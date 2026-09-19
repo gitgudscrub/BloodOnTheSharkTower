@@ -1,0 +1,95 @@
+{
+  "doorbell": {
+    "sounds": [
+      "blood_on_the_sharktower:doorbell"
+    ]
+  },
+  "doorknock": {
+    "sounds": [
+      {
+        "name": "blood_on_the_sharktower:doorknock",
+        "volume": 1.5
+      }
+    ]
+  },
+  "dusk": {
+    "sounds": [
+      "blood_on_the_sharktower:dusk"
+    ]
+  },
+  "dawn": {
+    "sounds": [
+      "blood_on_the_sharktower:dawn"
+    ]
+  },
+  "call_back": {
+    "sounds": [
+      "blood_on_the_sharktower:call_back"
+    ]
+  },
+  "role_receive": {
+    "sounds": [
+      "blood_on_the_sharktower:role_receive"
+    ]
+  },
+  "nomination": {
+    "sounds": [
+      "blood_on_the_sharktower:nomination"
+    ]
+  },
+  "vote_start": {
+    "sounds": [
+      "blood_on_the_sharktower:vote_start"
+    ]
+  },
+  "vote_music": {
+    "sounds": [
+      "blood_on_the_sharktower:vote_music"
+    ]
+  },
+  "clock_ticking": {
+    "sounds": [
+      "blood_on_the_sharktower:clock_ticking"
+    ]
+  },
+  "clock_tick": {
+    "sounds": [
+      "blood_on_the_sharktower:clock_tick"
+    ]
+  },
+  "not_enough_votes": {
+    "sounds": [
+      "blood_on_the_sharktower:not_enough_votes"
+    ]
+  },
+  "tie": {
+    "sounds": [
+      "blood_on_the_sharktower:tie"
+    ]
+  },
+  "marked": {
+    "sounds": [
+      "blood_on_the_sharktower:marked"
+    ]
+  },
+  "execution": {
+    "sounds": [
+      "blood_on_the_sharktower:execution"
+    ]
+  },
+  "execution_survived": {
+    "sounds": [
+      "blood_on_the_sharktower:execution_survived"
+    ]
+  },
+  "game_end": {
+    "sounds": [
+      "blood_on_the_sharktower:game_end"
+    ]
+  },
+  "whisper": {
+    "sounds": [
+      "blood_on_the_sharktower:whisper"
+    ]
+  }
+}

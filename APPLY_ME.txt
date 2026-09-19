@@ -1,0 +1,8 @@
+Blood on the Sharktower 0.7.0 Functional Parity patch
+
+Apply over your working 0.6.1 project (including the optional test-seats patch).
+Merge/replace matching files, then run:
+
+  .\gradlew.bat runClient
+
+See PORT_NOTES_0.7.0.md for test commands.

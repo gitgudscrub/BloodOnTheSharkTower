@@ -1,0 +1,31 @@
+Blood on the Sharktower — A.10.2 UI hotfix
+============================================
+
+Baseline:
+  1.1.0-dev-a.10.1 original-endgame
+
+What this fixes:
+  1. The orange SETUP HUD no longer draws on top of the red/green end-game banner.
+  2. The Final Grimoire no longer places a two-player game at 12/6 o'clock,
+     where the top player collided with the title and the bottom player collided
+     with Reset/Close.
+  3. Final Grimoire entries use a responsive centered grid and a subtle dark
+     backing card for readability.
+
+Apply:
+  Extract this ZIP into the root of your A.10.1 source project and allow it to
+  replace files.
+
+Changed code files:
+  src/client/java/com/sharktower/bloodonthesharktower/client/hud/SetupHUD.java
+  src/client/java/com/sharktower/bloodonthesharktower/client/gui/FinalGrimoireScreen.java
+
+Metadata:
+  gradle.properties is bumped to 1.1.0-dev-a.10.2.
+
+Quick test:
+  - End a game while still in SETUP. Only the end-game winner banner should be
+    visible at the top; the orange Setup/Trouble Brewing box should disappear.
+  - Open Final Grimoire with two seated players. They should appear side-by-side
+    in the middle with no title/button overlap.
+  - Reset/cancel reveal. The normal Setup HUD should return when phase is SETUP.

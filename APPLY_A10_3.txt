@@ -1,0 +1,12 @@
+A.10.3 Grimoire flow/reveal patch
+
+Base: Blood on the Sharktower 1.1.0-dev-a.10.2
+
+Changes:
+1. Choosing a player role or Demon bluff returns directly to the Grimoire.
+2. Escape/Back from the role chooser returns to the Grimoire.
+3. Final Grimoire uses the live Grimoire's radial role/head/seat layout.
+4. Final alignment is shown as a blue/red outline around each role token.
+5. Hovering a final-reveal player shows their role/alignment/status in the centre.
+
+For a source checkout, overwrite the included files at their matching paths.

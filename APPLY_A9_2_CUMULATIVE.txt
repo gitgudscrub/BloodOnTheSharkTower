@@ -1,0 +1,5 @@
+Blood on the Sharktower A.9 -> A.9.2 cumulative overlay
+
+Extract these files into the root of your existing A.9 project and overwrite matching files.
+This cumulative overlay includes both A.9.1 (exiled Travellers remain social/Night Chat participants) and A.9.2 (automatic seating).
+Use this if you may have skipped the earlier A.9.1 overlay.

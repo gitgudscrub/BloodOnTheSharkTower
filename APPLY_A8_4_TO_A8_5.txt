@@ -1,0 +1,12 @@
+Blood on the Sharktower A.8.4 -> A.8.5 dev harness hotfix
+
+Extract this ZIP into the root of your current project and allow build.gradle to be replaced.
+
+This changes ONLY the local development server configuration:
+- difficulty=peaceful
+- spawn-monsters=false
+
+It does not change normal production/server defaults.
+
+Close the current dev server completely, then run:
+  dev-harness\start-core-test.bat

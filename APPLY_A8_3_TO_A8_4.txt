@@ -1,0 +1,8 @@
+Blood on the Sharktower A.8.3 -> A.8.4 hotfix
+
+Extract this ZIP into the ROOT of your current project and choose Replace/Overwrite.
+Then close the current dev server and run:
+
+  dev-harness\start-core-test.bat
+
+The Storyteller and dummy players should all be able to join.

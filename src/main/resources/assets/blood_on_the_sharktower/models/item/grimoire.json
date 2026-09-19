@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "blood_on_the_sharktower:item/grimoire"
+  }
+}

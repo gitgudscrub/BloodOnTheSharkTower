@@ -1,0 +1,20 @@
+Blood on the Sharktower 0.3.0 - Core Networking Foundation
+
+Apply this over a working 0.2.1 project folder.
+Allow Windows to merge folders and replace matching files.
+
+Then run:
+  .\gradlew.bat runClient
+
+Join a world and run:
+  /sharktower
+
+Expected network lines:
+  Network sync: ONLINE (1 client ack)
+  Latest client state: phase=SETUP, script=none, seq=1
+
+Then test a forced round trip:
+  /sharktower sync
+  /sharktower
+
+The acknowledgement sequence should increase.

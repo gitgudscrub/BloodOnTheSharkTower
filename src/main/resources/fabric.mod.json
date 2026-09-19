@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "blood_on_the_sharktower",
+  "version": "${version}",
+  "name": "Blood on the Sharktower",
+  "description": "Private Minecraft 26.3 port of Blood on the Blocktower for the Sharktower community.",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.sharktower.bloodonthesharktower.BloodOnTheSharktower"
+    ],
+    "client": [
+      "com.sharktower.bloodonthesharktower.client.BloodOnTheSharktowerClient"
+    ],
+    "voicechat": [
+      "com.sharktower.bloodonthesharktower.voicechat.SharktowerVoicechatPlugin"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*",
+    "voicechat_api": ">=2.6.20"
+  },
+  "icon": "assets/blood_on_the_sharktower/icon.png"
+}

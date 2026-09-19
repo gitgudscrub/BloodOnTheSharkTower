@@ -1,0 +1,9 @@
+Blood on the Sharktower A.8 -> A.8.1 structure API hotfix
+
+Extract this ZIP into the ROOT of your existing A.8 project and choose Replace/Overwrite.
+
+Fix:
+- MatchSnapshotManager now uses MinecraftServer#getStructureTemplateManager()
+  instead of the unavailable getStructureManager() accessor.
+
+Then run dev-harness\start-core-test.bat again.

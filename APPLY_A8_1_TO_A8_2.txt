@@ -1,0 +1,9 @@
+Blood on the Sharktower A.8.2 client API hotfix
+
+Apply on top of A.8 + the A.8.1 structure hotfix.
+Extract this ZIP into the project root and choose Replace/Overwrite.
+
+Fixes Minecraft 26.3 client API compilation errors:
+- Settings key no longer references removed Minecraft.screen field.
+- GameRenderer.getMainCamera() -> mainCamera().
+- Removed LightTexture and uses RenderTypes.FULL_BRIGHT_LIGHTMAP.

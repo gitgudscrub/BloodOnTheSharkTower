@@ -1,0 +1,8 @@
+Blood on the Sharktower A.7 -> A.8 Development Harness Overlay
+
+1. Extract this ZIP into the root of your existing A.7 project.
+2. Allow build.gradle and gradle.properties to be replaced.
+3. Double-click dev-harness\start-core-test.bat.
+4. Wait for the server window to say Done, then press a key in the launcher window.
+
+The dev server is intentionally local-only (127.0.0.1) and offline-mode so several dummy clients can be run from one computer.

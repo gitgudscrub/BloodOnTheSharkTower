@@ -1,0 +1,8 @@
+Blood on the Sharktower A9 -> A9.1 overlay
+
+Extract this archive into the root of your existing A9 project and allow matching files to be replaced.
+
+A9.1 correction:
+- Exiled Travellers remain in shared Night Chat.
+- Exiled Travellers can still use private Storyteller chat.
+- They remain excluded from later election/exile voting clocks.

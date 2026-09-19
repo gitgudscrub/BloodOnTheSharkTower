@@ -1,0 +1,14 @@
+Blood on the Sharktower 1.1.0-dev A.5 -> A.6 overlay
+
+1. Stop the development server/client.
+2. Extract this ZIP directly into the root of your existing A.5 project.
+3. Allow your file manager to replace/overwrite matching files.
+4. Start/build the project normally.
+
+A.6 adds Match Snapshot & World Restore.
+Before using physical-world restore, stand at two opposite corners of the play area and run:
+  /bots snapshot corner1
+  /bots snapshot corner2
+
+Then use Send Roles normally. That commit creates the clean start-of-game checkpoint.
+Full Reset or Game Complete restores that checkpoint.

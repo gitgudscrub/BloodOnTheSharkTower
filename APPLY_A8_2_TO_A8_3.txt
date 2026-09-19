@@ -1,0 +1,10 @@
+Blood on the Sharktower A.8.2 -> A.8.3 hotfix
+
+Extract this ZIP into the root of your existing A.8.2 project and allow it to overwrite matching files.
+
+Fix:
+- ClockHandsRenderer no longer references a mapping-specific full-bright constant.
+- Uses Minecraft's packed full-bright light value directly (0x00F000F0).
+
+Then rerun:
+  dev-harness\start-core-test.bat

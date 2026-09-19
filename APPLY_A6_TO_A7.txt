@@ -1,0 +1,1 @@
+Extract the contents of this ZIP directly into your existing A.6 project folder and choose Replace/Overwrite when prompted.

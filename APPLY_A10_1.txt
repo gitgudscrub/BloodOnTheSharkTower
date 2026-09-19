@@ -1,0 +1,6 @@
+Blood on the Sharktower — A.10 -> A.10.1
+
+Extract this ZIP over the root of your existing A.10 project and allow files to be replaced.
+Then fully restart the dev server and all clients.
+
+A.10.1 restores the original BOTB-style end-game cinematic before the persistent Final Grimoire reveal.

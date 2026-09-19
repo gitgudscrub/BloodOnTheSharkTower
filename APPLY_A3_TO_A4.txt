@@ -1,0 +1,8 @@
+Blood on the Sharktower — A.3 to A.4 overlay
+
+1. Start with your existing 1.1.0-dev A.3 project folder.
+2. Extract the CONTENTS of this ZIP into that folder.
+3. Choose Replace/Overwrite for matching files.
+4. Rebuild the project as normal.
+
+This overlay contains only files changed or added for A.4 Nomination & Execution Flow.

@@ -1,0 +1,10 @@
+Blood on the Sharktower 1.1.0-dev A.2 -> A.3 overlay
+=====================================================
+
+1. Open your existing blood-on-the-sharktower-1.1.0-dev-a.2-nightchat-automation project folder.
+2. Extract the CONTENTS of this ZIP into that folder.
+3. When prompted, choose Replace/Overwrite existing files.
+4. The project is then updated to A.3 Night Chat Polish.
+
+This ZIP contains only files that are new or changed from A.2.
+Do not create an extra nested overlay folder inside the project; merge these files into the project root.

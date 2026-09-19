@@ -1,0 +1,218 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+version = project.version
+group = project.maven_group
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "blood_on_the_sharktower" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+
+    // A.8 local multiplayer development harness. Each client gets its own run
+    // directory so controls, voice-chat state, options and logs do not collide.
+    // The clients connect automatically to the loopback-only dev server.
+    runs {
+        devServer {
+            server()
+            displayName = "Sharktower Dev Server"
+            runDirectory = file("run/dev-server")
+            generateRunConfig = true
+        }
+
+        storyteller {
+            client()
+            displayName = "Sharktower - Storyteller"
+            runDirectory = file("run/storyteller")
+            programArguments.addAll(["--username", "Storyteller", "--uuid", "4172ea15-173e-3014-8673-7d079eaaf52d", "--server", "127.0.0.1", "--port", "25565"])
+            generateRunConfig = true
+        }
+
+        player1 {
+            client()
+            displayName = "Sharktower - Player 1"
+            runDirectory = file("run/player1")
+            programArguments.addAll(["--username", "TestPlayer1", "--uuid", "5116c225-ff07-3996-8901-9e809826e635", "--server", "127.0.0.1", "--port", "25565"])
+            generateRunConfig = true
+        }
+
+        player2 {
+            client()
+            displayName = "Sharktower - Player 2"
+            runDirectory = file("run/player2")
+            programArguments.addAll(["--username", "TestPlayer2", "--uuid", "67f79ba5-83e4-3e4c-bd13-65aae9e91ed3", "--server", "127.0.0.1", "--port", "25565"])
+            generateRunConfig = true
+        }
+
+        player3 {
+            client()
+            displayName = "Sharktower - Player 3"
+            runDirectory = file("run/player3")
+            programArguments.addAll(["--username", "TestPlayer3", "--uuid", "f170ac71-488e-3380-b41d-16c3597b1448", "--server", "127.0.0.1", "--port", "25565"])
+            generateRunConfig = true
+        }
+
+        player4 {
+            client()
+            displayName = "Sharktower - Player 4"
+            runDirectory = file("run/player4")
+            programArguments.addAll(["--username", "TestPlayer4", "--uuid", "474a3d0f-7f2d-3e1b-befa-7321805d1217", "--server", "127.0.0.1", "--port", "25565"])
+            generateRunConfig = true
+        }
+
+        player5 {
+            client()
+            displayName = "Sharktower - Player 5"
+            runDirectory = file("run/player5")
+            programArguments.addAll(["--username", "TestPlayer5", "--uuid", "7841ae74-b5b6-352c-b624-21b6c7af2b23", "--server", "127.0.0.1", "--port", "25565"])
+            generateRunConfig = true
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = "Henkelmax"
+        url = "https://maven.maxhenkel.de/repository/public"
+    }
+    maven {
+        name = "CurseMaven"
+        url = "https://www.cursemaven.com"
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Compile against the Simple Voice Chat API. The actual voice chat mod is runtime-only.
+    implementation "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+
+    // Development runtime: Simple Voice Chat 2.6.23+26.3 (CurseForge file 8886980).
+    runtimeOnly "curse.maven:simple-voice-chat-416089:${project.voicechat_curse_file_id}"
+
+    // In development the API stub is not nested into the runtime mod, so provide it explicitly.
+    runtimeOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}:fabric-stub"
+}
+
+processResources {
+    def modVersion = project.version
+    inputs.property "version", modVersion
+
+    filesMatching("fabric.mod.json") {
+        expand "version": modVersion
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 25
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+
+// Prepare an intentionally local-only development server. This server uses
+// offline authentication solely so several dummy clients can run from one PC.
+// Binding to 127.0.0.1 prevents remote machines from connecting.
+tasks.register("prepareSharktowerDevHarness") {
+    group = "sharktower development"
+    description = "Creates the local-only multiplayer dev server configuration."
+
+    doLast {
+        def serverDir = file("run/dev-server")
+        serverDir.mkdirs()
+
+        file("run/dev-server/eula.txt").text = "eula=true\n"
+
+        file("run/dev-server/server.properties").text = """# Generated by Blood on the Sharktower A.8 dev harness.
+# LOCAL DEVELOPMENT ONLY - do not expose this offline-mode server to the internet.
+server-ip=127.0.0.1
+server-port=25565
+online-mode=false
+enforce-secure-profile=false
+white-list=false
+enforce-whitelist=false
+max-players=20
+spawn-protection=0
+view-distance=4
+simulation-distance=4
+difficulty=peaceful
+spawn-monsters=false
+motd=Blood on the Sharktower - Local Dev Harness
+enable-command-block=true
+"""
+
+        // Keep the local harness open to its dummy clients even if a previous
+        // dev session enabled the vanilla whitelist. The server is loopback-only.
+        file("run/dev-server/whitelist.json").text = "[]\n"
+
+        // Make Simple Voice Chat deterministic for the local multi-client harness.
+        // Preserve any unrelated generated defaults while forcing the settings
+        // Sharktower relies on for Night Chat groups.
+        def voiceConfigDir = file("run/dev-server/config/voicechat")
+        voiceConfigDir.mkdirs()
+        def voiceConfigFile = file("run/dev-server/config/voicechat/voicechat-server.properties")
+        def voiceProps = new Properties()
+        if (voiceConfigFile.exists()) {
+            voiceConfigFile.withInputStream { voiceProps.load(it) }
+        }
+        voiceProps.setProperty("port", "24454")
+        voiceProps.setProperty("bind_address", "127.0.0.1")
+        voiceProps.setProperty("voice_host", "127.0.0.1:24454")
+        voiceProps.setProperty("enable_groups", "true")
+        voiceConfigFile.withOutputStream { out ->
+            voiceProps.store(out, "Blood on the Sharktower local dev harness - generated/updated on launch")
+        }
+
+        // The dev identities intentionally use separate run directories. Pre-complete
+        // Simple Voice Chat onboarding for each one so local multiplayer smoke tests
+        // don't require repeating the first-run wizard six times. Existing client
+        // audio/key preferences are preserved; only onboarding/disabled are forced.
+        ["storyteller", "player1", "player2", "player3", "player4", "player5"].each { clientRun ->
+            def clientVoiceDir = file("run/${clientRun}/config/voicechat")
+            clientVoiceDir.mkdirs()
+            def clientVoiceFile = file("run/${clientRun}/config/voicechat/voicechat-client.properties")
+            def clientVoiceProps = new Properties()
+            if (clientVoiceFile.exists()) {
+                clientVoiceFile.withInputStream { clientVoiceProps.load(it) }
+            }
+            clientVoiceProps.setProperty("onboarding_finished", "true")
+            clientVoiceProps.setProperty("disabled", "false")
+            clientVoiceFile.withOutputStream { out ->
+                clientVoiceProps.store(out, "Blood on the Sharktower local dev harness - onboarding preconfigured")
+            }
+        }
+
+        // Vanilla's offline UUID is nameUUIDFromBytes("OfflinePlayer:" + name).
+        // Pre-op the Storyteller test account so all /bots tools are immediately available.
+        def storytellerUuid = java.util.UUID.nameUUIDFromBytes(
+            "OfflinePlayer:Storyteller".getBytes(java.nio.charset.StandardCharsets.UTF_8)
+        )
+        file("run/dev-server/ops.json").text = groovy.json.JsonOutput.prettyPrint(
+            groovy.json.JsonOutput.toJson([[
+                uuid: storytellerUuid.toString(),
+                name: "Storyteller",
+                level: 4,
+                bypassesPlayerLimit: true
+            ]])
+        ) + "\n"
+    }
+}
+
+// Loom creates these run tasks from the configurations above. The matching
+// hook keeps this resilient if Gradle realizes those tasks later in configuration.
+tasks.matching { it.name in ["runDevServer", "runStoryteller", "runPlayer1", "runPlayer2", "runPlayer3", "runPlayer4", "runPlayer5"] }.configureEach {
+    dependsOn tasks.named("prepareSharktowerDevHarness")
+}

@@ -1,0 +1,6 @@
+Blood on the Sharktower — A.8 Final -> A.9 Traveller & Exile Voting
+
+Extract this ZIP into the ROOT of your A.8 Final project and choose Replace/Overwrite.
+Then restart the dev server/clients before testing A.9.
+
+See PORT_NOTES_1.1.0-dev-A9.md for the test sequence.

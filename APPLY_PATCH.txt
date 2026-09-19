@@ -1,0 +1,21 @@
+Blood on the Sharktower — A.11 live Setup seating + empty world-role hotfix
+
+Apply AFTER:
+  1. A11-smaller-perceived-role-and-empty-slot-hotfix
+  2. A11-grimoire-gui-scale-hotfix
+  3. A11-live-player-heads-hotfix
+
+Copy the contents of this patch folder over the project root, replacing files when prompted.
+
+Files replaced:
+  src/client/java/com/sharktower/bloodonthesharktower/client/gui/AssignRolesScreen.java
+  src/client/java/com/sharktower/bloodonthesharktower/client/render/RoleIconRenderer.java
+
+Then rebuild/restart the client/server as normal.
+
+Test:
+  - During Setup, seat a player while the Grim is open: they should appear immediately.
+  - During Setup, remove a player from a seat: they should disappear from the ring and appear in Unseated immediately.
+  - Shuffle seats: heads/names/seat numbers should follow the new live seat map.
+  - With an empty/unassigned Grim role, no black empty role square should float over the player's head.
+  - Assign a role: its world icon should appear normally.

@@ -1,0 +1,5 @@
+Blood on the Sharktower A9.1 -> A9.2 overlay
+
+Extract this ZIP into the root of your current A9.1 project and choose Replace/Overwrite.
+
+A9.2 adds automatic Setup-phase seat assignment for joining players. Storyteller claims automatically remove the Storyteller from player seating and compact the remaining seat numbers.
