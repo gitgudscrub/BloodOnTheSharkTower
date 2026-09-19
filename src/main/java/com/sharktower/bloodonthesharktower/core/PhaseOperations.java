@@ -65,7 +65,9 @@ public final class PhaseOperations {
             PhasePresentation.dawn(server, day);
         }
 
-        NightChatManager.Result voice = NightChatManager.stop();
+        NightChatManager.Result voice = alreadyDay
+                ? NightChatManager.stop()
+                : NightChatManager.stopForDawn();
         StateBroadcaster.broadcastCurrentState(server);
 
         if (!voice.ok()) {
