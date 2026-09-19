@@ -290,6 +290,56 @@ public final class NightChatManager {
     }
 
     /**
+     * Dawn is a hard handoff from Night routing into shared Day Chat.
+     *
+     * Private Storyteller conversations and pending invitations that originated
+     * during Night must not survive this transition, otherwise they continue to
+     * claim the same Simple Voice Chat connections that DayChatZoneManager is
+     * trying to place into BOTS Day Chat.
+     *
+     * New manual private conversations started after Dawn remain phase-independent.
+     */
+    public static synchronized Result stopForDawn() {
+        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
+        active = false;
+        lastRoutingError = null;
+        INVITES.clear();
+
+        int privateSessions = uniquePrivateSessionCount();
+        int released = 0;
+
+        if (api != null) {
+            endAllPrivateSessions(api);
+
+            for (UUID playerId : new HashSet<>(MANAGED_CONNECTIONS)) {
+                VoicechatConnection connection = api.getConnectionOf(playerId);
+                if (connection != null) {
+                    connection.setGroup(null);
+                    released++;
+                }
+                MANAGED_CONNECTIONS.remove(playerId);
+            }
+
+            try {
+                api.removeGroup(SHARED_NIGHT_GROUP_ID);
+            } catch (Throwable ignored) {
+                // Group may already be gone; nothing to recover here.
+            }
+        } else {
+            SESSIONS_BY_PARTICIPANT.clear();
+            MANAGED_CONNECTIONS.clear();
+        }
+
+        // Force the next state broadcast/tick to publish the new Day route instead
+        // of retaining a cached PRIVATE/PRIVATE_HOLD HUD value.
+        LAST_SENT_ROUTES.clear();
+
+        return Result.ok("Dawn voice handoff complete: shared Night Chat stopped, "
+                + privateSessions + " private session(s) ended, "
+                + released + " remaining voice connection(s) released for Day Chat.");
+    }
+
+    /**
      * Tear down every BOTS voice route, including private sessions and pending
      * invitations. This is for full game/reset cleanup, not ordinary phase changes.
      */
