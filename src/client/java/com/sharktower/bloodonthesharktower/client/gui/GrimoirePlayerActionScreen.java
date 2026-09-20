@@ -59,7 +59,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
             Button nominate = Button.builder(Component.literal("Nominate This Player").withStyle(ChatFormatting.YELLOW), b -> {
                         UUID nominator = GrimoireInteractionState.selectedNominator();
                         if (nominator == null) {
-                            message("Choose a nominator first (Shift + left-click a player token).");
+                            message("Choose a nominator first (Shift + left-click a player portrait or role token).");
                             return;
                         }
                         ClientStorytellerActions.send("nominate_pair", nominator + "|" + playerId);
