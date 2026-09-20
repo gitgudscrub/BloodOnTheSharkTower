@@ -1,7 +1,9 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
+import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireBluffWidget;
+import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireHoverHints;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerHeadWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePerceivedRoleWidget;
@@ -13,11 +15,14 @@ import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.renderer.RenderPipelines;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -56,6 +61,13 @@ public class AssignRolesScreen extends Screen {
     private static final int CONTROL_H = 20;
     private static final int MARGIN = 10;
     private static final int GAP = 5;
+
+    private static final Identifier PHASE_DUSK = Identifier.fromNamespaceAndPath(
+            BloodOnTheSharktower.MOD_ID, "textures/icons/original/dusk.png");
+    private static final Identifier PHASE_DAWN = Identifier.fromNamespaceAndPath(
+            BloodOnTheSharktower.MOD_ID, "textures/icons/original/dawn.png");
+    private static final Identifier PHASE_NOMINATIONS = Identifier.fromNamespaceAndPath(
+            BloodOnTheSharktower.MOD_ID, "textures/icons/original/nominations.png");
 
     private static boolean showUnseated = true;
     private static boolean showSelf = true;
@@ -494,6 +506,7 @@ public class AssignRolesScreen extends Screen {
             // Render the widgets and custom Grim drawing through the same virtual
             // Scale-4 canvas. This keeps text, tokens, tooltips and controls in
             // the same proportions instead of letting Auto GUI scale enlarge them.
+            GrimoireHoverHints.clear();
             super.extractRenderState(graphics, scaledMouseX, scaledMouseY, delta);
 
             List<Map.Entry<UUID, Integer>> seats = sortedSeats();
@@ -505,7 +518,8 @@ public class AssignRolesScreen extends Screen {
             renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
             renderSeatNumbers(graphics, seats, centerX, centerY, radius);
             renderCenterStatus(graphics, seats.size());
-            renderInteractionHint(graphics);
+            renderPhaseIndicator(graphics);
+            renderHoverHint(graphics);
             renderHandVotingPanel(graphics);
         } finally {
             graphics.pose().popMatrix();
@@ -579,27 +593,61 @@ public class AssignRolesScreen extends Screen {
         drawCentered(graphics, storytellers, baseY + 12, UiDrawing.MUTED, true);
     }
 
-    private void renderInteractionHint(GuiGraphicsExtractor graphics) {
-        String hint;
-        if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.nominationsOpen) {
-            UUID selected = GrimoireInteractionState.selectedNominator();
-            if (selected != null) {
-                int seat = ClientState.playerSeatNumbers.getOrDefault(selected, 0);
-                hint = "Nominator: " + ClientState.playerName(selected, seat)
-                        + "  |  Shift+RMB a nominee";
-            } else {
-                hint = "Shift+LMB a nominator  |  Shift+RMB a nominee";
-            }
-        } else if (ClientGrimoireEdits.isLocalStoryteller()) {
-            hint = "Role: edit  |  Head: reminders  |  RMB: actions";
-        } else {
-            hint = "Role: deduction  |  Head: reminders";
+    private void renderHoverHint(GuiGraphicsExtractor graphics) {
+        String hint = GrimoireHoverHints.current();
+
+        // A selected nominator is state rather than a generic instruction, so
+        // keep that confirmation visible even when the mouse is not hovering a
+        // token. Everything else is target-specific and disappears when idle.
+        UUID selected = GrimoireInteractionState.selectedNominator();
+        if ((hint == null || hint.isBlank()) && selected != null && ClientState.nominationsOpen) {
+            int seat = ClientState.playerSeatNumbers.getOrDefault(selected, 0);
+            hint = "Nominator: " + ClientState.playerName(selected, seat) + " — Shift+RMB a nominee";
         }
 
-        // Keep this below the radial role ring. The old h-44 position crossed
-        // the bottom player's role token.
+        if (hint == null || hint.isBlank()) return;
         int y = layoutHeight() - 19;
         drawCentered(graphics, hint, y, UiDrawing.MUTED, false);
+    }
+
+    private void renderPhaseIndicator(GuiGraphicsExtractor graphics) {
+        GamePhase phase = ClientState.phase();
+        Identifier icon = null;
+        String label = null;
+
+        switch (phase) {
+            case NIGHT -> {
+                icon = PHASE_DUSK;
+                label = "NIGHT";
+            }
+            case DAY -> {
+                icon = PHASE_DAWN;
+                label = "DAY";
+            }
+            case NOMINATIONS, PLAYER_NOMINATED, PLAYER_MARKED -> {
+                icon = PHASE_NOMINATIONS;
+                label = phase == GamePhase.PLAYER_MARKED ? "EXECUTION" : "NOMINATIONS";
+            }
+            case CALL_FOR_EXILE, EXILE_SUPPORT -> label = "TRAVELLER EXILE";
+            default -> {
+                return;
+            }
+        }
+
+        int x = MARGIN;
+        int y = MARGIN;
+        int iconSize = 28;
+        int panelWidth = label.length() > 10 ? 118 : 92;
+        UiDrawing.softPanel(graphics, x, y, panelWidth, 32);
+
+        if (icon != null) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, icon,
+                    x + 2, y + 2, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            graphics.text(this.font, label, x + 35, y + 12, UiDrawing.GOLD, true);
+        } else {
+            graphics.text(this.font, label,
+                    x + (panelWidth - this.font.width(label)) / 2, y + 12, UiDrawing.GOLD, true);
+        }
     }
 
     private void renderHandVotingPanel(GuiGraphicsExtractor graphics) {
