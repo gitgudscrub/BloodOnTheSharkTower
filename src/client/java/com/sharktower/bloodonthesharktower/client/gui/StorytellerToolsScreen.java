@@ -38,14 +38,17 @@ public class StorytellerToolsScreen extends Screen {
                 .bounds(left, top + row, 100, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Start Day"), b -> ClientStorytellerActions.send("phase_day"))
                 .bounds(mid, top + row, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Night Status"), b -> showHint("/bots nightchat status"))
+        this.addRenderableWidget(Button.builder(Component.literal("Night Status"), b ->
+                        ClientStorytellerActions.send("night_status"))
                 .bounds(right, top + row, 100, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Timer"), b -> this.minecraft.gui.setScreen(new TimerScreen()))
                 .bounds(left, top + row * 2, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Sync State"), b -> showHint("/bots sync"))
+        this.addRenderableWidget(Button.builder(Component.literal("Sync State"), b ->
+                        ClientStorytellerActions.send("sync_state"))
                 .bounds(mid, top + row * 2, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Status"), b -> showHint("/bots status"))
+        this.addRenderableWidget(Button.builder(Component.literal("Status"), b ->
+                        ClientStorytellerActions.send("storyteller_status"))
                 .bounds(right, top + row * 2, 100, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Nomination Flow"), b ->
@@ -62,7 +65,8 @@ public class StorytellerToolsScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("End Game"), b ->
                         this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
                 .bounds(mid, top + row * 4, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Restore Previous"), b -> showHint("/bots snapshot restorePrevious"))
+        this.addRenderableWidget(Button.builder(Component.literal("Restore Previous"), b ->
+                        ClientStorytellerActions.send("snapshot_restore_previous"))
                 .bounds(right, top + row * 4, 100, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Settings"), b ->
@@ -70,12 +74,6 @@ public class StorytellerToolsScreen extends Screen {
                 .bounds(cx - 105, this.height - 28, 100, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
                 .bounds(cx + 5, this.height - 28, 100, 20).build());
-    }
-
-    private void showHint(String text) {
-        if (this.minecraft != null && this.minecraft.player != null) {
-            this.minecraft.player.sendSystemMessage(Component.literal(text));
-        }
     }
 
     @Override
