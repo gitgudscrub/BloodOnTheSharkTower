@@ -46,11 +46,11 @@ public final class DemonKillReminderScreen extends Screen {
         List<ScriptRole> demons = demonsInStorytellerGrimoire();
         if (demons.size() == 1) {
             ScriptRole demon = demons.getFirst();
+            GrimoireReturnState.requestAfterNextGrimoireSync();
             ClientStorytellerActions.send(
                     "add_role_reminder",
                     seat + "|" + demon.getId() + "|Kill"
             );
-            minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
             return;
         }
 
@@ -76,11 +76,11 @@ public final class DemonKillReminderScreen extends Screen {
             this.addRenderableWidget(Button.builder(
                             Component.literal("+ " + demon.getDisplayName() + ": Kill"),
                             b -> {
+                                GrimoireReturnState.requestAfterNextGrimoireSync();
                                 ClientStorytellerActions.send(
                                         "add_role_reminder",
                                         seat + "|" + demon.getId() + "|Kill"
                                 );
-                                this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
                             })
                     .bounds(x, y + row * 25, buttonW, 20).build());
         }
