@@ -148,12 +148,14 @@ public final class DemonBluffSelectionScreen extends Screen {
     private void confirm() {
         if (selected.size() != 3) return;
 
+        GrimoireReturnState.requestAfterNextGrimoireSync();
         ClientStorytellerActions.send("set_bluffs", String.join("|", selected));
-        back();
     }
 
     private void back() {
-        if (this.minecraft != null) this.minecraft.gui.setScreen(new AssignRolesScreen());
+        if (this.minecraft == null) return;
+        GrimoireReturnState.suppressNextReveal();
+        this.minecraft.gui.setScreen(new AssignRolesScreen());
     }
 
     private String selectedNames() {
