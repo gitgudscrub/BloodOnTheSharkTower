@@ -32,6 +32,10 @@ public final class GrimoireReminderWidget extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+        if (!GrimoireRevealAnimation.beginElement(
+                graphics, getX(), getY(), this.width, this.height, reveal)) return;
+        try {
         if (reminder.text().isBlank()) {
             UiDrawing.emptyReminderSlot(graphics, getX(), getY(), width);
         } else {
@@ -65,6 +69,9 @@ public final class GrimoireReminderWidget extends AbstractWidget {
             GrimoireHoverHints.set(reminder.text().isBlank()
                     ? "Reminder slot — click to edit"
                     : reminder.text() + " — click to edit reminders");
+        }
+        } finally {
+            GrimoireRevealAnimation.endElement(graphics);
         }
     }
 
