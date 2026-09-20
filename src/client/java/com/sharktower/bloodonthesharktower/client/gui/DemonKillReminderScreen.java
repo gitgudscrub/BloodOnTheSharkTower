@@ -51,6 +51,8 @@ public final class DemonKillReminderScreen extends Screen {
                     "add_role_reminder",
                     seat + "|" + demon.getId() + "|Kill"
             );
+            GrimoireReturnState.suppressNextReveal();
+            minecraft.gui.setScreen(new AssignRolesScreen());
             return;
         }
 
@@ -81,6 +83,8 @@ public final class DemonKillReminderScreen extends Screen {
                                         "add_role_reminder",
                                         seat + "|" + demon.getId() + "|Kill"
                                 );
+                                GrimoireReturnState.suppressNextReveal();
+                                this.minecraft.gui.setScreen(new AssignRolesScreen());
                             })
                     .bounds(x, y + row * 25, buttonW, 20).build());
         }
