@@ -8,6 +8,7 @@ import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePerceived
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireReminderWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireStorytellerWidget;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
+import com.sharktower.bloodonthesharktower.core.GamePhase;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -33,8 +34,9 @@ import java.util.UUID;
  *  - circular role radius min(width/2,height/2)-50
  *  - inner player radius roleRadius-35
  *  - 90x20 Storyteller controls with 5px vertical gaps
- *  - Script Builder top-left, setup controls top-right, bluffs bottom-left,
- *    timer + SEND ROLES bottom-right.
+ *  - contextual Storyteller controls that change with the active game phase
+ *  - Script Builder top-left during Setup, bluffs bottom-left, compact utility
+ *    controls along the bottom edge.
  */
 public class AssignRolesScreen extends Screen {
     /**
@@ -45,8 +47,9 @@ public class AssignRolesScreen extends Screen {
     private static final int GRIMOIRE_REFERENCE_GUI_SCALE = 4;
     private static final int ROLE_SIZE = 32;
     private static final int PERCEIVED_ROLE_SIZE = 20;
-    // 16x16 is one quarter of a 32x32 role token by area, while staying readable.
-    private static final int REMINDER_SIZE = 16;
+    // Original BOTB reminder tokens are 14px with 2px padding around the 32px role token.
+    private static final int REMINDER_SIZE = 14;
+    private static final int REMINDER_PADDING = 2;
     private static final int DECEIVED_ROLE_GAP = 4;
     private static final int HEAD_SIZE = 24;
     private static final int CONTROL_W = 90;
@@ -68,7 +71,7 @@ public class AssignRolesScreen extends Screen {
 
     @Override
     protected void init() {
-        buildOriginalControls();
+        buildContextualControls();
         buildPlayerWidgets();
         buildReminderWidgets();
         buildStorytellerWidgets();
@@ -91,85 +94,148 @@ public class AssignRolesScreen extends Screen {
         }
     }
 
-    private void buildOriginalControls() {
-        // Ordinary players use this screen as a private deduction Grim. Keep
-        // server-authoritative setup/game controls Storyteller-only.
+    /**
+     * Original BOTB uses the Grimoire itself as the primary game console.
+     * Instead of leaving every Storyteller action visible at once, the right
+     * rail changes with the current GamePhase. Advanced/recovery tools remain
+     * one click away through TOOLS.
+     */
+    private void buildContextualControls() {
         if (!ClientGrimoireEdits.isLocalStoryteller()) return;
 
         int layoutWidth = layoutWidth();
         int layoutHeight = layoutHeight();
         int rightX = layoutWidth - CONTROL_W - MARGIN;
         int y = MARGIN;
+        GamePhase phase = ClientState.phase();
 
-        // Original top-left Script Builder button.
-        this.addRenderableWidget(Button.builder(Component.literal("Script Builder"), b ->
-                        this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
-                .bounds(MARGIN, MARGIN, 100, CONTROL_H).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Nomination Flow").withStyle(ChatFormatting.GOLD), b ->
-                        this.minecraft.gui.setScreen(new NominationControlScreen()))
-                .bounds(MARGIN, MARGIN + CONTROL_H + GAP, 100, CONTROL_H).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Controls"), b ->
-                        this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
-                .bounds(MARGIN + 105, MARGIN + CONTROL_H + GAP, 80, CONTROL_H).build());
+        if (phase == GamePhase.SETUP) {
+            this.addRenderableWidget(Button.builder(Component.literal("Script Builder"), b ->
+                            this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
+                    .bounds(MARGIN, MARGIN, 100, CONTROL_H).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Shuffle Roles").withStyle(ChatFormatting.AQUA), b ->
-                        action("shuffle_roles"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            y = addRightAction(rightX, y, "Shuffle Roles", ChatFormatting.AQUA, "shuffle_roles");
+            y = addRightAction(rightX, y, "Shuffle Seats", ChatFormatting.AQUA, "shuffle_seats");
+            y = addRightAction(rightX, y, "Randomize Roles", ChatFormatting.GOLD, "randomize_roles");
 
-        this.addRenderableWidget(Button.builder(Component.literal("Shuffle Seats").withStyle(ChatFormatting.AQUA), b ->
-                        action("shuffle_seats"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            this.addRenderableWidget(Button.builder(Component.literal("Role Bag").withStyle(ChatFormatting.LIGHT_PURPLE), b ->
+                            this.minecraft.gui.setScreen(new RoleBagScreen()))
+                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            y += CONTROL_H + GAP;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Randomize Roles").withStyle(ChatFormatting.GOLD), b ->
-                        action("randomize_roles"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            this.addRenderableWidget(Button.builder(
+                            Component.literal("Unseated: " + (showUnseated ? "SHOW" : "HIDE")), b -> {
+                        showUnseated = !showUnseated;
+                        this.minecraft.gui.setScreen(new AssignRolesScreen());
+                    }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            y += CONTROL_H + GAP;
 
-        // Sharktower 0.9.0: BOTC-app-style manual role bag.
-        this.addRenderableWidget(Button.builder(Component.literal("Role Bag").withStyle(ChatFormatting.LIGHT_PURPLE), b ->
-                        this.minecraft.gui.setScreen(new RoleBagScreen()))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            this.addRenderableWidget(Button.builder(
+                            Component.literal("Self: " + (showSelf ? "SHOW" : "HIDE")), b -> {
+                        showSelf = !showSelf;
+                        this.minecraft.gui.setScreen(new AssignRolesScreen());
+                    }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            y += CONTROL_H + GAP + 10;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Unseated: " + (showUnseated ? "SHOW" : "HIDE")), b -> {
-                    showUnseated = !showUnseated;
-                    this.minecraft.gui.setScreen(new AssignRolesScreen());
-                }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
+            addRightAction(rightX, y, "Send Home", ChatFormatting.AQUA, "send_home");
+        } else if (phase == GamePhase.NIGHT) {
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
+            y = addRightAction(rightX, y, "Send Home", ChatFormatting.AQUA, "send_home");
+            this.addRenderableWidget(Button.builder(Component.literal("Start Day").withStyle(ChatFormatting.GOLD), b ->
+                            action("phase_day"))
+                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+        } else if (phase == GamePhase.DAY) {
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightAction(rightX, y, "Open Noms", ChatFormatting.GOLD, "nominations_open");
 
-        this.addRenderableWidget(Button.builder(Component.literal("Self: " + (showSelf ? "SHOW" : "HIDE")), b -> {
-                    showSelf = !showSelf;
-                    this.minecraft.gui.setScreen(new AssignRolesScreen());
-                }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            if (ClientState.canBeExiled.values().stream().anyMatch(Boolean.TRUE::equals)) {
+                addRightScreen(rightX, y, "Traveller Exile", ChatFormatting.LIGHT_PURPLE,
+                        () -> this.minecraft.gui.setScreen(new ExileControlScreen()));
+            }
+        } else if (phase == GamePhase.NOMINATIONS) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightScreen(rightX, y, "Nomination Flow", ChatFormatting.GOLD,
+                    () -> this.minecraft.gui.setScreen(new NominationControlScreen()));
+            y = addRightAction(rightX, y, "Close Noms", ChatFormatting.GRAY, "nominations_close");
+            addRightAction(rightX, y, "No Execution", ChatFormatting.DARK_GRAY, "no_execution");
+        } else if (phase == GamePhase.PLAYER_NOMINATED) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
 
-        y += CONTROL_H + GAP + 10;
-        this.addRenderableWidget(Button.builder(Component.literal("Send to Seats").withStyle(ChatFormatting.LIGHT_PURPLE), b ->
-                        action("send_to_seats"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
-        this.addRenderableWidget(Button.builder(Component.literal("Send Home").withStyle(ChatFormatting.AQUA), b ->
-                        action("send_home"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
-        this.addRenderableWidget(Button.builder(Component.literal("Game End").withStyle(ChatFormatting.GOLD), b ->
-                        this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            String voteLabel = ClientState.voteInProgress
+                    ? (ClientState.voteClockComplete ? "Finish Vote" : "Vote Running")
+                    : "Start Vote";
+            Button voteButton = Button.builder(Component.literal(voteLabel).withStyle(ChatFormatting.AQUA), b -> {
+                        if (ClientState.voteInProgress) {
+                            if (ClientState.voteClockComplete) action("vote_finish");
+                        } else {
+                            action("vote_start");
+                        }
+                    })
+                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build();
+            voteButton.active = !ClientState.voteInProgress || ClientState.voteClockComplete;
+            this.addRenderableWidget(voteButton);
+            y += CONTROL_H + GAP;
 
-        // Original bottom-left bluffs visibility toggle.
-        this.addRenderableWidget(Button.builder(Component.literal("Bluffs: " + (showBluffs ? "SHOW" : "HIDE")), b -> {
+            y = addRightAction(rightX, y, "Cancel Nom.", ChatFormatting.GRAY, "nomination_cancel");
+            addRightScreen(rightX, y, "Nomination Flow", ChatFormatting.GOLD,
+                    () -> this.minecraft.gui.setScreen(new NominationControlScreen()));
+        } else if (phase == GamePhase.PLAYER_MARKED) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightAction(rightX, y, "Execute — Dies", ChatFormatting.RED, "execute_marked");
+            y = addRightAction(rightX, y, "Execute — Lives", ChatFormatting.GOLD, "execute_marked_survives");
+            addRightAction(rightX, y, "Close Noms", ChatFormatting.GRAY, "nominations_close");
+        } else if (phase == GamePhase.CALL_FOR_EXILE || phase == GamePhase.EXILE_SUPPORT) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightScreen(rightX, y, "Traveller Exile", ChatFormatting.LIGHT_PURPLE,
+                    () -> this.minecraft.gui.setScreen(new ExileControlScreen()));
+            addRightAction(rightX, y, "Reset Exile", ChatFormatting.GRAY, "exile_reset");
+        }
+
+        // Original bottom-left bluff visibility toggle.
+        this.addRenderableWidget(Button.builder(
+                        Component.literal("Bluffs: " + (showBluffs ? "SHOW" : "HIDE")), b -> {
                     showBluffs = !showBluffs;
                     this.minecraft.gui.setScreen(new AssignRolesScreen());
                 }).bounds(MARGIN, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
 
-        // Original lower-right small timer button + SEND ROLES.
-        this.addRenderableWidget(Button.builder(Component.literal("T"), b ->
-                        this.minecraft.gui.setScreen(new TimerScreen()))
-                .bounds(layoutWidth - CONTROL_W - 42, layoutHeight - 30, 20, CONTROL_H).build());
-        this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
-                        action("send_roles"))
-                .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
+        // Keep advanced/recovery controls available without permanently filling
+        // the main Grim with management buttons.
+        this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
+                        this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
+                .bounds(layoutWidth - CONTROL_W - 87, layoutHeight - 30, 55, CONTROL_H).build());
+
+        this.addRenderableWidget(Button.builder(Component.literal("END").withStyle(ChatFormatting.GOLD), b ->
+                        this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
+                .bounds(layoutWidth - CONTROL_W - 27, layoutHeight - 30, 45, CONTROL_H).build());
+
+        if (phase == GamePhase.SETUP) {
+            this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
+                            action("send_roles"))
+                    .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
+        } else {
+            this.addRenderableWidget(Button.builder(Component.literal("CONTROLS"), b ->
+                            this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
+                    .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
+        }
+    }
+
+    private int addRightAction(int x, int y, String label, ChatFormatting colour, String op) {
+        this.addRenderableWidget(Button.builder(Component.literal(label).withStyle(colour), b -> action(op))
+                .bounds(x, y, CONTROL_W, CONTROL_H).build());
+        return y + CONTROL_H + GAP;
+    }
+
+    private int addRightScreen(int x, int y, String label, ChatFormatting colour, Runnable open) {
+        this.addRenderableWidget(Button.builder(Component.literal(label).withStyle(colour), b -> open.run())
+                .bounds(x, y, CONTROL_W, CONTROL_H).build());
+        return y + CONTROL_H + GAP;
     }
 
     private void buildPlayerWidgets() {
