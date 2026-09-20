@@ -207,15 +207,12 @@ public class AssignRolesScreen extends Screen {
 
         // Keep advanced/recovery controls available without permanently filling
         // the main Grim with management buttons.
-        // Keep the bottom-right utility buttons in a non-overlapping strip:
-        // [TOOLS] [END] [SEND ROLES / CONTROLS].
+        // Keep the main Grim's bottom strip minimal. End Game remains
+        // available inside TOOLS; duplicating it here made the small-width
+        // Scale-4 layout unnecessarily cramped.
         this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
                         this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
-                .bounds(rightX - 115, layoutHeight - 30, 55, CONTROL_H).build());
-
-        this.addRenderableWidget(Button.builder(Component.literal("END").withStyle(ChatFormatting.GOLD), b ->
-                        this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
-                .bounds(rightX - 55, layoutHeight - 30, 50, CONTROL_H).build());
+                .bounds(rightX - 60, layoutHeight - 30, 55, CONTROL_H).build());
 
         if (phase == GamePhase.SETUP) {
             this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
