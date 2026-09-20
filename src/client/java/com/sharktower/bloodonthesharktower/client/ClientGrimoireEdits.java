@@ -68,13 +68,9 @@ public final class ClientGrimoireEdits {
             return ClientState.grimoireReminders.getOrDefault(playerId, List.of());
         }
 
-        List<Reminder> combined = new ArrayList<>();
-        for (Reminder reminder : SHARED_ABILITY_REMINDERS.getOrDefault(playerId, List.of())) {
-            if (!combined.contains(reminder)) combined.add(reminder);
-        }
-        for (Reminder reminder : REMINDER_OVERRIDES.getOrDefault(playerId, List.of())) {
-            if (!combined.contains(reminder)) combined.add(reminder);
-        }
+        List<Reminder> combined = new ArrayList<>(
+                SHARED_ABILITY_REMINDERS.getOrDefault(playerId, List.of()));
+        combined.addAll(REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
         return List.copyOf(combined);
     }
 
@@ -203,16 +199,30 @@ public final class ClientGrimoireEdits {
     }
 
     public static void removeReminder(UUID playerId, int index) {
-        if (playerId == null) return;
-        List<Reminder> reminders = new ArrayList<>(REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
-        if (index < 0 || index >= reminders.size()) return;
-        reminders.remove(index);
-        if (reminders.isEmpty()) REMINDER_OVERRIDES.remove(playerId);
-        else REMINDER_OVERRIDES.put(playerId, reminders);
+        if (playerId == null || index < 0) return;
+
+        List<Reminder> shared = new ArrayList<>(
+                SHARED_ABILITY_REMINDERS.getOrDefault(playerId, List.of()));
+        if (index < shared.size()) {
+            shared.remove(index);
+            if (shared.isEmpty()) SHARED_ABILITY_REMINDERS.remove(playerId);
+            else SHARED_ABILITY_REMINDERS.put(playerId, shared);
+            return;
+        }
+
+        int personalIndex = index - shared.size();
+        List<Reminder> personal = new ArrayList<>(
+                REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
+        if (personalIndex < 0 || personalIndex >= personal.size()) return;
+        personal.remove(personalIndex);
+        if (personal.isEmpty()) REMINDER_OVERRIDES.remove(playerId);
+        else REMINDER_OVERRIDES.put(playerId, personal);
     }
 
     public static void clearReminders(UUID playerId) {
-        if (playerId != null) REMINDER_OVERRIDES.remove(playerId);
+        if (playerId == null) return;
+        REMINDER_OVERRIDES.remove(playerId);
+        SHARED_ABILITY_REMINDERS.remove(playerId);
     }
 
     /** Resolve a seated player from either the Grimoire seat map or live seat map. */
