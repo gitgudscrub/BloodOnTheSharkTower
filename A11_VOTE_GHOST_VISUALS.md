@@ -137,3 +137,14 @@ The legacy `execute_marked` action remains the dies path; the new
   - Demon bluffs are included.
 - A later refresh replaces only the Storyteller-shared reminder layer.
 - Droisoned Spy/Widow true-Grim sharing remains blocked.
+
+
+## Demon bluff legality
+
+- The manual Demon bluff picker now excludes good roles currently represented in
+  the Storyteller's Grimoire.
+- Believed-role tokens shown to Drunk/Marionette are also excluded, matching the
+  existing random-bluff logic.
+- The server independently rejects an in-play/believed-role bluff even if a stale
+  client tries to submit one.
+- Example: if Chef is in play, Chef no longer appears as a selectable Demon bluff.
