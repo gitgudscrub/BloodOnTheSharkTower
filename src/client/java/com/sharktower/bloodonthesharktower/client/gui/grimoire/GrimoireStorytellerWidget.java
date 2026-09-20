@@ -50,6 +50,10 @@ public final class GrimoireStorytellerWidget extends AbstractWidget {
         String label = "STORYTELLER";
         int labelX = getX() + this.width / 2 - Minecraft.getInstance().font.width(label) / 2;
         graphics.text(Minecraft.getInstance().font, label, labelX, headY + headSize + 13, UiDrawing.MUTED, true);
+
+        if (isHovered()) {
+            GrimoireHoverHints.set("Storyteller — click for private chat / Storyteller interaction");
+        }
     }
 
     @Override
