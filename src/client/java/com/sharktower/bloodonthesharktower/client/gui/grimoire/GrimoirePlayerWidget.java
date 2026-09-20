@@ -1,12 +1,9 @@
 package com.sharktower.bloodonthesharktower.client.gui.grimoire;
 
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
-import com.sharktower.bloodonthesharktower.client.gui.AssignRolesScreen;
 import com.sharktower.bloodonthesharktower.client.gui.GrimoireInteractionState;
-import com.sharktower.bloodonthesharktower.client.gui.GrimoirePlayerActionScreen;
-import com.sharktower.bloodonthesharktower.client.gui.PlayerSetupScreen;
+import com.sharktower.bloodonthesharktower.client.gui.GrimoirePlayerClicks;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
-import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -71,46 +68,7 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
 
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        Minecraft minecraft = Minecraft.getInstance();
-        boolean storyteller = ClientGrimoireEdits.isLocalStoryteller();
-
-        if (storyteller && event.hasShiftDown()) {
-            if (!ClientState.nominationsOpen) {
-                if (minecraft.player != null) {
-                    minecraft.player.sendSystemMessage(Component.literal(
-                            "Open nominations before using Grimoire nomination shortcuts."));
-                }
-                return;
-            }
-
-            if (event.button() == 0) {
-                GrimoireInteractionState.toggleNominator(playerId);
-                return;
-            }
-
-            if (event.button() == 1) {
-                UUID nominator = GrimoireInteractionState.selectedNominator();
-                if (nominator == null) {
-                    if (minecraft.player != null) {
-                        minecraft.player.sendSystemMessage(Component.literal(
-                                "Choose a nominator first with Shift + left-click."));
-                    }
-                    return;
-                }
-
-                ClientStorytellerActions.send("nominate_pair", nominator + "|" + playerId);
-                GrimoireInteractionState.clearNominator();
-                minecraft.gui.setScreen(new AssignRolesScreen());
-                return;
-            }
-        }
-
-        if (storyteller && event.button() == 1) {
-            minecraft.gui.setScreen(new GrimoirePlayerActionScreen(playerId, seat));
-            return;
-        }
-
-        minecraft.gui.setScreen(new PlayerSetupScreen(playerId, seat, assignment));
+        GrimoirePlayerClicks.handle(playerId, seat, ClientGrimoireEdits.roleFor(playerId), event);
     }
 
     @Override
