@@ -35,6 +35,10 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+        if (!GrimoireRevealAnimation.beginElement(
+                graphics, getX(), getY(), this.width, this.height, reveal)) return;
+        try {
         PendingRoleAssignment current = ClientGrimoireEdits.roleFor(playerId);
         if (current == null) current = assignment;
         ScriptRole role = UiDrawing.roleOf(current);
@@ -66,6 +70,9 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             } else {
                 GrimoireHoverHints.set(name + " role — LMB edit | RMB actions");
             }
+        }
+        } finally {
+            GrimoireRevealAnimation.endElement(graphics);
         }
     }
 
