@@ -38,12 +38,11 @@ public final class DayChatZoneManager {
     private static final UUID SHARED_DAY_GROUP_ID = UUID.nameUUIDFromBytes(
             "blood-on-the-sharktower:day:shared".getBytes(StandardCharsets.UTF_8));
 
-    // A trigger is intentionally forgiving: players only need to walk through the
-    // doorway, not stand on an exact block. Horizontal distance is checked separately
-    // from height so steps/slabs at an entrance do not make the trigger unreliable.
+    // Doorway triggers use a true 1.5-block radius around the recorded entrance
+    // or exit point. With an empty doorway, place entrance and exit markers on
+    // opposite sides so crossing the threshold has an unambiguous direction.
     private static final double TRIGGER_RADIUS = 1.50D;
     private static final double TRIGGER_RADIUS_SQUARED = TRIGGER_RADIUS * TRIGGER_RADIUS;
-    private static final double TRIGGER_VERTICAL_TOLERANCE = 1.50D;
 
     // Day Chat routing now scans every server tick so sprinting players cannot
     // skip across a doorway between checks. Keep a short grace period on both
@@ -542,10 +541,9 @@ public final class DayChatZoneManager {
 
         boolean matches(ServerPlayer player) {
             double dx = player.getX() - x;
+            double dy = player.getY() - y;
             double dz = player.getZ() - z;
-            double dy = Math.abs(player.getY() - y);
-            return (dx * dx + dz * dz) <= TRIGGER_RADIUS_SQUARED
-                    && dy <= TRIGGER_VERTICAL_TOLERANCE;
+            return dx * dx + dy * dy + dz * dz <= TRIGGER_RADIUS_SQUARED;
         }
 
         double distanceSquared(TriggerPoint other) {
