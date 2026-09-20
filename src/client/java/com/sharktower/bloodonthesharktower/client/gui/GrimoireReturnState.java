@@ -10,6 +10,7 @@ package com.sharktower.bloodonthesharktower.client.gui;
  */
 public final class GrimoireReturnState {
     private static boolean returnAfterNextGrimoireSync;
+    private static boolean suppressNextReveal;
 
     private GrimoireReturnState() {}
 
@@ -20,10 +21,22 @@ public final class GrimoireReturnState {
     public static boolean consumeAfterGrimoireSync() {
         if (!returnAfterNextGrimoireSync) return false;
         returnAfterNextGrimoireSync = false;
+        suppressNextReveal = true;
+        return true;
+    }
+
+    public static void suppressNextReveal() {
+        suppressNextReveal = true;
+    }
+
+    public static boolean consumeSuppressNextReveal() {
+        if (!suppressNextReveal) return false;
+        suppressNextReveal = false;
         return true;
     }
 
     public static void clear() {
         returnAfterNextGrimoireSync = false;
+        suppressNextReveal = false;
     }
 }
