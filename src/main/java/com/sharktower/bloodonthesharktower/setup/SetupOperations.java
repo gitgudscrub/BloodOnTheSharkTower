@@ -428,17 +428,30 @@ public final class SetupOperations {
         return Result.ok("Added reminder to seat " + seat + ": " + cleaned);
     }
 
-    /** Add an original-style source-role reminder marker, e.g. Steward: Know. */
+    /** Add an original-style source-role reminder marker, e.g. Steward: Know or Imp: Kill. */
     public static Result addRoleReminder(int seat, String roleId, String text) {
         UUID player = playerBySeat(seat);
         if (player == null) return Result.fail("No player is assigned to seat " + seat + ".");
-        Role sourceRole = Role.findById(roleId);
-        if (sourceRole == null || sourceRole == Role.NO_ROLE) return Result.fail("Unknown reminder source role: " + roleId);
+
+        ScriptRole sourceRole = resolveScriptRole(roleId);
+        if (sourceRole == null) return Result.fail("Unknown reminder source role: " + roleId);
+
         String cleaned = text == null ? "" : text.trim();
         if (cleaned.isEmpty()) return Result.fail("Reminder text cannot be blank.");
+
+        Reminder reminder;
+        if (sourceRole instanceof ScriptRole.Official official) {
+            reminder = new Reminder(cleaned, Optional.of(official.role()));
+        } else {
+            // Custom/script-only roles keep their role id so the client can use
+            // that script role's artwork when rendering the reminder token.
+            reminder = Reminder.forCustomRole(cleaned, sourceRole.getId());
+        }
+
         StorytellerState.REMINDERS.computeIfAbsent(player, ignored -> new ArrayList<>())
-                .add(new Reminder(cleaned, Optional.of(sourceRole)));
-        return Result.ok("Added " + sourceRole.getDisplayName() + " reminder to seat " + seat + ": " + cleaned);
+                .add(reminder);
+        return Result.ok("Added " + sourceRole.getDisplayName()
+                + " reminder to seat " + seat + ": " + cleaned);
     }
 
     public static Result removeReminder(int seat, int index) {
