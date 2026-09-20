@@ -44,3 +44,20 @@ Clocktower death mechanics.
 8. Start another vote and confirm that player cannot produce another blue YES.
 9. Enable Organ Grinder and confirm ordinary players cannot see individual
    tick/cross markers while the Storyteller still can.
+
+
+## Follow-up polish from multiplayer test
+
+- Vote tick/cross markers are now approximately one block tall and render above
+  the floating role token so they remain readable across the town-square circle.
+- Vote intent markers appear during the active nomination/exile discussion before
+  the clock starts, using the raised-hand state.
+- Starting either election holds the server clock for a visible 3-second 3/2/1
+  countdown before the first seat can lock.
+- YES presentation is consistently green and NO presentation is consistently red
+  in the voting HUD, sidebar hand indicator, and Storyteller boolean night-info lines.
+- The local dead player no longer sees their own ambient soul particles.
+- Daytime voice-room entrance and exit markers now use a true 1.5-block radius.
+- Daytime doorway routing scans every server tick, with entry/exit grace windows,
+  so sprinting through a doorway cannot skip the trigger or immediately bounce
+  from Private Chat back to Day Chat.
