@@ -22,6 +22,11 @@ public final class GrimoirePlayerClicks {
         // This means Left Shift is explicitly supported while retaining the
         // accessibility benefit of allowing Right Shift as well.
         boolean shift = event.hasShiftDown();
+        // AssignRolesScreen may remap mouse coordinates for the virtual Scale-4
+        // canvas. The preserved MouseButtonInfo is the authoritative button
+        // identity after that remap; using event.button() here could misclassify
+        // a physical left-click as the right-click nomination branch.
+        int button = event.buttonInfo().button();
 
         if (storyteller && shift) {
             if (!ClientState.nominationsOpen) {
@@ -32,12 +37,12 @@ public final class GrimoirePlayerClicks {
                 return;
             }
 
-            if (event.button() == 0) {
+            if (button == 0) {
                 GrimoireInteractionState.toggleNominator(playerId);
                 return;
             }
 
-            if (event.button() == 1) {
+            if (button == 1) {
                 UUID nominator = GrimoireInteractionState.selectedNominator();
                 if (nominator == null) {
                     if (minecraft.player != null) {
@@ -54,12 +59,12 @@ public final class GrimoirePlayerClicks {
             }
         }
 
-        if (storyteller && event.button() == 1) {
+        if (storyteller && button == 1) {
             minecraft.gui.setScreen(new GrimoirePlayerActionScreen(playerId, seat));
             return;
         }
 
-        if (event.button() == 0) {
+        if (button == 0) {
             minecraft.gui.setScreen(new PlayerSetupScreen(playerId, seat, assignment));
         }
     }
