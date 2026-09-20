@@ -394,6 +394,46 @@ public final class SetupOperations {
         return Result.ok("Added Demon bluff: " + role.getDisplayName() + ".");
     }
 
+    /**
+     * Atomically replace the three Demon bluff slots.
+     *
+     * The UI collects all three choices before sending them, so validation is
+     * performed for the whole set before StorytellerState is mutated.
+     */
+    public static Result setBluffs(List<String> roleIds) {
+        if (roleIds == null || roleIds.size() != 3) {
+            return Result.fail("Choose exactly 3 Demon bluffs.");
+        }
+
+        List<ScriptRole> chosen = new ArrayList<>();
+        Set<String> seen = new java.util.HashSet<>();
+
+        for (String roleId : roleIds) {
+            ScriptRole role = resolveScriptRole(roleId);
+            if (role == null) return Result.fail("Unknown Demon bluff role '" + roleId + "'.");
+            if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) {
+                return Result.fail("Demon bluffs must be good characters.");
+            }
+
+            String key = role.getId().toLowerCase(java.util.Locale.ROOT);
+            if (!seen.add(key)) {
+                return Result.fail(role.getDisplayName() + " was selected more than once.");
+            }
+            if (isUnavailableDemonBluff(role.getId())) {
+                return Result.fail(role.getDisplayName()
+                        + " is in play or shown as a believed role and cannot be a Demon bluff.");
+            }
+
+            chosen.add(role);
+        }
+
+        StorytellerState.DEMON_BLUFFS.clear();
+        StorytellerState.DEMON_BLUFFS.addAll(chosen);
+        return Result.ok("Set Demon bluffs: "
+                + chosen.stream().map(ScriptRole::getDisplayName)
+                .collect(java.util.stream.Collectors.joining(", ")) + ".");
+    }
+
     /** Replaces one of the three original BOTB Demon bluff slots. */
     public static Result setBluff(int index, String roleId) {
         if (index < 0 || index > 2) return Result.fail("Demon bluff slot must be 1-3.");
