@@ -742,18 +742,18 @@ public class AssignRolesScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         MouseButtonEvent mapped = remapMouse(event);
 
-        // Resolve the physical button from MouseButtonEvent itself before widget
-        // dispatch. In 26.3 MouseButtonInfo.button() is not the same identity we
-        // want for this screen-level routing; using it caused physical LMB to
-        // open Player Actions while physical RMB was ignored.
-        if (event.button() == 1) {
+        // Minecraft 26.3's MouseButtonInfo uses 1-based button ids here:
+        // 1 = left, 2 = right, 3 = middle. Earlier Grim code assumed the old
+        // GLFW-style 0/1 ids, which made LMB open Player Actions and caused
+        // physical RMB to be ignored entirely.
+        if (mapped.buttonInfo().button() == 2) {
             GrimHit hit = grimHitAt(mapped.x(), mapped.y());
             if (hit != null) {
                 GrimoirePlayerClicks.handleRight(
                         hit.playerId(),
                         hit.seat(),
                         hit.assignment(),
-                        event.hasShiftDown()
+                        mapped.hasShiftDown()
                 );
                 return true;
             }
