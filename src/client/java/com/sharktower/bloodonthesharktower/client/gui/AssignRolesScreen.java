@@ -8,6 +8,7 @@ import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerWid
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerHeadWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePerceivedRoleWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireReminderWidget;
+import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireRevealAnimation;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireStorytellerWidget;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.GamePhase;
@@ -15,7 +16,6 @@ import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -83,6 +83,7 @@ public class AssignRolesScreen extends Screen {
 
     @Override
     protected void init() {
+        GrimoireRevealAnimation.beginScreen();
         buildContextualControls();
         buildPlayerWidgets();
         buildReminderWidgets();
@@ -538,6 +539,13 @@ public class AssignRolesScreen extends Screen {
             int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
 
+            float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+            if (!GrimoireRevealAnimation.beginElement(
+                    graphics, headX, headY, HEAD_SIZE, HEAD_SIZE + 16, reveal)) {
+                continue;
+            }
+            try {
+
             // Do not gate face rendering on connectedPlayers. That list can arrive a
             // tick later than the seat map, and PlayerFaceCompat already fails safely
             // when a profile/skin is not available yet. This lets a newly seated
@@ -561,6 +569,9 @@ public class AssignRolesScreen extends Screen {
             if (ClientState.isHandRaised(uuid)) {
                 drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY + 5);
             }
+            } finally {
+                GrimoireRevealAnimation.endElement(graphics);
+            }
         }
     }
 
@@ -577,7 +588,16 @@ public class AssignRolesScreen extends Screen {
             int seatRadius = radius + 20;
             int sx = (int) Math.round(centerX + seatRadius * Math.cos(angle));
             int sy = (int) Math.round(centerY + seatRadius * Math.sin(angle));
-            drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, true);
+
+            float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+            if (!GrimoireRevealAnimation.beginElement(graphics, sx - 6, sy - 6, 12, 12, reveal)) {
+                continue;
+            }
+            try {
+                drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, true);
+            } finally {
+                GrimoireRevealAnimation.endElement(graphics);
+            }
         }
     }
 
