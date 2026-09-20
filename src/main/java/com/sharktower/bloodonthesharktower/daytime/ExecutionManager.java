@@ -60,6 +60,7 @@ public final class ExecutionManager {
         DaytimeState.clearMarkedForExecution();
         DaytimeState.clearStorytellerMFE();
         DaytimeState.closeNominations();
+        VotingManager.clearLastResult();
         ServerState.executionToday = false;
         BloodOnTheSharktower.LOGGER.info("Day closed with no execution.");
         StateBroadcaster.broadcastDayNightState(server);
