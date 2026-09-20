@@ -5,6 +5,7 @@ import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.hud.GameEndAnimationHUD;
 import com.sharktower.bloodonthesharktower.client.hud.ClientTriggeredNightOrder;
 import com.sharktower.bloodonthesharktower.client.gui.AssignRolesScreen;
+import com.sharktower.bloodonthesharktower.client.gui.GrimoireReturnState;
 import com.sharktower.bloodonthesharktower.client.gui.BaseThreeScreen;
 import com.sharktower.bloodonthesharktower.client.gui.RoleBagScreen;
 import com.sharktower.bloodonthesharktower.networking.NetworkSyncAckC2SPayload;
@@ -154,7 +155,8 @@ public final class CoreStateReceivers {
             // Role Bag workflow: after the server has actually shuffled and
             // synchronised the pending assignments, return the Storyteller to
             // the Grimoire so the result is visible immediately.
-            if (RoleBagScreen.consumeOpenGrimoireAfterDistributionSync()) {
+            if (RoleBagScreen.consumeOpenGrimoireAfterDistributionSync()
+                    || GrimoireReturnState.consumeAfterGrimoireSync()) {
                 Minecraft client = Minecraft.getInstance();
                 client.execute(() -> client.gui.setScreen(new AssignRolesScreen()));
             }
