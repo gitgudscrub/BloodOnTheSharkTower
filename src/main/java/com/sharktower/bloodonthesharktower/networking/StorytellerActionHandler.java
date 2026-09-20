@@ -19,6 +19,7 @@ import com.sharktower.bloodonthesharktower.setup.SeatPositionManager;
 import com.sharktower.bloodonthesharktower.setup.SetupOperations;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
+import com.sharktower.bloodonthesharktower.snapshot.MatchSnapshotManager;
 import com.sharktower.bloodonthesharktower.timer.TimerManager;
 import com.sharktower.bloodonthesharktower.voicechat.NightChatManager;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -138,6 +139,18 @@ public final class StorytellerActionHandler {
                     if (!TimerManager.isActive()) yield SetupOperations.Result.fail("No timer is currently running.");
                     TimerManager.stopTimer(server);
                     yield SetupOperations.Result.ok("Timer stopped.");
+                }
+                case "sync_state" -> {
+                    StateBroadcaster.broadcastCurrentState(server);
+                    yield SetupOperations.Result.ok("Current Sharktower state synchronized to connected clients.");
+                }
+                case "storyteller_status" -> SetupOperations.Result.ok(storytellerStatus());
+                case "night_status" -> SetupOperations.Result.ok(NightChatManager.statusLine());
+                case "snapshot_restore_previous" -> {
+                    MatchSnapshotManager.Result restored = MatchSnapshotManager.restorePrevious(server);
+                    yield restored.ok()
+                            ? SetupOperations.Result.ok(restored.message())
+                            : SetupOperations.Result.fail(restored.message());
                 }
                 case "send_to_seats" -> {
                     int moved = SeatPositionManager.sendAllToTownSquare(server, SetupOperations.workingSeats());
@@ -706,6 +719,19 @@ public final class StorytellerActionHandler {
         StateBroadcaster.broadcastVoteState(server);
         return SetupOperations.Result.ok(String.format(java.util.Locale.ROOT,
                 "Vote speed set to %.2f second(s) per seat.", VotePresentationSettings.stepTicks() / 20.0D));
+    }
+
+    private static String storytellerStatus() {
+        String script = ServerState.currentScript == null ? "none" : ServerState.currentScript.name();
+        String timer = TimerManager.isActive()
+                ? (TimerManager.isPaused() ? "paused" : "running") + " " + TimerManager.getRemainingSeconds() + "s"
+                : "idle";
+        return "Sharktower: script=" + script
+                + ", seats=" + ServerState.PLAYER_SEAT_NUMBERS.size()
+                + ", day=" + ServerState.currentDay
+                + ", night=" + ServerState.currentNight
+                + ", nominations=" + DaytimeState.areNominationsOpen()
+                + ", timer=" + timer + ".";
     }
 
     private static SetupOperations.Result startTimer(MinecraftServer server, int seconds) {
