@@ -36,3 +36,19 @@ is an explicit player action and clears both local layers.
 
 The server still does not expose this information through the ordinary public
 Grimoire packet, so unrelated players receive no extra role/reminder/bluff data.
+
+
+## Magician jinx
+
+When a **Magician** is actually present in the Storyteller's current Grimoire,
+the Spy/Widow share automatically applies the Magician jinx:
+
+- the Magician's character token is blanked in the shared view;
+- every in-play Demon character token is blanked in the shared view;
+- the Storyteller's own Grimoire is not modified;
+- seats, names, death state, reminder tokens and Demon bluffs are still shared;
+- explicit blank role entries overwrite any local guesses the receiving
+  Spy/Widow had for those players.
+
+This applies to both Spy and eligible Widow Grimoire shares. If no Magician is
+in play, the shared role map is unchanged.
