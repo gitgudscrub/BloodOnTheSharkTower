@@ -75,6 +75,14 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         boolean storyteller = ClientGrimoireEdits.isLocalStoryteller();
 
         if (storyteller && event.hasShiftDown()) {
+            if (!ClientState.nominationsOpen) {
+                if (minecraft.player != null) {
+                    minecraft.player.sendSystemMessage(Component.literal(
+                            "Open nominations before using Grimoire nomination shortcuts."));
+                }
+                return;
+            }
+
             if (event.button() == 0) {
                 GrimoireInteractionState.toggleNominator(playerId);
                 return;
