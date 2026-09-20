@@ -742,19 +742,19 @@ public class AssignRolesScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         MouseButtonEvent mapped = remapMouse(event);
 
-        // Minecraft's AbstractWidget RMB dispatch has been inconsistent on the
-        // scaled Grim. Resolve player/head/role right-clicks at screen level so
-        // Player Actions and Shift+RMB nominations are always available.
-        if (mapped.buttonInfo().button() == 1) {
+        // Resolve the physical button from MouseButtonEvent itself before widget
+        // dispatch. In 26.3 MouseButtonInfo.button() is not the same identity we
+        // want for this screen-level routing; using it caused physical LMB to
+        // open Player Actions while physical RMB was ignored.
+        if (event.button() == 1) {
             GrimHit hit = grimHitAt(mapped.x(), mapped.y());
             if (hit != null) {
-                if (mapped.hasShiftDown()) {
-                    GrimoirePlayerClicks.handle(
-                            hit.playerId(), hit.seat(), hit.assignment(), mapped);
-                } else if (ClientGrimoireEdits.isLocalStoryteller()) {
-                    this.minecraft.gui.setScreen(
-                            new GrimoirePlayerActionScreen(hit.playerId(), hit.seat()));
-                }
+                GrimoirePlayerClicks.handleRight(
+                        hit.playerId(),
+                        hit.seat(),
+                        hit.assignment(),
+                        event.hasShiftDown()
+                );
                 return true;
             }
         }
