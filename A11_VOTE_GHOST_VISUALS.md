@@ -148,3 +148,15 @@ The legacy `execute_marked` action remains the dies path; the new
 - The server independently rejects an in-play/believed-role bluff even if a stale
   client tries to submit one.
 - Example: if Chef is in play, Chef no longer appears as a selectable Demon bluff.
+
+
+## Three-bluff multi-select
+
+- Clicking any Demon bluff slot now opens one shared **Choose 3 Demon Bluffs**
+  screen instead of editing one slot at a time.
+- Existing valid bluffs are preselected.
+- The Storyteller can toggle up to three out-of-play good roles across pages.
+- Selected roles stay highlighted with a checkmark and a 0/3 - 3/3 counter.
+- **Confirm 3 Bluffs** is enabled only when exactly three roles are selected.
+- Confirmation replaces all three bluff slots atomically and returns to the Grim.
+- In-play roles and Drunk/Marionette believed roles remain excluded.
