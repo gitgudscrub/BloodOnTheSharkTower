@@ -540,6 +540,19 @@ public final class BotsCommands {
         ServerPlayer player = requirePlayer(context, "testseats addEmpty");
         if (player == null) return 0;
 
+        // Keep Storytellers centred rather than allowing an old setup seat to
+        // make them appear in the ring during incremental layout testing.
+        if (StorytellerState.isStoryteller(player.getUUID())) {
+            ServerState.PLAYER_SEAT_NUMBERS.remove(player.getUUID());
+            StorytellerState.PENDING_SEAT_NUMBERS.remove(player.getUUID());
+            ServerState.PLAYER_DEATH_STATUS.remove(player.getUUID());
+            ServerState.PLAYER_ROLES.remove(player.getUUID());
+            StorytellerState.PENDING_ROLES.remove(player.getUUID());
+            ServerState.PLAYER_PERCEIVED_ROLES.remove(player.getUUID());
+            StorytellerState.PENDING_PERCEIVED_ROLES.remove(player.getUUID());
+            StorytellerState.REMINDERS.remove(player.getUUID());
+        }
+
         java.util.Map<UUID, Integer> seats = StorytellerState.effectiveGrimoireSeats();
 
         int seat = 1;
