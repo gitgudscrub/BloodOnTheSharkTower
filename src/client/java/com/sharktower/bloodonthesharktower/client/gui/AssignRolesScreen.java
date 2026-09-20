@@ -345,6 +345,7 @@ public class AssignRolesScreen extends Screen {
             renderCenterCounts(graphics, seats.size());
             renderHandVotingPanel(graphics);
             renderBluffLabels(graphics);
+            renderInteractionHelp(graphics);
         } finally {
             graphics.pose().popMatrix();
         }
@@ -428,6 +429,23 @@ public class AssignRolesScreen extends Screen {
                 int seat = ClientState.playerSeatNumbers.getOrDefault(ClientState.currentVoteClockPlayer, 0);
                 drawCenteredAt(graphics, "Now: " + (seat > 0 ? "Seat " + seat : "ST"), x + CONTROL_W / 2, y + 54, UiDrawing.MUTED, false);
             }
+        }
+    }
+
+    private void renderInteractionHelp(GuiGraphicsExtractor graphics) {
+        if (!ClientGrimoireEdits.isLocalStoryteller()) return;
+        if (ClientState.phase() == com.sharktower.bloodonthesharktower.core.GamePhase.SETUP) return;
+
+        int y = layoutHeight() - 47;
+        String controls = "LMB: Edit   RMB: Actions   Shift+LMB: Nominator   Shift+RMB: Nominee";
+        drawCentered(graphics, controls, y, UiDrawing.MUTED, false);
+
+        UUID nominator = GrimoireInteractionState.selectedNominator();
+        if (nominator != null) {
+            int seat = ClientState.playerSeatNumbers.getOrDefault(nominator, 0);
+            String selected = "NOMINATOR: " + ClientState.playerName(nominator, seat)
+                    + " — Shift+RMB the nominee";
+            drawCentered(graphics, selected, y - 12, UiDrawing.YES, true);
         }
     }
 
