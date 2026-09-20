@@ -114,3 +114,26 @@ The legacy `execute_marked` action remains the dies path; the new
 - If multiple Demons are in play, the chooser contains only those in-play Demons.
 - If no Demon is currently represented in the Grimoire, the Demon Kill button is
   disabled.
+
+
+## Demon action + death-shroud follow-up
+
+- Player Actions now separates **Demon Kill Reminder** from **Resolve Demon Kill**.
+  The reminder action never changes death state; Resolve Demon Kill is the explicit
+  lethal game action.
+- If one Demon is in the Storyteller Grim, Demon Kill Reminder immediately places
+  that Demon's `Kill` reminder. Multiple Demons still open the in-play chooser.
+- Dead role tokens now use a high-contrast hood/drape shroud overlay rather than
+  the old red X, making death readable on red Minion/Demon tokens.
+
+## Spy / Widow share follow-up
+
+- Night visits no longer auto-open a separate true-Grim snapshot.
+- Storyteller receives a clickable **[SHARE GRIMOIRE]** chat action.
+- The shared snapshot populates the player's normal personal Grimoire:
+  - roles overwrite local role guesses;
+  - Storyteller reminders are added;
+  - player-created reminders are preserved;
+  - Demon bluffs are included.
+- A later refresh replaces only the Storyteller-shared reminder layer.
+- Droisoned Spy/Widow true-Grim sharing remains blocked.
