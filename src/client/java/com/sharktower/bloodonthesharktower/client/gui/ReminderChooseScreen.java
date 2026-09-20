@@ -50,6 +50,7 @@ public final class ReminderChooseScreen extends Screen {
             int row = i / 2;
             this.addRenderableWidget(Button.builder(Component.literal("+ " + preset.text()), b -> {
                         if (ClientGrimoireEdits.isLocalStoryteller()) {
+                            GrimoireReturnState.requestAfterNextGrimoireSync();
                             if (preset.sourceRole() != null) {
                                 ClientStorytellerActions.send(
                                         "add_role_reminder",
@@ -60,8 +61,8 @@ public final class ReminderChooseScreen extends Screen {
                             }
                         } else {
                             ClientGrimoireEdits.addReminder(playerId, preset.text());
+                            returnToGrimoire();
                         }
-                        this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
                     })
                     .bounds(cx - w - gap / 2 + col * (w + gap), y + row * 25, w, 20).build());
         }
@@ -76,11 +77,12 @@ public final class ReminderChooseScreen extends Screen {
             String removeLabel = "Remove: " + (source.isBlank() ? "" : source + " — ") + text;
             this.addRenderableWidget(Button.builder(Component.literal(removeLabel), b -> {
                         if (ClientGrimoireEdits.isLocalStoryteller()) {
+                            GrimoireReturnState.requestAfterNextGrimoireSync();
                             ClientStorytellerActions.send("remove_reminder", seat + "|" + index);
                         } else {
                             ClientGrimoireEdits.removeReminder(playerId, index);
+                            returnToGrimoire();
                         }
-                        this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
                     })
                     .bounds(cx - 115, existingY + i * 23, 230, 20).build());
         }
@@ -98,16 +100,27 @@ public final class ReminderChooseScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(Component.literal("Clear All Reminders"), b -> {
                     if (ClientGrimoireEdits.isLocalStoryteller()) {
+                        GrimoireReturnState.requestAfterNextGrimoireSync();
                         ClientStorytellerActions.send("clear_reminders", Integer.toString(seat));
                     } else {
                         ClientGrimoireEdits.clearReminders(playerId);
+                        returnToGrimoire();
                     }
-                    this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
                 })
                 .bounds(cx - 115, this.height - 52, 230, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b ->
-                        this.minecraft.gui.setScreen(new AssignRolesScreen()))
+        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b -> returnToGrimoire())
                 .bounds(cx - 115, this.height - 27, 230, 20).build());
+    }
+
+    private void returnToGrimoire() {
+        if (this.minecraft == null) return;
+        GrimoireReturnState.suppressNextReveal();
+        this.minecraft.gui.setScreen(new AssignRolesScreen());
+    }
+
+    @Override
+    public void onClose() {
+        returnToGrimoire();
     }
 
     @Override
