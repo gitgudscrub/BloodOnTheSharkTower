@@ -133,10 +133,31 @@ public final class RoleSelectionScreen extends Screen {
                 return true;
             });
         } else {
+            java.util.Set<String> unavailableBluffs = new java.util.HashSet<>();
+            if (mode == Mode.BLUFF) {
+                ClientState.grimoireRoles.values().stream()
+                        .filter(java.util.Objects::nonNull)
+                        .map(com.sharktower.bloodonthesharktower.core.PendingRoleAssignment::getRoleId)
+                        .filter(id -> id != null && !id.isBlank())
+                        .map(id -> id.toLowerCase(java.util.Locale.ROOT))
+                        .forEach(unavailableBluffs::add);
+
+                // Drunk/Marionette believed-role tokens are also withheld from
+                // bluff choices, matching the existing random-bluff logic and
+                // avoiding a "bluff" that a good player has already been shown.
+                ClientState.grimoirePerceivedRoles.values().stream()
+                        .filter(java.util.Objects::nonNull)
+                        .map(com.sharktower.bloodonthesharktower.core.PendingRoleAssignment::getRoleId)
+                        .filter(id -> id != null && !id.isBlank())
+                        .map(id -> id.toLowerCase(java.util.Locale.ROOT))
+                        .forEach(unavailableBluffs::add);
+            }
+
             roles.removeIf(role -> switch (role.getTeam()) {
                 case NONE, FABLED, LORIC -> true;
                 case MINION, DEMON, TRAVELER -> mode == Mode.BLUFF;
-                default -> false;
+                default -> mode == Mode.BLUFF
+                        && unavailableBluffs.contains(role.getId().toLowerCase(java.util.Locale.ROOT));
             });
         }
         roles.sort(Comparator
