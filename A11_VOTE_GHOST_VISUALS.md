@@ -89,3 +89,16 @@ Execution now has two explicit outcomes:
 
 The legacy `execute_marked` action remains the dies path; the new
 `execute_marked_survives` action handles survival.
+
+
+## Alignment + Demon reminder polish
+
+- Generic `Good` reminders render as a pixel-art thumbs-up marker.
+- Generic `Evil` reminders render as a pixel-art thumbs-down marker.
+- The Reminder screen has a dedicated **Demon Kill** picker.
+- Demon Kill options are generated from Demon roles on the currently loaded
+  script, e.g. `Imp: Kill`, `Po: Kill`, `Shabaloth: Kill`.
+- Those Kill reminders retain their Demon source role and therefore render the
+  matching Demon token in the Grimoire.
+- Source-role reminders now also accept script/custom role ids, so the same data
+  path is not restricted to the base official-role enum.
