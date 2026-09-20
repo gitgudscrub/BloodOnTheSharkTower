@@ -81,3 +81,22 @@ A.13 must not regress:
 - three-bluff multi-select;
 - Spy/Widow Grim sharing;
 - Storyteller centre interaction/private chat.
+
+
+## Visual polish pass
+
+- Original BOTB Dusk, Dawn and Nominations artwork is now used as a compact
+  phase badge on the live Grim.
+- The always-visible instruction line has been replaced by target-specific
+  hover hints:
+  - role token -> role editing / nomination shortcuts;
+  - player head -> reminders / actions;
+  - reminder token -> reminder editing;
+  - bluff token -> bluff editing;
+  - believed-role token -> perceived role editing;
+  - Storyteller -> Storyteller interaction/private chat.
+- A selected nominator remains visible as state feedback even when nothing is
+  hovered.
+- Restored the original timing feel with a 50ms per-seat stagger and 200ms
+  eased reveal for player heads, role tokens, perceived roles, reminders and
+  seat numbers.
