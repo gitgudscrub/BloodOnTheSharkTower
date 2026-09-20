@@ -62,6 +62,9 @@ public final class GrimoireReminderWidget extends AbstractWidget {
         }
         if (isHovered()) {
             graphics.outline(getX() - 1, getY() - 1, width + 2, height + 2, UiDrawing.GOLD);
+            GrimoireHoverHints.set(reminder.text().isBlank()
+                    ? "Reminder slot — click to edit"
+                    : reminder.text() + " — click to edit reminders");
         }
     }
 
