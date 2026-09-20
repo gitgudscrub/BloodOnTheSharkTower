@@ -52,6 +52,15 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
             float delta
     ) {
         // Intentionally invisible. AssignRolesScreen renders the face and labels.
+        if (isHovered()) {
+            if (ClientGrimoireEdits.isLocalStoryteller()
+                    && com.sharktower.bloodonthesharktower.states.ClientState.nominationsOpen) {
+                GrimoireHoverHints.set("Seat " + seat
+                        + " player — LMB reminders | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
+            } else {
+                GrimoireHoverHints.set("Seat " + seat + " player — LMB reminders | RMB actions");
+            }
+        }
     }
 
     @Override
