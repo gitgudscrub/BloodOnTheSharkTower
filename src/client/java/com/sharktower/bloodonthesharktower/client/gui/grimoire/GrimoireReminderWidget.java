@@ -43,9 +43,13 @@ public final class GrimoireReminderWidget extends AbstractWidget {
                 UiDrawing.roleToken(graphics, sourceRole, getX(), getY(), width);
                 graphics.outline(getX(), getY(), width, height,
                         isHovered() ? UiDrawing.GOLD : 0xFFE6D6A8);
+            } else if (reminder.text().equalsIgnoreCase("Good")) {
+                drawThumb(graphics, true);
+            } else if (reminder.text().equalsIgnoreCase("Evil")) {
+                drawThumb(graphics, false);
             } else {
-                // Generic reminders have no source character, so keep the old
-                // parchment/letter fallback rather than inventing a role icon.
+                // Generic reminders with no universal symbol retain the
+                // parchment/letter fallback.
                 graphics.fill(getX(), getY(), getX() + width, getY() + height, 0xFFE6D6A8);
                 graphics.outline(getX(), getY(), width, height,
                         isHovered() ? UiDrawing.GOLD : UiDrawing.BLACK);
@@ -58,6 +62,44 @@ public final class GrimoireReminderWidget extends AbstractWidget {
         }
         if (isHovered()) {
             graphics.outline(getX() - 1, getY() - 1, width + 2, height + 2, UiDrawing.GOLD);
+        }
+    }
+
+    /**
+     * Tiny pixel-art thumbs so Good/Evil have a universal visual marker without
+     * depending on emoji/font availability. Good is thumbs-up, Evil thumbs-down.
+     */
+    private void drawThumb(GuiGraphicsExtractor graphics, boolean up) {
+        int x = getX();
+        int y = getY();
+        int bg = up ? UiDrawing.GOOD : UiDrawing.EVIL;
+        int hand = 0xFFFFE0B2;
+        int edge = 0xFF5A432D;
+
+        graphics.fill(x, y, x + width, y + height, bg);
+        graphics.outline(x, y, width, height, isHovered() ? UiDrawing.GOLD : UiDrawing.BLACK);
+
+        if (up) {
+            // Palm.
+            graphics.fill(x + 6, y + 6, x + 12, y + 12, hand);
+            // Raised thumb.
+            graphics.fill(x + 9, y + 2, x + 12, y + 7, hand);
+            graphics.fill(x + 8, y + 3, x + 10, y + 6, hand);
+            // Wrist.
+            graphics.fill(x + 3, y + 8, x + 7, y + 13, hand);
+            // A couple of dark pixels make the silhouette readable at 16px.
+            graphics.fill(x + 5, y + 7, x + 6, y + 12, edge);
+            graphics.fill(x + 11, y + 4, x + 12, y + 6, edge);
+        } else {
+            // Palm.
+            graphics.fill(x + 6, y + 4, x + 12, y + 10, hand);
+            // Lowered thumb.
+            graphics.fill(x + 9, y + 9, x + 12, y + 14, hand);
+            graphics.fill(x + 8, y + 10, x + 10, y + 13, hand);
+            // Wrist.
+            graphics.fill(x + 3, y + 3, x + 7, y + 8, hand);
+            graphics.fill(x + 5, y + 4, x + 6, y + 9, edge);
+            graphics.fill(x + 11, y + 10, x + 12, y + 12, edge);
         }
     }
 
