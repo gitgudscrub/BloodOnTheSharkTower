@@ -43,13 +43,13 @@ public final class HandVoteHUD {
                     ? (countedYes ? "EXILE SUPPORT — YES" : "EXILE SUPPORT — NO")
                     : (countedYes ? "VOTE COUNTED — YES" : "VOTE COUNTED — NO");
             hint = "The clock has passed your seat.";
-            colour = countedYes ? UiDrawing.GOLD : UiDrawing.MUTED;
+            colour = countedYes ? UiDrawing.YES : UiDrawing.NO;
         } else {
             state = exileVoting
-                    ? (raised ? "EXILE HAND RAISED" : "EXILE HAND LOWERED")
-                    : (raised ? "HAND RAISED" : "HAND LOWERED");
+                    ? (raised ? "EXILE SUPPORT — YES" : "EXILE SUPPORT — NO")
+                    : (raised ? "VOTE — YES" : "VOTE — NO");
             hint = "[" + key + "] Raise / Lower";
-            colour = raised ? UiDrawing.GOLD : UiDrawing.MUTED;
+            colour = raised ? UiDrawing.YES : UiDrawing.NO;
         }
 
         int width = Math.max(138, Math.max(minecraft.font.width(state), minecraft.font.width(hint)) + 18);
