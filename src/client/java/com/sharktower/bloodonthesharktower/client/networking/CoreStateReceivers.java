@@ -155,11 +155,16 @@ public final class CoreStateReceivers {
             // Role Bag workflow: after the server has actually shuffled and
             // synchronised the pending assignments, return the Storyteller to
             // the Grimoire so the result is visible immediately.
-            if (RoleBagScreen.consumeOpenGrimoireAfterDistributionSync()
-                    || GrimoireReturnState.consumeAfterGrimoireSync()) {
+            boolean roleBagReturn = RoleBagScreen.consumeOpenGrimoireAfterDistributionSync();
+            boolean editorReturn = GrimoireReturnState.consumeAfterGrimoireSync();
+
+            if (roleBagReturn) {
                 Minecraft client = Minecraft.getInstance();
                 client.execute(() -> client.gui.setScreen(new AssignRolesScreen()));
             }
+            // editorReturn intentionally performs no immediate setScreen here.
+            // GrimoireReturnState will reopen the Grim from END_CLIENT_TICK after
+            // the current network/input lifecycle has completely finished.
         });
 
         ClientPlayNetworking.registerGlobalReceiver(SyncDaytimeStateS2CPayload.TYPE, (payload, context) -> {
