@@ -86,9 +86,12 @@ public final class ReminderChooseScreen extends Screen {
         }
 
         if (ClientGrimoireEdits.isLocalStoryteller()) {
-            this.addRenderableWidget(Button.builder(Component.literal("Night Info Markers"), b ->
+            this.addRenderableWidget(Button.builder(Component.literal("Night Info"), b ->
                             this.minecraft.gui.setScreen(new NightInfoReminderScreen(playerId, seat)))
-                    .bounds(cx - 115, this.height - 77, 230, 20).build());
+                    .bounds(cx - 115, this.height - 77, 112, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("Demon Kill"), b ->
+                            this.minecraft.gui.setScreen(new DemonKillReminderScreen(playerId, seat)))
+                    .bounds(cx + 3, this.height - 77, 112, 20).build());
         }
 
         this.addRenderableWidget(Button.builder(Component.literal("Clear All Reminders"), b -> {
