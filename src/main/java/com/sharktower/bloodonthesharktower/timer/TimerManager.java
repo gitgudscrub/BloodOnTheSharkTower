@@ -2,12 +2,8 @@ package com.sharktower.bloodonthesharktower.timer;
 
 import com.sharktower.bloodonthesharktower.networking.TimerStateS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -66,32 +62,10 @@ public final class TimerManager {
         if (remainingSeconds > 0) remainingSeconds--;
         if (remainingSeconds <= 0) {
             stopInternal();
-            playCompletionGong(server);
+            broadcastTimerState(server, true);
+            return;
         }
-        broadcastTimerState(server);
-    }
-
-    /**
-     * Audible "time's up" cue for a countdown that reaches zero naturally.
-     *
-     * Use a direct per-player notification so the gong is global rather than
-     * positional: Storytellers and players hear it even when split between
-     * private-chat areas/houses. Manual Stop deliberately does not call this.
-     */
-    private static void playCompletionGong(MinecraftServer server) {
-        if (server == null) return;
-        Component returnMessage = Component.literal("Please return to Town Square")
-                .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
-
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.playNotifySound(
-                    SoundEvents.BELL_RESONATE,
-                    SoundSource.MASTER,
-                    1.0F,
-                    0.72F
-            );
-            player.sendSystemMessage(returnMessage);
-        }
+        broadcastTimerState(server, false);
     }
 
     private static void stopInternal() {
@@ -106,14 +80,20 @@ public final class TimerManager {
     }
 
     public static void broadcastTimerState(MinecraftServer server) {
-        TimerStateS2CPayload payload = new TimerStateS2CPayload(active, paused, remainingSeconds, totalSeconds);
+        broadcastTimerState(server, false);
+    }
+
+    private static void broadcastTimerState(MinecraftServer server, boolean completedNaturally) {
+        TimerStateS2CPayload payload = new TimerStateS2CPayload(
+                active, paused, remainingSeconds, totalSeconds, completedNaturally);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
 
     public static void addPlayer(ServerPlayer player) {
-        ServerPlayNetworking.send(player, new TimerStateS2CPayload(active, paused, remainingSeconds, totalSeconds));
+        ServerPlayNetworking.send(player, new TimerStateS2CPayload(
+                active, paused, remainingSeconds, totalSeconds, false));
     }
 
     public static void removePlayer(ServerPlayer player) {
