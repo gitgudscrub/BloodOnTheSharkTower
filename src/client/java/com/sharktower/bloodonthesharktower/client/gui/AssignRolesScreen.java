@@ -108,6 +108,9 @@ public class AssignRolesScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Nomination Flow").withStyle(ChatFormatting.GOLD), b ->
                         this.minecraft.gui.setScreen(new NominationControlScreen()))
                 .bounds(MARGIN, MARGIN + CONTROL_H + GAP, 100, CONTROL_H).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Controls"), b ->
+                        this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
+                .bounds(MARGIN + 105, MARGIN + CONTROL_H + GAP, 80, CONTROL_H).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Shuffle Roles").withStyle(ChatFormatting.AQUA), b ->
                         action("shuffle_roles"))
@@ -356,7 +359,6 @@ public class AssignRolesScreen extends Screen {
             renderCenterCounts(graphics, seats.size());
             renderHandVotingPanel(graphics);
             renderBluffLabels(graphics);
-            renderInteractionHelp(graphics);
         } finally {
             graphics.pose().popMatrix();
         }
@@ -440,24 +442,6 @@ public class AssignRolesScreen extends Screen {
                 int seat = ClientState.playerSeatNumbers.getOrDefault(ClientState.currentVoteClockPlayer, 0);
                 drawCenteredAt(graphics, "Now: " + (seat > 0 ? "Seat " + seat : "ST"), x + CONTROL_W / 2, y + 54, UiDrawing.MUTED, false);
             }
-        }
-    }
-
-    private void renderInteractionHelp(GuiGraphicsExtractor graphics) {
-        if (!ClientGrimoireEdits.isLocalStoryteller()) return;
-        if (ClientState.phase() == com.sharktower.bloodonthesharktower.core.GamePhase.SETUP) return;
-
-        int y = layoutHeight() - 58;
-        drawCentered(graphics, "LMB: Edit   |   RMB: Actions", y, UiDrawing.MUTED, false);
-        drawCentered(graphics, "Shift+LMB: Nominator   |   Shift+RMB: Nominee",
-                y + 11, UiDrawing.MUTED, false);
-
-        UUID nominator = GrimoireInteractionState.selectedNominator();
-        if (nominator != null) {
-            int seat = ClientState.playerSeatNumbers.getOrDefault(nominator, 0);
-            String selected = "NOMINATOR: " + ClientState.playerName(nominator, seat)
-                    + " — Shift+RMB the nominee";
-            drawCentered(graphics, selected, y - 12, UiDrawing.YES, true);
         }
     }
 
