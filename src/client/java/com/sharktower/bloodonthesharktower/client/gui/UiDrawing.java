@@ -24,6 +24,8 @@ public final class UiDrawing {
     public static final int GOOD = 0xFF55AAFF;
     public static final int EVIL = 0xFFFF5555;
     public static final int GOLD = 0xFFFFD166;
+    public static final int YES = 0xFF55FF55;
+    public static final int NO = 0xFFFF5555;
     public static final int DEAD = 0xFF8A8A8A;
     public static final int BLACK = 0xFF000000;
 
