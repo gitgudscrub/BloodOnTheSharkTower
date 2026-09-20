@@ -97,9 +97,7 @@ public final class AbilityGrimoireScreen extends Screen {
 
             boolean dead = ClientState.playerDeathStatus.getOrDefault(id, false);
             if (dead) {
-                graphics.outline(roleX - 2, roleY - 2, ROLE_SIZE + 4, ROLE_SIZE + 4, UiDrawing.DEAD);
-                graphics.text(this.font, "X", roleX + ROLE_SIZE / 2 - 3,
-                        roleY + ROLE_SIZE / 2 - 4, UiDrawing.DEAD, true);
+                UiDrawing.deathShroud(graphics, roleX, roleY, ROLE_SIZE);
             }
 
             // Reminder tokens sit around the true role token exactly as information
