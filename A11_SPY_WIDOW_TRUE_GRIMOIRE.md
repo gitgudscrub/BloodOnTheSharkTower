@@ -1,34 +1,38 @@
-# A.11 — Spy / Widow True Grimoire Sharing
+# A.11 — Spy / Widow Storyteller-confirmed Grimoire Sharing
 
-Adds a safe, read-only true-Grimoire view for official roles whose ability lets
-that player see the Grimoire.
+Spy and Widow now use the player's normal personal Grimoire instead of an
+automatic separate read-only screen.
 
-## Behaviour
+## Storyteller flow
 
-- When the Storyteller activates a **Spy** night visit, a sober/healthy true Spy
-  automatically receives the committed true Grimoire.
-- When the Storyteller activates a **Widow** visit on Night 1, a sober/healthy
-  true Widow receives the same view.
-- The snapshot opens automatically as a read-only circular Grimoire with:
-  - true role tokens
-  - seat order
-  - player names / heads
-  - death state
-  - current reminder tokens
-- Demon bluffs and Sharktower-only Drunk/Marionette perceived-role helper boxes
-  are not included, because those are not part of the physical true Grimoire.
-- The player's personal deduction Grimoire is never overwritten.
-- Closing the screen discards the snapshot. Re-activating the Spy/Widow night
-  visit sends it again.
-- The screen closes automatically at Dawn / outside Night.
+When the Storyteller activates an eligible Spy/Widow night visit:
 
-## Droison safety
+- the Grimoire is **not** shared automatically;
+- the Storyteller receives a chat prompt with a clickable **[SHARE GRIMOIRE]** button;
+- clicking the button re-checks the target's actual role, Night eligibility,
+  death state and Droison state before any information is sent.
 
-If the true Spy/Widow currently has a **Poisoned** or **Drunk** reminder, the mod
-will **not** automatically send the true Grimoire. The Storyteller receives a
-warning in their action result instead. This avoids accidentally giving correct
-information when the role is droisoned.
+Spy is eligible on its normal Night visits. Widow is eligible for its Night 1
+Grimoire view.
 
-A Drunk/Marionette who merely *believes* they are Spy/Widow is also never sent
-this true snapshot, because eligibility is checked against the server's actual
-role assignment.
+If the actual Spy/Widow is currently marked `Poisoned` or `Drunk`, true-Grim
+sharing remains blocked and the Storyteller is warned to handle false
+information manually.
+
+## What the player receives
+
+The share is sourced from the Storyteller's **current working Grimoire**:
+
+- current Storyteller role assignments overwrite the player's local role guesses;
+- current Storyteller reminder tokens are added as a separate shared layer;
+- the player's own locally-created reminder tokens are preserved;
+- refreshing/re-sharing replaces the previous Storyteller reminder layer without
+  deleting the player's own notes;
+- current Demon bluffs are shared too;
+- the normal personal Grimoire opens immediately when the share arrives.
+
+Shared reminders and personal reminders remain locally editable. **Clear All**
+is an explicit player action and clears both local layers.
+
+The server still does not expose this information through the ordinary public
+Grimoire packet, so unrelated players receive no extra role/reminder/bluff data.
