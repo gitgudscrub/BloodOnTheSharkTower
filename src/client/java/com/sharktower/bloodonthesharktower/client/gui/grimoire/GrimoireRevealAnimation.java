@@ -21,6 +21,10 @@ public final class GrimoireRevealAnimation {
         startedAtMs = System.currentTimeMillis();
     }
 
+    public static void showImmediately() {
+        startedAtMs = System.currentTimeMillis() - 60_000L;
+    }
+
     public static float progressForSeat(int seat) {
         return progressForIndex(Math.max(0, seat - 1));
     }
