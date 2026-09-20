@@ -48,11 +48,13 @@ public final class GrimoirePlayerActionScreen extends Screen {
         boolean thisMarked = playerId.equals(ClientState.markedForExecution);
 
         if (!setup) {
-            this.addRenderableWidget(Button.builder(Component.literal("Set as Nominator").withStyle(ChatFormatting.GOLD), b -> {
+            Button setNominator = Button.builder(Component.literal("Set as Nominator").withStyle(ChatFormatting.GOLD), b -> {
                         GrimoireInteractionState.selectNominator(playerId);
                         back();
                     })
-                    .bounds(cx - w - gap / 2, y, w, 20).build());
+                    .bounds(cx - w - gap / 2, y, w, 20).build();
+            setNominator.active = ClientState.nominationsOpen;
+            this.addRenderableWidget(setNominator);
 
             Button nominate = Button.builder(Component.literal("Nominate This Player").withStyle(ChatFormatting.YELLOW), b -> {
                         UUID nominator = GrimoireInteractionState.selectedNominator();
@@ -65,7 +67,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
                         back();
                     })
                     .bounds(cx + gap / 2, y, w, 20).build();
-            nominate.active = GrimoireInteractionState.hasSelectedNominator();
+            nominate.active = ClientState.nominationsOpen && GrimoireInteractionState.hasSelectedNominator();
             this.addRenderableWidget(nominate);
 
             y += 26;
