@@ -9,7 +9,6 @@ import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -77,13 +76,13 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
     }
 
     @Override
-    protected boolean isValidClickButton(MouseButtonInfo buttonInfo) {
-        return buttonInfo.button() == 0 || buttonInfo.button() == 1;
-    }
-
-    @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        GrimoirePlayerClicks.handle(playerId, seat, ClientGrimoireEdits.roleFor(playerId), event);
+        GrimoirePlayerClicks.handleRoleLeft(
+                playerId,
+                seat,
+                ClientGrimoireEdits.roleFor(playerId),
+                event.hasShiftDown()
+        );
     }
 
     @Override
