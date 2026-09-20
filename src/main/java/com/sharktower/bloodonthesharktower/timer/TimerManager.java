@@ -2,6 +2,8 @@ package com.sharktower.bloodonthesharktower.timer;
 
 import com.sharktower.bloodonthesharktower.networking.TimerStateS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -78,6 +80,9 @@ public final class TimerManager {
      */
     private static void playCompletionGong(MinecraftServer server) {
         if (server == null) return;
+        Component returnMessage = Component.literal("Please return to Town Square")
+                .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             player.playNotifySound(
                     SoundEvents.BELL_RESONATE,
@@ -85,6 +90,7 @@ public final class TimerManager {
                     1.0F,
                     0.72F
             );
+            player.sendSystemMessage(returnMessage);
         }
     }
 
