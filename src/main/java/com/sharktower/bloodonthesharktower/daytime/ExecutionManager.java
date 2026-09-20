@@ -34,9 +34,11 @@ public final class ExecutionManager {
         ServerState.executionToday = true;
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
+        VotingManager.clearLastResult();
         BloodOnTheSharktower.LOGGER.info("Executed player {} (forced={}, butcher={})", player, forced, butcherUuid);
         ModSounds.playForAll(server, ModSounds.EXECUTION);
         StateBroadcaster.broadcastDeathStatus(server);
+        StateBroadcaster.broadcastVoteState(server);
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastGrimoire(server);
@@ -47,10 +49,12 @@ public final class ExecutionManager {
         ServerState.executionToday = true;
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
+        VotingManager.clearLastResult();
         BloodOnTheSharktower.LOGGER.info("Execution failed/survived for {} (forced={}, butcher={})", player, forced, butcherUuid);
         ModSounds.playForAll(server, ModSounds.EXECUTION_SURVIVED);
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
+        StateBroadcaster.broadcastVoteState(server);
     }
     public static void noExecution(MinecraftServer server) {
         DaytimeState.clearMarkedForExecution();
