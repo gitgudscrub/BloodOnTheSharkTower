@@ -66,8 +66,6 @@ public final class NightInfoReminderScreen extends Screen {
                                         "add_role_reminder",
                                         seat + "|" + marker.role().getId() + "|" + marker.text()
                                 );
-                                GrimoireReturnState.suppressNextReveal();
-                                this.minecraft.gui.setScreen(new AssignRolesScreen());
                             })
                     .bounds(x, y + row * 25, buttonW, 20).build());
         }
