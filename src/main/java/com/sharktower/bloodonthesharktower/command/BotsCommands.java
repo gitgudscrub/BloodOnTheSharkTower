@@ -151,6 +151,8 @@ public final class BotsCommands {
                         .then(Commands.literal("testseats")
                                 .then(Commands.literal("clear")
                                         .executes(BotsCommands::executeClearTestSeats))
+                                .then(Commands.literal("addEmpty")
+                                        .executes(BotsCommands::executeAddEmptyTestSeat))
                                 .then(Commands.literal("empty")
                                         .then(Commands.argument("count", IntegerArgumentType.integer(1, 20))
                                                 .executes(BotsCommands::executeEmptyTestSeats)))
@@ -531,6 +533,35 @@ public final class BotsCommands {
         int sequence = StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         send(context, "Generated " + count + " Grimoire test seats. Sequence: " + sequence);
         send(context, "Open the Grimoire with R. Use /bots testseats clear to remove synthetic seats.");
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int executeAddEmptyTestSeat(CommandContext<CommandSourceStack> context) {
+        requirePlayer(context, "testseats addEmpty");
+        java.util.Map<UUID, Integer> seats = StorytellerState.effectiveGrimoireSeats();
+
+        int seat = 1;
+        java.util.Set<Integer> used = new java.util.HashSet<>();
+        for (Integer value : seats.values()) {
+            if (value != null && value > 0) used.add(value);
+        }
+        while (used.contains(seat)) seat++;
+
+        UUID uuid = syntheticTestUuid(seat);
+        SYNTHETIC_TEST_PLAYERS.add(uuid);
+        ServerState.PLAYER_SEAT_NUMBERS.put(uuid, seat);
+        StorytellerState.PENDING_SEAT_NUMBERS.put(uuid, seat);
+        ServerState.PLAYER_DEATH_STATUS.put(uuid, false);
+        ServerState.PLAYER_ROLES.remove(uuid);
+        StorytellerState.PENDING_ROLES.remove(uuid);
+        ServerState.PLAYER_PERCEIVED_ROLES.remove(uuid);
+        StorytellerState.PENDING_PERCEIVED_ROLES.remove(uuid);
+        StorytellerState.REMINDERS.remove(uuid);
+
+        StorytellerState.nextSeatNumber = Math.max(StorytellerState.nextSeatNumber, seat + 1);
+        int sequence = StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
+        send(context, "Added empty Grimoire test seat " + seat + ". Sequence: " + sequence);
+        send(context, "Repeat /bots testseats addEmpty to add another, or /bots testseats clear when finished.");
         return Command.SINGLE_SUCCESS;
     }
 
