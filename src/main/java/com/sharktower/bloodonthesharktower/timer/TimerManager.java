@@ -4,6 +4,8 @@ import com.sharktower.bloodonthesharktower.networking.TimerStateS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -60,8 +62,30 @@ public final class TimerManager {
     private static synchronized void tick(MinecraftServer server) {
         if (!active || paused) return;
         if (remainingSeconds > 0) remainingSeconds--;
-        if (remainingSeconds <= 0) stopInternal();
+        if (remainingSeconds <= 0) {
+            stopInternal();
+            playCompletionGong(server);
+        }
         broadcastTimerState(server);
+    }
+
+    /**
+     * Audible "time's up" cue for a countdown that reaches zero naturally.
+     *
+     * Use a direct per-player notification so the gong is global rather than
+     * positional: Storytellers and players hear it even when split between
+     * private-chat areas/houses. Manual Stop deliberately does not call this.
+     */
+    private static void playCompletionGong(MinecraftServer server) {
+        if (server == null) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            player.playNotifySound(
+                    SoundEvents.BELL_RESONATE,
+                    SoundSource.MASTER,
+                    1.0F,
+                    0.72F
+            );
+        }
     }
 
     private static void stopInternal() {
