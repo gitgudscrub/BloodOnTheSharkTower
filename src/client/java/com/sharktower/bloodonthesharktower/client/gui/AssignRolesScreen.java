@@ -79,6 +79,9 @@ public class AssignRolesScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (!ClientState.nominationsOpen && GrimoireInteractionState.hasSelectedNominator()) {
+            GrimoireInteractionState.clearNominator();
+        }
         String currentSignature = seatLayoutSignature();
         if (!currentSignature.equals(lastSeatLayoutSignature) && this.minecraft != null) {
             // Role/head widgets are constructed in init(). Re-open this screen when
