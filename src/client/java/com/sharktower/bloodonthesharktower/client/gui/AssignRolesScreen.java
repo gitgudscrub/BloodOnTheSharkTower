@@ -506,6 +506,7 @@ public class AssignRolesScreen extends Screen {
             renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
             renderSeatNumbers(graphics, seats, centerX, centerY, radius);
             renderCenterStatus(graphics, seats.size());
+            renderInteractionHint(graphics);
             renderHandVotingPanel(graphics);
         } finally {
             graphics.pose().popMatrix();
@@ -577,6 +578,20 @@ public class AssignRolesScreen extends Screen {
         int baseY = layoutHeight() / 2 + 18;
         drawCentered(graphics, players, baseY, UiDrawing.TEXT, true);
         drawCentered(graphics, storytellers, baseY + 12, UiDrawing.MUTED, true);
+    }
+
+    private void renderInteractionHint(GuiGraphicsExtractor graphics) {
+        String hint;
+        if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.nominationsOpen) {
+            hint = "Role: edit  |  Head: reminders  |  Shift+LMB: nominator  |  Shift+RMB: nominee  |  RMB: actions";
+        } else if (ClientGrimoireEdits.isLocalStoryteller()) {
+            hint = "Role: edit  |  Head: reminders  |  RMB: actions";
+        } else {
+            hint = "Role: deduction  |  Head: reminders";
+        }
+
+        int y = layoutHeight() - 44;
+        drawCentered(graphics, hint, y, UiDrawing.MUTED, false);
     }
 
     private void renderHandVotingPanel(GuiGraphicsExtractor graphics) {
