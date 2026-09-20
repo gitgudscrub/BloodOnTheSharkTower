@@ -61,3 +61,31 @@ Clocktower death mechanics.
 - Daytime doorway routing scans every server tick, with entry/exit grace windows,
   so sprinting through a doorway cannot skip the trigger or immediately bounce
   from Private Chat back to Day Chat.
+
+
+## Grimoire game-flow interactions
+
+The Storyteller Grimoire now supports direct day-game interactions without
+requiring the separate Nomination Flow screen for routine play:
+
+- Left-click a player role token: role/alignment/reminder setup.
+- Right-click a player role token: open the accessible Player Actions sheet.
+- Shift + left-click: select/toggle that player as the nominator.
+- Shift + right-click: nominate the clicked player using the selected nominator.
+- The selected nominator has a green outline + N marker.
+- The current nominee has a gold outline.
+- The Grim displays the active shortcut legend and selected nominator.
+
+The Player Actions sheet exposes the same flow with ordinary buttons, so modifier
+clicks are optional rather than required.
+
+Execution now has two explicit outcomes:
+
+- Execute — Dies: records the execution, marks the player dead, triggers death
+  handling, and plays the original execution sound.
+- Execute — Lives: records the execution and closes nominations, but leaves the
+  player alive, does not fire death handling, and plays the original survived
+  execution sound.
+
+The legacy `execute_marked` action remains the dies path; the new
+`execute_marked_survives` action handles survival.
