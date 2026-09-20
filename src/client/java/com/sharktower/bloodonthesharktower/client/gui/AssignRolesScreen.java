@@ -207,13 +207,15 @@ public class AssignRolesScreen extends Screen {
 
         // Keep advanced/recovery controls available without permanently filling
         // the main Grim with management buttons.
+        // Keep the bottom-right utility buttons in a non-overlapping strip:
+        // [TOOLS] [END] [SEND ROLES / CONTROLS].
         this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
                         this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
-                .bounds(layoutWidth - CONTROL_W - 87, layoutHeight - 30, 55, CONTROL_H).build());
+                .bounds(rightX - 115, layoutHeight - 30, 55, CONTROL_H).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("END").withStyle(ChatFormatting.GOLD), b ->
                         this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
-                .bounds(layoutWidth - CONTROL_W - 27, layoutHeight - 30, 45, CONTROL_H).build());
+                .bounds(rightX - 55, layoutHeight - 30, 50, CONTROL_H).build());
 
         if (phase == GamePhase.SETUP) {
             this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
@@ -583,14 +585,23 @@ public class AssignRolesScreen extends Screen {
     private void renderInteractionHint(GuiGraphicsExtractor graphics) {
         String hint;
         if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.nominationsOpen) {
-            hint = "Role: edit  |  Head: reminders  |  Shift+LMB: nominator  |  Shift+RMB: nominee  |  RMB: actions";
+            UUID selected = GrimoireInteractionState.selectedNominator();
+            if (selected != null) {
+                int seat = ClientState.playerSeatNumbers.getOrDefault(selected, 0);
+                hint = "Nominator: " + ClientState.playerName(selected, seat)
+                        + "  |  Shift+RMB a nominee";
+            } else {
+                hint = "Shift+LMB a nominator  |  Shift+RMB a nominee";
+            }
         } else if (ClientGrimoireEdits.isLocalStoryteller()) {
             hint = "Role: edit  |  Head: reminders  |  RMB: actions";
         } else {
             hint = "Role: deduction  |  Head: reminders";
         }
 
-        int y = layoutHeight() - 44;
+        // Keep this below the radial role ring. The old h-44 position crossed
+        // the bottom player's role token.
+        int y = layoutHeight() - 19;
         drawCentered(graphics, hint, y, UiDrawing.MUTED, false);
     }
 
