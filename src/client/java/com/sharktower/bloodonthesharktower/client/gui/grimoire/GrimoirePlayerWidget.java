@@ -57,6 +57,16 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         } else if (isHovered()) {
             graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
         }
+
+        if (isHovered()) {
+            String name = ClientState.playerName(playerId, seat);
+            if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.nominationsOpen) {
+                GrimoireHoverHints.set(name
+                        + " role — LMB edit | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
+            } else {
+                GrimoireHoverHints.set(name + " role — LMB edit | RMB actions");
+            }
+        }
     }
 
     @Override
