@@ -3,6 +3,7 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireBluffWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerWidget;
+import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerHeadWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePerceivedRoleWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireReminderWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireStorytellerWidget;
@@ -175,6 +176,7 @@ public class AssignRolesScreen extends Screen {
         int centerX = layoutWidth() / 2;
         int centerY = layoutHeight() / 2;
         int radius = Math.max(54, Math.min(centerX, centerY) - 50);
+        int innerRadius = Math.max(24, radius - 47);
         int count = seats.size();
 
         for (int i = 0; i < count; i++) {
@@ -187,6 +189,12 @@ public class AssignRolesScreen extends Screen {
             double tokenCenterY = centerY + radius * Math.sin(angle);
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
+
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
+            this.addRenderableWidget(new GrimoirePlayerHeadWidget(
+                    headX, headY, HEAD_SIZE, uuid, seat, assignment
+            ));
 
             if (isDeceivedCharacter(assignment)) {
                 // Centre the TRUE + BELIEVED pair around the player's normal radial
@@ -247,7 +255,7 @@ public class AssignRolesScreen extends Screen {
                 int rx = (int) Math.round(centerX + reminderRadius * Math.cos(reminderAngle)) - REMINDER_SIZE / 2;
                 int ry = (int) Math.round(centerY + reminderRadius * Math.sin(reminderAngle)) - REMINDER_SIZE / 2;
                 this.addRenderableWidget(new GrimoireReminderWidget(
-                        rx, ry, REMINDER_SIZE, uuid, seat, reminders.get(r).text()
+                        rx, ry, REMINDER_SIZE, uuid, seat, reminders.get(r)
                 ));
             }
         }
