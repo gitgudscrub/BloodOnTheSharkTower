@@ -4,7 +4,6 @@ import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.Role;
-import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -90,22 +89,10 @@ public final class ReminderChooseScreen extends Screen {
             this.addRenderableWidget(Button.builder(Component.literal("Night Info"), b ->
                             this.minecraft.gui.setScreen(new NightInfoReminderScreen(playerId, seat)))
                     .bounds(cx - 115, this.height - 77, 112, 20).build());
-            List<ScriptRole> grimDemons = DemonKillReminderScreen.demonsInStorytellerGrimoire();
-            Button demonKill = Button.builder(Component.literal("Demon Kill"), b -> {
-                        List<ScriptRole> demons = DemonKillReminderScreen.demonsInStorytellerGrimoire();
-                        if (demons.size() == 1) {
-                            ScriptRole demon = demons.getFirst();
-                            ClientStorytellerActions.send(
-                                    "add_role_reminder",
-                                    seat + "|" + demon.getId() + "|Kill"
-                            );
-                            this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
-                        } else if (demons.size() > 1) {
-                            this.minecraft.gui.setScreen(new DemonKillReminderScreen(playerId, seat));
-                        }
-                    })
+            Button demonKill = Button.builder(Component.literal("Demon Kill"), b ->
+                            DemonKillReminderScreen.openOrApply(playerId, seat))
                     .bounds(cx + 3, this.height - 77, 112, 20).build();
-            demonKill.active = !grimDemons.isEmpty();
+            demonKill.active = !DemonKillReminderScreen.demonsInStorytellerGrimoire().isEmpty();
             this.addRenderableWidget(demonKill);
         }
 
