@@ -160,6 +160,9 @@ public final class StorytellerActionHandler {
                 case "load_script_json" -> SetupOperations.loadScriptJson(arg);
                 case "load_base3" -> BaseThreeScripts.load(arg);
                 case "add_bluff" -> SetupOperations.addBluff(arg);
+                case "set_bluffs" -> SetupOperations.setBluffs(
+                        arg.isBlank() ? java.util.List.of() : java.util.Arrays.asList(arg.split("\\|"))
+                );
                 case "set_bluff" -> {
                     String[] parts = split(arg, 2);
                     yield SetupOperations.setBluff(Integer.parseInt(parts[0]), parts[1]);
