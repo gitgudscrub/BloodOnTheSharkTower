@@ -304,30 +304,113 @@ public class AssignRolesScreen extends Screen {
                 || assignment.role() == com.sharktower.bloodonthesharktower.core.Role.MARIONETTE);
     }
 
+    /**
+     * BOTB reminder tokens hug the 32px role token rather than forming a second
+     * radial ring around the Grim. Eight compact slots surround each role token;
+     * the outward-facing slots are preferred so reminders naturally avoid the
+     * player's head/name on the inner side of the circle.
+     */
     private void buildReminderWidgets() {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return;
+
         int centerX = layoutWidth() / 2;
         int centerY = layoutHeight() / 2;
         int radius = Math.max(54, Math.min(centerX, centerY) - 50);
+        int innerRadius = Math.max(24, radius - 47);
         int count = seats.size();
+
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
             UUID uuid = entry.getKey();
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
+
+            double tokenCenterX = centerX + radius * Math.cos(angle);
+            double tokenCenterY = centerY + radius * Math.sin(angle);
+            PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
+
+            // Match the true-role position used by buildPlayerWidgets for
+            // Drunk/Marionette true+believed role pairs.
+            if (isDeceivedCharacter(assignment)) {
+                double tangentX = -Math.sin(angle);
+                double tangentY = Math.cos(angle);
+                double trueOffset = -(PERCEIVED_ROLE_SIZE + DECEIVED_ROLE_GAP) / 2.0;
+                tokenCenterX += tangentX * trueOffset;
+                tokenCenterY += tangentY * trueOffset;
+            }
+
+            int roleX = (int) Math.round(tokenCenterX) - ROLE_SIZE / 2;
+            int roleY = (int) Math.round(tokenCenterY) - ROLE_SIZE / 2;
+
+            int top = roleY - REMINDER_SIZE - REMINDER_PADDING;
+            int bottom = roleY + ROLE_SIZE + REMINDER_PADDING;
+            int left = roleX - REMINDER_SIZE - REMINDER_PADDING;
+            int right = roleX + ROLE_SIZE + REMINDER_PADDING;
+            int nearLeft = roleX + ROLE_SIZE / 2 - REMINDER_SIZE - REMINDER_PADDING;
+            int nearRight = roleX + ROLE_SIZE / 2 + REMINDER_PADDING;
+            int nearTop = roleY + ROLE_SIZE / 2 - REMINDER_SIZE - REMINDER_PADDING;
+            int nearBottom = roleY + ROLE_SIZE / 2 + REMINDER_PADDING;
+
+            List<int[]> candidates = new ArrayList<>(List.of(
+                    new int[]{nearLeft, top},
+                    new int[]{nearRight, top},
+                    new int[]{right, nearTop},
+                    new int[]{right, nearBottom},
+                    new int[]{nearRight, bottom},
+                    new int[]{nearLeft, bottom},
+                    new int[]{left, nearBottom},
+                    new int[]{left, nearTop}
+            ));
+
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
+            final double roleCenterX = tokenCenterX;
+            final double roleCenterY = tokenCenterY;
+            final double outwardX = Math.cos(angle);
+            final double outwardY = Math.sin(angle);
+
+            candidates.sort(Comparator.comparingDouble((int[] p) ->
+                    reminderPlacementScore(
+                            p,
+                            roleCenterX,
+                            roleCenterY,
+                            outwardX,
+                            outwardY,
+                            headX,
+                            headY
+                    )).reversed());
+
             List<Reminder> reminders = ClientGrimoireEdits.remindersFor(uuid);
-            int reminderCount = Math.min(6, reminders.size());
+            int reminderCount = Math.min(candidates.size(), reminders.size());
             for (int r = 0; r < reminderCount; r++) {
-                double reminderAngle = angle + (r - (reminderCount - 1) / 2.0) * 0.14;
-                int reminderRadius = radius + 28;
-                int rx = (int) Math.round(centerX + reminderRadius * Math.cos(reminderAngle)) - REMINDER_SIZE / 2;
-                int ry = (int) Math.round(centerY + reminderRadius * Math.sin(reminderAngle)) - REMINDER_SIZE / 2;
+                int[] position = candidates.get(r);
                 this.addRenderableWidget(new GrimoireReminderWidget(
-                        rx, ry, REMINDER_SIZE, uuid, seat, reminders.get(r)
+                        position[0], position[1], REMINDER_SIZE, uuid, seat, reminders.get(r)
                 ));
             }
         }
+    }
+
+    private static double reminderPlacementScore(
+            int[] position,
+            double roleCenterX,
+            double roleCenterY,
+            double outwardX,
+            double outwardY,
+            int headX,
+            int headY
+    ) {
+        double reminderCenterX = position[0] + REMINDER_SIZE / 2.0;
+        double reminderCenterY = position[1] + REMINDER_SIZE / 2.0;
+        double score = (reminderCenterX - roleCenterX) * outwardX
+                + (reminderCenterY - roleCenterY) * outwardY;
+
+        boolean overlapsHead = position[0] < headX + HEAD_SIZE
+                && position[0] + REMINDER_SIZE > headX
+                && position[1] < headY + HEAD_SIZE
+                && position[1] + REMINDER_SIZE > headY;
+        return overlapsHead ? score - 1000.0 : score;
     }
 
 
@@ -422,9 +505,8 @@ public class AssignRolesScreen extends Screen {
 
             renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
             renderSeatNumbers(graphics, seats, centerX, centerY, radius);
-            renderCenterCounts(graphics, seats.size());
+            renderCenterStatus(graphics, seats.size());
             renderHandVotingPanel(graphics);
-            renderBluffLabels(graphics);
         } finally {
             graphics.pose().popMatrix();
         }
@@ -485,12 +567,16 @@ public class AssignRolesScreen extends Screen {
         }
     }
 
-    private void renderCenterCounts(GuiGraphicsExtractor graphics, int playerCount) {
+    private void renderCenterStatus(GuiGraphicsExtractor graphics, int playerCount) {
+        // The original Grim only needs setup counts before play begins. Keeping
+        // these off the live-game Grim leaves the centre focused on the ST head.
+        if (ClientState.phase() != GamePhase.SETUP) return;
+
         String players = "Players: " + playerCount;
         String storytellers = "Storytellers: " + ClientState.storytellerPlayers.size();
         int baseY = layoutHeight() / 2 + 18;
         drawCentered(graphics, players, baseY, UiDrawing.TEXT, true);
-        drawCentered(graphics, storytellers, baseY + 12, UiDrawing.TEXT, true);
+        drawCentered(graphics, storytellers, baseY + 12, UiDrawing.MUTED, true);
     }
 
     private void renderHandVotingPanel(GuiGraphicsExtractor graphics) {
@@ -529,18 +615,6 @@ public class AssignRolesScreen extends Screen {
         graphics.outline(x, y - 1, 10, 12, dark);
     }
 
-    private void renderBluffLabels(GuiGraphicsExtractor graphics) {
-        if (!showBluffs) return;
-        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
-        int startY = Math.max(55, layoutHeight() / 2 + 18);
-        for (int i = 0; i < 3; i++) {
-            String id = i < ClientGrimoireEdits.visibleDemonBluffs().size() ? ClientGrimoireEdits.visibleDemonBluffs().get(i) : "";
-            if (!id.isBlank()) {
-                String name = id.replace('_', ' ');
-                graphics.text(this.font, name, MARGIN + 38, startY + i * 42 + 11, UiDrawing.MUTED, false);
-            }
-        }
-    }
 
     /**
      * Normalize GUI scales above 4 back to the Scale-4 physical footprint.
