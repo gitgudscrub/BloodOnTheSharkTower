@@ -83,25 +83,37 @@ public final class PlayerSetupScreen extends Screen {
                     .bounds(cx - 100, this.height - 55, 200, 20).build());
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b ->
-                        this.minecraft.gui.setScreen(new AssignRolesScreen()))
+        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b -> returnToGrimoire())
                 .bounds(cx - 100, this.height - 30, 200, 20).build());
     }
 
     private void action(String action, String argument) {
         if (ClientGrimoireEdits.isLocalStoryteller()) {
+            GrimoireReturnState.requestAfterNextGrimoireSync();
             ClientStorytellerActions.send(action, argument);
-        } else {
-            switch (action) {
-                case "clear_role" -> ClientGrimoireEdits.clearRole(playerId);
-                case "alignment_default" -> ClientGrimoireEdits.setAlignment(playerId, AlignmentOverride.DEFAULT);
-                case "alignment_good" -> ClientGrimoireEdits.setAlignment(playerId, AlignmentOverride.FORCE_GOOD);
-                case "alignment_evil" -> ClientGrimoireEdits.setAlignment(playerId, AlignmentOverride.FORCE_BAD);
-                case "clear_reminders" -> ClientGrimoireEdits.clearReminders(playerId);
-                default -> { }
-            }
+            return;
         }
+
+        switch (action) {
+            case "clear_role" -> ClientGrimoireEdits.clearRole(playerId);
+            case "alignment_default" -> ClientGrimoireEdits.setAlignment(playerId, AlignmentOverride.DEFAULT);
+            case "alignment_good" -> ClientGrimoireEdits.setAlignment(playerId, AlignmentOverride.FORCE_GOOD);
+            case "alignment_evil" -> ClientGrimoireEdits.setAlignment(playerId, AlignmentOverride.FORCE_BAD);
+            case "clear_reminders" -> ClientGrimoireEdits.clearReminders(playerId);
+            default -> { }
+        }
+        returnToGrimoire();
+    }
+
+    private void returnToGrimoire() {
+        if (this.minecraft == null) return;
+        GrimoireReturnState.suppressNextReveal();
         this.minecraft.gui.setScreen(new AssignRolesScreen());
+    }
+
+    @Override
+    public void onClose() {
+        returnToGrimoire();
     }
 
     @Override
