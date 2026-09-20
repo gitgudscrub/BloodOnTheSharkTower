@@ -20,6 +20,8 @@ public final class ModSounds {
     public static final SoundEvent VOTE_START = register("vote_start");
     public static final SoundEvent CLOCK_TICKING = register("clock_ticking"); // legacy asset
     public static final SoundEvent CLOCK_TICK = register("clock_tick");
+    public static final SoundEvent EXECUTION = register("execution");
+    public static final SoundEvent EXECUTION_SURVIVED = register("execution_survived");
     public static final SoundEvent GAME_END = register("game_end");
 
     private ModSounds() {}
