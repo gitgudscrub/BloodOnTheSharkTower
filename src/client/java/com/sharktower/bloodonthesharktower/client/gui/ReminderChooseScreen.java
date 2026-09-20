@@ -59,7 +59,6 @@ public final class ReminderChooseScreen extends Screen {
                             } else {
                                 ClientStorytellerActions.send("add_reminder", seat + "|" + preset.text());
                             }
-                            returnToGrimoire();
                         } else {
                             ClientGrimoireEdits.addReminder(playerId, preset.text());
                             returnToGrimoire();
@@ -80,7 +79,6 @@ public final class ReminderChooseScreen extends Screen {
                         if (ClientGrimoireEdits.isLocalStoryteller()) {
                             GrimoireReturnState.requestAfterNextGrimoireSync();
                             ClientStorytellerActions.send("remove_reminder", seat + "|" + index);
-                            returnToGrimoire();
                         } else {
                             ClientGrimoireEdits.removeReminder(playerId, index);
                             returnToGrimoire();
@@ -104,7 +102,6 @@ public final class ReminderChooseScreen extends Screen {
                     if (ClientGrimoireEdits.isLocalStoryteller()) {
                         GrimoireReturnState.requestAfterNextGrimoireSync();
                         ClientStorytellerActions.send("clear_reminders", Integer.toString(seat));
-                        returnToGrimoire();
                     } else {
                         ClientGrimoireEdits.clearReminders(playerId);
                         returnToGrimoire();
