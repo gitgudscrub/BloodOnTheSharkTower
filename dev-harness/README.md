@@ -1,8 +1,8 @@
-# A.8 Local Multiplayer Development Harness
+# Local Multiplayer Development Harness
 
 This harness runs several independent Minecraft development clients against one local-only Fabric server.
 
-## Recommended quick test
+## Core smoke test
 
 Double-click `start-core-test.bat`.
 
