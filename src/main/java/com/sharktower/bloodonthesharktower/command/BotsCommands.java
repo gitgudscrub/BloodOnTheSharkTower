@@ -25,6 +25,7 @@ import com.sharktower.bloodonthesharktower.daytime.VotingManager;
 import com.sharktower.bloodonthesharktower.daytime.VotePresentationSettings;
 import com.sharktower.bloodonthesharktower.networking.NetworkDiagnostics;
 import com.sharktower.bloodonthesharktower.networking.StateBroadcaster;
+import com.sharktower.bloodonthesharktower.networking.StorytellerActionHandler;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
 import com.sharktower.bloodonthesharktower.setup.SeatPositionManager;
@@ -163,6 +164,9 @@ public final class BotsCommands {
                         .then(Commands.literal("storyteller")
                                 .then(Commands.literal("claim").executes(BotsCommands::executeStorytellerClaim))
                                 .then(Commands.literal("release").executes(BotsCommands::executeStorytellerRelease)))
+                        .then(Commands.literal("sharegrimoire")
+                                .then(Commands.argument("player", StringArgumentType.word())
+                                        .executes(BotsCommands::executeShareGrimoire)))
                         .then(Commands.literal("setupStatus").executes(BotsCommands::executeSetupStatus))
                         .then(Commands.literal("seatPlayer")
                                 .then(Commands.argument("player", StringArgumentType.word())
@@ -844,6 +848,27 @@ public final class BotsCommands {
         StateBroadcaster.broadcastPlayerDirectory(context.getSource().getServer());
         send(context, "Storyteller control released.");
         return Command.SINGLE_SUCCESS;
+    }
+
+    private static int executeShareGrimoire(CommandContext<CommandSourceStack> context) {
+        ServerPlayer storyteller = requirePlayer(context, "sharegrimoire");
+        if (storyteller == null) return 0;
+
+        UUID targetId;
+        try {
+            targetId = UUID.fromString(StringArgumentType.getString(context, "player"));
+        } catch (IllegalArgumentException ex) {
+            send(context, "Invalid Spy/Widow player id.");
+            return 0;
+        }
+
+        SetupOperations.Result result = StorytellerActionHandler.shareAbilityGrimoire(
+                context.getSource().getServer(),
+                storyteller,
+                targetId
+        );
+        send(context, result.message());
+        return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeSetupStatus(CommandContext<CommandSourceStack> context) {
