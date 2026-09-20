@@ -377,20 +377,76 @@ public final class StorytellerActionHandler {
                 .map(bluff -> bluff.getId())
                 .toList();
 
+        Map<UUID, PendingRoleAssignment> shareRoles = StorytellerState.effectiveGrimoireRoles();
+        boolean magicianJinxApplied = hasInPlayMagician(shareRoles);
+        if (magicianJinxApplied) {
+            shareRoles = applyMagicianGrimoireJinx(shareRoles);
+        }
+
         ServerPlayNetworking.send(target, new AbilityGrimoireS2CPayload(
-                StorytellerState.effectiveGrimoireRoles(),
+                shareRoles,
                 StorytellerState.effectiveGrimoireSeats(),
                 StorytellerState.REMINDERS,
                 bluffIds,
                 role.getId()
         ));
 
-        target.sendSystemMessage(Component.literal(
-                        "The Storyteller shared the Grimoire with you. True roles and Storyteller reminders were added to your personal Grim; your own reminder notes were kept. Demon bluffs were also shared.")
+        String playerMessage = "The Storyteller shared the Grimoire with you. "
+                + "True roles and Storyteller reminders were added to your personal Grim; "
+                + "your own reminder notes were kept. Demon bluffs were also shared.";
+        if (magicianJinxApplied) {
+            playerMessage += " Magician jinx applied: the Magician and Demon character tokens were removed.";
+        }
+        target.sendSystemMessage(Component.literal(playerMessage)
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
 
         return SetupOperations.Result.ok("Shared the current Storyteller Grimoire with "
-                + target.getName().getString() + " (" + role.getDisplayName() + ").");
+                + target.getName().getString() + " (" + role.getDisplayName() + ")."
+                + (magicianJinxApplied
+                    ? " Magician jinx applied: Magician and Demon character tokens hidden."
+                    : ""));
+    }
+
+    private static boolean hasInPlayMagician(Map<UUID, PendingRoleAssignment> roles) {
+        if (roles == null || roles.isEmpty()) return false;
+        for (PendingRoleAssignment assignment : roles.values()) {
+            if (assignment == null || assignment.isCustomRole()) continue;
+            if (assignment.role() == Role.MAGICIAN) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Magician / Spy and Magician / Widow jinx:
+     * when the evil information role sees the Grimoire, remove the Magician and
+     * Demon character tokens from that shared view only.
+     *
+     * The Storyteller's real Grimoire is not changed. Explicit NO_ROLE entries
+     * are used rather than removing map keys so the receiving client's local role
+     * guesses are definitely overwritten with a blank token.
+     */
+    private static Map<UUID, PendingRoleAssignment> applyMagicianGrimoireJinx(
+            Map<UUID, PendingRoleAssignment> roles
+    ) {
+        Map<UUID, PendingRoleAssignment> filtered = new java.util.HashMap<>(roles);
+        PendingRoleAssignment blank = new PendingRoleAssignment(
+                Role.NO_ROLE,
+                AlignmentOverride.DEFAULT
+        );
+
+        for (Map.Entry<UUID, PendingRoleAssignment> entry : roles.entrySet()) {
+            PendingRoleAssignment assignment = entry.getValue();
+            if (assignment == null) continue;
+
+            boolean magician = !assignment.isCustomRole() && assignment.role() == Role.MAGICIAN;
+            boolean demon = assignment.getRoleType() == com.sharktower.bloodonthesharktower.core.RoleType.DEMON;
+
+            if (magician || demon) {
+                filtered.put(entry.getKey(), blank);
+            }
+        }
+
+        return Map.copyOf(filtered);
     }
 
     private static boolean isDroisonedForGrimoire(UUID playerId) {
