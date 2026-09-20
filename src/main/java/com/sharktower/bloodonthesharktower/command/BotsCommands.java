@@ -537,7 +537,9 @@ public final class BotsCommands {
     }
 
     private static int executeAddEmptyTestSeat(CommandContext<CommandSourceStack> context) {
-        requirePlayer(context, "testseats addEmpty");
+        ServerPlayer player = requirePlayer(context, "testseats addEmpty");
+        if (player == null) return 0;
+
         java.util.Map<UUID, Integer> seats = StorytellerState.effectiveGrimoireSeats();
 
         int seat = 1;
