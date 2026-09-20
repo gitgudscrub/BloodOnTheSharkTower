@@ -381,6 +381,9 @@ public final class SetupOperations {
         if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) {
             return Result.fail("Demon bluffs must be good characters.");
         }
+        if (isUnavailableDemonBluff(role.getId())) {
+            return Result.fail(role.getDisplayName() + " is in play or shown as a believed role and cannot be a Demon bluff.");
+        }
         if (StorytellerState.DEMON_BLUFFS.stream().anyMatch(existing -> existing.getId().equals(role.getId()))) {
             return Result.fail(role.getDisplayName() + " is already a bluff.");
         }
@@ -399,6 +402,9 @@ public final class SetupOperations {
         if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) {
             return Result.fail("Demon bluffs must be good characters.");
         }
+        if (isUnavailableDemonBluff(role.getId())) {
+            return Result.fail(role.getDisplayName() + " is in play or shown as a believed role and cannot be a Demon bluff.");
+        }
         for (int i = 0; i < StorytellerState.DEMON_BLUFFS.size(); i++) {
             if (i != index && StorytellerState.DEMON_BLUFFS.get(i).getId().equals(role.getId())) {
                 return Result.fail(role.getDisplayName() + " is already a bluff.");
@@ -410,6 +416,26 @@ public final class SetupOperations {
         if (index == StorytellerState.DEMON_BLUFFS.size()) StorytellerState.DEMON_BLUFFS.add(role);
         else StorytellerState.DEMON_BLUFFS.set(index, role);
         return Result.ok("Set Demon bluff slot " + (index + 1) + " to " + role.getDisplayName() + ".");
+    }
+
+    private static boolean isUnavailableDemonBluff(String roleId) {
+        if (roleId == null || roleId.isBlank()) return true;
+        String wanted = roleId.toLowerCase(java.util.Locale.ROOT);
+
+        boolean actualInPlay = workingRoles().values().stream()
+                .filter(SetupOperations::isAssigned)
+                .map(PendingRoleAssignment::getRoleId)
+                .filter(java.util.Objects::nonNull)
+                .map(id -> id.toLowerCase(java.util.Locale.ROOT))
+                .anyMatch(wanted::equals);
+        if (actualInPlay) return true;
+
+        return workingPerceivedRoles().values().stream()
+                .filter(SetupOperations::isAssigned)
+                .map(PendingRoleAssignment::getRoleId)
+                .filter(java.util.Objects::nonNull)
+                .map(id -> id.toLowerCase(java.util.Locale.ROOT))
+                .anyMatch(wanted::equals);
     }
 
     public static Result clearBluffs() {
