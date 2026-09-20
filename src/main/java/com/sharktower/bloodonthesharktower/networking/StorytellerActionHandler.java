@@ -109,7 +109,8 @@ public final class StorytellerActionHandler {
                 case "vote_cancel" -> cancelVote(server);
                 case "vote_override_delta" -> adjustVoteOverride(server, Integer.parseInt(arg));
                 case "vote_override_clear" -> clearVoteOverride(server);
-                case "execute_marked" -> executeMarked(server);
+                case "execute_marked" -> executeMarked(server, true);
+                case "execute_marked_survives" -> executeMarked(server, false);
                 case "no_execution" -> noExecution(server);
                 case "exile_call_pair" -> callExile(server, arg);
                 case "exile_start" -> startExile(server);
@@ -431,7 +432,7 @@ public final class StorytellerActionHandler {
         return SetupOperations.Result.ok("Vote-count override cleared. Locked count: " + VotingManager.effectiveVoteCount() + ".");
     }
 
-    private static SetupOperations.Result executeMarked(MinecraftServer server) {
+    private static SetupOperations.Result executeMarked(MinecraftServer server, boolean dies) {
         UUID marked = DaytimeState.getMarkedForExecution();
         if (marked == null) {
             if (DaytimeState.getStorytellerMFE() != null) {
@@ -439,10 +440,19 @@ public final class StorytellerActionHandler {
             }
             return SetupOperations.Result.fail("Nobody is currently on the block.");
         }
+
         String name = label(server, marked);
-        ExecutionManager.executePlayer(server, marked, false, null);
-        announce(server, Component.literal(name + " is executed and dies.").withStyle(ChatFormatting.RED));
-        return SetupOperations.Result.ok("Executed " + name + ".");
+        if (dies) {
+            ExecutionManager.executePlayer(server, marked, false, null);
+            announce(server, Component.literal(name + " is executed and dies.")
+                    .withStyle(ChatFormatting.RED));
+            return SetupOperations.Result.ok("Executed " + name + "; they died.");
+        }
+
+        ExecutionManager.executePlayerFail(server, marked, false, null);
+        announce(server, Component.literal(name + " is executed but does not die.")
+                .withStyle(ChatFormatting.GOLD));
+        return SetupOperations.Result.ok("Executed " + name + "; they survived.");
     }
 
     private static SetupOperations.Result noExecution(MinecraftServer server) {
