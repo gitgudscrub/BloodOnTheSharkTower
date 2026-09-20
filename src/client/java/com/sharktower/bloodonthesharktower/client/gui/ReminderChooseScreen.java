@@ -15,8 +15,18 @@ import java.util.UUID;
 
 /** Compact BOTB-style reminder picker/editor for one seated player. */
 public final class ReminderChooseScreen extends Screen {
-    private static final String[] PRESETS = {
-            "Poisoned", "Drunk", "Red Herring", "Good", "Evil", "Demon", "Minion", "Protected", "Grandchild"
+    private record Preset(String text, Role sourceRole) {}
+
+    private static final Preset[] PRESETS = {
+            new Preset("Poisoned", Role.POISONER),
+            new Preset("Drunk", null),
+            new Preset("Red Herring", Role.FORTUNE_TELLER),
+            new Preset("Good", null),
+            new Preset("Evil", null),
+            new Preset("Demon", null),
+            new Preset("Minion", null),
+            new Preset("Protected", Role.MONK),
+            new Preset("Grandchild", Role.GRANDMOTHER)
     };
 
     private final UUID playerId;
@@ -35,14 +45,21 @@ public final class ReminderChooseScreen extends Screen {
         int w = 110;
         int gap = 6;
         for (int i = 0; i < PRESETS.length; i++) {
-            String preset = PRESETS[i];
+            Preset preset = PRESETS[i];
             int col = i % 2;
             int row = i / 2;
-            this.addRenderableWidget(Button.builder(Component.literal("+ " + preset), b -> {
+            this.addRenderableWidget(Button.builder(Component.literal("+ " + preset.text()), b -> {
                         if (ClientGrimoireEdits.isLocalStoryteller()) {
-                            ClientStorytellerActions.send("add_reminder", seat + "|" + preset);
+                            if (preset.sourceRole() != null) {
+                                ClientStorytellerActions.send(
+                                        "add_role_reminder",
+                                        seat + "|" + preset.sourceRole().getId() + "|" + preset.text()
+                                );
+                            } else {
+                                ClientStorytellerActions.send("add_reminder", seat + "|" + preset.text());
+                            }
                         } else {
-                            ClientGrimoireEdits.addReminder(playerId, preset);
+                            ClientGrimoireEdits.addReminder(playerId, preset.text());
                         }
                         this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
                     })
