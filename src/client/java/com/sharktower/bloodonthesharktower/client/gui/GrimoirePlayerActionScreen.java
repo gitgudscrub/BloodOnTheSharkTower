@@ -112,9 +112,17 @@ public final class GrimoirePlayerActionScreen extends Screen {
                 this.addRenderableWidget(Button.builder(Component.literal("Mark Dead"), b ->
                                 actionAndBack("mark_dead", Integer.toString(seat)))
                         .bounds(cx - w - gap / 2, y, w, 20).build());
-                this.addRenderableWidget(Button.builder(Component.literal("Demon Kill").withStyle(ChatFormatting.RED), b ->
+
+                Button demonReminder = Button.builder(Component.literal("Demon Kill Reminder").withStyle(ChatFormatting.GOLD), b ->
+                                DemonKillReminderScreen.openOrApply(playerId, seat))
+                        .bounds(cx + gap / 2, y, w, 20).build();
+                demonReminder.active = !DemonKillReminderScreen.demonsInStorytellerGrimoire().isEmpty();
+                this.addRenderableWidget(demonReminder);
+                y += 26;
+
+                this.addRenderableWidget(Button.builder(Component.literal("Resolve Demon Kill").withStyle(ChatFormatting.RED), b ->
                                 actionAndBack("demon_kill", Integer.toString(seat)))
-                        .bounds(cx + gap / 2, y, w, 20).build());
+                        .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             } else {
                 this.addRenderableWidget(Button.builder(Component.literal("Mark Dead").withStyle(ChatFormatting.RED), b ->
