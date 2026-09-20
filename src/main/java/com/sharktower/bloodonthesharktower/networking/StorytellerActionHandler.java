@@ -259,11 +259,10 @@ public final class StorytellerActionHandler {
                     + " has no configured home. Use /bots setSeatHome " + seat + " first.");
         }
 
-        // True Spy/Widow abilities can receive a one-use read-only snapshot of
-        // the real Grimoire. This is deliberately separate from the player's
-        // personal deduction Grim so the shared information cannot overwrite
-        // their notes or leak into floating role icons.
-        String grimoireShare = shareTrueGrimoireForRoleVisit(target);
+        // Spy/Widow Grimoire information is deliberately Storyteller-confirmed.
+        // The visit posts a clickable share prompt to the Storyteller instead of
+        // silently pushing a separate read-only screen to the player.
+        String grimoireShare = promptTrueGrimoireShare(storyteller, target);
 
         // If this player is already the Storyteller's active private partner, the
         // visit is complete; do not create a duplicate invitation. Re-activating
@@ -297,13 +296,12 @@ public final class StorytellerActionHandler {
     }
 
     /**
-     * Send the actual committed Grimoire only when the target genuinely has an
-     * active Spy/Widow ability. A poisoned/drunk player is intentionally not
-     * given the true snapshot; the Storyteller receives a warning instead so
-     * they can handle false information manually.
+     * During a Spy/Widow visit, ask the Storyteller to explicitly share the
+     * current Storyteller Grimoire instead of auto-sending it.
      */
-    private static String shareTrueGrimoireForRoleVisit(ServerPlayer target) {
-        if (target == null) return "";
+    private static String promptTrueGrimoireShare(ServerPlayer storyteller, ServerPlayer target) {
+        if (storyteller == null || target == null) return "";
+
         UUID id = target.getUUID();
         PendingRoleAssignment actual = ServerState.PLAYER_ROLES.get(id);
         if (actual == null || actual.isCustomRole() || actual.role() == null) return "";
@@ -314,24 +312,85 @@ public final class StorytellerActionHandler {
         if (!eligible) return "";
 
         if (Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(id))) {
-            return " True Grimoire not shared because " + role.getDisplayName() + " is dead.";
+            return " " + role.getDisplayName() + " is dead; no Grimoire share prompt was created.";
         }
 
         if (isDroisonedForGrimoire(id)) {
-            return " True Grimoire NOT auto-shared: " + role.getDisplayName()
-                    + " is Droisoned, so use false information as appropriate.";
+            storyteller.sendSystemMessage(Component.literal(
+                            role.getDisplayName() + " is currently Droisoned. True Grimoire sharing is blocked; give false information manually if appropriate.")
+                    .withStyle(ChatFormatting.RED));
+            return " True Grimoire share blocked because " + role.getDisplayName() + " is Droisoned.";
         }
 
+        String shareCommand = "/bots sharegrimoire " + id;
+        Component prompt = Component.literal(role.getDisplayName() + " may see the Grimoire. ")
+                .withStyle(ChatFormatting.LIGHT_PURPLE)
+                .append(Component.literal("[SHARE GRIMOIRE]")
+                        .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD, ChatFormatting.UNDERLINE)
+                        .withStyle(style -> style
+                                .withClickEvent(new ClickEvent.RunCommand(shareCommand))
+                                .withHoverEvent(new HoverEvent.ShowText(Component.literal(
+                                        "Share your current Storyteller Grimoire, reminders and Demon bluffs")))));
+        storyteller.sendSystemMessage(prompt);
+        return " Grimoire share prompt sent.";
+    }
+
+    /**
+     * Called by the Storyteller's clickable chat action. Re-check every rule at
+     * click time so a stale prompt cannot leak the true Grim after state changes.
+     */
+    public static SetupOperations.Result shareAbilityGrimoire(
+            MinecraftServer server,
+            ServerPlayer storyteller,
+            UUID targetId
+    ) {
+        if (server == null || storyteller == null || !StorytellerState.isStoryteller(storyteller.getUUID())) {
+            return SetupOperations.Result.fail("Only the Storyteller can share a Spy/Widow Grimoire.");
+        }
+        if (!PhaseOperations.isNight()) {
+            return SetupOperations.Result.fail("Spy/Widow Grimoire sharing is only available during Night.");
+        }
+
+        ServerPlayer target = server.getPlayerList().getPlayer(targetId);
+        if (target == null) return SetupOperations.Result.fail("That Spy/Widow is no longer connected.");
+
+        PendingRoleAssignment actual = ServerState.PLAYER_ROLES.get(targetId);
+        if (actual == null || actual.isCustomRole() || actual.role() == null) {
+            return SetupOperations.Result.fail("That player does not have an eligible official Spy/Widow ability.");
+        }
+
+        Role role = actual.role();
+        boolean eligible = role == Role.SPY
+                || (role == Role.WIDOW && ServerState.currentNight == 1 && ServerState.currentDay == 0);
+        if (!eligible) {
+            return SetupOperations.Result.fail("That player is not currently eligible to see the true Grimoire.");
+        }
+        if (Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(targetId))) {
+            return SetupOperations.Result.fail(role.getDisplayName() + " is dead.");
+        }
+        if (isDroisonedForGrimoire(targetId)) {
+            return SetupOperations.Result.fail(role.getDisplayName()
+                    + " is Droisoned; true Grimoire sharing remains blocked.");
+        }
+
+        java.util.List<String> bluffIds = StorytellerState.DEMON_BLUFFS.stream()
+                .map(bluff -> bluff.getId())
+                .toList();
+
         ServerPlayNetworking.send(target, new AbilityGrimoireS2CPayload(
-                ServerState.PLAYER_ROLES,
-                ServerState.PLAYER_SEAT_NUMBERS,
+                StorytellerState.effectiveGrimoireRoles(),
+                StorytellerState.effectiveGrimoireSeats(),
                 StorytellerState.REMINDERS,
+                bluffIds,
                 role.getId()
         ));
+
         target.sendSystemMessage(Component.literal(
-                        "Your " + role.getDisplayName() + " ability lets you see the Grimoire. Close it when you are ready.")
+                        "The Storyteller shared the Grimoire with you. True roles and Storyteller reminders were added to your personal Grim; your own reminder notes were kept. Demon bluffs were also shared.")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
-        return " True Grimoire shared with the " + role.getDisplayName() + ".";
+
+        return SetupOperations.Result.ok("Shared the current Storyteller Grimoire with "
+                + target.getName().getString() + " (" + role.getDisplayName() + ").");
     }
 
     private static boolean isDroisonedForGrimoire(UUID playerId) {
