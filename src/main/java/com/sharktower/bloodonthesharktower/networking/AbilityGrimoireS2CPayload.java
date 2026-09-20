@@ -21,6 +21,7 @@ public record AbilityGrimoireS2CPayload(
         Map<UUID, PendingRoleAssignment> roles,
         Map<UUID, Integer> seatNumbers,
         Map<UUID, List<Reminder>> reminders,
+        List<String> demonBluffs,
         String sourceRoleId
 ) implements CustomPacketPayload {
     public static final Identifier ID_VALUE = Identifier.fromNamespaceAndPath(
@@ -36,6 +37,7 @@ public record AbilityGrimoireS2CPayload(
                     decoded.roles(),
                     decoded.seats(),
                     decoded.reminders(),
+                    decoded.demonBluffs(),
                     sourceRole
             );
         }
@@ -48,7 +50,7 @@ public record AbilityGrimoireS2CPayload(
                     Map.of(),
                     value.seatNumbers(),
                     value.reminders(),
-                    List.of(),
+                    value.demonBluffs(),
                     true
             ));
         }
@@ -58,6 +60,7 @@ public record AbilityGrimoireS2CPayload(
         roles = Map.copyOf(roles);
         seatNumbers = Map.copyOf(seatNumbers);
         reminders = Map.copyOf(reminders);
+        demonBluffs = List.copyOf(demonBluffs);
         sourceRoleId = sourceRoleId == null ? "" : sourceRoleId;
     }
 
