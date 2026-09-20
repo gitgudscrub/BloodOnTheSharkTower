@@ -5,6 +5,7 @@ import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -32,6 +33,30 @@ public final class DemonKillReminderScreen extends Screen {
         super(Component.literal("Demon Kill Marker — Seat " + seat));
         this.playerId = playerId;
         this.seat = seat;
+    }
+
+    /**
+     * Fast path used by both the reminder screen and Player Actions.
+     * One in-play Demon means no chooser is necessary.
+     */
+    public static void openOrApply(UUID playerId, int seat) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft == null) return;
+
+        List<ScriptRole> demons = demonsInStorytellerGrimoire();
+        if (demons.size() == 1) {
+            ScriptRole demon = demons.getFirst();
+            ClientStorytellerActions.send(
+                    "add_role_reminder",
+                    seat + "|" + demon.getId() + "|Kill"
+            );
+            minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat));
+            return;
+        }
+
+        if (demons.size() > 1) {
+            minecraft.gui.setScreen(new DemonKillReminderScreen(playerId, seat));
+        }
     }
 
     @Override
