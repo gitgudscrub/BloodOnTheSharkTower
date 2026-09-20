@@ -27,6 +27,9 @@ public final class GhostPlayerEffects {
         ticks++;
 
         for (Player player : minecraft.level.players()) {
+            // Do not render the local player's own soul ambience. In first-person
+            // the particles can drift directly across the camera and become noisy.
+            if (minecraft.player != null && player.getUUID().equals(minecraft.player.getUUID())) continue;
             if (!ClientState.playerDeathStatus.getOrDefault(player.getUUID(), false)) continue;
 
             boolean ghostVoteAvailable = !ClientState.hasUsedGhostVote.getOrDefault(player.getUUID(), false);
