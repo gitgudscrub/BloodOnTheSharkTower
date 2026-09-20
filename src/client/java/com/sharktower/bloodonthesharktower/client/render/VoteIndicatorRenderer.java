@@ -28,9 +28,12 @@ import java.util.UUID;
  * players while leaving them visible to the Storyteller.
  */
 public final class VoteIndicatorRenderer {
-    private static final double ICON_SIZE = 0.34D;
-    private static final double CURRENT_VOTER_BONUS = 0.06D;
-    private static final double HEAD_OFFSET = 0.24D;
+    // Deliberately large enough to read across the town-square circle. The role
+    // token renderer centres its token at +0.72 above the head, so the vote marker
+    // sits clearly above that layer rather than covering the character icon.
+    private static final double ICON_SIZE = 1.00D;
+    private static final double CURRENT_VOTER_BONUS = 0.14D;
+    private static final double HEAD_OFFSET = 1.60D;
 
     private static final Identifier YES_TEXTURE = Identifier.fromNamespaceAndPath(
             BloodOnTheSharktower.MOD_ID, "textures/hud/vote_yes.png");
@@ -48,7 +51,13 @@ public final class VoteIndicatorRenderer {
 
     private static void render(SubmitNodeCollector collector, PoseStack poseStack) {
         if (GameEndAnimationHUD.isAnimating()) return;
-        if (!ClientState.voteInProgress && !ClientState.exileSupportVote) return;
+
+        // Show intent as soon as a nomination/exile call exists, not only after
+        // the Storyteller starts the clock. This lets everyone read raised/lowered
+        // hands during the discussion period before the three-second countdown.
+        boolean electionPrepared = ClientState.currentNominee != null
+                || ClientState.currentExileTarget != null;
+        if (!electionPrepared && !ClientState.voteInProgress && !ClientState.exileSupportVote) return;
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) return;
@@ -67,9 +76,20 @@ public final class VoteIndicatorRenderer {
             if (!ClientState.playerSeatNumbers.containsKey(id)) continue;
             if (ClientState.storytellerPlayers.contains(id)) continue;
 
-            boolean yes = ClientState.lockedVotes.containsKey(id)
-                    ? ClientState.lockedVotes.getOrDefault(id, false)
-                    : ClientState.currentVotes.getOrDefault(id, false);
+            boolean yes;
+            if (ClientState.lockedVotes.containsKey(id)) {
+                // Once the clock has passed a seat, its public marker is frozen.
+                yes = ClientState.lockedVotes.getOrDefault(id, false);
+            } else if (ClientState.voteInProgress && !ClientState.exileSupportVote) {
+                // Normal nomination votes keep currentVotes synchronized from the
+                // live hand until that seat locks.
+                yes = ClientState.currentVotes.getOrDefault(
+                        id, ClientState.raisedHands.getOrDefault(id, false));
+            } else {
+                // Before the clock, and for uncounted Traveller-exile voters, the
+                // raised hand itself is the public YES/NO intent.
+                yes = ClientState.raisedHands.getOrDefault(id, false);
+            }
             boolean dead = ClientState.playerDeathStatus.getOrDefault(id, false);
 
             Identifier texture = yes
