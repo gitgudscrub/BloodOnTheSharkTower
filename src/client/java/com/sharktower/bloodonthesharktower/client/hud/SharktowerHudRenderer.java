@@ -33,6 +33,7 @@ public final class SharktowerHudRenderer {
         NightOrderHUD.render(graphics, minecraft);
         if (ClientSettings.playerListHud) PlayerSidebarHUD.render(graphics, minecraft);
         if (ClientSettings.electionHud) ElectionHUD.render(graphics, minecraft);
+        VoteCountdownHUD.render(graphics, minecraft);
         if (ClientSettings.handHud) HandVoteHUD.render(graphics, minecraft);
         if (ClientSettings.timerHud) TimerHUD.render(graphics, minecraft);
     }

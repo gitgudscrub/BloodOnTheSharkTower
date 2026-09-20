@@ -3,6 +3,7 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireBluffWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerWidget;
+import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerHeadWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePerceivedRoleWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireReminderWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireStorytellerWidget;
@@ -79,6 +80,9 @@ public class AssignRolesScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (!ClientState.nominationsOpen && GrimoireInteractionState.hasSelectedNominator()) {
+            GrimoireInteractionState.clearNominator();
+        }
         String currentSignature = seatLayoutSignature();
         if (!currentSignature.equals(lastSeatLayoutSignature) && this.minecraft != null) {
             // Role/head widgets are constructed in init(). Re-open this screen when
@@ -104,6 +108,9 @@ public class AssignRolesScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Nomination Flow").withStyle(ChatFormatting.GOLD), b ->
                         this.minecraft.gui.setScreen(new NominationControlScreen()))
                 .bounds(MARGIN, MARGIN + CONTROL_H + GAP, 100, CONTROL_H).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Controls"), b ->
+                        this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
+                .bounds(MARGIN + 105, MARGIN + CONTROL_H + GAP, 80, CONTROL_H).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Shuffle Roles").withStyle(ChatFormatting.AQUA), b ->
                         action("shuffle_roles"))
@@ -172,6 +179,7 @@ public class AssignRolesScreen extends Screen {
         int centerX = layoutWidth() / 2;
         int centerY = layoutHeight() / 2;
         int radius = Math.max(54, Math.min(centerX, centerY) - 50);
+        int innerRadius = Math.max(24, radius - 47);
         int count = seats.size();
 
         for (int i = 0; i < count; i++) {
@@ -184,6 +192,12 @@ public class AssignRolesScreen extends Screen {
             double tokenCenterY = centerY + radius * Math.sin(angle);
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
+
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
+            this.addRenderableWidget(new GrimoirePlayerHeadWidget(
+                    headX, headY, HEAD_SIZE, uuid, seat, assignment
+            ));
 
             if (isDeceivedCharacter(assignment)) {
                 // Centre the TRUE + BELIEVED pair around the player's normal radial
@@ -244,7 +258,7 @@ public class AssignRolesScreen extends Screen {
                 int rx = (int) Math.round(centerX + reminderRadius * Math.cos(reminderAngle)) - REMINDER_SIZE / 2;
                 int ry = (int) Math.round(centerY + reminderRadius * Math.sin(reminderAngle)) - REMINDER_SIZE / 2;
                 this.addRenderableWidget(new GrimoireReminderWidget(
-                        rx, ry, REMINDER_SIZE, uuid, seat, reminders.get(r).text()
+                        rx, ry, REMINDER_SIZE, uuid, seat, reminders.get(r)
                 ));
             }
         }
@@ -308,10 +322,10 @@ public class AssignRolesScreen extends Screen {
 
     private void buildBluffWidgets() {
         if (!showBluffs) return;
-        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientState.demonBluffs.isEmpty()) return;
+        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
         int startY = Math.max(55, layoutHeight() / 2 + 18);
         for (int i = 0; i < 3; i++) {
-            String roleId = i < ClientState.demonBluffs.size() ? ClientState.demonBluffs.get(i) : "";
+            String roleId = i < ClientGrimoireEdits.visibleDemonBluffs().size() ? ClientGrimoireEdits.visibleDemonBluffs().get(i) : "";
             this.addRenderableWidget(new GrimoireBluffWidget(MARGIN, startY + i * 42, 32, i, roleId));
         }
     }
@@ -373,6 +387,11 @@ public class AssignRolesScreen extends Screen {
                         headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
             }
             graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
+            if (GrimoireInteractionState.isSelectedNominator(uuid)) {
+                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.YES);
+            } else if (uuid.equals(ClientState.currentNominee)) {
+                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.GOLD);
+            }
             String name = ClientState.playerName(uuid, seat);
             int nameY = headY + HEAD_SIZE + 2;
             drawCenteredAt(graphics, name, headX + HEAD_SIZE / 2, nameY, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
@@ -446,10 +465,10 @@ public class AssignRolesScreen extends Screen {
 
     private void renderBluffLabels(GuiGraphicsExtractor graphics) {
         if (!showBluffs) return;
-        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientState.demonBluffs.isEmpty()) return;
+        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
         int startY = Math.max(55, layoutHeight() / 2 + 18);
         for (int i = 0; i < 3; i++) {
-            String id = i < ClientState.demonBluffs.size() ? ClientState.demonBluffs.get(i) : "";
+            String id = i < ClientGrimoireEdits.visibleDemonBluffs().size() ? ClientGrimoireEdits.visibleDemonBluffs().get(i) : "";
             if (!id.isBlank()) {
                 String name = id.replace('_', ' ');
                 graphics.text(this.font, name, MARGIN + 38, startY + i * 42 + 11, UiDrawing.MUTED, false);

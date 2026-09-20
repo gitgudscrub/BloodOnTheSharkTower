@@ -24,6 +24,8 @@ public final class UiDrawing {
     public static final int GOOD = 0xFF55AAFF;
     public static final int EVIL = 0xFFFF5555;
     public static final int GOLD = 0xFFFFD166;
+    public static final int YES = 0xFF55FF55;
+    public static final int NO = 0xFFFF5555;
     public static final int DEAD = 0xFF8A8A8A;
     public static final int BLACK = 0xFF000000;
 
@@ -79,6 +81,43 @@ public final class UiDrawing {
         int colour = teamColor(role.getTeam());
         graphics.fill(x, y, x + size, y + size, opaque(colour));
         if (size > 2) roleIcon(graphics, role, x + 1, y + 1, size - 2);
+    }
+
+    /**
+     * High-contrast BOTC-style death shroud placed over a role token.
+     *
+     * The old red X disappeared on red Minion/Demon backplates. This dims the
+     * whole token and adds a pale hood/drape silhouette that remains readable
+     * regardless of the underlying team colour.
+     */
+    public static void deathShroud(GuiGraphicsExtractor graphics, int x, int y, int size) {
+        if (size <= 0) return;
+
+        graphics.fill(x, y, x + size, y + size, 0x99101014);
+
+        int left = x + Math.max(2, size / 6);
+        int right = x + size - Math.max(2, size / 6);
+        int hoodLeft = x + size / 3;
+        int hoodRight = x + size - size / 3;
+        int hoodTop = y + Math.max(2, size / 7);
+        int shoulderTop = y + size / 3;
+        int lowerTop = y + (size * 2) / 3;
+        int bottom = y + size - Math.max(2, size / 10);
+
+        int cloth = 0xFFE2E2E8;
+        int shadow = 0xFF34343C;
+
+        // Stepped pixel-art hood and drape.
+        graphics.fill(hoodLeft, hoodTop, hoodRight, shoulderTop + 2, cloth);
+        graphics.fill(x + size / 4, shoulderTop, x + size - size / 4, lowerTop, cloth);
+        graphics.fill(left, lowerTop - 1, right, bottom, cloth);
+
+        // Dark face opening makes the hood read as a shroud rather than a white box.
+        graphics.fill(x + size / 3, shoulderTop, x + size - size / 3,
+                y + size / 2 + 1, shadow);
+
+        // Strong neutral border, independent of team colour.
+        graphics.outline(x - 2, y - 2, size + 4, size + 4, 0xFFF2F2F4);
     }
 
     public static ScriptRole roleOf(PendingRoleAssignment assignment) {

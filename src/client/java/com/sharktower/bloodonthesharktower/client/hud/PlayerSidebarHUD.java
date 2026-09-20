@@ -143,7 +143,7 @@ public final class PlayerSidebarHUD {
         if (electionVisible && shouldShowHand(id)) {
             int handX = x + width - HAND_WIDTH;
             int handY = y + 3;
-            drawHand(graphics, handX, handY, UiDrawing.GOLD);
+            drawHand(graphics, handX, handY, UiDrawing.YES);
         }
     }
 
@@ -169,7 +169,7 @@ public final class PlayerSidebarHUD {
 
     /** Tiny pixel hand so the indicator does not depend on an emoji font. */
     private static void drawHand(GuiGraphicsExtractor graphics, int x, int y, int colour) {
-        int dark = 0xFF6A4A00;
+        int dark = 0xFF174F22;
         // dark silhouette / outline
         graphics.fill(x + 1, y + 1, x + 3, y + 6, dark);
         graphics.fill(x + 3, y, x + 5, y + 6, dark);

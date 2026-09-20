@@ -692,15 +692,17 @@ public final class NightChatManager {
      */
     public static synchronized void serverTick(MinecraftServer server) {
         if (server == null) return;
+
+        // Daytime doorway routing must be responsive enough to catch a sprint
+        // through a 1.5-block trigger. Run it every server tick; only the Night
+        // Storyteller-house automation remains throttled below.
+        DayChatZoneManager.serverTick(server);
+
         houseCheckTicks++;
         if (houseCheckTicks < HOUSE_CHECK_INTERVAL_TICKS) return;
         houseCheckTicks = 0;
 
         cleanupExpiredInvites();
-
-        // Reconcile daytime public/private-zone routing on the same throttled
-        // cadence as the existing Night Chat house checks.
-        DayChatZoneManager.serverTick(server);
 
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         if (api == null) {

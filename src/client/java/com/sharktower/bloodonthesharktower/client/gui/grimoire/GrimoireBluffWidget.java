@@ -1,6 +1,6 @@
 package com.sharktower.bloodonthesharktower.client.gui.grimoire;
 
-import com.sharktower.bloodonthesharktower.client.gui.RoleSelectionScreen;
+import com.sharktower.bloodonthesharktower.client.gui.DemonBluffSelectionScreen;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
@@ -36,7 +36,7 @@ public final class GrimoireBluffWidget extends AbstractWidget {
 
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        Minecraft.getInstance().gui.setScreen(RoleSelectionScreen.forBluff(index));
+        Minecraft.getInstance().gui.setScreen(new DemonBluffSelectionScreen());
     }
 
     @Override

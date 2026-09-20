@@ -23,7 +23,9 @@ import java.util.UUID;
  */
 public final class ElectionManager {
     public static final int PISTON_POWER_DELAY_TICKS = 2;
+    public static final int START_COUNTDOWN_TICKS = 60;
     private static long observedVoteStart = -1L;
+    private static int countdownTicksRemaining;
     private static int ticksUntilNextSeat = VotePresentationSettings.stepTicks();
 
     private ElectionManager() {}
@@ -42,6 +44,7 @@ public final class ElectionManager {
         boolean clockRunning = DaytimeState.isVoteInProgress() || DaytimeState.isExileSupportInProgress();
         if (server == null || !clockRunning || !ElectionState.isVotingPhaseActive()) {
             observedVoteStart = -1L;
+            countdownTicksRemaining = 0;
             ticksUntilNextSeat = VotePresentationSettings.stepTicks();
             return;
         }
@@ -49,6 +52,7 @@ public final class ElectionManager {
         long start = ElectionState.getStartTime();
         if (start != observedVoteStart) {
             observedVoteStart = start;
+            countdownTicksRemaining = START_COUNTDOWN_TICKS;
             ticksUntilNextSeat = VotePresentationSettings.stepTicks();
             freezePlayersInSeats(server, ElectionState.getElectionOrder());
             sendStartSounds(server);
@@ -63,6 +67,15 @@ public final class ElectionManager {
         // Voting is a physical town-square moment: keep every seated player on
         // their configured cushion/seat until the clockwise sweep is complete.
         keepPlayersFrozen(server, ElectionState.getElectionOrder());
+
+        // Give the table a clear three-second visual countdown before the first
+        // seat can lock. Clients animate 3/2/1 from the vote-start state; this
+        // server-side hold makes that presentation authoritative rather than
+        // allowing the first voter to be counted underneath it.
+        if (countdownTicksRemaining > 0) {
+            countdownTicksRemaining--;
+            return;
+        }
 
         if (--ticksUntilNextSeat > 0) return;
         ticksUntilNextSeat = VotePresentationSettings.stepTicks();
@@ -122,6 +135,7 @@ public final class ElectionManager {
     public static void cancelAllTimers() {
         ElectionState.resetVotingPhase();
         observedVoteStart = -1L;
+        countdownTicksRemaining = 0;
         ticksUntilNextSeat = VotePresentationSettings.stepTicks();
     }
 

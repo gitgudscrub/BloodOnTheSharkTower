@@ -105,6 +105,7 @@ public final class ClientState {
     public static double clockReferenceY = 0.0D;
     public static double clockReferenceZ = 0.0D;
     public static long voteClockStepClientNanos = System.nanoTime();
+    public static long voteCountdownStartClientNanos = 0L;
 
     /** Storyteller/grimoire snapshot state. */
     public static Map<UUID, PendingRoleAssignment> grimoireRoles = new HashMap<>();
@@ -271,7 +272,16 @@ public final class ClientState {
             double referenceY,
             double referenceZ
     ) {
+        boolean electionWasRunning = voteInProgress || exileSupportVote;
+        boolean electionWillRun = active || exileSupport;
         boolean voteActiveChanged = voteInProgress != active;
+
+        if (!electionWasRunning && electionWillRun) {
+            voteCountdownStartClientNanos = System.nanoTime();
+        } else if (!electionWillRun) {
+            voteCountdownStartClientNanos = 0L;
+        }
+
         voteInProgress = active;
         effectiveVoteCount = effectiveCount;
         voteThreshold = threshold;
@@ -328,6 +338,25 @@ public final class ClientState {
         lastExecutedRoleName = executedRoleName == null ? "" : executedRoleName;
         demonVotedToday = demonVoted;
         minionNominatedToday = minionNominated;
+    }
+
+    /**
+     * Local presentation timer for the server's three-second pre-clock hold.
+     * Returns 3, 2, 1 while the countdown should be visible, otherwise 0.
+     */
+    public static int voteCountdownNumber() {
+        if (!(voteInProgress || exileSupportVote)
+                || voteClockComplete
+                || voteCountdownStartClientNanos <= 0L) {
+            return 0;
+        }
+
+        long elapsedNanos = Math.max(0L, System.nanoTime() - voteCountdownStartClientNanos);
+        long remainingNanos = 3_000_000_000L - elapsedNanos;
+        if (remainingNanos <= 0L) return 0;
+
+        return (int) Math.min(3L,
+                Math.max(1L, (remainingNanos + 999_999_999L) / 1_000_000_000L));
     }
 
     public static boolean isHandRaised(UUID id) {

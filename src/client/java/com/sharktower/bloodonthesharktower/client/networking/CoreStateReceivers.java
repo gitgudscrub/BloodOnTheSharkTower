@@ -1,11 +1,11 @@
 package com.sharktower.bloodonthesharktower.client.networking;
 
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
+import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.hud.GameEndAnimationHUD;
 import com.sharktower.bloodonthesharktower.client.hud.ClientTriggeredNightOrder;
 import com.sharktower.bloodonthesharktower.client.gui.AssignRolesScreen;
 import com.sharktower.bloodonthesharktower.client.gui.BaseThreeScreen;
-import com.sharktower.bloodonthesharktower.client.gui.AbilityGrimoireScreen;
 import com.sharktower.bloodonthesharktower.client.gui.RoleBagScreen;
 import com.sharktower.bloodonthesharktower.networking.NetworkSyncAckC2SPayload;
 import com.sharktower.bloodonthesharktower.networking.NetworkSyncProbeS2CPayload;
@@ -115,15 +115,20 @@ public final class CoreStateReceivers {
 
         ClientPlayNetworking.registerGlobalReceiver(AbilityGrimoireS2CPayload.TYPE, (payload, context) -> {
             Minecraft client = Minecraft.getInstance();
-            client.execute(() -> client.gui.setScreen(new AbilityGrimoireScreen(
-                    payload.roles(),
-                    payload.seatNumbers(),
-                    payload.reminders(),
-                    payload.sourceRoleId()
-            )));
+            client.execute(() -> {
+                ClientGrimoireEdits.applyAbilityGrimoireSnapshot(
+                        payload.roles(),
+                        payload.reminders(),
+                        payload.demonBluffs()
+                );
+                // Open the normal personal Grimoire so the Spy/Widow sees the
+                // shared information in the same place they keep their own notes.
+                client.gui.setScreen(new AssignRolesScreen());
+            });
             BloodOnTheSharktower.LOGGER.info(
-                    "Client received one-use ability Grimoire from role '{}': {} roles, {} seats, {} reminder groups",
-                    payload.sourceRoleId(), payload.roles().size(), payload.seatNumbers().size(), payload.reminders().size()
+                    "Client received shared ability Grimoire from role '{}': {} roles, {} seats, {} reminder groups, {} bluffs",
+                    payload.sourceRoleId(), payload.roles().size(), payload.seatNumbers().size(),
+                    payload.reminders().size(), payload.demonBluffs().size()
             );
         });
 

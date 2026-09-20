@@ -6,6 +6,7 @@ import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
+import com.sharktower.bloodonthesharktower.sound.ModSounds;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.UUID;
@@ -33,8 +34,11 @@ public final class ExecutionManager {
         ServerState.executionToday = true;
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
+        VotingManager.clearLastResult();
         BloodOnTheSharktower.LOGGER.info("Executed player {} (forced={}, butcher={})", player, forced, butcherUuid);
+        ModSounds.playForAll(server, ModSounds.EXECUTION);
         StateBroadcaster.broadcastDeathStatus(server);
+        StateBroadcaster.broadcastVoteState(server);
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastGrimoire(server);
@@ -45,14 +49,18 @@ public final class ExecutionManager {
         ServerState.executionToday = true;
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
+        VotingManager.clearLastResult();
         BloodOnTheSharktower.LOGGER.info("Execution failed/survived for {} (forced={}, butcher={})", player, forced, butcherUuid);
+        ModSounds.playForAll(server, ModSounds.EXECUTION_SURVIVED);
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
+        StateBroadcaster.broadcastVoteState(server);
     }
     public static void noExecution(MinecraftServer server) {
         DaytimeState.clearMarkedForExecution();
         DaytimeState.clearStorytellerMFE();
         DaytimeState.closeNominations();
+        VotingManager.clearLastResult();
         ServerState.executionToday = false;
         BloodOnTheSharktower.LOGGER.info("Day closed with no execution.");
         StateBroadcaster.broadcastDayNightState(server);

@@ -381,6 +381,9 @@ public final class SetupOperations {
         if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) {
             return Result.fail("Demon bluffs must be good characters.");
         }
+        if (isUnavailableDemonBluff(role.getId())) {
+            return Result.fail(role.getDisplayName() + " is in play or shown as a believed role and cannot be a Demon bluff.");
+        }
         if (StorytellerState.DEMON_BLUFFS.stream().anyMatch(existing -> existing.getId().equals(role.getId()))) {
             return Result.fail(role.getDisplayName() + " is already a bluff.");
         }
@@ -391,6 +394,46 @@ public final class SetupOperations {
         return Result.ok("Added Demon bluff: " + role.getDisplayName() + ".");
     }
 
+    /**
+     * Atomically replace the three Demon bluff slots.
+     *
+     * The UI collects all three choices before sending them, so validation is
+     * performed for the whole set before StorytellerState is mutated.
+     */
+    public static Result setBluffs(List<String> roleIds) {
+        if (roleIds == null || roleIds.size() != 3) {
+            return Result.fail("Choose exactly 3 Demon bluffs.");
+        }
+
+        List<ScriptRole> chosen = new ArrayList<>();
+        Set<String> seen = new java.util.HashSet<>();
+
+        for (String roleId : roleIds) {
+            ScriptRole role = resolveScriptRole(roleId);
+            if (role == null) return Result.fail("Unknown Demon bluff role '" + roleId + "'.");
+            if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) {
+                return Result.fail("Demon bluffs must be good characters.");
+            }
+
+            String key = role.getId().toLowerCase(java.util.Locale.ROOT);
+            if (!seen.add(key)) {
+                return Result.fail(role.getDisplayName() + " was selected more than once.");
+            }
+            if (isUnavailableDemonBluff(role.getId())) {
+                return Result.fail(role.getDisplayName()
+                        + " is in play or shown as a believed role and cannot be a Demon bluff.");
+            }
+
+            chosen.add(role);
+        }
+
+        StorytellerState.DEMON_BLUFFS.clear();
+        StorytellerState.DEMON_BLUFFS.addAll(chosen);
+        return Result.ok("Set Demon bluffs: "
+                + chosen.stream().map(ScriptRole::getDisplayName)
+                .collect(java.util.stream.Collectors.joining(", ")) + ".");
+    }
+
     /** Replaces one of the three original BOTB Demon bluff slots. */
     public static Result setBluff(int index, String roleId) {
         if (index < 0 || index > 2) return Result.fail("Demon bluff slot must be 1-3.");
@@ -398,6 +441,9 @@ public final class SetupOperations {
         if (role == null) return Result.fail("Unknown role '" + roleId + "'.");
         if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) {
             return Result.fail("Demon bluffs must be good characters.");
+        }
+        if (isUnavailableDemonBluff(role.getId())) {
+            return Result.fail(role.getDisplayName() + " is in play or shown as a believed role and cannot be a Demon bluff.");
         }
         for (int i = 0; i < StorytellerState.DEMON_BLUFFS.size(); i++) {
             if (i != index && StorytellerState.DEMON_BLUFFS.get(i).getId().equals(role.getId())) {
@@ -410,6 +456,26 @@ public final class SetupOperations {
         if (index == StorytellerState.DEMON_BLUFFS.size()) StorytellerState.DEMON_BLUFFS.add(role);
         else StorytellerState.DEMON_BLUFFS.set(index, role);
         return Result.ok("Set Demon bluff slot " + (index + 1) + " to " + role.getDisplayName() + ".");
+    }
+
+    private static boolean isUnavailableDemonBluff(String roleId) {
+        if (roleId == null || roleId.isBlank()) return true;
+        String wanted = roleId.toLowerCase(java.util.Locale.ROOT);
+
+        boolean actualInPlay = workingRoles().values().stream()
+                .filter(SetupOperations::isAssigned)
+                .map(PendingRoleAssignment::getRoleId)
+                .filter(java.util.Objects::nonNull)
+                .map(id -> id.toLowerCase(java.util.Locale.ROOT))
+                .anyMatch(wanted::equals);
+        if (actualInPlay) return true;
+
+        return workingPerceivedRoles().values().stream()
+                .filter(SetupOperations::isAssigned)
+                .map(PendingRoleAssignment::getRoleId)
+                .filter(java.util.Objects::nonNull)
+                .map(id -> id.toLowerCase(java.util.Locale.ROOT))
+                .anyMatch(wanted::equals);
     }
 
     public static Result clearBluffs() {
@@ -428,17 +494,30 @@ public final class SetupOperations {
         return Result.ok("Added reminder to seat " + seat + ": " + cleaned);
     }
 
-    /** Add an original-style source-role reminder marker, e.g. Steward: Know. */
+    /** Add an original-style source-role reminder marker, e.g. Steward: Know or Imp: Kill. */
     public static Result addRoleReminder(int seat, String roleId, String text) {
         UUID player = playerBySeat(seat);
         if (player == null) return Result.fail("No player is assigned to seat " + seat + ".");
-        Role sourceRole = Role.findById(roleId);
-        if (sourceRole == null || sourceRole == Role.NO_ROLE) return Result.fail("Unknown reminder source role: " + roleId);
+
+        ScriptRole sourceRole = resolveScriptRole(roleId);
+        if (sourceRole == null) return Result.fail("Unknown reminder source role: " + roleId);
+
         String cleaned = text == null ? "" : text.trim();
         if (cleaned.isEmpty()) return Result.fail("Reminder text cannot be blank.");
+
+        Reminder reminder;
+        if (sourceRole instanceof ScriptRole.Official official) {
+            reminder = new Reminder(cleaned, Optional.of(official.role()));
+        } else {
+            // Custom/script-only roles keep their role id so the client can use
+            // that script role's artwork when rendering the reminder token.
+            reminder = Reminder.forCustomRole(cleaned, sourceRole.getId());
+        }
+
         StorytellerState.REMINDERS.computeIfAbsent(player, ignored -> new ArrayList<>())
-                .add(new Reminder(cleaned, Optional.of(sourceRole)));
-        return Result.ok("Added " + sourceRole.getDisplayName() + " reminder to seat " + seat + ": " + cleaned);
+                .add(reminder);
+        return Result.ok("Added " + sourceRole.getDisplayName()
+                + " reminder to seat " + seat + ": " + cleaned);
     }
 
     public static Result removeReminder(int seat, int index) {

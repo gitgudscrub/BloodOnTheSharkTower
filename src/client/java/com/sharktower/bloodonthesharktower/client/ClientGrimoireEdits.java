@@ -26,6 +26,12 @@ public final class ClientGrimoireEdits {
     private static final Map<UUID, PendingRoleAssignment> PERCEIVED_ROLE_OVERRIDES = new HashMap<>();
     private static final Map<UUID, List<Reminder>> REMINDER_OVERRIDES = new HashMap<>();
 
+    // Ability-sourced information is kept separate from the player's own reminder
+    // notebook so a Spy/Widow refresh can replace the Storyteller snapshot without
+    // deleting reminders the player personally added.
+    private static final Map<UUID, List<Reminder>> SHARED_ABILITY_REMINDERS = new HashMap<>();
+    private static List<String> SHARED_ABILITY_DEMON_BLUFFS = List.of();
+
     private ClientGrimoireEdits() {}
 
     public static boolean isLocalStoryteller() {
@@ -61,11 +67,67 @@ public final class ClientGrimoireEdits {
         if (isLocalStoryteller() || ClientState.rolesRevealed) {
             return ClientState.grimoireReminders.getOrDefault(playerId, List.of());
         }
-        return List.copyOf(REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
+
+        List<Reminder> combined = new ArrayList<>(
+                SHARED_ABILITY_REMINDERS.getOrDefault(playerId, List.of()));
+        combined.addAll(REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
+        return List.copyOf(combined);
     }
 
     public static boolean hasVisibleRoleNotes() {
         return !ClientState.grimoireRoles.isEmpty() || !ROLE_OVERRIDES.isEmpty();
+    }
+
+    /**
+     * Apply a Spy/Widow share into the ordinary personal Grimoire.
+     *
+     * True roles replace role guesses, Storyteller reminder tokens replace the
+     * previous shared snapshot, but the player's own reminder notes are retained.
+     * Demon bluffs are kept in a local ability overlay so later ordinary server
+     * Grimoire syncs cannot immediately erase them.
+     */
+    public static void applyAbilityGrimoireSnapshot(
+            Map<UUID, PendingRoleAssignment> roles,
+            Map<UUID, List<Reminder>> reminders,
+            List<String> demonBluffs
+    ) {
+        if (isLocalStoryteller()) return;
+
+        ROLE_OVERRIDES.clear();
+        PERCEIVED_ROLE_OVERRIDES.clear();
+
+        if (roles != null) {
+            for (Map.Entry<UUID, PendingRoleAssignment> entry : roles.entrySet()) {
+                PendingRoleAssignment assignment = entry.getValue();
+                if (assignment != null && assignment.isCustomRole() && ClientState.currentScript != null) {
+                    assignment = assignment.resolveCustomRole(ClientState.currentScript);
+                }
+                if (entry.getKey() != null && assignment != null) {
+                    ROLE_OVERRIDES.put(entry.getKey(), assignment);
+                }
+            }
+        }
+
+        SHARED_ABILITY_REMINDERS.clear();
+        if (reminders != null) {
+            for (Map.Entry<UUID, List<Reminder>> entry : reminders.entrySet()) {
+                if (entry.getKey() == null || entry.getValue() == null) continue;
+                SHARED_ABILITY_REMINDERS.put(entry.getKey(), List.copyOf(entry.getValue()));
+            }
+        }
+
+        SHARED_ABILITY_DEMON_BLUFFS = demonBluffs == null
+                ? List.of()
+                : List.copyOf(demonBluffs);
+    }
+
+    public static List<String> visibleDemonBluffs() {
+        if (isLocalStoryteller() || ClientState.rolesRevealed) {
+            return ClientState.demonBluffs;
+        }
+        return SHARED_ABILITY_DEMON_BLUFFS.isEmpty()
+                ? ClientState.demonBluffs
+                : SHARED_ABILITY_DEMON_BLUFFS;
     }
 
     public static void assignRole(UUID playerId, ScriptRole role) {
@@ -137,16 +199,30 @@ public final class ClientGrimoireEdits {
     }
 
     public static void removeReminder(UUID playerId, int index) {
-        if (playerId == null) return;
-        List<Reminder> reminders = new ArrayList<>(REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
-        if (index < 0 || index >= reminders.size()) return;
-        reminders.remove(index);
-        if (reminders.isEmpty()) REMINDER_OVERRIDES.remove(playerId);
-        else REMINDER_OVERRIDES.put(playerId, reminders);
+        if (playerId == null || index < 0) return;
+
+        List<Reminder> shared = new ArrayList<>(
+                SHARED_ABILITY_REMINDERS.getOrDefault(playerId, List.of()));
+        if (index < shared.size()) {
+            shared.remove(index);
+            if (shared.isEmpty()) SHARED_ABILITY_REMINDERS.remove(playerId);
+            else SHARED_ABILITY_REMINDERS.put(playerId, shared);
+            return;
+        }
+
+        int personalIndex = index - shared.size();
+        List<Reminder> personal = new ArrayList<>(
+                REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
+        if (personalIndex < 0 || personalIndex >= personal.size()) return;
+        personal.remove(personalIndex);
+        if (personal.isEmpty()) REMINDER_OVERRIDES.remove(playerId);
+        else REMINDER_OVERRIDES.put(playerId, personal);
     }
 
     public static void clearReminders(UUID playerId) {
-        if (playerId != null) REMINDER_OVERRIDES.remove(playerId);
+        if (playerId == null) return;
+        REMINDER_OVERRIDES.remove(playerId);
+        SHARED_ABILITY_REMINDERS.remove(playerId);
     }
 
     /** Resolve a seated player from either the Grimoire seat map or live seat map. */

@@ -77,6 +77,12 @@ public final class PlayerSetupScreen extends Screen {
             }
         }
 
+        if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.phase() != GamePhase.SETUP) {
+            this.addRenderableWidget(Button.builder(Component.literal("Game Actions"), b ->
+                            this.minecraft.gui.setScreen(new GrimoirePlayerActionScreen(playerId, seat)))
+                    .bounds(cx - 100, this.height - 55, 200, 20).build());
+        }
+
         this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b ->
                         this.minecraft.gui.setScreen(new AssignRolesScreen()))
                 .bounds(cx - 100, this.height - 30, 200, 20).build());

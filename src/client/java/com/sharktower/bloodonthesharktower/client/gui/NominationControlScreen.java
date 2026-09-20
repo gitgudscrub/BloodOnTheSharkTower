@@ -61,8 +61,10 @@ public final class NominationControlScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("No Execution"), b -> action("no_execution"))
                 .bounds(cx + 65, actionY + 50, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Execute Marked").withStyle(ChatFormatting.RED), b -> action("execute_marked"))
-                .bounds(cx - 60, actionY + 75, 120, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Execute — Dies").withStyle(ChatFormatting.RED), b -> action("execute_marked"))
+                .bounds(cx - 125, actionY + 75, 120, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Execute — Lives").withStyle(ChatFormatting.GOLD), b -> action("execute_marked_survives"))
+                .bounds(cx + 5, actionY + 75, 120, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
                 .bounds(cx - 60, this.height - 27, 120, 20).build());
     }

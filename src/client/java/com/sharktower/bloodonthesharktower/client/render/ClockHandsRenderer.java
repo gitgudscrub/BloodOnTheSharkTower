@@ -59,7 +59,14 @@ public final class ClockHandsRenderer {
         Point center = new Point(ClientState.clockCenterX, ClientState.clockCenterY + 0.045D, ClientState.clockCenterZ);
 
         Point minuteTarget;
-        if (electionClock) {
+        if (electionClock && ClientState.voteCountdownNumber() > 0) {
+            // Keep the long hand on the nominee/exile target for the visible
+            // 3/2/1. It jumps to the first voter only when the server-authoritative
+            // pre-clock hold has elapsed.
+            minuteTarget = liveOrFallback(minecraft, electionTarget,
+                    ClientState.clockReferenceAvailable,
+                    ClientState.clockReferenceX, ClientState.clockReferenceY, ClientState.clockReferenceZ);
+        } else if (electionClock) {
             minuteTarget = voteSweepTarget(minecraft, center, electionTarget);
         } else {
             minuteTarget = liveOrFallback(minecraft, electionTarget,

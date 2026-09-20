@@ -38,22 +38,24 @@ public final class DayChatZoneManager {
     private static final UUID SHARED_DAY_GROUP_ID = UUID.nameUUIDFromBytes(
             "blood-on-the-sharktower:day:shared".getBytes(StandardCharsets.UTF_8));
 
-    // A trigger is intentionally forgiving: players only need to walk through the
-    // doorway, not stand on an exact block. Horizontal distance is checked separately
-    // from height so steps/slabs at an entrance do not make the trigger unreliable.
-    private static final double TRIGGER_RADIUS = 2.25D;
+    // Doorway triggers use a true 1.5-block radius around the recorded entrance
+    // or exit point. With an empty doorway, place entrance and exit markers on
+    // opposite sides so crossing the threshold has an unambiguous direction.
+    private static final double TRIGGER_RADIUS = 1.50D;
     private static final double TRIGGER_RADIUS_SQUARED = TRIGGER_RADIUS * TRIGGER_RADIUS;
-    private static final double TRIGGER_VERTICAL_TOLERANCE = 2.75D;
 
-    // DayChatZoneManager is called from NightChatManager's throttled tick. A short
-    // scan-based cooldown prevents an entrance/exit pair placed close together from
-    // immediately bouncing a player back into the room after they leave.
-    private static final int EXIT_COOLDOWN_SCANS = 3;
+    // Day Chat routing now scans every server tick so sprinting players cannot
+    // skip across a doorway between checks. Keep a short grace period on both
+    // sides of the doorway so nearby entrance/exit markers cannot immediately
+    // bounce a player back to the route they just left.
+    private static final int EXIT_COOLDOWN_TICKS = 15;
+    private static final int ENTRY_EXIT_GRACE_TICKS = 10;
 
     private static final Map<String, ChatZone> ZONES = new TreeMap<>();
     private static final Set<UUID> DAY_ROUTED = new HashSet<>();
     private static final Map<UUID, String> PLAYER_ZONE = new HashMap<>();
     private static final Map<UUID, Integer> EXIT_COOLDOWN = new HashMap<>();
+    private static final Map<UUID, Integer> ENTRY_EXIT_GRACE = new HashMap<>();
     private static int lastObservedDay = -1;
     private static boolean privateWindowClosedForDay;
 
@@ -87,6 +89,7 @@ public final class DayChatZoneManager {
         ZONES.clear();
         PLAYER_ZONE.clear();
         EXIT_COOLDOWN.clear();
+        ENTRY_EXIT_GRACE.clear();
         DAY_ROUTED.clear();
         if (zones == null) return;
         for (Map.Entry<String, PersistentZone> entry : zones.entrySet()) {
@@ -108,7 +111,7 @@ public final class DayChatZoneManager {
         }
     }
 
-    /** Called from NightChatManager's existing throttled server tick. */
+    /** Called every server tick from NightChatManager so sprinting cannot skip a doorway trigger. */
     public static synchronized void serverTick(MinecraftServer server) {
         if (server == null) return;
 
@@ -119,8 +122,9 @@ public final class DayChatZoneManager {
 
         if (NightChatManager.isActive()) {
             // NightChatManager has already reassigned participants to the shared
-            // night group. Only forget daytime bookkeeping; never null their group.
-            forgetDayRouting(api);
+            // night group. Only forget daytime bookkeeping once; never null their
+            // Night group or repeatedly remove the same Day groups every tick.
+            if (!DAY_ROUTED.isEmpty() || !PLAYER_ZONE.isEmpty()) forgetDayRouting(api);
             return;
         }
 
@@ -133,6 +137,7 @@ public final class DayChatZoneManager {
             lastObservedDay = ServerState.currentDay;
             privateWindowClosedForDay = false;
             EXIT_COOLDOWN.clear();
+            ENTRY_EXIT_GRACE.clear();
         }
         if (DaytimeState.areNominationsOpen()) privateWindowClosedForDay = true;
 
@@ -146,6 +151,7 @@ public final class DayChatZoneManager {
             DAY_ROUTED.remove(id);
             PLAYER_ZONE.remove(id);
             EXIT_COOLDOWN.remove(id);
+            ENTRY_EXIT_GRACE.remove(id);
         }
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -172,10 +178,15 @@ public final class DayChatZoneManager {
                 }
 
                 // While inside a private chat, position does not matter. The player
-                // stays private until they physically pass an exit trigger.
-                if (zone.nearAnyExit(player)) {
+                // stays private until they physically pass an exit trigger. A brief
+                // post-entry grace prevents an entrance/exit pair on opposite sides
+                // of one doorway from firing back-to-back while the player clears it.
+                if (ENTRY_EXIT_GRACE.getOrDefault(id, 0) > 0) {
+                    assignPrivateZone(api, id, currentZone);
+                } else if (zone.nearAnyExit(player)) {
                     assignSharedDay(api, id);
-                    EXIT_COOLDOWN.put(id, EXIT_COOLDOWN_SCANS);
+                    EXIT_COOLDOWN.put(id, EXIT_COOLDOWN_TICKS);
+                    ENTRY_EXIT_GRACE.remove(id);
                 } else {
                     assignPrivateZone(api, id, currentZone);
                 }
@@ -194,6 +205,7 @@ public final class DayChatZoneManager {
                 assignSharedDay(api, id);
             } else {
                 assignPrivateZone(api, id, entering);
+                ENTRY_EXIT_GRACE.put(id, ENTRY_EXIT_GRACE_TICKS);
             }
         }
 
@@ -203,6 +215,7 @@ public final class DayChatZoneManager {
         DAY_ROUTED.removeIf(id -> !online.contains(id));
         PLAYER_ZONE.keySet().removeIf(id -> !online.contains(id));
         EXIT_COOLDOWN.keySet().removeIf(id -> !online.contains(id));
+        ENTRY_EXIT_GRACE.keySet().removeIf(id -> !online.contains(id));
     }
 
     public static synchronized String statusLine() {
@@ -291,6 +304,7 @@ public final class DayChatZoneManager {
             return "No private chat named '" + rawName + "' exists.";
         }
         PLAYER_ZONE.entrySet().removeIf(entry -> name.equals(entry.getValue()));
+        ENTRY_EXIT_GRACE.keySet().removeIf(id -> !PLAYER_ZONE.containsKey(id));
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         if (api != null) removeGroup(api, zoneGroupId(name));
         MapConfigurationStore.saveQuietly();
@@ -306,6 +320,7 @@ public final class DayChatZoneManager {
         ZONES.clear();
         PLAYER_ZONE.clear();
         EXIT_COOLDOWN.clear();
+        ENTRY_EXIT_GRACE.clear();
         MapConfigurationStore.saveQuietly();
         return "Cleared " + count + " daytime private chat" + (count == 1 ? "" : "s") + ".";
     }
@@ -336,8 +351,18 @@ public final class DayChatZoneManager {
         try {
             VoicechatConnection connection = api.getConnectionOf(playerId);
             if (connection == null || !connection.isConnected()) return;
+
+            Group targetGroup = ensureSharedDayGroup(api);
+            Group currentGroup = connection.getGroup();
+            boolean alreadyShared = currentGroup != null
+                    && SHARED_DAY_GROUP_ID.equals(currentGroup.getId())
+                    && DAY_ROUTED.contains(playerId)
+                    && !PLAYER_ZONE.containsKey(playerId);
+            if (alreadyShared) return;
+
             String oldZone = PLAYER_ZONE.remove(playerId);
-            connection.setGroup(ensureSharedDayGroup(api));
+            ENTRY_EXIT_GRACE.remove(playerId);
+            connection.setGroup(targetGroup);
             DAY_ROUTED.add(playerId);
             if (oldZone != null && !PLAYER_ZONE.containsValue(oldZone)) removeGroup(api, zoneGroupId(oldZone));
         } catch (Throwable t) {
@@ -351,6 +376,17 @@ public final class DayChatZoneManager {
         try {
             VoicechatConnection connection = api.getConnectionOf(playerId);
             if (connection == null || !connection.isConnected()) return;
+
+            UUID targetId = zoneGroupId(zoneName);
+            Group currentGroup = connection.getGroup();
+            boolean alreadyPrivate = zoneName.equals(PLAYER_ZONE.get(playerId))
+                    && currentGroup != null
+                    && targetId.equals(currentGroup.getId());
+            if (alreadyPrivate) {
+                DAY_ROUTED.add(playerId);
+                return;
+            }
+
             String oldZone = PLAYER_ZONE.put(playerId, zoneName);
             connection.setGroup(ensureZoneGroup(api, zoneName));
             DAY_ROUTED.add(playerId);
@@ -382,6 +418,7 @@ public final class DayChatZoneManager {
         DAY_ROUTED.clear();
         PLAYER_ZONE.clear();
         EXIT_COOLDOWN.clear();
+        ENTRY_EXIT_GRACE.clear();
         removeGroup(api, SHARED_DAY_GROUP_ID);
         for (String name : ZONES.keySet()) removeGroup(api, zoneGroupId(name));
     }
@@ -443,11 +480,16 @@ public final class DayChatZoneManager {
     }
 
     private static void tickCooldowns() {
-        if (EXIT_COOLDOWN.isEmpty()) return;
-        for (UUID id : new HashSet<>(EXIT_COOLDOWN.keySet())) {
-            int next = EXIT_COOLDOWN.getOrDefault(id, 0) - 1;
-            if (next <= 0) EXIT_COOLDOWN.remove(id);
-            else EXIT_COOLDOWN.put(id, next);
+        tickCooldownMap(EXIT_COOLDOWN);
+        tickCooldownMap(ENTRY_EXIT_GRACE);
+    }
+
+    private static void tickCooldownMap(Map<UUID, Integer> cooldowns) {
+        if (cooldowns.isEmpty()) return;
+        for (UUID id : new HashSet<>(cooldowns.keySet())) {
+            int next = cooldowns.getOrDefault(id, 0) - 1;
+            if (next <= 0) cooldowns.remove(id);
+            else cooldowns.put(id, next);
         }
     }
 
@@ -499,10 +541,9 @@ public final class DayChatZoneManager {
 
         boolean matches(ServerPlayer player) {
             double dx = player.getX() - x;
+            double dy = player.getY() - y;
             double dz = player.getZ() - z;
-            double dy = Math.abs(player.getY() - y);
-            return (dx * dx + dz * dz) <= TRIGGER_RADIUS_SQUARED
-                    && dy <= TRIGGER_VERTICAL_TOLERANCE;
+            return dx * dx + dy * dy + dz * dz <= TRIGGER_RADIUS_SQUARED;
         }
 
         double distanceSquared(TriggerPoint other) {

@@ -129,7 +129,7 @@ public final class NightVisitInfoHUD {
         if (!infoLines.isEmpty()) {
             lineY += 2;
             for (String line : infoLines) {
-                graphics.text(minecraft.font, line, textX, lineY, RED, true);
+                graphics.text(minecraft.font, line, textX, lineY, yesNoColour(line, RED), true);
                 lineY += 11;
             }
         }
@@ -137,12 +137,20 @@ public final class NightVisitInfoHUD {
         lineY += 3;
         String status = "Droisoned: " + (droisoned ? "YES" : "NO");
         graphics.text(minecraft.font, status, textX, lineY,
-                droisoned ? RED : GREEN, true);
+                droisoned ? UiDrawing.YES : UiDrawing.NO, true);
 
         if (vortoxInPlay) {
             lineY += 11;
-            graphics.text(minecraft.font, "Vortox: YES", textX, lineY, RED, true);
+            graphics.text(minecraft.font, "Vortox: YES", textX, lineY, UiDrawing.YES, true);
         }
+    }
+
+    private static int yesNoColour(String text, int fallback) {
+        if (text == null) return fallback;
+        String normalized = text.trim().toUpperCase(Locale.ROOT);
+        if (normalized.endsWith("YES")) return UiDrawing.YES;
+        if (normalized.endsWith("NO")) return UiDrawing.NO;
+        return fallback;
     }
 
     private static boolean isVortoxInPlay() {
