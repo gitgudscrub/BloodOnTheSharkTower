@@ -77,6 +77,8 @@ public class AssignRolesScreen extends Screen {
     // signature so widget instances are rebuilt as soon as the live seat map changes.
     private String lastSeatLayoutSignature = "";
 
+    private record GrimHit(UUID playerId, int seat, PendingRoleAssignment assignment) {}
+
     public AssignRolesScreen() {
         super(Component.literal("Blood on the Sharktower — Grimoire"));
     }
@@ -738,7 +740,96 @@ public class AssignRolesScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return super.mouseClicked(remapMouse(event), doubleClick);
+        MouseButtonEvent mapped = remapMouse(event);
+
+        // Minecraft's AbstractWidget RMB dispatch has been inconsistent on the
+        // scaled Grim. Resolve player/head/role right-clicks at screen level so
+        // Player Actions and Shift+RMB nominations are always available.
+        if (mapped.buttonInfo().button() == 1) {
+            GrimHit hit = grimHitAt(mapped.x(), mapped.y());
+            if (hit != null) {
+                if (mapped.hasShiftDown()) {
+                    GrimoirePlayerClicks.handle(
+                            hit.playerId(), hit.seat(), hit.assignment(), mapped);
+                } else if (ClientGrimoireEdits.isLocalStoryteller()) {
+                    this.minecraft.gui.setScreen(
+                            new GrimoirePlayerActionScreen(hit.playerId(), hit.seat()));
+                }
+                return true;
+            }
+        }
+
+        return super.mouseClicked(mapped, doubleClick);
+    }
+
+    /**
+     * Resolve the visible player element under a Grim-space mouse coordinate.
+     * Covers portraits, true role tokens and Drunk/Marionette believed tokens.
+     */
+    private GrimHit grimHitAt(double mouseX, double mouseY) {
+        List<Map.Entry<UUID, Integer>> seats = sortedSeats();
+        if (seats.isEmpty()) return null;
+
+        int centerX = layoutWidth() / 2;
+        int centerY = layoutHeight() / 2;
+        int radius = Math.max(54, Math.min(centerX, centerY) - 50);
+        int innerRadius = Math.max(24, radius - 47);
+        int count = seats.size();
+
+        for (int i = 0; i < count; i++) {
+            Map.Entry<UUID, Integer> entry = seats.get(i);
+            UUID uuid = entry.getKey();
+            int seat = entry.getValue() == null ? i + 1 : entry.getValue();
+            PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
+            double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
+
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
+            if (inside(mouseX, mouseY, headX, headY, HEAD_SIZE, HEAD_SIZE)) {
+                return new GrimHit(uuid, seat, assignment);
+            }
+
+            double tokenCenterX = centerX + radius * Math.cos(angle);
+            double tokenCenterY = centerY + radius * Math.sin(angle);
+
+            if (isDeceivedCharacter(assignment)) {
+                double tangentX = -Math.sin(angle);
+                double tangentY = Math.cos(angle);
+                double trueOffset = -(PERCEIVED_ROLE_SIZE + DECEIVED_ROLE_GAP) / 2.0;
+                double perceivedOffset = (ROLE_SIZE + DECEIVED_ROLE_GAP) / 2.0;
+
+                int roleX = (int) Math.round(tokenCenterX + tangentX * trueOffset) - ROLE_SIZE / 2;
+                int roleY = (int) Math.round(tokenCenterY + tangentY * trueOffset) - ROLE_SIZE / 2;
+                if (inside(mouseX, mouseY, roleX, roleY, ROLE_SIZE, ROLE_SIZE)) {
+                    return new GrimHit(uuid, seat, assignment);
+                }
+
+                int perceivedX = (int) Math.round(tokenCenterX + tangentX * perceivedOffset)
+                        - PERCEIVED_ROLE_SIZE / 2;
+                int perceivedY = (int) Math.round(tokenCenterY + tangentY * perceivedOffset)
+                        - PERCEIVED_ROLE_SIZE / 2;
+                if (inside(mouseX, mouseY, perceivedX, perceivedY,
+                        PERCEIVED_ROLE_SIZE, PERCEIVED_ROLE_SIZE)) {
+                    return new GrimHit(uuid, seat, assignment);
+                }
+            } else {
+                int roleX = (int) Math.round(tokenCenterX) - ROLE_SIZE / 2;
+                int roleY = (int) Math.round(tokenCenterY) - ROLE_SIZE / 2;
+                if (inside(mouseX, mouseY, roleX, roleY, ROLE_SIZE, ROLE_SIZE)) {
+                    return new GrimHit(uuid, seat, assignment);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean inside(
+            double mouseX, double mouseY,
+            int x, int y, int width, int height
+    ) {
+        return mouseX >= x && mouseX < x + width
+                && mouseY >= y && mouseY < y + height;
     }
 
     @Override
