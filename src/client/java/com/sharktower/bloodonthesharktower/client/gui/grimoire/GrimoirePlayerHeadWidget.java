@@ -2,14 +2,12 @@ package com.sharktower.bloodonthesharktower.client.gui.grimoire;
 
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.gui.GrimoirePlayerClicks;
-import com.sharktower.bloodonthesharktower.client.gui.GrimoirePlayerActionScreen;
 import com.sharktower.bloodonthesharktower.client.gui.ReminderChooseScreen;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
 
 import java.util.UUID;
@@ -64,30 +62,14 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
     }
 
     @Override
-    protected boolean isValidClickButton(MouseButtonInfo buttonInfo) {
-        return buttonInfo.button() == 0 || buttonInfo.button() == 1;
-    }
-
-    @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        PendingRoleAssignment current = ClientGrimoireEdits.roleFor(playerId);
-        int button = event.buttonInfo().button();
-
-        if (event.hasShiftDown()) {
-            GrimoirePlayerClicks.handle(playerId, seat, current == null ? assignment : current, event);
+        if (event.hasShiftDown() && ClientGrimoireEdits.isLocalStoryteller()) {
+            GrimoirePlayerClicks.handleShiftLeft(playerId);
             return;
         }
 
-        if (button == 0) {
-            net.minecraft.client.Minecraft.getInstance().gui.setScreen(
-                    new ReminderChooseScreen(playerId, seat));
-            return;
-        }
-
-        if (button == 1 && ClientGrimoireEdits.isLocalStoryteller()) {
-            net.minecraft.client.Minecraft.getInstance().gui.setScreen(
-                    new GrimoirePlayerActionScreen(playerId, seat));
-        }
+        net.minecraft.client.Minecraft.getInstance().gui.setScreen(
+                new ReminderChooseScreen(playerId, seat));
     }
 
     @Override
