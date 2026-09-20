@@ -45,9 +45,7 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             graphics.text(Minecraft.getInstance().font, "E", getX() + this.width / 2 - 3,
                     getY() + this.height / 2 - 4, 0xFFFFFFFF, true);
         } else if (currentDead) {
-            graphics.outline(getX() - 2, getY() - 2, this.width + 4, this.height + 4, 0xFFFF5555);
-            graphics.text(Minecraft.getInstance().font, "X", getX() + this.width / 2 - 3,
-                    getY() + this.height / 2 - 4, 0xFFFF5555, true);
+            UiDrawing.deathShroud(graphics, getX(), getY(), this.width);
         }
 
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
