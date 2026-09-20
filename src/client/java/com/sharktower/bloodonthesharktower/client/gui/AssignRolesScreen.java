@@ -79,6 +79,38 @@ public class AssignRolesScreen extends Screen {
 
     private record GrimHit(UUID playerId, int seat, PendingRoleAssignment assignment) {}
 
+    private record GrimLayout(int centerX, int centerY, int roleRadius, int headRadius) {}
+
+    /**
+     * Preserve the original BOTB token/head sizes, but give very large games a
+     * little more breathing room at the bottom edge. At 13-15 players the role
+     * ring moves slightly inward and the whole player circle lifts a few pixels.
+     * The head ring keeps its original radius so role tokens sit a little closer
+     * to their player portraits instead of feeling detached.
+     */
+    private GrimLayout grimoireLayout(int playerCount) {
+        int centerX = layoutWidth() / 2;
+        int baseCenterY = layoutHeight() / 2;
+        int baseRoleRadius = Math.max(54, Math.min(centerX, baseCenterY) - 50);
+
+        int inward = switch (playerCount) {
+            case 15 -> 8;
+            case 14 -> 6;
+            case 13 -> 4;
+            default -> 0;
+        };
+        int lift = switch (playerCount) {
+            case 15 -> 8;
+            case 14 -> 6;
+            case 13 -> 4;
+            default -> 0;
+        };
+
+        int roleRadius = Math.max(54, baseRoleRadius - inward);
+        int headRadius = Math.max(24, baseRoleRadius - 47);
+        return new GrimLayout(centerX, baseCenterY - lift, roleRadius, headRadius);
+    }
+
     public AssignRolesScreen() {
         super(Component.literal("Blood on the Sharktower — Grimoire"));
     }
@@ -260,11 +292,12 @@ public class AssignRolesScreen extends Screen {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return;
 
-        int centerX = layoutWidth() / 2;
-        int centerY = layoutHeight() / 2;
-        int radius = Math.max(54, Math.min(centerX, centerY) - 50);
-        int innerRadius = Math.max(24, radius - 47);
         int count = seats.size();
+        GrimLayout layout = grimoireLayout(count);
+        int centerX = layout.centerX();
+        int centerY = layout.centerY();
+        int radius = layout.roleRadius();
+        int innerRadius = layout.headRadius();
 
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
@@ -332,11 +365,12 @@ public class AssignRolesScreen extends Screen {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return;
 
-        int centerX = layoutWidth() / 2;
-        int centerY = layoutHeight() / 2;
-        int radius = Math.max(54, Math.min(centerX, centerY) - 50);
-        int innerRadius = Math.max(24, radius - 47);
         int count = seats.size();
+        GrimLayout layout = grimoireLayout(count);
+        int centerX = layout.centerX();
+        int centerY = layout.centerY();
+        int radius = layout.roleRadius();
+        int innerRadius = layout.headRadius();
 
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
@@ -517,10 +551,11 @@ public class AssignRolesScreen extends Screen {
             super.extractRenderState(graphics, scaledMouseX, scaledMouseY, delta);
 
             List<Map.Entry<UUID, Integer>> seats = sortedSeats();
-            int centerX = layoutWidth() / 2;
-            int centerY = layoutHeight() / 2;
-            int radius = Math.max(54, Math.min(centerX, centerY) - 50);
-            int innerRadius = Math.max(24, radius - 47);
+            GrimLayout layout = grimoireLayout(seats.size());
+            int centerX = layout.centerX();
+            int centerY = layout.centerY();
+            int radius = layout.roleRadius();
+            int innerRadius = layout.headRadius();
 
             renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
             renderSeatNumbers(graphics, seats, centerX, centerY, radius);
@@ -770,11 +805,12 @@ public class AssignRolesScreen extends Screen {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return null;
 
-        int centerX = layoutWidth() / 2;
-        int centerY = layoutHeight() / 2;
-        int radius = Math.max(54, Math.min(centerX, centerY) - 50);
-        int innerRadius = Math.max(24, radius - 47);
         int count = seats.size();
+        GrimLayout layout = grimoireLayout(count);
+        int centerX = layout.centerX();
+        int centerY = layout.centerY();
+        int radius = layout.roleRadius();
+        int innerRadius = layout.headRadius();
 
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
