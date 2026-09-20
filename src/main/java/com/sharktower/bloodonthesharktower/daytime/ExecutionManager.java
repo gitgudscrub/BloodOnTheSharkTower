@@ -6,6 +6,7 @@ import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
+import com.sharktower.bloodonthesharktower.sound.ModSounds;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.UUID;
@@ -34,6 +35,7 @@ public final class ExecutionManager {
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
         BloodOnTheSharktower.LOGGER.info("Executed player {} (forced={}, butcher={})", player, forced, butcherUuid);
+        ModSounds.playForAll(server, ModSounds.EXECUTION);
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
@@ -46,6 +48,7 @@ public final class ExecutionManager {
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
         BloodOnTheSharktower.LOGGER.info("Execution failed/survived for {} (forced={}, butcher={})", player, forced, butcherUuid);
+        ModSounds.playForAll(server, ModSounds.EXECUTION_SURVIVED);
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
     }
