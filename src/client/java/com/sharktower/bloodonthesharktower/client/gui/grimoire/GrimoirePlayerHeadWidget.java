@@ -62,19 +62,20 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
         PendingRoleAssignment current = ClientGrimoireEdits.roleFor(playerId);
+        int button = event.buttonInfo().button();
 
         if (event.hasShiftDown()) {
             GrimoirePlayerClicks.handle(playerId, seat, current == null ? assignment : current, event);
             return;
         }
 
-        if (event.button() == 0) {
+        if (button == 0) {
             net.minecraft.client.Minecraft.getInstance().gui.setScreen(
                     new ReminderChooseScreen(playerId, seat));
             return;
         }
 
-        if (event.button() == 1 && ClientGrimoireEdits.isLocalStoryteller()) {
+        if (button == 1 && ClientGrimoireEdits.isLocalStoryteller()) {
             net.minecraft.client.Minecraft.getInstance().gui.setScreen(
                     new GrimoirePlayerActionScreen(playerId, seat));
         }
