@@ -112,7 +112,7 @@ public final class DayChatZoneManager {
         }
     }
 
-    /** Called from NightChatManager's existing throttled server tick. */
+    /** Called every server tick from NightChatManager so sprinting cannot skip a doorway trigger. */
     public static synchronized void serverTick(MinecraftServer server) {
         if (server == null) return;
 
@@ -123,8 +123,9 @@ public final class DayChatZoneManager {
 
         if (NightChatManager.isActive()) {
             // NightChatManager has already reassigned participants to the shared
-            // night group. Only forget daytime bookkeeping; never null their group.
-            forgetDayRouting(api);
+            // night group. Only forget daytime bookkeeping once; never null their
+            // Night group or repeatedly remove the same Day groups every tick.
+            if (!DAY_ROUTED.isEmpty() || !PLAYER_ZONE.isEmpty()) forgetDayRouting(api);
             return;
         }
 
@@ -351,8 +352,18 @@ public final class DayChatZoneManager {
         try {
             VoicechatConnection connection = api.getConnectionOf(playerId);
             if (connection == null || !connection.isConnected()) return;
+
+            Group targetGroup = ensureSharedDayGroup(api);
+            Group currentGroup = connection.getGroup();
+            boolean alreadyShared = currentGroup != null
+                    && SHARED_DAY_GROUP_ID.equals(currentGroup.getId())
+                    && DAY_ROUTED.contains(playerId)
+                    && !PLAYER_ZONE.containsKey(playerId);
+            if (alreadyShared) return;
+
             String oldZone = PLAYER_ZONE.remove(playerId);
-            connection.setGroup(ensureSharedDayGroup(api));
+            ENTRY_EXIT_GRACE.remove(playerId);
+            connection.setGroup(targetGroup);
             DAY_ROUTED.add(playerId);
             if (oldZone != null && !PLAYER_ZONE.containsValue(oldZone)) removeGroup(api, zoneGroupId(oldZone));
         } catch (Throwable t) {
@@ -366,6 +377,17 @@ public final class DayChatZoneManager {
         try {
             VoicechatConnection connection = api.getConnectionOf(playerId);
             if (connection == null || !connection.isConnected()) return;
+
+            UUID targetId = zoneGroupId(zoneName);
+            Group currentGroup = connection.getGroup();
+            boolean alreadyPrivate = zoneName.equals(PLAYER_ZONE.get(playerId))
+                    && currentGroup != null
+                    && targetId.equals(currentGroup.getId());
+            if (alreadyPrivate) {
+                DAY_ROUTED.add(playerId);
+                return;
+            }
+
             String oldZone = PLAYER_ZONE.put(playerId, zoneName);
             connection.setGroup(ensureZoneGroup(api, zoneName));
             DAY_ROUTED.add(playerId);
