@@ -102,3 +102,15 @@ The legacy `execute_marked` action remains the dies path; the new
   matching Demon token in the Grimoire.
 - Source-role reminders now also accept script/custom role ids, so the same data
   path is not restricted to the base official-role enum.
+
+
+## In-play Demon kill markers
+
+- Demon Kill reminder options are sourced from Demon roles actually present in
+  the Storyteller's Grimoire, not every Demon listed on the loaded script.
+- Duplicate copies of the same Demon character collapse to one reminder choice.
+- If exactly one Demon is in the Grimoire, pressing **Demon Kill** immediately
+  adds that Demon's `Kill` reminder without opening another chooser.
+- If multiple Demons are in play, the chooser contains only those in-play Demons.
+- If no Demon is currently represented in the Grimoire, the Demon Kill button is
+  disabled.
