@@ -439,9 +439,10 @@ public class AssignRolesScreen extends Screen {
         if (!ClientGrimoireEdits.isLocalStoryteller()) return;
         if (ClientState.phase() == com.sharktower.bloodonthesharktower.core.GamePhase.SETUP) return;
 
-        int y = layoutHeight() - 47;
-        String controls = "LMB: Edit   RMB: Actions   Shift+LMB: Nominator   Shift+RMB: Nominee";
-        drawCentered(graphics, controls, y, UiDrawing.MUTED, false);
+        int y = layoutHeight() - 58;
+        drawCentered(graphics, "LMB: Edit   |   RMB: Actions", y, UiDrawing.MUTED, false);
+        drawCentered(graphics, "Shift+LMB: Nominator   |   Shift+RMB: Nominee",
+                y + 11, UiDrawing.MUTED, false);
 
         UUID nominator = GrimoireInteractionState.selectedNominator();
         if (nominator != null) {
