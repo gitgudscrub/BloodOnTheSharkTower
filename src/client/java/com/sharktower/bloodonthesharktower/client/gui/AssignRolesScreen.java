@@ -322,10 +322,10 @@ public class AssignRolesScreen extends Screen {
 
     private void buildBluffWidgets() {
         if (!showBluffs) return;
-        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientState.demonBluffs.isEmpty()) return;
+        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
         int startY = Math.max(55, layoutHeight() / 2 + 18);
         for (int i = 0; i < 3; i++) {
-            String roleId = i < ClientState.demonBluffs.size() ? ClientState.demonBluffs.get(i) : "";
+            String roleId = i < ClientGrimoireEdits.visibleDemonBluffs().size() ? ClientGrimoireEdits.visibleDemonBluffs().get(i) : "";
             this.addRenderableWidget(new GrimoireBluffWidget(MARGIN, startY + i * 42, 32, i, roleId));
         }
     }
@@ -465,10 +465,10 @@ public class AssignRolesScreen extends Screen {
 
     private void renderBluffLabels(GuiGraphicsExtractor graphics) {
         if (!showBluffs) return;
-        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientState.demonBluffs.isEmpty()) return;
+        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
         int startY = Math.max(55, layoutHeight() / 2 + 18);
         for (int i = 0; i < 3; i++) {
-            String id = i < ClientState.demonBluffs.size() ? ClientState.demonBluffs.get(i) : "";
+            String id = i < ClientGrimoireEdits.visibleDemonBluffs().size() ? ClientGrimoireEdits.visibleDemonBluffs().get(i) : "";
             if (!id.isBlank()) {
                 String name = id.replace('_', ' ');
                 graphics.text(this.font, name, MARGIN + 38, startY + i * 42 + 11, UiDrawing.MUTED, false);
