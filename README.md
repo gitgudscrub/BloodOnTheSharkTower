@@ -1,52 +1,132 @@
-# Blood on the Sharktower — 1.1.0-dev A.11.0
+# Blood on the Sharktower
 
-A.10 — End Game & Reset UX builds on the multiplayer-tested A.9 Final baseline.
+**Current milestone:** 1.1.0-rc1 — A.12 Release Candidate
 
-The match can now end ceremonially without immediately destroying the final game state. The Storyteller chooses the winning team, all players enter a read-only reveal period, and the existing start-of-game snapshot is only restored when the Storyteller is ready for the next match.
+Blood on the Sharktower is a private Minecraft 26.3 Fabric port/fork of Blood on the Blocktower, rebuilt around the way the Sharktower group actually runs Blood on the Clocktower.
 
-Highlights:
-- Storyteller Tools now has an **End Game** workflow.
-- Choose **GOOD WINS** or **EVIL WINS**.
-- End Game immediately stops Night Chat/timers and closes active election state, but preserves roles, deaths and exiles for the reveal.
-- Every player gets a public **GAME OVER** HUD banner.
-- During reveal mode, the normal Grimoire key opens a **read-only Final Grimoire** for every player.
-- The Final Grimoire shows each seat, player, real role, final alignment and dead/exiled status.
-- Storytellers can change the declared winning team if they clicked the wrong result.
-- **Reset for Next Game** restores the tested start-of-game snapshot/world state only after the reveal/discussion period is finished.
-- Full Reset remains available as the immediate emergency rollback.
-- End-game reveal blocks ordinary player game actions and phase changes until reset/cancelled.
-- Commands are available for testing:
-  - `/bots endGame good`
-  - `/bots endGame evil`
-  - `/bots endGame cancel`
-  - `/bots resetForNextGame`
+> **Private-use project.** The project owner has permission to use the inherited Blood on the Blocktower code and assets for private use. Do not publicly redistribute this repository or compiled builds without any additional permission required by the relevant rights holders. See `PRIVATE_USE_NOTICE.md`.
 
-A.9 Final also includes automatic setup seating, Traveller exile voting, exiled-Traveller Night Chat support, the local multiplayer dev harness, and the tested world snapshot restoration path.
+## Current platform
 
-Use `dev-harness/start-core-test.bat` for Storyteller + two local dummy players.
+- Minecraft **26.3**
+- Java **25**
+- Fabric Loader **0.19.5**
+- Fabric API **0.160.6+26.3**
+- Simple Voice Chat **2.6.23+26.3**
+- Mod version **1.1.0-rc1**
 
-This project is for private use only under the permissions noted in `PRIVATE_USE_NOTICE.md`.
+## What is implemented
 
-## A.10.1 — Original-style End Game cinematic
+The A.11 playable loop is complete and has passed the local multiplayer regression checklist.
 
-A.10.1 adds the original BOTB-style black-screen game-end sequence before the persistent A.10 Final Grimoire reveal. It shows Victory/Defeat, the winning team, then reveals players/roles in seat order while the original game-end sound plays.
+### Setup and Grimoire
 
-## A.10.2 — End-game UI hotfix
+- Automatic player seating during Setup, with disconnect seat compaction.
+- Script builder with custom scripts and the Base 3.
+- Role Bag with current/expected distribution.
+- Randomise/shuffle role and seat tools.
+- Circular Storyteller Grimoire with player heads, role tokens, reminders and Demon bluffs.
+- Direct Grimoire game actions:
+  - left-click: edit role/alignment/reminders;
+  - right-click: Player Actions;
+  - Shift + left-click: select nominator;
+  - Shift + right-click: nominate.
+- Source-role reminder tokens, Good/Evil thumbs markers and Demon kill reminders.
+- Three-role Demon bluff multi-select with in-play-role filtering.
 
-A.10.2 prevents the SETUP HUD from drawing over the persistent winner banner and replaces the Final Grimoire's unsafe circular placement with a responsive centred grid that reserves space for the title and bottom controls.
+### Day, nominations and voting
 
-### A.10.3 UI follow-up
-- Role/bluff selection returns directly to the Grimoire after a choice.
-- Final Grimoire uses the same radial token/head layout as the live Grimoire, with final-alignment outlines and hover details.
+- Nominations and Storyteller vote controls.
+- Public raised-hand voting.
+- Large world vote markers:
+  - green tick = living YES;
+  - blue tick = dead ghost YES;
+  - red cross = NO.
+- Visible 3/2/1 pre-vote countdown and physical clock presentation.
+- Execute — Dies and Execute — Lives outcomes.
+- Clear dead-player presentation in the Grim with BOTC-style shrouds.
+- Dead players render translucently with soul-wisp effects.
+- Traveller exile support.
 
+### Night and voice chat
 
-## A.11.0 — Setup disconnect seat cleanup
+- Dusk/Dawn phase flow and Storyteller night-order bar.
+- Event-driven and manual night visits.
+- Storyteller/private voice chat plus shared Night Chat.
+- Day private-chat rooms with persistent entrance/exit points.
+- Sprint-safe 1.5-block doorway triggers.
+- Reconnect-aware voice routing.
+- Night visit information, Droisoned/Vortox warnings and perceived-role handling.
 
-A.11 begins the release-candidate polish pass. When an ordinary player disconnects while the match is in Setup, their seat is now released immediately and every higher-numbered seat is compacted down to remove the gap. Example: if Seat 2 leaves from a 1/2/3/4 roster, the old Seat 3 becomes Seat 2 and the old Seat 4 becomes Seat 3.
+### Information roles and hidden state
 
-- The departing player's pending/live role, death state and reminders are removed with the seat.
-- Remaining roles stay attached to the same players while only their seat numbers move.
-- Storyteller clients receive the updated Grimoire immediately.
-- If a start-of-game checkpoint already exists, its setup roster is refreshed without recapturing or rotating the world snapshot, so Reset for Next Game cannot restore a player who left during Setup.
-- Disconnects during an active Day/Night game still retain the player's seat for reconnects.
-- The completed Final Grimoire is preserved during end-game reveal; cleanup happens after returning to Setup.
+- Ordinary clients do not receive the full hidden Storyteller Grimoire.
+- Spy/Widow Grimoire sharing is Storyteller-confirmed through a clickable chat action.
+- Shared roles overwrite guesses while player-created reminders are preserved.
+- Storyteller reminders and Demon bluffs are shared to Spy/Widow.
+- Magician/Spy and Magician/Widow jinx handling automatically blanks the Magician and in-play Demon character tokens in the shared copy.
+
+### End game
+
+- Good/Evil winner selection.
+- Original-style end-game presentation.
+- Persistent Final Grimoire reveal.
+- Reset for Next Game restores the captured start-of-game snapshot.
+
+## Development
+
+The quickest local multiplayer smoke test is:
+
+```text
+dev-harness\start-core-test.bat
+```
+
+This launches a loopback-only Fabric server plus:
+
+- Storyteller
+- TestPlayer1
+- TestPlayer2
+
+For a larger vote-circle test use:
+
+```text
+dev-harness\start-extended-test.bat
+```
+
+The extended harness launches the Storyteller plus five dummy players.
+
+To build the mod:
+
+```text
+gradlew.bat build
+```
+
+The local harness deliberately uses offline-mode identities and binds the server to `127.0.0.1`. It is for local development only.
+
+## A.12 — Release Candidate
+
+A.12 is a stabilisation milestone, not a feature-expansion milestone. The goals are:
+
+1. run full multiplayer soak tests with real players;
+2. fix release-blocking regressions only;
+3. verify hidden-information boundaries and reconnect behaviour;
+4. produce a clean release JAR for the real server/client pack;
+5. graduate 1.1.0 from RC to the private stable build.
+
+See `A12_RELEASE_CANDIDATE_CHECKLIST.md`.
+
+## Repository layout
+
+- `src/` — mod source.
+- `dev-harness/` — local multiplayer test harness.
+- `docs/` — current technical documentation.
+- `docs/history/` — archived port notes, patch instructions and milestone implementation notes.
+- `tools/` — development/support tooling.
+- `PRIVATE_USE_NOTICE.md` — distribution restrictions.
+- `CHANGELOG.md` — release/milestone summary.
+
+## Project history
+
+The port began as a staged Minecraft 26.x reconstruction of Blood on the Blocktower. Historical milestone notes and one-off patch instructions are retained under `docs/history/` for reference, but they are not current installation instructions.
+
+For current status, use this README, `docs/PORT_STATUS.md`, and the A.12 release-candidate checklist.

@@ -1,50 +1,125 @@
-# Blood on the Sharktower — 26.2 port status
+# Blood on the Sharktower — Port Status
 
-## Baseline
+## Current baseline
 
-- Minecraft: 26.2
-- Java: 25
-- Fabric clean Sharktower shell: confirmed
-- Port source: Blood on the Blocktower 1.21.1-1.3.0
-- Original compiled classes inventoried: 377
-- Original asset files staged under Sharktower namespace: 222
-- Distribution: private use only under the permission granted to the user
+- Minecraft: **26.3**
+- Java: **25**
+- Fabric Loader: **0.19.5**
+- Fabric API: **0.160.6+26.3**
+- Simple Voice Chat: **2.6.23+26.3**
+- Current milestone: **1.1.0-rc1 / A.12 Release Candidate**
+- Original port source: Blood on the Blocktower 1.21.1-1.3.0
+- Distribution: **private use only**
 
-## Confirmed by runtime tests
+The staged port itself is no longer the active development problem. The project now has a complete playable setup → Night/Day → nomination/vote/execution → end-game loop and is in release-candidate stabilisation.
 
-- 0.1.0 — clean 26.2 launch
-- 0.1.1 — health command
-- 0.2.0 — core state/assets
-- 0.2.1 — role/script model
-- 0.3.0 — S2C/C2S networking round trip
-- 0.3.1 — full compressed script sync
-- 0.3.2 — player role sync (rolled into later bulk state)
-- 0.4.0 — bulk playable core: roles, seats, death, grimoire, phase parity
+## Confirmed functional areas
 
-## 0.5.0 — game-flow batch (current test target)
+### Core state and setup
 
-Ported:
+- role/script model;
+- custom script loading;
+- Base 3 loading;
+- player seating and Setup disconnect compaction;
+- Role Bag distribution;
+- role/seat randomisation and shuffling;
+- committed/pending Storyteller Grimoire state;
+- perceived-role support for characters such as Drunk/Marionette;
+- match-start snapshot and Reset for Next Game.
 
-- DaytimeState
-- ElectionState / ElectionConfig / ElectionType / ElectionManager core
-- NominationManager
-- VotingManager
-- ExecutionManager
-- ExileManager / ExileSupportManager
-- daytime + vote S2C state payloads
-- client daytime/election state
-- `/bots` commands for backend nomination/vote/execution/exile testing
+### Grimoire and Storyteller UX
 
-Still deferred:
+- circular live Grimoire;
+- player heads and role tokens;
+- source-role reminder tokens;
+- Demon bluff slots and three-role multi-select;
+- direct nomination controls from player portrait/role token;
+- Player Actions screen;
+- public-info books;
+- Final Grimoire reveal;
+- Spy/Widow Storyteller-confirmed Grim sharing;
+- Magician/Spy and Magician/Widow shared-Grim jinx handling.
 
-- physical vote levers/pistons/indicator blocks
-- timed clock presentation
-- game HUDs/screens
-- role assignment/setup UI
-- full grimoire UI
-- mixins
-- Simple Voice Chat
+### Day game
 
-## Next target
+- nominations;
+- hand voting;
+- vote clock;
+- locked votes;
+- ghost votes;
+- Traveller exile support;
+- Execute — Dies;
+- Execute — Lives;
+- vote-result cleanup;
+- large world-space tick/cross vote markers;
+- 3/2/1 pre-vote countdown.
 
-0.6.0 — bulk GUI/HUD restoration and world/presentation hooks.
+### Night game and information
+
+- Dusk/Dawn flow;
+- Storyteller night-order bar;
+- first-night/other-night ordering;
+- night visit teleport/private-chat invitation;
+- triggered night-order support;
+- Droisoned and Vortox presentation warnings;
+- perceived-role night information;
+- Demon kill reminder and resolution flows.
+
+### Voice chat and map integration
+
+- Simple Voice Chat integration;
+- shared Night Chat;
+- Storyteller private chats;
+- dead-player Night Chat participation;
+- Day Chat;
+- persistent private-chat room entrance/exit markers;
+- 1.5-block sprint-safe doorway routing;
+- reconnect handling;
+- voice-route HUD.
+
+### Presentation and end game
+
+- public role-count strip;
+- world role icons;
+- dead-player translucency and soul wisps;
+- BOTC-style Grimoire death shroud;
+- game-end cinematic;
+- winner banner;
+- persistent Final Grimoire;
+- controlled reset after post-game discussion.
+
+## A.11 status
+
+**Complete.**
+
+A.11 became the release-candidate polish pass and absorbed the final multiplayer regression fixes around:
+
+- setup live updates;
+- Grimoire accessibility;
+- nomination/vote presentation;
+- dead-player presentation;
+- private voice routing;
+- reminder/bluff workflow;
+- Spy/Widow information sharing;
+- hidden-information boundaries;
+- end-game/reconnect polish.
+
+Historical A.11 implementation notes remain under `docs/history/`.
+
+## Current target — A.12
+
+A.12 is **stabilisation only**.
+
+Release-candidate work should focus on:
+
+- real-player multiplayer soak tests;
+- reconnect/disconnect tests during every major phase;
+- hidden-information/privacy verification;
+- Simple Voice Chat stability over a full game;
+- performance/UI readability at normal player counts;
+- packaging and installing the release JAR into the real pack;
+- fixing release-blocking bugs found during those tests.
+
+New gameplay systems should normally wait until after 1.1.0 unless they are required to fix a broken existing flow.
+
+See `A12_RELEASE_CANDIDATE_CHECKLIST.md`.
