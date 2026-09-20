@@ -19,6 +19,7 @@ import com.sharktower.bloodonthesharktower.setup.SeatPositionManager;
 import com.sharktower.bloodonthesharktower.setup.SetupOperations;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
+import com.sharktower.bloodonthesharktower.timer.TimerManager;
 import com.sharktower.bloodonthesharktower.voicechat.NightChatManager;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
@@ -122,6 +123,22 @@ public final class StorytellerActionHandler {
                 case "exile_override_clear" -> clearExileOverride(server);
                 case "set_vote_step_ticks" -> setVoteStepTicks(server, Integer.parseInt(arg));
                 case "set_clock_scale" -> setClockScale(server, Double.parseDouble(arg));
+                case "timer_start" -> startTimer(server, Integer.parseInt(arg));
+                case "timer_pause" -> {
+                    if (!TimerManager.isActive()) yield SetupOperations.Result.fail("No timer is currently running.");
+                    TimerManager.pauseTimer(server);
+                    yield SetupOperations.Result.ok("Timer paused.");
+                }
+                case "timer_resume" -> {
+                    if (!TimerManager.isActive()) yield SetupOperations.Result.fail("No timer is currently running.");
+                    TimerManager.resumeTimer(server);
+                    yield SetupOperations.Result.ok("Timer resumed.");
+                }
+                case "timer_stop" -> {
+                    if (!TimerManager.isActive()) yield SetupOperations.Result.fail("No timer is currently running.");
+                    TimerManager.stopTimer(server);
+                    yield SetupOperations.Result.ok("Timer stopped.");
+                }
                 case "send_to_seats" -> {
                     int moved = SeatPositionManager.sendAllToTownSquare(server, SetupOperations.workingSeats());
                     yield SetupOperations.Result.ok("Sent " + moved + " connected player(s) to town-square seats.");
@@ -689,6 +706,14 @@ public final class StorytellerActionHandler {
         StateBroadcaster.broadcastVoteState(server);
         return SetupOperations.Result.ok(String.format(java.util.Locale.ROOT,
                 "Vote speed set to %.2f second(s) per seat.", VotePresentationSettings.stepTicks() / 20.0D));
+    }
+
+    private static SetupOperations.Result startTimer(MinecraftServer server, int seconds) {
+        if (seconds < 1 || seconds > 3600) {
+            return SetupOperations.Result.fail("Timer must be between 1 and 3600 seconds.");
+        }
+        TimerManager.startTimer(server, seconds, false);
+        return SetupOperations.Result.ok("Timer started for " + seconds + " second(s).");
     }
 
     private static SetupOperations.Result setClockScale(MinecraftServer server, double scale) {
