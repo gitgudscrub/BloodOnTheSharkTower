@@ -571,36 +571,66 @@ public final class BotsCommands {
         ServerPlayer player = requirePlayer(context, "testseats empty");
         if (player == null) return 0;
 
-        int count = IntegerArgumentType.getInteger(context, "count");
+        int targetCount = IntegerArgumentType.getInteger(context, "count");
         clearSyntheticTestSeats();
 
-        // Keep the executing player as seat 1 so the Storyteller client remains
-        // represented by a real connected UUID. Seats 2..count are synthetic,
-        // blank players with NO_ROLE so the Grimoire renders empty role slots.
-        ServerState.PLAYER_SEAT_NUMBERS.put(player.getUUID(), 1);
-        StorytellerState.PENDING_SEAT_NUMBERS.put(player.getUUID(), 1);
-        ServerState.PLAYER_DEATH_STATUS.put(player.getUUID(), false);
-        ServerState.PLAYER_ROLES.remove(player.getUUID());
-        StorytellerState.PENDING_ROLES.remove(player.getUUID());
+        // A Storyteller belongs in the centre of the Grim, never in the player
+        // ring. Remove the executing Storyteller from any stale setup/live seat
+        // entry before generating layout-test seats.
+        if (StorytellerState.isStoryteller(player.getUUID())) {
+            ServerState.PLAYER_SEAT_NUMBERS.remove(player.getUUID());
+            StorytellerState.PENDING_SEAT_NUMBERS.remove(player.getUUID());
+            ServerState.PLAYER_DEATH_STATUS.remove(player.getUUID());
+            ServerState.PLAYER_ROLES.remove(player.getUUID());
+            StorytellerState.PENDING_ROLES.remove(player.getUUID());
+            ServerState.PLAYER_PERCEIVED_ROLES.remove(player.getUUID());
+            StorytellerState.PENDING_PERCEIVED_ROLES.remove(player.getUUID());
+            StorytellerState.REMINDERS.remove(player.getUUID());
+        }
 
-        for (int seat = 2; seat <= count; seat++) {
+        java.util.Set<Integer> used = new java.util.HashSet<>();
+        for (Integer value : StorytellerState.effectiveGrimoireSeats().values()) {
+            if (value != null && value > 0) used.add(value);
+        }
+
+        int existing = used.size();
+        if (existing >= targetCount) {
+            int sequence = StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
+            send(context, "Grimoire already has " + existing + " non-Storyteller seat(s); target was "
+                    + targetCount + ". Sequence: " + sequence);
+            return Command.SINGLE_SUCCESS;
+        }
+
+        int added = 0;
+        int seat = 1;
+        while (existing + added < targetCount) {
+            while (used.contains(seat)) seat++;
+
             UUID uuid = syntheticTestUuid(seat);
             SYNTHETIC_TEST_PLAYERS.add(uuid);
-
             ServerState.PLAYER_SEAT_NUMBERS.put(uuid, seat);
             StorytellerState.PENDING_SEAT_NUMBERS.put(uuid, seat);
             ServerState.PLAYER_DEATH_STATUS.put(uuid, false);
-
             ServerState.PLAYER_ROLES.remove(uuid);
             StorytellerState.PENDING_ROLES.remove(uuid);
             ServerState.PLAYER_PERCEIVED_ROLES.remove(uuid);
             StorytellerState.PENDING_PERCEIVED_ROLES.remove(uuid);
             StorytellerState.REMINDERS.remove(uuid);
+
+            used.add(seat);
+            added++;
+            seat++;
         }
 
-        StorytellerState.nextSeatNumber = Math.max(StorytellerState.nextSeatNumber, count + 1);
+        StorytellerState.nextSeatNumber = Math.max(
+                StorytellerState.nextSeatNumber,
+                used.stream().mapToInt(Integer::intValue).max().orElse(0) + 1
+        );
+
         int sequence = StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Generated " + count + " empty Grimoire test seats. Sequence: " + sequence);
+        send(context, "Grimoire test layout now has " + targetCount
+                + " non-Storyteller seat(s), including " + added + " empty synthetic seat"
+                + (added == 1 ? "" : "s") + ". Sequence: " + sequence);
         send(context, "Open the Grimoire with R. Use /bots testseats clear when finished.");
         return Command.SINGLE_SUCCESS;
     }
