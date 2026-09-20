@@ -43,6 +43,7 @@ public final class GrimoirePerceivedRoleWidget extends AbstractWidget {
 
         if (isHovered()) {
             graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
+            GrimoireHoverHints.set("Seat " + seat + " believed role — click to edit");
         }
     }
 
