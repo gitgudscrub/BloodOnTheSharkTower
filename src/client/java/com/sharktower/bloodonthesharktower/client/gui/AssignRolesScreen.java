@@ -387,6 +387,11 @@ public class AssignRolesScreen extends Screen {
                         headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
             }
             graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
+            if (GrimoireInteractionState.isSelectedNominator(uuid)) {
+                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.YES);
+            } else if (uuid.equals(ClientState.currentNominee)) {
+                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.GOLD);
+            }
             String name = ClientState.playerName(uuid, seat);
             int nameY = headY + HEAD_SIZE + 2;
             drawCenteredAt(graphics, name, headX + HEAD_SIZE / 2, nameY, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
