@@ -83,7 +83,11 @@ public class AssignRolesScreen extends Screen {
 
     @Override
     protected void init() {
-        GrimoireRevealAnimation.beginScreen();
+        if (GrimoireReturnState.consumeSuppressNextReveal()) {
+            GrimoireRevealAnimation.showImmediately();
+        } else {
+            GrimoireRevealAnimation.beginScreen();
+        }
         buildContextualControls();
         buildPlayerWidgets();
         buildReminderWidgets();
