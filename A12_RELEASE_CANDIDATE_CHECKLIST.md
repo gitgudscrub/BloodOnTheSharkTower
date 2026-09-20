@@ -8,7 +8,7 @@ A.12 is a **stabilisation milestone**. The feature set is frozen unless a new ch
 - [x] Current documentation updated for release-candidate status.
 - [x] Historical patch/port notes archived out of the repository root.
 - [x] Version changed to `1.1.0-rc1`.
-- [ ] Clean checkout builds successfully with `gradlew.bat build`.
+- [x] Clean checkout builds successfully in GitHub Actions with Java 25.
 - [ ] Release JAR launches in a clean client instance.
 - [ ] Release JAR launches on a clean dedicated server.
 
