@@ -91,5 +91,10 @@
     "sounds": [
       "blood_on_the_sharktower:whisper"
     ]
+  },
+  "timer_gong": {
+    "sounds": [
+      "blood_on_the_sharktower:timer_gong"
+    ]
   }
 }
