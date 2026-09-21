@@ -16,6 +16,7 @@ public final class ModSounds {
     public static final SoundEvent DUSK = register("dusk");
     public static final SoundEvent DAWN = register("dawn");
     public static final SoundEvent CALL_BACK = register("call_back");
+    public static final SoundEvent TIMER_GONG = register("timer_gong");
     public static final SoundEvent NOMINATION = register("nomination");
     public static final SoundEvent VOTE_START = register("vote_start");
     public static final SoundEvent CLOCK_TICKING = register("clock_ticking"); // legacy asset
