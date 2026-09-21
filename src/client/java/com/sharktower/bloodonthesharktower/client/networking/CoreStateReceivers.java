@@ -27,12 +27,12 @@ import com.sharktower.bloodonthesharktower.networking.TriggeredNightOrderS2CPayl
 import com.sharktower.bloodonthesharktower.networking.StorytellerNightInfoS2CPayload;
 import com.sharktower.bloodonthesharktower.networking.AbilityGrimoireS2CPayload;
 import com.sharktower.bloodonthesharktower.timer.ClientTimerState;
+import com.sharktower.bloodonthesharktower.sound.ModSounds;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
 
 /** Client receivers for the bulk-ported core gameplay state family. */
 public final class CoreStateReceivers {
@@ -282,7 +282,7 @@ public final class CoreStateReceivers {
                 Minecraft client = Minecraft.getInstance();
                 client.execute(() -> {
                     if (client.player == null) return;
-                    client.player.playSound(SoundEvents.BELL_RESONATE, 1.0F, 0.72F);
+                    client.player.playSound(ModSounds.TIMER_GONG, 1.0F, 1.0F);
                     client.player.sendSystemMessage(
                             Component.literal("Please return to Town Square")
                                     .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
