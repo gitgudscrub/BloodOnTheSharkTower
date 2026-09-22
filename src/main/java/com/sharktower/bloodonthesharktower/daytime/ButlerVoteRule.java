@@ -27,12 +27,22 @@ public final class ButlerVoteRule {
     private ButlerVoteRule() {}
 
     public static boolean isLivingButler(UUID playerId) {
-        if (playerId == null) return false;
+        if (playerId == null || torInPlay()) return false;
         PendingRoleAssignment assignment = ServerState.PLAYER_ROLES.get(playerId);
         return assignment != null
                 && !assignment.isCustomRole()
                 && assignment.role() == Role.BUTLER
                 && !Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(playerId));
+    }
+
+    /**
+     * TOR is a Loric, so its global rule is active by being present on the
+     * current script rather than being assigned to a seat. While TOR is in
+     * play, Butler voting is intentionally unrestricted.
+     */
+    public static boolean torInPlay() {
+        return ServerState.currentScript != null
+                && ServerState.currentScript.hasFabledOrLoric(Role.TOR.getId());
     }
 
     /** Returns the current Butler Master from the reminder token, if configured. */
