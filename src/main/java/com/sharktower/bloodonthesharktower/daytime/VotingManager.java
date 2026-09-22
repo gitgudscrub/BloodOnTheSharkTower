@@ -60,6 +60,7 @@ public final class VotingManager {
         if (Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(player)) && DaytimeState.hasUsedGhostVote(player)) {
             vote = false;
         }
+        vote = ButlerVoteRule.allowYesAtLock(server, player, vote);
         DaytimeState.lockVote(player, vote);
         ElectionState.lockVote(player, vote);
         if (vote) DayPublicInfoBookManager.recordVote(server, player);
