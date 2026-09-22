@@ -26,7 +26,8 @@ public final class ReminderChooseScreen extends Screen {
             new Preset("Demon", null),
             new Preset("Minion", null),
             new Preset("Protected", Role.MONK),
-            new Preset("Grandchild", Role.GRANDMOTHER)
+            new Preset("Grandchild", Role.GRANDMOTHER),
+            new Preset("Master", Role.BUTLER)
     };
 
     private final UUID playerId;
