@@ -47,6 +47,7 @@ public final class VotingManager {
         if (Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(player)) && DaytimeState.hasUsedGhostVote(player)) {
             yes = false;
         }
+        if (yes) yes = ButlerVoteRule.mayRaiseHand(player);
         DaytimeState.setRaisedHand(player, yes);
         DaytimeState.setCurrentVote(player, yes);
         DaytimeState.setLeverState(player, yes);
