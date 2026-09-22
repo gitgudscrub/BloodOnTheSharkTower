@@ -103,11 +103,12 @@ public final class RoleSelectionScreen extends Screen {
             this.addRenderableWidget(Button.builder(Component.literal("Clear Believed Role"), b -> {
                         java.util.UUID target = ClientGrimoireEdits.playerAtSeat(seat);
                         if (ClientGrimoireEdits.isLocalStoryteller()) {
+                            GrimoireReturnState.requestAfterNextGrimoireSync();
                             ClientStorytellerActions.send("clear_perceived_role", Integer.toString(seat));
                         } else {
                             ClientGrimoireEdits.clearPerceivedRole(target);
+                            returnToGrimoire();
                         }
-                        returnToGrimoire();
                     })
                     .bounds(this.width / 2 - 125, this.height - 27, 120, 20).build());
             this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> returnToGrimoire())
@@ -167,10 +168,14 @@ public final class RoleSelectionScreen extends Screen {
     }
 
     private void choose(ScriptRole role) {
+        boolean waitingForServerGrimoire = false;
+
         if (mode == Mode.PLAYER) {
             if (ClientGrimoireEdits.isLocalStoryteller()) {
                 // Storyteller edits are authoritative and are pushed to players
                 // only when SEND ROLES is used.
+                GrimoireReturnState.requestAfterNextGrimoireSync();
+                waitingForServerGrimoire = true;
                 ClientStorytellerActions.send("assign_role", seat + "|" + role.getId());
             } else {
                 // Ordinary players use the Grimoire as a private notebook.
@@ -181,21 +186,27 @@ public final class RoleSelectionScreen extends Screen {
         } else if (mode == Mode.PERCEIVED) {
             java.util.UUID target = ClientGrimoireEdits.playerAtSeat(seat);
             if (ClientGrimoireEdits.isLocalStoryteller()) {
+                GrimoireReturnState.requestAfterNextGrimoireSync();
+                waitingForServerGrimoire = true;
                 ClientStorytellerActions.send("assign_perceived_role", seat + "|" + role.getId());
             } else {
                 ClientGrimoireEdits.assignPerceivedRole(target, role);
             }
         } else if (ClientGrimoireEdits.isLocalStoryteller()) {
             // Demon-bluff setup is Storyteller-owned state.
+            GrimoireReturnState.requestAfterNextGrimoireSync();
+            waitingForServerGrimoire = true;
             ClientStorytellerActions.send("set_bluff", bluffIndex + "|" + role.getId());
         }
 
-        // Role selection is a Grimoire sub-flow, not a terminal screen.
-        returnToGrimoire();
+        // Server-owned edits return when the authoritative Grimoire snapshot
+        // arrives. Local deduction edits can return immediately.
+        if (!waitingForServerGrimoire) returnToGrimoire();
     }
 
     private void returnToGrimoire() {
         if (this.minecraft == null || this.minecraft.gui == null) return;
+        GrimoireReturnState.suppressNextReveal();
         this.minecraft.gui.setScreen(returnScreen != null ? returnScreen : new AssignRolesScreen());
     }
 

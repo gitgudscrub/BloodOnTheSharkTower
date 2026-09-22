@@ -35,7 +35,7 @@ public final class ExileControlScreen extends Screen {
 
         buildPlayerGrid();
 
-        int actionY = Math.min(this.height - 151, 222);
+        int actionY = actionRowY();
         this.addRenderableWidget(Button.builder(Component.literal("Call for Exile").withStyle(ChatFormatting.LIGHT_PURPLE), b -> submitExile())
                 .bounds(cx - 185, actionY, 120, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Start Exile Vote").withStyle(ChatFormatting.AQUA), b -> action("exile_start"))
@@ -85,6 +85,26 @@ public final class ExileControlScreen extends Screen {
             this.addRenderableWidget(Button.builder(label, b -> choosePlayer(id))
                     .bounds(startX + col * (buttonW + gap), startY + row * 23, buttonW, 20).build());
         }
+    }
+
+    private int playerGridBottom() {
+        int count = ClientState.playerSeatNumbers.size();
+        if (count <= 0) return 82;
+
+        int columns = Math.min(4, Math.max(2, (count + 4) / 5));
+        int rows = (count + columns - 1) / columns;
+        return 82 + Math.max(0, rows - 1) * 23 + 20;
+    }
+
+    private int actionRowY() {
+        // Reserve 54px above the action rows for active-exile status/legend
+        // and 102px below for the two additional action rows + Back button.
+        int desired = Math.max(190, playerGridBottom() + 76);
+        return Math.min(this.height - 102, desired);
+    }
+
+    private int statusBlockY() {
+        return actionRowY() - 54;
     }
 
     private void choosePlayer(UUID id) {
@@ -138,7 +158,7 @@ public final class ExileControlScreen extends Screen {
                 "Caller: " + label(selectedCaller) + "   →   Traveller: " + label(selectedTraveler),
                 63, UiDrawing.TEXT, true);
 
-        int statusY = Math.min(this.height - 179, 204);
+        int statusY = statusBlockY();
         if (ClientState.currentExileTarget != null) {
             drawCentered(graphics,
                     "ACTIVE: " + label(ClientState.currentExileCaller) + " → " + label(ClientState.currentExileTarget),

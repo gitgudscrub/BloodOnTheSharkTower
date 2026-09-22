@@ -25,10 +25,11 @@ import java.util.UUID;
  * Automatic daytime voice routing using entrance/exit trigger points.
  *
  * During DAY all seated players and active Storytellers share one hidden Day Chat
- * group. Before nominations open, seated non-Storyteller players are moved into an
- * isolated private group when they pass close to one of that area's entrance points.
- * They remain in that private group regardless of where they move inside the area,
- * and only return to Day Chat when they pass an exit point (or nominations open).
+ * group. Before nominations open, any Day Chat participant — including an active
+ * Storyteller — is moved into an isolated private group when they pass close to one
+ * of that area's entrance points. They remain in that private group regardless of
+ * where they move inside the area, and only return to Day Chat when they pass an
+ * exit point (or nominations open).
  *
  * This deliberately avoids trying to model the physical room/area itself, so private
  * spaces can be any shape. For a doorway that is used in both directions, place the
@@ -159,9 +160,12 @@ public final class DayChatZoneManager {
             if (!participants.contains(id)) continue;
             if (NightChatManager.privatePartner(id) != null) continue;
 
-            // Storytellers always remain in public Day Chat. Physical private-chat
-            // gates are a player-to-player whisper mechanic, not ST eavesdropping.
-            if (!privateChatsEnabled || StorytellerState.isStoryteller(id)) {
+            // Storytellers use the same physical private-area routing as players.
+            // Crossing an entrance joins the existing zone group (if players are
+            // already inside, the Storyteller joins their conversation); crossing
+            // an exit returns them to shared Day Chat. Once nominations open,
+            // private routing closes for everyone as before.
+            if (!privateChatsEnabled) {
                 assignSharedDay(api, id);
                 continue;
             }

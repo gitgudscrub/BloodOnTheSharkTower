@@ -62,9 +62,9 @@ public final class GrimoirePlayerActionScreen extends Screen {
                             message("Choose a nominator first (Shift + left-click a player portrait or role token).");
                             return;
                         }
+                        GrimoireReturnState.requestAfterNextGrimoireSync();
                         ClientStorytellerActions.send("nominate_pair", nominator + "|" + playerId);
                         GrimoireInteractionState.clearNominator();
-                        back();
                     })
                     .bounds(cx + gap / 2, y, w, 20).build();
             nominate.active = ClientState.nominationsOpen && GrimoireInteractionState.hasSelectedNominator();
@@ -171,17 +171,24 @@ public final class GrimoirePlayerActionScreen extends Screen {
     }
 
     private void actionAndBack(String action) {
+        GrimoireReturnState.requestAfterNextGrimoireSync();
         ClientStorytellerActions.send(action);
-        back();
     }
 
     private void actionAndBack(String action, String arg) {
+        GrimoireReturnState.requestAfterNextGrimoireSync();
         ClientStorytellerActions.send(action, arg);
-        back();
     }
 
     private void back() {
-        if (this.minecraft != null) this.minecraft.gui.setScreen(new AssignRolesScreen());
+        if (this.minecraft == null) return;
+        GrimoireReturnState.suppressNextReveal();
+        this.minecraft.gui.setScreen(new AssignRolesScreen());
+    }
+
+    @Override
+    public void onClose() {
+        back();
     }
 
     private void message(String text) {

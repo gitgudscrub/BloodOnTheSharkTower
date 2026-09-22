@@ -60,8 +60,12 @@ public final class TimerManager {
     private static synchronized void tick(MinecraftServer server) {
         if (!active || paused) return;
         if (remainingSeconds > 0) remainingSeconds--;
-        if (remainingSeconds <= 0) stopInternal();
-        broadcastTimerState(server);
+        if (remainingSeconds <= 0) {
+            stopInternal();
+            broadcastTimerState(server, true);
+            return;
+        }
+        broadcastTimerState(server, false);
     }
 
     private static void stopInternal() {
@@ -76,14 +80,20 @@ public final class TimerManager {
     }
 
     public static void broadcastTimerState(MinecraftServer server) {
-        TimerStateS2CPayload payload = new TimerStateS2CPayload(active, paused, remainingSeconds, totalSeconds);
+        broadcastTimerState(server, false);
+    }
+
+    private static void broadcastTimerState(MinecraftServer server, boolean completedNaturally) {
+        TimerStateS2CPayload payload = new TimerStateS2CPayload(
+                active, paused, remainingSeconds, totalSeconds, completedNaturally);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
 
     public static void addPlayer(ServerPlayer player) {
-        ServerPlayNetworking.send(player, new TimerStateS2CPayload(active, paused, remainingSeconds, totalSeconds));
+        ServerPlayNetworking.send(player, new TimerStateS2CPayload(
+                active, paused, remainingSeconds, totalSeconds, false));
     }
 
     public static void removePlayer(ServerPlayer player) {

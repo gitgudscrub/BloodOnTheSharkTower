@@ -9,7 +9,6 @@ import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -35,6 +34,10 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+        if (!GrimoireRevealAnimation.beginElement(
+                graphics, getX(), getY(), this.width, this.height, reveal)) return;
+        try {
         PendingRoleAssignment current = ClientGrimoireEdits.roleFor(playerId);
         if (current == null) current = assignment;
         ScriptRole role = UiDrawing.roleOf(current);
@@ -57,16 +60,29 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         } else if (isHovered()) {
             graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
         }
-    }
 
-    @Override
-    protected boolean isValidClickButton(MouseButtonInfo buttonInfo) {
-        return buttonInfo.button() == 0 || buttonInfo.button() == 1;
+        if (isHovered()) {
+            String name = ClientState.playerName(playerId, seat);
+            if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.nominationsOpen) {
+                GrimoireHoverHints.set(name
+                        + " role — LMB edit | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
+            } else {
+                GrimoireHoverHints.set(name + " role — LMB edit | RMB actions");
+            }
+        }
+        } finally {
+            GrimoireRevealAnimation.endElement(graphics);
+        }
     }
 
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        GrimoirePlayerClicks.handle(playerId, seat, ClientGrimoireEdits.roleFor(playerId), event);
+        GrimoirePlayerClicks.handleRoleLeft(
+                playerId,
+                seat,
+                ClientGrimoireEdits.roleFor(playerId),
+                event.hasShiftDown()
+        );
     }
 
     @Override

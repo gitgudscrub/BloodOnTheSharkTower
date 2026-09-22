@@ -30,12 +30,20 @@ public class ScriptReferenceScreen extends Screen {
         int buttonWidth = 90;
         int gap = 10;
         int y = 25;
+
+        // Match the original BOTB tab geometry: three 90px buttons separated
+        // by 10px gaps, centred as one 290px strip. The previous coordinates
+        // overlapped each neighbouring tab by 35px.
+        int middleX = center - buttonWidth / 2;
+        int leftX = middleX - gap - buttonWidth;
+        int rightX = middleX + buttonWidth + gap;
+
         this.addRenderableWidget(Button.builder(Component.literal("Roles"), b -> page = Page.ROLES)
-                .bounds(center - buttonWidth - gap, y, buttonWidth, 20).build());
+                .bounds(leftX, y, buttonWidth, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Night Order"), b -> page = Page.NIGHT_ORDER)
-                .bounds(center - buttonWidth / 2, y, buttonWidth, 20).build());
+                .bounds(middleX, y, buttonWidth, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Jinxes"), b -> page = Page.JINXES)
-                .bounds(center + gap, y, buttonWidth, 20).build());
+                .bounds(rightX, y, buttonWidth, 20).build());
     }
 
     @Override
@@ -85,23 +93,31 @@ public class ScriptReferenceScreen extends Screen {
             y += 14;
 
             int cellWidth = 75;
-            int visible = Math.min(5, roles.size());
-            int rowWidth = visible * cellWidth;
-            int rowX = this.width / 2 - rowWidth / 2;
-            for (int i = 0; i < visible; i++) {
-                ScriptRole role = roles.get(i);
-                int cellX = rowX + i * cellWidth;
-                int tokenX = cellX + (cellWidth - 40) / 2;
-                int tokenY = y;
-                UiDrawing.roleToken(graphics, role, tokenX, tokenY, 40);
-                String name = role.getDisplayName();
-                graphics.text(this.font, name, cellX + (cellWidth - this.font.width(name)) / 2,
-                        tokenY + 45, UiDrawing.TEXT, false);
-                if (mouseX >= cellX && mouseX < cellX + cellWidth && mouseY >= tokenY && mouseY < tokenY + 62) {
-                    hovered = role;
+            int columns = Math.min(5, Math.max(1, roles.size()));
+            int rows = (roles.size() + columns - 1) / columns;
+
+            for (int row = 0; row < rows; row++) {
+                int rowStart = row * columns;
+                int rowCount = Math.min(columns, roles.size() - rowStart);
+                int rowWidth = rowCount * cellWidth;
+                int rowX = this.width / 2 - rowWidth / 2;
+
+                for (int col = 0; col < rowCount; col++) {
+                    ScriptRole role = roles.get(rowStart + col);
+                    int cellX = rowX + col * cellWidth;
+                    int tokenY = y + row * 67;
+                    int tokenX = cellX + (cellWidth - 40) / 2;
+                    UiDrawing.roleToken(graphics, role, tokenX, tokenY, 40);
+                    String name = role.getDisplayName();
+                    graphics.text(this.font, name, cellX + (cellWidth - this.font.width(name)) / 2,
+                            tokenY + 45, UiDrawing.TEXT, false);
+                    if (mouseX >= cellX && mouseX < cellX + cellWidth
+                            && mouseY >= tokenY && mouseY < tokenY + 62) {
+                        hovered = role;
+                    }
                 }
             }
-            y += 67;
+            y += rows * 67;
         }
 
         if (script.bootlegger() != null && !script.bootlegger().isEmpty()) {

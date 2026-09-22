@@ -31,7 +31,12 @@ public final class GrimoireBluffWidget extends AbstractWidget {
         } else {
             UiDrawing.emptyRoleSlot(graphics, getX(), getY(), this.width);
         }
-        if (isHovered()) graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
+        if (isHovered()) {
+            graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
+            GrimoireHoverHints.set(role == null
+                    ? "Demon bluff slot " + (index + 1) + " — click to choose bluffs"
+                    : "Demon bluff: " + role.getDisplayName() + " — click to edit all three");
+        }
     }
 
     @Override

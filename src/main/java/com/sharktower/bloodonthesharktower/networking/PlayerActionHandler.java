@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.networking;
 
 import com.sharktower.bloodonthesharktower.core.Role;
+import com.sharktower.bloodonthesharktower.daytime.ButlerVoteRule;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
 import com.sharktower.bloodonthesharktower.daytime.NominationManager;
 import com.sharktower.bloodonthesharktower.daytime.ExileManager;
@@ -90,7 +91,17 @@ public final class PlayerActionHandler {
         }
 
         boolean next = forcedState != null ? forcedState : !DaytimeState.isHandRaised(id);
+
+        if (next && !ButlerVoteRule.mayRaiseHand(id)) {
+            player.sendSystemMessage(Component.literal(
+                            "As the Butler, you may only raise your hand while your Master is voting.")
+                    .withStyle(ChatFormatting.GOLD));
+            return;
+        }
+
         DaytimeState.setRaisedHand(id, next);
+        if (!next) ButlerVoteRule.onHandLowered(server, id);
+
         StateBroadcaster.broadcastVoteState(server);
         player.sendSystemMessage(Component.literal(exileVoting
                 ? (next ? "Exile support hand raised." : "Exile support hand lowered.")

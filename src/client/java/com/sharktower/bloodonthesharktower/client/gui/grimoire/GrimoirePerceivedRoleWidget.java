@@ -31,6 +31,10 @@ public final class GrimoirePerceivedRoleWidget extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+        if (!GrimoireRevealAnimation.beginElement(
+                graphics, getX(), getY(), this.width, this.height, reveal)) return;
+        try {
         PendingRoleAssignment perceived = ClientState.grimoirePerceivedRoles.get(playerId);
         ScriptRole role = UiDrawing.roleOf(perceived);
 
@@ -43,6 +47,10 @@ public final class GrimoirePerceivedRoleWidget extends AbstractWidget {
 
         if (isHovered()) {
             graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
+            GrimoireHoverHints.set("Seat " + seat + " believed role — click to edit");
+        }
+        } finally {
+            GrimoireRevealAnimation.endElement(graphics);
         }
     }
 

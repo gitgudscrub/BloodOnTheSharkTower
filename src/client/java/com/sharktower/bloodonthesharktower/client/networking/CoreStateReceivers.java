@@ -5,6 +5,7 @@ import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.hud.GameEndAnimationHUD;
 import com.sharktower.bloodonthesharktower.client.hud.ClientTriggeredNightOrder;
 import com.sharktower.bloodonthesharktower.client.gui.AssignRolesScreen;
+import com.sharktower.bloodonthesharktower.client.gui.GrimoireReturnState;
 import com.sharktower.bloodonthesharktower.client.gui.BaseThreeScreen;
 import com.sharktower.bloodonthesharktower.client.gui.RoleBagScreen;
 import com.sharktower.bloodonthesharktower.networking.NetworkSyncAckC2SPayload;
@@ -26,9 +27,12 @@ import com.sharktower.bloodonthesharktower.networking.TriggeredNightOrderS2CPayl
 import com.sharktower.bloodonthesharktower.networking.StorytellerNightInfoS2CPayload;
 import com.sharktower.bloodonthesharktower.networking.AbilityGrimoireS2CPayload;
 import com.sharktower.bloodonthesharktower.timer.ClientTimerState;
+import com.sharktower.bloodonthesharktower.sound.ModSounds;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 /** Client receivers for the bulk-ported core gameplay state family. */
 public final class CoreStateReceivers {
@@ -154,10 +158,16 @@ public final class CoreStateReceivers {
             // Role Bag workflow: after the server has actually shuffled and
             // synchronised the pending assignments, return the Storyteller to
             // the Grimoire so the result is visible immediately.
-            if (RoleBagScreen.consumeOpenGrimoireAfterDistributionSync()) {
+            boolean roleBagReturn = RoleBagScreen.consumeOpenGrimoireAfterDistributionSync();
+            boolean editorReturn = GrimoireReturnState.consumeAfterGrimoireSync();
+
+            if (roleBagReturn) {
                 Minecraft client = Minecraft.getInstance();
                 client.execute(() -> client.gui.setScreen(new AssignRolesScreen()));
             }
+            // editorReturn intentionally performs no immediate setScreen here.
+            // GrimoireReturnState will reopen the Grim from END_CLIENT_TICK after
+            // the current network/input lifecycle has completely finished.
         });
 
         ClientPlayNetworking.registerGlobalReceiver(SyncDaytimeStateS2CPayload.TYPE, (payload, context) -> {
@@ -267,9 +277,23 @@ public final class CoreStateReceivers {
             ClientTimerState.updateTimerState(
                     payload.isActive(), payload.isPaused(), payload.remainingSeconds(), payload.totalSeconds()
             );
+
+            if (payload.completedNaturally()) {
+                Minecraft client = Minecraft.getInstance();
+                client.execute(() -> {
+                    if (client.player == null) return;
+                    client.player.playSound(ModSounds.TIMER_GONG, 1.0F, 1.0F);
+                    client.player.sendSystemMessage(
+                            Component.literal("Please return to Town Square")
+                                    .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                    );
+                });
+            }
+
             BloodOnTheSharktower.LOGGER.info(
-                    "Client timer state: active={}, paused={}, remaining={}/{}",
-                    payload.isActive(), payload.isPaused(), payload.remainingSeconds(), payload.totalSeconds()
+                    "Client timer state: active={}, paused={}, remaining={}/{}, completedNaturally={}",
+                    payload.isActive(), payload.isPaused(), payload.remainingSeconds(), payload.totalSeconds(),
+                    payload.completedNaturally()
             );
         });
 

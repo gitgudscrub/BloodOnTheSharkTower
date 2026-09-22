@@ -61,11 +61,11 @@ public final class NightInfoReminderScreen extends Screen {
             this.addRenderableWidget(Button.builder(
                             Component.literal("+ " + marker.role().getDisplayName() + ": " + marker.text()),
                             b -> {
+                                GrimoireReturnState.requestAfterNextGrimoireSync();
                                 ClientStorytellerActions.send(
                                         "add_role_reminder",
                                         seat + "|" + marker.role().getId() + "|" + marker.text()
                                 );
-                                this.minecraft.gui.setScreen(new NightInfoReminderScreen(playerId, seat));
                             })
                     .bounds(x, y + row * 25, buttonW, 20).build());
         }

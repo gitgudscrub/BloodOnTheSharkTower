@@ -25,6 +25,7 @@ public final class ExileSupportManager {
     /** Direct/manual support setter retained for command testing. */
     public static void setSupport(MinecraftServer server, UUID player, boolean yes) {
         if (!DaytimeState.isExileSupportInProgress() || player == null || DaytimeState.isExiledTraveler(player)) return;
+        if (yes) yes = ButlerVoteRule.mayRaiseHand(player);
         DaytimeState.setRaisedHand(player, yes);
         DaytimeState.lockExileSupportVote(player, yes);
         ElectionState.lockVote(player, yes);
@@ -36,6 +37,7 @@ public final class ExileSupportManager {
     public static void lockSupportFromHand(MinecraftServer server, UUID player) {
         if (!DaytimeState.isExileSupportInProgress() || player == null || DaytimeState.isExiledTraveler(player)) return;
         boolean yes = DaytimeState.isHandRaised(player);
+        yes = ButlerVoteRule.allowYesAtLock(server, player, yes);
         DaytimeState.lockExileSupportVote(player, yes);
         ElectionState.lockVote(player, yes);
         StateBroadcaster.broadcastDaytimeState(server);

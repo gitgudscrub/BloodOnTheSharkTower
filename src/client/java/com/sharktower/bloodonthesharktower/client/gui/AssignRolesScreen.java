@@ -1,13 +1,17 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
+import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireBluffWidget;
+import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireHoverHints;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerHeadWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePerceivedRoleWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireReminderWidget;
+import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireRevealAnimation;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireStorytellerWidget;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
+import com.sharktower.bloodonthesharktower.core.GamePhase;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -17,6 +21,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.renderer.RenderPipelines;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,8 +39,9 @@ import java.util.UUID;
  *  - circular role radius min(width/2,height/2)-50
  *  - inner player radius roleRadius-35
  *  - 90x20 Storyteller controls with 5px vertical gaps
- *  - Script Builder top-left, setup controls top-right, bluffs bottom-left,
- *    timer + SEND ROLES bottom-right.
+ *  - contextual Storyteller controls that change with the active game phase
+ *  - Script Builder top-left during Setup, bluffs bottom-left, compact utility
+ *    controls along the bottom edge.
  */
 public class AssignRolesScreen extends Screen {
     /**
@@ -45,14 +52,22 @@ public class AssignRolesScreen extends Screen {
     private static final int GRIMOIRE_REFERENCE_GUI_SCALE = 4;
     private static final int ROLE_SIZE = 32;
     private static final int PERCEIVED_ROLE_SIZE = 20;
-    // 16x16 is one quarter of a 32x32 role token by area, while staying readable.
-    private static final int REMINDER_SIZE = 16;
+    // Original BOTB reminder tokens are 14px with 2px padding around the 32px role token.
+    private static final int REMINDER_SIZE = 14;
+    private static final int REMINDER_PADDING = 2;
     private static final int DECEIVED_ROLE_GAP = 4;
     private static final int HEAD_SIZE = 24;
     private static final int CONTROL_W = 90;
     private static final int CONTROL_H = 20;
     private static final int MARGIN = 10;
     private static final int GAP = 5;
+
+    private static final Identifier PHASE_DUSK = Identifier.fromNamespaceAndPath(
+            BloodOnTheSharktower.MOD_ID, "textures/icons/original/dusk.png");
+    private static final Identifier PHASE_DAWN = Identifier.fromNamespaceAndPath(
+            BloodOnTheSharktower.MOD_ID, "textures/icons/original/dawn.png");
+    private static final Identifier PHASE_NOMINATIONS = Identifier.fromNamespaceAndPath(
+            BloodOnTheSharktower.MOD_ID, "textures/icons/original/nominations.png");
 
     private static boolean showUnseated = true;
     private static boolean showSelf = true;
@@ -62,13 +77,52 @@ public class AssignRolesScreen extends Screen {
     // signature so widget instances are rebuilt as soon as the live seat map changes.
     private String lastSeatLayoutSignature = "";
 
+    private record GrimHit(UUID playerId, int seat, PendingRoleAssignment assignment) {}
+
+    private record GrimLayout(int centerX, int centerY, int roleRadius, int headRadius) {}
+
+    /**
+     * Preserve the original BOTB token/head sizes, but give very large games a
+     * little more breathing room at the bottom edge. At 13-15 players the role
+     * ring moves slightly inward and the whole player circle lifts a few pixels.
+     * The head ring keeps its original radius so role tokens sit a little closer
+     * to their player portraits instead of feeling detached.
+     */
+    private GrimLayout grimoireLayout(int playerCount) {
+        int centerX = layoutWidth() / 2;
+        int baseCenterY = layoutHeight() / 2;
+        int baseRoleRadius = Math.max(54, Math.min(centerX, baseCenterY) - 50);
+
+        int inward = switch (playerCount) {
+            case 15 -> 8;
+            case 14 -> 6;
+            case 13 -> 4;
+            default -> 0;
+        };
+        int lift = switch (playerCount) {
+            case 15 -> 8;
+            case 14 -> 6;
+            case 13 -> 4;
+            default -> 0;
+        };
+
+        int roleRadius = Math.max(54, baseRoleRadius - inward);
+        int headRadius = Math.max(24, baseRoleRadius - 47);
+        return new GrimLayout(centerX, baseCenterY - lift, roleRadius, headRadius);
+    }
+
     public AssignRolesScreen() {
         super(Component.literal("Blood on the Sharktower — Grimoire"));
     }
 
     @Override
     protected void init() {
-        buildOriginalControls();
+        if (GrimoireReturnState.consumeSuppressNextReveal()) {
+            GrimoireRevealAnimation.showImmediately();
+        } else {
+            GrimoireRevealAnimation.beginScreen();
+        }
+        buildContextualControls();
         buildPlayerWidgets();
         buildReminderWidgets();
         buildStorytellerWidgets();
@@ -91,96 +145,159 @@ public class AssignRolesScreen extends Screen {
         }
     }
 
-    private void buildOriginalControls() {
-        // Ordinary players use this screen as a private deduction Grim. Keep
-        // server-authoritative setup/game controls Storyteller-only.
+    /**
+     * Original BOTB uses the Grimoire itself as the primary game console.
+     * Instead of leaving every Storyteller action visible at once, the right
+     * rail changes with the current GamePhase. Advanced/recovery tools remain
+     * one click away through TOOLS.
+     */
+    private void buildContextualControls() {
         if (!ClientGrimoireEdits.isLocalStoryteller()) return;
 
         int layoutWidth = layoutWidth();
         int layoutHeight = layoutHeight();
         int rightX = layoutWidth - CONTROL_W - MARGIN;
         int y = MARGIN;
+        GamePhase phase = ClientState.phase();
 
-        // Original top-left Script Builder button.
-        this.addRenderableWidget(Button.builder(Component.literal("Script Builder"), b ->
-                        this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
-                .bounds(MARGIN, MARGIN, 100, CONTROL_H).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Nomination Flow").withStyle(ChatFormatting.GOLD), b ->
-                        this.minecraft.gui.setScreen(new NominationControlScreen()))
-                .bounds(MARGIN, MARGIN + CONTROL_H + GAP, 100, CONTROL_H).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Controls"), b ->
-                        this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
-                .bounds(MARGIN + 105, MARGIN + CONTROL_H + GAP, 80, CONTROL_H).build());
+        if (phase == GamePhase.SETUP) {
+            this.addRenderableWidget(Button.builder(Component.literal("Script Builder"), b ->
+                            this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
+                    .bounds(MARGIN, MARGIN, 100, CONTROL_H).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Shuffle Roles").withStyle(ChatFormatting.AQUA), b ->
-                        action("shuffle_roles"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            y = addRightAction(rightX, y, "Shuffle Roles", ChatFormatting.AQUA, "shuffle_roles");
+            y = addRightAction(rightX, y, "Shuffle Seats", ChatFormatting.AQUA, "shuffle_seats");
+            y = addRightAction(rightX, y, "Randomize Roles", ChatFormatting.GOLD, "randomize_roles");
 
-        this.addRenderableWidget(Button.builder(Component.literal("Shuffle Seats").withStyle(ChatFormatting.AQUA), b ->
-                        action("shuffle_seats"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            this.addRenderableWidget(Button.builder(Component.literal("Role Bag").withStyle(ChatFormatting.LIGHT_PURPLE), b ->
+                            this.minecraft.gui.setScreen(new RoleBagScreen()))
+                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            y += CONTROL_H + GAP;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Randomize Roles").withStyle(ChatFormatting.GOLD), b ->
-                        action("randomize_roles"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            this.addRenderableWidget(Button.builder(
+                            Component.literal("Unseated: " + (showUnseated ? "SHOW" : "HIDE")), b -> {
+                        showUnseated = !showUnseated;
+                        this.minecraft.gui.setScreen(new AssignRolesScreen());
+                    }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            y += CONTROL_H + GAP;
 
-        // Sharktower 0.9.0: BOTC-app-style manual role bag.
-        this.addRenderableWidget(Button.builder(Component.literal("Role Bag").withStyle(ChatFormatting.LIGHT_PURPLE), b ->
-                        this.minecraft.gui.setScreen(new RoleBagScreen()))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            this.addRenderableWidget(Button.builder(
+                            Component.literal("Self: " + (showSelf ? "SHOW" : "HIDE")), b -> {
+                        showSelf = !showSelf;
+                        this.minecraft.gui.setScreen(new AssignRolesScreen());
+                    }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            y += CONTROL_H + GAP + 10;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Unseated: " + (showUnseated ? "SHOW" : "HIDE")), b -> {
-                    showUnseated = !showUnseated;
-                    this.minecraft.gui.setScreen(new AssignRolesScreen());
-                }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
+            addRightAction(rightX, y, "Send Home", ChatFormatting.AQUA, "send_home");
+        } else if (phase == GamePhase.NIGHT) {
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
+            y = addRightAction(rightX, y, "Send Home", ChatFormatting.AQUA, "send_home");
+            this.addRenderableWidget(Button.builder(Component.literal("Start Day").withStyle(ChatFormatting.GOLD), b ->
+                            action("phase_day"))
+                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+        } else if (phase == GamePhase.DAY) {
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightAction(rightX, y, "Open Noms", ChatFormatting.GOLD, "nominations_open");
 
-        this.addRenderableWidget(Button.builder(Component.literal("Self: " + (showSelf ? "SHOW" : "HIDE")), b -> {
-                    showSelf = !showSelf;
-                    this.minecraft.gui.setScreen(new AssignRolesScreen());
-                }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            if (ClientState.canBeExiled.values().stream().anyMatch(Boolean.TRUE::equals)) {
+                addRightScreen(rightX, y, "Traveller Exile", ChatFormatting.LIGHT_PURPLE,
+                        () -> this.minecraft.gui.setScreen(new ExileControlScreen()));
+            }
+        } else if (phase == GamePhase.NOMINATIONS) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightScreen(rightX, y, "Nomination Flow", ChatFormatting.GOLD,
+                    () -> this.minecraft.gui.setScreen(new NominationControlScreen()));
+            y = addRightAction(rightX, y, "Close Noms", ChatFormatting.GRAY, "nominations_close");
+            addRightAction(rightX, y, "No Execution", ChatFormatting.DARK_GRAY, "no_execution");
+        } else if (phase == GamePhase.PLAYER_NOMINATED) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
 
-        y += CONTROL_H + GAP + 10;
-        this.addRenderableWidget(Button.builder(Component.literal("Send to Seats").withStyle(ChatFormatting.LIGHT_PURPLE), b ->
-                        action("send_to_seats"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
-        this.addRenderableWidget(Button.builder(Component.literal("Send Home").withStyle(ChatFormatting.AQUA), b ->
-                        action("send_home"))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-        y += CONTROL_H + GAP;
-        this.addRenderableWidget(Button.builder(Component.literal("Game End").withStyle(ChatFormatting.GOLD), b ->
-                        this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
-                .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            String voteLabel = ClientState.voteInProgress
+                    ? (ClientState.voteClockComplete ? "Finish Vote" : "Vote Running")
+                    : "Start Vote";
+            Button voteButton = Button.builder(Component.literal(voteLabel).withStyle(ChatFormatting.AQUA), b -> {
+                        if (ClientState.voteInProgress) {
+                            if (ClientState.voteClockComplete) action("vote_finish");
+                        } else {
+                            action("vote_start");
+                        }
+                    })
+                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build();
+            voteButton.active = !ClientState.voteInProgress || ClientState.voteClockComplete;
+            this.addRenderableWidget(voteButton);
+            y += CONTROL_H + GAP;
 
-        // Original bottom-left bluffs visibility toggle.
-        this.addRenderableWidget(Button.builder(Component.literal("Bluffs: " + (showBluffs ? "SHOW" : "HIDE")), b -> {
+            y = addRightAction(rightX, y, "Cancel Nom.", ChatFormatting.GRAY, "nomination_cancel");
+            addRightScreen(rightX, y, "Nomination Flow", ChatFormatting.GOLD,
+                    () -> this.minecraft.gui.setScreen(new NominationControlScreen()));
+        } else if (phase == GamePhase.PLAYER_MARKED) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightAction(rightX, y, "Execute — Dies", ChatFormatting.RED, "execute_marked");
+            y = addRightAction(rightX, y, "Execute — Lives", ChatFormatting.GOLD, "execute_marked_survives");
+            addRightAction(rightX, y, "Close Noms", ChatFormatting.GRAY, "nominations_close");
+        } else if (phase == GamePhase.CALL_FOR_EXILE || phase == GamePhase.EXILE_SUPPORT) {
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+                    () -> this.minecraft.gui.setScreen(new TimerScreen()));
+            y = addRightScreen(rightX, y, "Traveller Exile", ChatFormatting.LIGHT_PURPLE,
+                    () -> this.minecraft.gui.setScreen(new ExileControlScreen()));
+            addRightAction(rightX, y, "Reset Exile", ChatFormatting.GRAY, "exile_reset");
+        }
+
+        // Original bottom-left bluff visibility toggle.
+        this.addRenderableWidget(Button.builder(
+                        Component.literal("Bluffs: " + (showBluffs ? "SHOW" : "HIDE")), b -> {
                     showBluffs = !showBluffs;
                     this.minecraft.gui.setScreen(new AssignRolesScreen());
                 }).bounds(MARGIN, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
 
-        // Original lower-right small timer button + SEND ROLES.
-        this.addRenderableWidget(Button.builder(Component.literal("T"), b ->
-                        this.minecraft.gui.setScreen(new TimerScreen()))
-                .bounds(layoutWidth - CONTROL_W - 42, layoutHeight - 30, 20, CONTROL_H).build());
-        this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
-                        action("send_roles"))
-                .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
+        // Keep advanced/recovery controls available without permanently filling
+        // the main Grim with management buttons.
+        // Keep the main Grim's bottom strip minimal. End Game remains
+        // available inside TOOLS; duplicating it here made the small-width
+        // Scale-4 layout unnecessarily cramped.
+        this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
+                        this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
+                .bounds(rightX - 60, layoutHeight - 30, 55, CONTROL_H).build());
+
+        if (phase == GamePhase.SETUP) {
+            this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
+                            action("send_roles"))
+                    .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
+        } else {
+            this.addRenderableWidget(Button.builder(Component.literal("CONTROLS"), b ->
+                            this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
+                    .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
+        }
+    }
+
+    private int addRightAction(int x, int y, String label, ChatFormatting colour, String op) {
+        this.addRenderableWidget(Button.builder(Component.literal(label).withStyle(colour), b -> action(op))
+                .bounds(x, y, CONTROL_W, CONTROL_H).build());
+        return y + CONTROL_H + GAP;
+    }
+
+    private int addRightScreen(int x, int y, String label, ChatFormatting colour, Runnable open) {
+        this.addRenderableWidget(Button.builder(Component.literal(label).withStyle(colour), b -> open.run())
+                .bounds(x, y, CONTROL_W, CONTROL_H).build());
+        return y + CONTROL_H + GAP;
     }
 
     private void buildPlayerWidgets() {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return;
 
-        int centerX = layoutWidth() / 2;
-        int centerY = layoutHeight() / 2;
-        int radius = Math.max(54, Math.min(centerX, centerY) - 50);
-        int innerRadius = Math.max(24, radius - 47);
         int count = seats.size();
+        GrimLayout layout = grimoireLayout(count);
+        int centerX = layout.centerX();
+        int centerY = layout.centerY();
+        int radius = layout.roleRadius();
+        int innerRadius = layout.headRadius();
 
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
@@ -238,30 +355,114 @@ public class AssignRolesScreen extends Screen {
                 || assignment.role() == com.sharktower.bloodonthesharktower.core.Role.MARIONETTE);
     }
 
+    /**
+     * BOTB reminder tokens hug the 32px role token rather than forming a second
+     * radial ring around the Grim. Eight compact slots surround each role token;
+     * the outward-facing slots are preferred so reminders naturally avoid the
+     * player's head/name on the inner side of the circle.
+     */
     private void buildReminderWidgets() {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return;
-        int centerX = layoutWidth() / 2;
-        int centerY = layoutHeight() / 2;
-        int radius = Math.max(54, Math.min(centerX, centerY) - 50);
+
         int count = seats.size();
+        GrimLayout layout = grimoireLayout(count);
+        int centerX = layout.centerX();
+        int centerY = layout.centerY();
+        int radius = layout.roleRadius();
+        int innerRadius = layout.headRadius();
+
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
             UUID uuid = entry.getKey();
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
+
+            double tokenCenterX = centerX + radius * Math.cos(angle);
+            double tokenCenterY = centerY + radius * Math.sin(angle);
+            PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
+
+            // Match the true-role position used by buildPlayerWidgets for
+            // Drunk/Marionette true+believed role pairs.
+            if (isDeceivedCharacter(assignment)) {
+                double tangentX = -Math.sin(angle);
+                double tangentY = Math.cos(angle);
+                double trueOffset = -(PERCEIVED_ROLE_SIZE + DECEIVED_ROLE_GAP) / 2.0;
+                tokenCenterX += tangentX * trueOffset;
+                tokenCenterY += tangentY * trueOffset;
+            }
+
+            int roleX = (int) Math.round(tokenCenterX) - ROLE_SIZE / 2;
+            int roleY = (int) Math.round(tokenCenterY) - ROLE_SIZE / 2;
+
+            int top = roleY - REMINDER_SIZE - REMINDER_PADDING;
+            int bottom = roleY + ROLE_SIZE + REMINDER_PADDING;
+            int left = roleX - REMINDER_SIZE - REMINDER_PADDING;
+            int right = roleX + ROLE_SIZE + REMINDER_PADDING;
+            int nearLeft = roleX + ROLE_SIZE / 2 - REMINDER_SIZE - REMINDER_PADDING;
+            int nearRight = roleX + ROLE_SIZE / 2 + REMINDER_PADDING;
+            int nearTop = roleY + ROLE_SIZE / 2 - REMINDER_SIZE - REMINDER_PADDING;
+            int nearBottom = roleY + ROLE_SIZE / 2 + REMINDER_PADDING;
+
+            List<int[]> candidates = new ArrayList<>(List.of(
+                    new int[]{nearLeft, top},
+                    new int[]{nearRight, top},
+                    new int[]{right, nearTop},
+                    new int[]{right, nearBottom},
+                    new int[]{nearRight, bottom},
+                    new int[]{nearLeft, bottom},
+                    new int[]{left, nearBottom},
+                    new int[]{left, nearTop}
+            ));
+
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
+            final double roleCenterX = tokenCenterX;
+            final double roleCenterY = tokenCenterY;
+            final double outwardX = Math.cos(angle);
+            final double outwardY = Math.sin(angle);
+
+            candidates.sort(Comparator.comparingDouble((int[] p) ->
+                    reminderPlacementScore(
+                            p,
+                            roleCenterX,
+                            roleCenterY,
+                            outwardX,
+                            outwardY,
+                            headX,
+                            headY
+                    )).reversed());
+
             List<Reminder> reminders = ClientGrimoireEdits.remindersFor(uuid);
-            int reminderCount = Math.min(6, reminders.size());
+            int reminderCount = Math.min(candidates.size(), reminders.size());
             for (int r = 0; r < reminderCount; r++) {
-                double reminderAngle = angle + (r - (reminderCount - 1) / 2.0) * 0.14;
-                int reminderRadius = radius + 28;
-                int rx = (int) Math.round(centerX + reminderRadius * Math.cos(reminderAngle)) - REMINDER_SIZE / 2;
-                int ry = (int) Math.round(centerY + reminderRadius * Math.sin(reminderAngle)) - REMINDER_SIZE / 2;
+                int[] position = candidates.get(r);
                 this.addRenderableWidget(new GrimoireReminderWidget(
-                        rx, ry, REMINDER_SIZE, uuid, seat, reminders.get(r)
+                        position[0], position[1], REMINDER_SIZE, uuid, seat, reminders.get(r)
                 ));
             }
         }
+    }
+
+    private static double reminderPlacementScore(
+            int[] position,
+            double roleCenterX,
+            double roleCenterY,
+            double outwardX,
+            double outwardY,
+            int headX,
+            int headY
+    ) {
+        double reminderCenterX = position[0] + REMINDER_SIZE / 2.0;
+        double reminderCenterY = position[1] + REMINDER_SIZE / 2.0;
+        double score = (reminderCenterX - roleCenterX) * outwardX
+                + (reminderCenterY - roleCenterY) * outwardY;
+
+        boolean overlapsHead = position[0] < headX + HEAD_SIZE
+                && position[0] + REMINDER_SIZE > headX
+                && position[1] < headY + HEAD_SIZE
+                && position[1] + REMINDER_SIZE > headY;
+        return overlapsHead ? score - 1000.0 : score;
     }
 
 
@@ -346,19 +547,22 @@ public class AssignRolesScreen extends Screen {
             // Render the widgets and custom Grim drawing through the same virtual
             // Scale-4 canvas. This keeps text, tokens, tooltips and controls in
             // the same proportions instead of letting Auto GUI scale enlarge them.
+            GrimoireHoverHints.clear();
             super.extractRenderState(graphics, scaledMouseX, scaledMouseY, delta);
 
             List<Map.Entry<UUID, Integer>> seats = sortedSeats();
-            int centerX = layoutWidth() / 2;
-            int centerY = layoutHeight() / 2;
-            int radius = Math.max(54, Math.min(centerX, centerY) - 50);
-            int innerRadius = Math.max(24, radius - 47);
+            GrimLayout layout = grimoireLayout(seats.size());
+            int centerX = layout.centerX();
+            int centerY = layout.centerY();
+            int radius = layout.roleRadius();
+            int innerRadius = layout.headRadius();
 
             renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
             renderSeatNumbers(graphics, seats, centerX, centerY, radius);
-            renderCenterCounts(graphics, seats.size());
+            renderCenterStatus(graphics, seats.size());
+            renderPhaseIndicator(graphics);
+            renderHoverHint(graphics);
             renderHandVotingPanel(graphics);
-            renderBluffLabels(graphics);
         } finally {
             graphics.pose().popMatrix();
         }
@@ -375,6 +579,13 @@ public class AssignRolesScreen extends Screen {
             int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
             int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
+
+            float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+            if (!GrimoireRevealAnimation.beginElement(
+                    graphics, headX, headY, HEAD_SIZE, HEAD_SIZE + 16, reveal)) {
+                continue;
+            }
+            try {
 
             // Do not gate face rendering on connectedPlayers. That list can arrive a
             // tick later than the seat map, and PlayerFaceCompat already fails safely
@@ -399,6 +610,9 @@ public class AssignRolesScreen extends Screen {
             if (ClientState.isHandRaised(uuid)) {
                 drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY + 5);
             }
+            } finally {
+                GrimoireRevealAnimation.endElement(graphics);
+            }
         }
     }
 
@@ -415,16 +629,86 @@ public class AssignRolesScreen extends Screen {
             int seatRadius = radius + 20;
             int sx = (int) Math.round(centerX + seatRadius * Math.cos(angle));
             int sy = (int) Math.round(centerY + seatRadius * Math.sin(angle));
-            drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, true);
+
+            float reveal = GrimoireRevealAnimation.progressForSeat(seat);
+            if (!GrimoireRevealAnimation.beginElement(graphics, sx - 6, sy - 6, 12, 12, reveal)) {
+                continue;
+            }
+            try {
+                drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, true);
+            } finally {
+                GrimoireRevealAnimation.endElement(graphics);
+            }
         }
     }
 
-    private void renderCenterCounts(GuiGraphicsExtractor graphics, int playerCount) {
+    private void renderCenterStatus(GuiGraphicsExtractor graphics, int playerCount) {
+        // The original Grim only needs setup counts before play begins. Keeping
+        // these off the live-game Grim leaves the centre focused on the ST head.
+        if (ClientState.phase() != GamePhase.SETUP) return;
+
         String players = "Players: " + playerCount;
         String storytellers = "Storytellers: " + ClientState.storytellerPlayers.size();
         int baseY = layoutHeight() / 2 + 18;
         drawCentered(graphics, players, baseY, UiDrawing.TEXT, true);
-        drawCentered(graphics, storytellers, baseY + 12, UiDrawing.TEXT, true);
+        drawCentered(graphics, storytellers, baseY + 12, UiDrawing.MUTED, true);
+    }
+
+    private void renderHoverHint(GuiGraphicsExtractor graphics) {
+        String hint = GrimoireHoverHints.current();
+
+        // A selected nominator is state rather than a generic instruction, so
+        // keep that confirmation visible even when the mouse is not hovering a
+        // token. Everything else is target-specific and disappears when idle.
+        UUID selected = GrimoireInteractionState.selectedNominator();
+        if ((hint == null || hint.isBlank()) && selected != null && ClientState.nominationsOpen) {
+            int seat = ClientState.playerSeatNumbers.getOrDefault(selected, 0);
+            hint = "Nominator: " + ClientState.playerName(selected, seat) + " — Shift+RMB a nominee";
+        }
+
+        if (hint == null || hint.isBlank()) return;
+        int y = layoutHeight() - 19;
+        drawCentered(graphics, hint, y, UiDrawing.MUTED, false);
+    }
+
+    private void renderPhaseIndicator(GuiGraphicsExtractor graphics) {
+        GamePhase phase = ClientState.phase();
+        Identifier icon = null;
+        String label = null;
+
+        switch (phase) {
+            case NIGHT -> {
+                icon = PHASE_DUSK;
+                label = "NIGHT";
+            }
+            case DAY -> {
+                icon = PHASE_DAWN;
+                label = "DAY";
+            }
+            case NOMINATIONS, PLAYER_NOMINATED, PLAYER_MARKED -> {
+                icon = PHASE_NOMINATIONS;
+                label = phase == GamePhase.PLAYER_MARKED ? "EXECUTION" : "NOMINATIONS";
+            }
+            case CALL_FOR_EXILE, EXILE_SUPPORT -> label = "TRAVELLER EXILE";
+            default -> {
+                return;
+            }
+        }
+
+        int x = MARGIN;
+        int y = MARGIN;
+        int iconSize = 28;
+        int panelWidth = label.length() > 10 ? 118 : 92;
+        UiDrawing.softPanel(graphics, x, y, panelWidth, 32);
+
+        if (icon != null) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, icon,
+                    x + 2, y + 2, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            graphics.text(this.font, label, x + 35, y + 12, UiDrawing.GOLD, true);
+        } else {
+            graphics.text(this.font, label,
+                    x + (panelWidth - this.font.width(label)) / 2, y + 12, UiDrawing.GOLD, true);
+        }
     }
 
     private void renderHandVotingPanel(GuiGraphicsExtractor graphics) {
@@ -463,18 +747,6 @@ public class AssignRolesScreen extends Screen {
         graphics.outline(x, y - 1, 10, 12, dark);
     }
 
-    private void renderBluffLabels(GuiGraphicsExtractor graphics) {
-        if (!showBluffs) return;
-        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
-        int startY = Math.max(55, layoutHeight() / 2 + 18);
-        for (int i = 0; i < 3; i++) {
-            String id = i < ClientGrimoireEdits.visibleDemonBluffs().size() ? ClientGrimoireEdits.visibleDemonBluffs().get(i) : "";
-            if (!id.isBlank()) {
-                String name = id.replace('_', ' ');
-                graphics.text(this.font, name, MARGIN + 38, startY + i * 42 + 11, UiDrawing.MUTED, false);
-            }
-        }
-    }
 
     /**
      * Normalize GUI scales above 4 back to the Scale-4 physical footprint.
@@ -503,7 +775,97 @@ public class AssignRolesScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return super.mouseClicked(remapMouse(event), doubleClick);
+        MouseButtonEvent mapped = remapMouse(event);
+
+        // Minecraft 26.3's MouseButtonInfo uses 1-based button ids here:
+        // 1 = left, 2 = right, 3 = middle. Earlier Grim code assumed the old
+        // GLFW-style 0/1 ids, which made LMB open Player Actions and caused
+        // physical RMB to be ignored entirely.
+        if (mapped.buttonInfo().button() == 2) {
+            GrimHit hit = grimHitAt(mapped.x(), mapped.y());
+            if (hit != null) {
+                GrimoirePlayerClicks.handleRight(
+                        hit.playerId(),
+                        hit.seat(),
+                        hit.assignment(),
+                        mapped.hasShiftDown()
+                );
+                return true;
+            }
+        }
+
+        return super.mouseClicked(mapped, doubleClick);
+    }
+
+    /**
+     * Resolve the visible player element under a Grim-space mouse coordinate.
+     * Covers portraits, true role tokens and Drunk/Marionette believed tokens.
+     */
+    private GrimHit grimHitAt(double mouseX, double mouseY) {
+        List<Map.Entry<UUID, Integer>> seats = sortedSeats();
+        if (seats.isEmpty()) return null;
+
+        int count = seats.size();
+        GrimLayout layout = grimoireLayout(count);
+        int centerX = layout.centerX();
+        int centerY = layout.centerY();
+        int radius = layout.roleRadius();
+        int innerRadius = layout.headRadius();
+
+        for (int i = 0; i < count; i++) {
+            Map.Entry<UUID, Integer> entry = seats.get(i);
+            UUID uuid = entry.getKey();
+            int seat = entry.getValue() == null ? i + 1 : entry.getValue();
+            PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
+            double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
+
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
+            if (inside(mouseX, mouseY, headX, headY, HEAD_SIZE, HEAD_SIZE)) {
+                return new GrimHit(uuid, seat, assignment);
+            }
+
+            double tokenCenterX = centerX + radius * Math.cos(angle);
+            double tokenCenterY = centerY + radius * Math.sin(angle);
+
+            if (isDeceivedCharacter(assignment)) {
+                double tangentX = -Math.sin(angle);
+                double tangentY = Math.cos(angle);
+                double trueOffset = -(PERCEIVED_ROLE_SIZE + DECEIVED_ROLE_GAP) / 2.0;
+                double perceivedOffset = (ROLE_SIZE + DECEIVED_ROLE_GAP) / 2.0;
+
+                int roleX = (int) Math.round(tokenCenterX + tangentX * trueOffset) - ROLE_SIZE / 2;
+                int roleY = (int) Math.round(tokenCenterY + tangentY * trueOffset) - ROLE_SIZE / 2;
+                if (inside(mouseX, mouseY, roleX, roleY, ROLE_SIZE, ROLE_SIZE)) {
+                    return new GrimHit(uuid, seat, assignment);
+                }
+
+                int perceivedX = (int) Math.round(tokenCenterX + tangentX * perceivedOffset)
+                        - PERCEIVED_ROLE_SIZE / 2;
+                int perceivedY = (int) Math.round(tokenCenterY + tangentY * perceivedOffset)
+                        - PERCEIVED_ROLE_SIZE / 2;
+                if (inside(mouseX, mouseY, perceivedX, perceivedY,
+                        PERCEIVED_ROLE_SIZE, PERCEIVED_ROLE_SIZE)) {
+                    return new GrimHit(uuid, seat, assignment);
+                }
+            } else {
+                int roleX = (int) Math.round(tokenCenterX) - ROLE_SIZE / 2;
+                int roleY = (int) Math.round(tokenCenterY) - ROLE_SIZE / 2;
+                if (inside(mouseX, mouseY, roleX, roleY, ROLE_SIZE, ROLE_SIZE)) {
+                    return new GrimHit(uuid, seat, assignment);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean inside(
+            double mouseX, double mouseY,
+            int x, int y, int width, int height
+    ) {
+        return mouseX >= x && mouseX < x + width
+                && mouseY >= y && mouseY < y + height;
     }
 
     @Override
