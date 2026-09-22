@@ -478,6 +478,19 @@ public final class SetupOperations {
                 .anyMatch(wanted::equals);
     }
 
+    private static void removeButlerMasterReminders() {
+        for (List<Reminder> reminders : StorytellerState.REMINDERS.values()) {
+            reminders.removeIf(reminder -> reminder != null
+                    && reminder.role().orElse(null) == Role.BUTLER
+                    && "master".equals(normalizeReminderText(reminder.text())));
+        }
+        StorytellerState.REMINDERS.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().isEmpty());
+    }
+
+    private static String normalizeReminderText(String text) {
+        return text == null ? "" : text.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
     public static Result clearBluffs() {
         int count = StorytellerState.DEMON_BLUFFS.size();
         StorytellerState.DEMON_BLUFFS.clear();
@@ -507,6 +520,12 @@ public final class SetupOperations {
 
         Reminder reminder;
         if (sourceRole instanceof ScriptRole.Official official) {
+            // The Butler's Master is represented directly by the player carrying
+            // this source-role reminder. Keep it unique so voting enforcement has
+            // one unambiguous Master to follow.
+            if (official.role() == Role.BUTLER && "master".equals(normalizeReminderText(cleaned))) {
+                removeButlerMasterReminders();
+            }
             reminder = new Reminder(cleaned, Optional.of(official.role()));
         } else {
             // Custom/script-only roles keep their role id so the client can use
