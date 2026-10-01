@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import gzip
 import json
 import os
 import pathlib
@@ -101,6 +100,8 @@ def named_tag(tag_type: int, name: str, payload: bytes) -> bytes:
 
 def build_servers_dat(path: pathlib.Path):
     # Root compound -> list "servers" -> one server compound.
+    # Modrinth's override extractor parses servers.dat as raw NBT. Do not gzip
+    # this file: a gzip header (1F 8B) is rejected before the instance is made.
     server = b"".join([
         named_tag(8, "name", nbt_string(SERVER_NAME)),
         named_tag(8, "ip", nbt_string(SERVER_ADDRESS)),
@@ -111,8 +112,7 @@ def build_servers_dat(path: pathlib.Path):
     servers_list = bytes([10]) + struct.pack(">i", 1) + server
     root = bytes([10]) + nbt_string("") + named_tag(9, "servers", servers_list) + b"\x00"
     path.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(path, "wb") as out:
-        out.write(root)
+    path.write_bytes(root)
 
 
 def main():
