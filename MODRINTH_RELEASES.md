@@ -1,8 +1,8 @@
 # Blood on the Sharktower — Modrinth releases
 
-This repository can build a Modrinth `.mrpack` and, when explicitly requested, publish it to the private-group Modrinth project.
+This repository can build a Modrinth `.mrpack` and a matching server JAR, and, when explicitly requested, publish the client pack to the private-group Modrinth project.
 
-The important safety rule is that **publishing is manual-only**. Pull requests only build a dry-run pack. Merging development work never uploads a new player release automatically.
+The important safety rule is that **publishing is manual-only**. Pull requests only build dry-run artifacts. Merging development work never uploads a new player release automatically.
 
 ## Pack contents
 
@@ -16,6 +16,8 @@ The generated pack currently targets:
 - the Sharktower JAR built from the selected Git commit
 
 Third-party mods are referenced from their pinned Modrinth CDN versions. The Sharktower JAR is embedded in `overrides/mods` inside the `.mrpack`.
+
+Each workflow run also exports the same Sharktower build as a separate server artifact named `blood-on-the-sharktower-<version>-server`. Inside it is `blood-on-the-sharktower-<version>.jar`, ready to replace the previous Sharktower JAR in the dedicated server's `mods` directory. The existing Fabric API, Cloth Config, and Simple Voice Chat server JARs do not need to be replaced when their pinned versions have not changed.
 
 Any future client config/resource files that should ship with every installation can be checked into `modrinth/overrides/` using their final Minecraft-instance paths, for example:
 
@@ -47,7 +49,7 @@ In GitHub:
 2. Under **Secrets**, create:
    - `MODRINTH_TOKEN` = the Modrinth personal access token.
 3. Under **Variables**, create:
-   - `MODRINTH_PROJECT_ID` = the Modrinth project ID (the short base62 ID, not the full URL).
+   - `MODRINTH_PROJECT_ID` = the Modrinth project ID or slug.
 
 ## Dry run
 
@@ -59,8 +61,10 @@ Before the first publish:
 4. Enter a release version such as `1.1.0`.
 5. Leave **Publish after building** OFF.
 6. Run it.
-7. Download the resulting `blood-on-the-sharktower-<version>-mrpack` artifact.
-8. Import that `.mrpack` into a fresh Modrinth instance and verify it launches and joins the server.
+7. Download the resulting `blood-on-the-sharktower-<version>-mrpack` client artifact.
+8. Download the matching `blood-on-the-sharktower-<version>-server` artifact for the dedicated server.
+9. Import the `.mrpack` into a fresh Modrinth instance and verify it launches and joins the server.
+10. Stop the dedicated server, replace only its old `blood-on-the-sharktower-*.jar` with the new JAR from the server artifact, then restart and verify the server comes up cleanly.
 
 Pull requests that change the pack builder, pack manifest, or release workflow also perform this same dry-run build automatically using version `0.0.0-ci`.
 
@@ -79,10 +83,11 @@ The workflow will:
 
 1. compile the mod on Java 25;
 2. override the built JAR version with the player-facing release version;
-3. fetch the pinned dependency metadata/hashes from Modrinth;
-4. build and inspect the `.mrpack`;
-5. keep a downloadable GitHub Actions artifact for 30 days;
-6. upload the `.mrpack` as a new version of the configured Modrinth project.
+3. export that exact JAR as the dedicated-server artifact;
+4. fetch the pinned dependency metadata/hashes from Modrinth;
+5. build and inspect the `.mrpack` containing the same Sharktower JAR;
+6. keep both downloadable GitHub Actions artifacts for 30 days;
+7. upload the `.mrpack` as a new version of the configured Modrinth project when publishing is enabled.
 
 ## Player update flow
 
@@ -92,7 +97,7 @@ Players only need to make the switch once:
 2. They install Blood on the Sharktower from that project in the Modrinth App.
 3. Future versions remain attached to the project, so they can use Modrinth's normal version/update controls rather than importing a new ZIP every release.
 
-The dedicated AMP server is still updated separately; this workflow updates the client modpack distribution only.
+The dedicated AMP server is still updated separately. For each release, download the matching server artifact, stop the server, replace the old Sharktower JAR in `mods`, and restart it. This keeps the player pack and server on the same Sharktower version.
 
 ## Version policy
 
