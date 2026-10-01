@@ -3,7 +3,6 @@ package com.sharktower.bloodonthesharktower.daytime;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.Role;
-import com.sharktower.bloodonthesharktower.networking.StateBroadcaster;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
 import net.minecraft.ChatFormatting;
@@ -21,7 +20,9 @@ import java.util.UUID;
  *
  * The Butler's Master is the player carrying the Butler-sourced "Master"
  * reminder token in the Storyteller Grimoire. A living Butler may only raise
- * their hand while that Master's hand is raised. Dead Butlers are unrestricted.
+ * their hand while that Master's hand is raised. If the Master later lowers
+ * their hand, the Butler is privately reminded to lower theirs rather than
+ * having the server move it automatically. Dead Butlers are unrestricted.
  */
 public final class ButlerVoteRule {
     private ButlerVoteRule() {}
@@ -63,44 +64,35 @@ public final class ButlerVoteRule {
     }
 
     /**
-     * Called whenever a hand is lowered. Any living Butler following that player
-     * must lower too unless their own vote is already locked.
+     * Called whenever a hand is lowered. If the Butler's Master lowers while the
+     * Butler is still voting, remind the Butler privately rather than changing
+     * their visible hand state automatically.
      */
     public static void onHandLowered(MinecraftServer server, UUID loweredPlayer) {
         if (server == null || loweredPlayer == null) return;
         UUID master = master();
         if (!loweredPlayer.equals(master)) return;
 
-        boolean changed = false;
-        for (Map.Entry<UUID, PendingRoleAssignment> entry : ServerState.PLAYER_ROLES.entrySet()) {
-            UUID butler = entry.getKey();
+        for (UUID butler : ServerState.PLAYER_ROLES.keySet()) {
             if (!isLivingButler(butler) || isLocked(butler) || !DaytimeState.isHandRaised(butler)) continue;
-
-            DaytimeState.setRaisedHand(butler, false);
-            DaytimeState.setLeverState(butler, false);
-            changed = true;
 
             ServerPlayer player = server.getPlayerList().getPlayer(butler);
             if (player != null) {
                 player.sendSystemMessage(Component.literal(
-                                "Your Master lowered their hand, so your Butler vote was lowered too.")
+                                "Your Master lowered their hand. Please lower your hand.")
                         .withStyle(ChatFormatting.GOLD));
             }
         }
-
-        if (changed) StateBroadcaster.broadcastVoteState(server);
     }
 
     /**
      * Defensive check at the exact lock-in moment. This prevents stale or
-     * malicious client state from ever counting an illegal Butler YES.
+     * malicious client state from ever counting an illegal Butler YES without
+     * changing the Butler's visible hand state and creating a public role tell.
      */
     public static boolean allowYesAtLock(MinecraftServer server, UUID playerId, boolean requestedYes) {
         if (!requestedYes || !isLivingButler(playerId)) return requestedYes;
         if (mayRaiseHand(playerId)) return true;
-
-        DaytimeState.setRaisedHand(playerId, false);
-        DaytimeState.setLeverState(playerId, false);
 
         ServerPlayer player = server == null ? null : server.getPlayerList().getPlayer(playerId);
         if (player != null) {
