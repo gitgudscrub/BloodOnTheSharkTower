@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build JAR
+    name: Build JAR and Client Pack
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -34,19 +34,32 @@ jobs:
           chmod +x gradlew
           ./gradlew clean build --stacktrace
 
+      - name: Build Modrinth client pack
+        run: python3 tools/package_modrinth_client.py
+
       - name: List build outputs
         if: always()
         run: |
           find build/libs -maxdepth 1 -type f -printf '%f\n' 2>/dev/null || true
+          find dist -maxdepth 1 -type f -printf '%f\n' 2>/dev/null || true
 
-      - name: Upload release JAR
+      - name: Upload server JAR
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: blood-on-the-sharktower-1.1.0-rc1
+          name: blood-on-the-sharktower-server
           path: |
             build/libs/*.jar
             !build/libs/*-sources.jar
             !build/libs/*-dev.jar
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Modrinth client pack
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blood-on-the-sharktower-client
+          path: dist/*.mrpack
           if-no-files-found: error
           retention-days: 30
