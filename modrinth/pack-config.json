@@ -3,6 +3,10 @@
   "summary": "Private Blood on the Clocktower Minecraft experience for the Blood on the Sharktower community.",
   "minecraft": "26.3",
   "fabric_loader": "0.19.5",
+  "server": {
+    "name": "Blood on the Sharktower",
+    "address": "88.97.251.50"
+  },
   "dependencies": [
     {
       "name": "Fabric API",
