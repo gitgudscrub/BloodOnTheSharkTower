@@ -90,6 +90,57 @@ The version in `gradle.properties` is the source of truth for releases. The mod 
 
 When the Modrinth project is approved, whichever version is current at that point becomes the latest Modrinth release; the numbering does not reset for the platform launch.
 
+## Roadmap
+
+Development is deliberately staged so that the core Clocktower rules are reliable before the project expands into the much larger Experimental and homebrew rulesets.
+
+### 1.0.x — Base 3 full support *(current focus)*
+
+Version **1.0.0** marked the first playable Base 3 baseline. The rest of the **1.0.x** line is focused on making **Trouble Brewing, Bad Moon Rising and Sects & Violets** fully supported and dependable in real games.
+
+Priorities include:
+
+- testing every Base 3 character and its important interactions;
+- correctly handling setup changes, role changes, death, resurrection, poisoning/drunkenness and registration;
+- reliable reminders, night order and Storyteller information;
+- nominations, executions, ghost votes and character-specific voting rules;
+- reconnect and hidden-information behaviour;
+- fixing UI or quality-of-life issues found during real multiplayer games.
+
+The goal is to finish the Base 3 foundation before treating the wider character pool as fully supported.
+
+### 1.1.x — Custom scripts and Experimental characters
+
+Once the Base 3 is stable, the next milestone is to turn the existing custom-script functionality into a fully supported gameplay path and systematically test the **Experimental** character pool.
+
+This phase will focus on:
+
+- robust custom script loading and validation;
+- Experimental character abilities and reminder tokens;
+- interactions between characters that do not normally appear together in the Base 3;
+- official jinxes and unusual setup interactions;
+- expanding the reusable rules engine where Experimental characters expose gaps in the Base 3 implementation.
+
+### 1.2.x — Klutzbanana homebrew support
+
+The next major capability will be support for homebrew content created with **Klutzbanana**.
+
+The aim is to support imported homebrew characters and scripts, including the information the mod can represent generically such as:
+
+- character names, teams and ability text;
+- custom icons and script data;
+- reminder tokens;
+- night-order information;
+- setup metadata and other supported character properties.
+
+Homebrew abilities can be arbitrarily complex, so this phase will distinguish between mechanics the mod can automate safely and mechanics that should remain under Storyteller control.
+
+### Design principle
+
+Where practical, Blood on the Sharktower implements **reusable game concepts rather than one-off character exceptions**. Systems such as role changes, alignment changes, poisoning, registration, extra deaths, resurrection, setup modification and reminder ownership should be reusable by many characters.
+
+Clocktower will always contain special cases, but building strong shared systems during the Base 3 phase should make Experimental and homebrew support substantially easier and less fragile later.
+
 ## Development
 
 Build the mod with:
