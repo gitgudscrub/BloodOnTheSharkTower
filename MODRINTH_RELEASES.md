@@ -1,6 +1,6 @@
 # Blood on the Sharktower — Modrinth releases
 
-This repository can build a Modrinth `.mrpack` and a matching server JAR, and, when explicitly requested, publish the client pack to the private-group Modrinth project.
+This repository can build a Modrinth `.mrpack` and a matching server JAR, and, when explicitly requested, publish the client pack to the Blood on the Sharktower Modrinth project.
 
 The important safety rule is that **publishing is manual-only**. Pull requests only build dry-run artifacts. Merging development work never uploads a new player release automatically.
 
@@ -13,11 +13,15 @@ The generated pack currently targets:
 - Fabric API 0.161.0+26.3 (`bNnaTiuM`)
 - Cloth Config API 26.3.158+fabric (`eZ3xIIuk`)
 - Simple Voice Chat fabric-2.6.24+26.3 (`OLnMVWXy`)
+- No Chat Restrictions Fabric-MC26.3-v1.3.0 (`l4Pr3hk8`, client-only)
 - the Sharktower JAR built from the selected Git commit
+- a preconfigured Multiplayer entry named `Blood on the Sharktower` pointing at `88.97.251.50` on Minecraft's default port
 
-Third-party mods are referenced from their pinned Modrinth CDN versions. The Sharktower JAR is embedded in `overrides/mods` inside the `.mrpack`.
+Third-party mods are referenced from pinned Modrinth versions. The Sharktower JAR is embedded in `overrides/mods` inside the `.mrpack`.
 
-Each workflow run also exports the same Sharktower build as a separate server artifact named `blood-on-the-sharktower-<version>-server`. Inside it is `blood-on-the-sharktower-<version>.jar`, ready to replace the previous Sharktower JAR in the dedicated server's `mods` directory. The existing Fabric API, Cloth Config, and Simple Voice Chat server JARs do not need to be replaced when their pinned versions have not changed.
+The pack builder also generates `overrides/servers.dat`, so a fresh installation can launch Minecraft, press **Multiplayer**, and see **Blood on the Sharktower** already listed without manually entering the address.
+
+Each workflow run also exports the same Sharktower build as a separate server artifact named `blood-on-the-sharktower-<version>-server`. Inside it is `blood-on-the-sharktower-<version>.jar`, ready to replace the previous Sharktower JAR in the dedicated server's `mods` directory. No Chat Restrictions is client-only and must not be uploaded to the dedicated server.
 
 Any future client config/resource files that should ship with every installation can be checked into `modrinth/overrides/` using their final Minecraft-instance paths, for example:
 
@@ -63,7 +67,7 @@ Before the first publish:
 6. Run it.
 7. Download the resulting `blood-on-the-sharktower-<version>-mrpack` client artifact.
 8. Download the matching `blood-on-the-sharktower-<version>-server` artifact for the dedicated server.
-9. Import the `.mrpack` into a fresh Modrinth instance and verify it launches and joins the server.
+9. Import the `.mrpack` into a fresh Modrinth instance, launch it, open **Multiplayer**, confirm **Blood on the Sharktower** is already listed, and join the server.
 10. Stop the dedicated server, replace only its old `blood-on-the-sharktower-*.jar` with the new JAR from the server artifact, then restart and verify the server comes up cleanly.
 
 Pull requests that change the pack builder, pack manifest, or release workflow also perform this same dry-run build automatically using version `0.0.0-ci`.
@@ -85,9 +89,10 @@ The workflow will:
 2. override the built JAR version with the player-facing release version;
 3. export that exact JAR as the dedicated-server artifact;
 4. fetch the pinned dependency metadata/hashes from Modrinth;
-5. build and inspect the `.mrpack` containing the same Sharktower JAR;
-6. keep both downloadable GitHub Actions artifacts for 30 days;
-7. upload the `.mrpack` as a new version of the configured Modrinth project when publishing is enabled.
+5. generate the preconfigured `servers.dat`;
+6. build and inspect the `.mrpack` containing the same Sharktower JAR;
+7. keep both downloadable GitHub Actions artifacts for 30 days;
+8. upload the `.mrpack` as a new version of the configured Modrinth project when publishing is enabled.
 
 ## Player update flow
 
