@@ -22,7 +22,9 @@ import java.util.UUID;
  * reminder token in the Storyteller Grimoire. A living Butler may only raise
  * their hand while that Master's hand is raised. If the Master later lowers
  * their hand, the Butler is privately reminded to lower theirs rather than
- * having the server move it automatically. Dead Butlers are unrestricted.
+ * having the server move it automatically. Once raised, the Butler's hand is
+ * counted normally so the voting UI cannot reveal the Butler through a rejected
+ * vote. Dead Butlers are unrestricted.
  */
 public final class ButlerVoteRule {
     private ButlerVoteRule() {}
@@ -86,21 +88,12 @@ public final class ButlerVoteRule {
     }
 
     /**
-     * Defensive check at the exact lock-in moment. This prevents stale or
-     * malicious client state from ever counting an illegal Butler YES without
-     * changing the Butler's visible hand state and creating a public role tell.
+     * Once a Butler has legally raised their hand, lock-in treats it like any
+     * other raised hand. The private reminder above is deliberately advisory so
+     * the public vote count cannot identify the Butler through a rejected vote.
      */
     public static boolean allowYesAtLock(MinecraftServer server, UUID playerId, boolean requestedYes) {
-        if (!requestedYes || !isLivingButler(playerId)) return requestedYes;
-        if (mayRaiseHand(playerId)) return true;
-
-        ServerPlayer player = server == null ? null : server.getPlayerList().getPlayer(playerId);
-        if (player != null) {
-            player.sendSystemMessage(Component.literal(
-                            "Your Butler vote could not be counted because your Master is not voting.")
-                    .withStyle(ChatFormatting.GOLD));
-        }
-        return false;
+        return requestedYes;
     }
 
     private static boolean isLocked(UUID playerId) {
