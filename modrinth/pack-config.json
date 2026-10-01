@@ -1,0 +1,26 @@
+{
+  "name": "Blood on the Sharktower",
+  "summary": "Private Blood on the Clocktower Minecraft experience for the Blood on the Sharktower community.",
+  "minecraft": "26.3",
+  "fabric_loader": "0.19.5",
+  "dependencies": [
+    {
+      "name": "Fabric API",
+      "version_id": "bNnaTiuM",
+      "client": "required",
+      "server": "required"
+    },
+    {
+      "name": "Cloth Config API",
+      "version_id": "eZ3xIIuk",
+      "client": "required",
+      "server": "required"
+    },
+    {
+      "name": "Simple Voice Chat",
+      "version_id": "OLnMVWXy",
+      "client": "required",
+      "server": "required"
+    }
+  ]
+}
