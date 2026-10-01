@@ -4,7 +4,7 @@
 
 Blood on the Sharktower is a Minecraft 26.3 Fabric mod and modpack for playing **Blood on the Clocktower** in Minecraft. It began as a port/fork of Blood on the Blocktower and has grown into a Sharktower-focused implementation with its own Grimoire, role bag, voting, voice-chat routing, night flow, script support and quality-of-life systems.
 
-The project is built for the Sharktower community, but the client pack is also distributed through Modrinth.
+The project is built for the Sharktower community. A Modrinth client package is being prepared for public distribution once the project is approved.
 
 ## Platform
 
@@ -19,7 +19,7 @@ The project is built for the Sharktower community, but the client pack is also d
 
 ### Players
 
-The recommended client install is the Blood on the Sharktower Modrinth modpack:
+While the Modrinth project is awaiting approval, client builds can be shared directly as `.mrpack` files. Once approved, the recommended client install will be the Blood on the Sharktower Modrinth modpack:
 
 https://modrinth.com/modpack/blood-on-the-sharktower
 
