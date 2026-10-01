@@ -98,9 +98,26 @@ jobs:
             --output "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack"
 
       - name: Inspect pack contents
+        shell: bash
         run: |
-          unzip -l "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack"
-          unzip -p "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack" modrinth.index.json | python3 -m json.tool
+          PACK="dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack"
+          unzip -l "$PACK"
+          unzip -p "$PACK" modrinth.index.json | python3 -m json.tool
+          python3 - "$PACK" <<'PY'
+          import sys
+          import zipfile
+
+          pack = sys.argv[1]
+          with zipfile.ZipFile(pack) as archive:
+              data = archive.read("overrides/servers.dat")
+          if not data:
+              raise SystemExit("servers.dat is empty")
+          if data[0] != 0x0A:
+              raise SystemExit(
+                  f"servers.dat must be raw NBT beginning with TAG_Compound 0x0A; found 0x{data[0]:02X}"
+              )
+          print("servers.dat raw NBT header validated: 0x0A")
+          PY
 
       - name: Upload client modpack artifact
         uses: actions/upload-artifact@v4
