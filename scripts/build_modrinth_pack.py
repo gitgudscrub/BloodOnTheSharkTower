@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build a deterministic Blood on the Sharktower .mrpack.
 
-Third-party mods are referenced directly from their pinned Modrinth versions.
+Third-party mods are referenced directly from their Modrinth versions.
 The locally-built Sharktower JAR is embedded under overrides/mods so the pack
 remains a single Modrinth project for players to install and update.
 """
@@ -14,21 +14,39 @@ import hashlib
 import json
 import shutil
 import struct
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
 
-API = "https://api.modrinth.com/v2/version/{}"
+VERSION_API = "https://api.modrinth.com/v2/version/{}"
+PROJECT_VERSIONS_API = "https://api.modrinth.com/v2/project/{}/version"
 USER_AGENT = "gitgudscrub/BloodOnTheSharkTower (GitHub Actions)"
 
 
-def fetch_version(version_id: str) -> dict:
-    request = urllib.request.Request(
-        API.format(version_id),
-        headers={"User-Agent": USER_AGENT},
-    )
+def fetch_json(url: str) -> object:
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=30) as response:
         return json.load(response)
+
+
+def fetch_version(version_id: str) -> dict:
+    return fetch_json(VERSION_API.format(version_id))
+
+
+def fetch_latest_project_version(project_id: str, game_version: str, loader: str) -> dict:
+    query = urllib.parse.urlencode(
+        {
+            "game_versions": json.dumps([game_version]),
+            "loaders": json.dumps([loader]),
+        }
+    )
+    versions = fetch_json(f"{PROJECT_VERSIONS_API.format(project_id)}?{query}")
+    if not versions:
+        raise RuntimeError(
+            f"No {loader} version of Modrinth project {project_id} supports Minecraft {game_version}"
+        )
+    return versions[0]
 
 
 def primary_file(version: dict) -> dict:
@@ -38,8 +56,19 @@ def primary_file(version: dict) -> dict:
     return next((item for item in files if item.get("primary")), files[0])
 
 
-def dependency_entry(spec: dict) -> dict:
-    version = fetch_version(spec["version_id"])
+def dependency_entry(spec: dict, game_version: str, loader: str) -> dict:
+    if spec.get("version_id"):
+        version = fetch_version(spec["version_id"])
+    elif spec.get("project_id"):
+        version = fetch_latest_project_version(spec["project_id"], game_version, loader)
+    else:
+        raise RuntimeError(f"Dependency {spec.get('name', '<unnamed>')} has no version_id or project_id")
+
+    print(
+        f"Resolved {spec['name']}: {version.get('version_number')} "
+        f"(version id {version.get('id')})"
+    )
+
     file = primary_file(version)
     hashes = file.get("hashes") or {}
     if not hashes.get("sha1") or not hashes.get("sha512"):
@@ -84,23 +113,18 @@ def named_nbt_tag(tag_type: int, name: str, payload: bytes) -> bytes:
 
 
 def write_servers_dat(path: Path, server_name: str, address: str) -> None:
-    """Write a minimal Minecraft servers.dat containing the Sharktower server.
-
-    servers.dat is a gzip-compressed NBT compound. Only stable fields needed for
-    a normal saved multiplayer entry are emitted so Minecraft can populate the
-    remaining transient ping/icon information itself.
-    """
+    """Write a minimal Minecraft servers.dat containing the Sharktower server."""
     server = bytearray()
     server += named_nbt_tag(8, "name", nbt_utf(server_name))
     server += named_nbt_tag(8, "ip", nbt_utf(address))
     server += named_nbt_tag(1, "hidden", b"\x00")
-    server += b"\x00"  # TAG_End for this server compound.
+    server += b"\x00"
 
     root = bytearray()
-    root += b"\x0a\x00\x00"  # Root TAG_Compound with an empty name.
+    root += b"\x0a\x00\x00"
     root += bytes([9]) + nbt_utf("servers")
     root += bytes([10]) + struct.pack(">i", 1) + server
-    root += b"\x00"  # TAG_End for the root compound.
+    root += b"\x00"
 
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(gzip.compress(bytes(root), mtime=0))
@@ -127,7 +151,10 @@ def main() -> None:
         raise SystemExit(f"Built Sharktower JAR not found: {args.jar}")
 
     config = json.loads(args.config.read_text(encoding="utf-8"))
-    files = [dependency_entry(spec) for spec in config["dependencies"]]
+    files = [
+        dependency_entry(spec, config["minecraft"], "fabric")
+        for spec in config["dependencies"]
+    ]
 
     work = Path("build/modrinth-pack")
     if work.exists():
