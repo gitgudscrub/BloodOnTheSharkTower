@@ -1,6 +1,12 @@
 name: Build / Publish Modrinth Pack
 
 on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/publish-modrinth.yml'
+      - 'scripts/build_modrinth_pack.py'
+      - 'modrinth/**'
   workflow_dispatch:
     inputs:
       version:
@@ -30,6 +36,9 @@ on:
 permissions:
   contents: read
 
+env:
+  RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '0.0.0-ci' }}
+
 jobs:
   modrinth-pack:
     name: Build Modrinth Pack
@@ -43,7 +52,7 @@ jobs:
       - name: Validate release version
         shell: bash
         run: |
-          if [[ ! "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+          if [[ ! "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
             echo "Version must look like 1.1.0, 1.1.0-beta.1, etc."
             exit 1
           fi
@@ -60,7 +69,7 @@ jobs:
       - name: Build stable Sharktower JAR
         run: |
           chmod +x gradlew
-          ./gradlew clean build --stacktrace -Pversion="${{ inputs.version }}"
+          ./gradlew clean build --stacktrace -Pversion="$RELEASE_VERSION"
 
       - name: Locate release JAR
         id: jar
@@ -79,25 +88,25 @@ jobs:
       - name: Build .mrpack
         run: |
           python3 scripts/build_modrinth_pack.py \
-            --version "${{ inputs.version }}" \
+            --version "$RELEASE_VERSION" \
             --jar "${{ steps.jar.outputs.path }}" \
-            --output "dist/blood-on-the-sharktower-${{ inputs.version }}.mrpack"
+            --output "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack"
 
       - name: Inspect pack contents
         run: |
-          unzip -l "dist/blood-on-the-sharktower-${{ inputs.version }}.mrpack"
-          unzip -p "dist/blood-on-the-sharktower-${{ inputs.version }}.mrpack" modrinth.index.json | python3 -m json.tool
+          unzip -l "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack"
+          unzip -p "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack" modrinth.index.json | python3 -m json.tool
 
       - name: Upload dry-run / release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: blood-on-the-sharktower-${{ inputs.version }}-mrpack
-          path: dist/blood-on-the-sharktower-${{ inputs.version }}.mrpack
+          name: blood-on-the-sharktower-${{ env.RELEASE_VERSION }}-mrpack
+          path: dist/blood-on-the-sharktower-${{ env.RELEASE_VERSION }}.mrpack
           if-no-files-found: error
           retention-days: 30
 
       - name: Validate Modrinth publishing configuration
-        if: ${{ inputs.publish_to_modrinth }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_modrinth }}
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
@@ -112,11 +121,10 @@ jobs:
           fi
 
       - name: Publish version to Modrinth
-        if: ${{ inputs.publish_to_modrinth }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_modrinth }}
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
-          RELEASE_VERSION: ${{ inputs.version }}
           RELEASE_CHANGELOG: ${{ inputs.changelog }}
           RELEASE_TYPE: ${{ inputs.version_type }}
         shell: bash
