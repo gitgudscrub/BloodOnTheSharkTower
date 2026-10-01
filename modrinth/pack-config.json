@@ -25,6 +25,12 @@
       "version_id": "OLnMVWXy",
       "client": "required",
       "server": "required"
+    },
+    {
+      "name": "No Chat Restrictions",
+      "project_id": "z440MEwJ",
+      "client": "required",
+      "server": "unsupported"
     }
   ]
 }
