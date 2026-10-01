@@ -96,7 +96,7 @@ Development is deliberately staged so that the core Clocktower rules are reliabl
 
 ### 1.0.x — Base 3 full support *(current focus)*
 
-Version **1.0.0** marked the first playable Base 3 baseline. The rest of the **1.0.x** line is focused on making **Trouble Brewing, Bad Moon Rising and Sects & Violets** fully supported and dependable in real games.
+Version **1.0.0** marked the first playable Base 3 baseline. The rest of the **1.0.x** line is focused on making **Trouble Brewing, Bad Moon Rising and Sects & Violets** fully supported and dependable in real games, while also finishing the core player experience needed for regular community play.
 
 Priorities include:
 
@@ -105,9 +105,27 @@ Priorities include:
 - reliable reminders, night order and Storyteller information;
 - nominations, executions, ghost votes and character-specific voting rules;
 - reconnect and hidden-information behaviour;
+- player identity and customisation support;
 - fixing UI or quality-of-life issues found during real multiplayer games.
 
-The goal is to finish the Base 3 foundation before treating the wider character pool as fully supported.
+#### Player identity and customisation
+
+The **1.0.x** line will include a persistent player profile system so players can present themselves consistently in Sharktower games without changing their underlying Minecraft identity.
+
+Planned features include:
+
+- `/nick` commands so players can choose the name they want to be called;
+- `/pronouns` commands with common presets plus custom pronoun text;
+- optional display of pronouns above the player's head;
+- optional cosmetic display colours that do not encode role, alignment or other game information;
+- persistence by UUID so settings survive reconnects and server restarts;
+- use of the chosen nickname in player-facing Sharktower UI such as the Grimoire, nominations and voting where practical;
+- retention of the real Minecraft username internally for permissions, moderation and debugging;
+- sensible validation to prevent control characters, misleading system-style names and other problematic display values.
+
+These options are intended to be cosmetic and social only. They must never reveal or imply hidden Clocktower information.
+
+The goal is to finish both the Base 3 rules foundation and the core player experience before treating the wider character pool as fully supported.
 
 ### 1.1.x — Custom scripts and Experimental characters
 
