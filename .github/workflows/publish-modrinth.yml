@@ -85,6 +85,11 @@ jobs:
           echo "path=${jars[0]}" >> "$GITHUB_OUTPUT"
           echo "Using ${jars[0]}"
 
+      - name: Prepare server JAR
+        run: |
+          mkdir -p dist/server
+          cp "${{ steps.jar.outputs.path }}" "dist/server/blood-on-the-sharktower-${RELEASE_VERSION}.jar"
+
       - name: Build .mrpack
         run: |
           python3 scripts/build_modrinth_pack.py \
@@ -97,11 +102,19 @@ jobs:
           unzip -l "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack"
           unzip -p "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack" modrinth.index.json | python3 -m json.tool
 
-      - name: Upload dry-run / release artifact
+      - name: Upload client modpack artifact
         uses: actions/upload-artifact@v4
         with:
           name: blood-on-the-sharktower-${{ env.RELEASE_VERSION }}-mrpack
           path: dist/blood-on-the-sharktower-${{ env.RELEASE_VERSION }}.mrpack
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload server JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blood-on-the-sharktower-${{ env.RELEASE_VERSION }}-server
+          path: dist/server/blood-on-the-sharktower-${{ env.RELEASE_VERSION }}.jar
           if-no-files-found: error
           retention-days: 30
 
