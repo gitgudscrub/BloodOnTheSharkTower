@@ -9,9 +9,11 @@ remains a single Modrinth project for players to install and update.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import shutil
+import struct
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -70,6 +72,40 @@ def copy_overrides(source: Path, destination: Path) -> None:
         shutil.copy2(item, target)
 
 
+def nbt_utf(value: str) -> bytes:
+    encoded = value.encode("utf-8")
+    if len(encoded) > 65535:
+        raise ValueError("NBT string is too long")
+    return struct.pack(">H", len(encoded)) + encoded
+
+
+def named_nbt_tag(tag_type: int, name: str, payload: bytes) -> bytes:
+    return bytes([tag_type]) + nbt_utf(name) + payload
+
+
+def write_servers_dat(path: Path, server_name: str, address: str) -> None:
+    """Write a minimal Minecraft servers.dat containing the Sharktower server.
+
+    servers.dat is a gzip-compressed NBT compound. Only stable fields needed for
+    a normal saved multiplayer entry are emitted so Minecraft can populate the
+    remaining transient ping/icon information itself.
+    """
+    server = bytearray()
+    server += named_nbt_tag(8, "name", nbt_utf(server_name))
+    server += named_nbt_tag(8, "ip", nbt_utf(address))
+    server += named_nbt_tag(1, "hidden", b"\x00")
+    server += b"\x00"  # TAG_End for this server compound.
+
+    root = bytearray()
+    root += b"\x0a\x00\x00"  # Root TAG_Compound with an empty name.
+    root += bytes([9]) + nbt_utf("servers")
+    root += bytes([10]) + struct.pack(">i", 1) + server
+    root += b"\x00"  # TAG_End for the root compound.
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(gzip.compress(bytes(root), mtime=0))
+
+
 def sha(path: Path, algorithm: str) -> str:
     digest = hashlib.new(algorithm)
     with path.open("rb") as stream:
@@ -99,6 +135,14 @@ def main() -> None:
     overrides = work / "overrides"
     overrides.mkdir(parents=True)
     copy_overrides(args.overrides, overrides)
+
+    server_config = config.get("server")
+    if server_config:
+        server_name = server_config.get("name", config["name"])
+        server_address = server_config.get("address")
+        if not server_address:
+            raise RuntimeError("Pack server configuration is missing an address")
+        write_servers_dat(overrides / "servers.dat", server_name, server_address)
 
     mods_dir = overrides / "mods"
     mods_dir.mkdir(parents=True, exist_ok=True)
@@ -137,6 +181,8 @@ def main() -> None:
     print(f"  loader: fabric-loader {config['fabric_loader']}")
     print(f"  remote dependencies: {len(files)}")
     print(f"  embedded Sharktower JAR: {sharktower_name}")
+    if server_config:
+        print(f"  multiplayer server: {server_config.get('name', config['name'])} ({server_config['address']})")
     print(f"  mrpack sha1: {sha(args.output, 'sha1')}")
     print(f"  mrpack sha512: {sha(args.output, 'sha512')}")
 
