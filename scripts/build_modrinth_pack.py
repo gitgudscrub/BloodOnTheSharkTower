@@ -9,7 +9,6 @@ remains a single Modrinth project for players to install and update.
 from __future__ import annotations
 
 import argparse
-import gzip
 import hashlib
 import json
 import shutil
@@ -113,7 +112,12 @@ def named_nbt_tag(tag_type: int, name: str, payload: bytes) -> bytes:
 
 
 def write_servers_dat(path: Path, server_name: str, address: str) -> None:
-    """Write a minimal Minecraft servers.dat containing the Sharktower server."""
+    """Write an uncompressed NBT servers.dat containing the Sharktower server.
+
+    Minecraft and the Modrinth App expect servers.dat itself to begin with the
+    root TAG_Compound (0x0A). Do not gzip this file: the launcher parses this
+    override while installing the pack.
+    """
     server = bytearray()
     server += named_nbt_tag(8, "name", nbt_utf(server_name))
     server += named_nbt_tag(8, "ip", nbt_utf(address))
@@ -127,7 +131,7 @@ def write_servers_dat(path: Path, server_name: str, address: str) -> None:
     root += b"\x00"
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(gzip.compress(bytes(root), mtime=0))
+    path.write_bytes(bytes(root))
 
 
 def sha(path: Path, algorithm: str) -> str:
