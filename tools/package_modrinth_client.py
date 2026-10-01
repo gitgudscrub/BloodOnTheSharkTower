@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import os
 import pathlib
 import shutil
 import struct
@@ -13,10 +12,23 @@ DIST = ROOT / "dist"
 PACK_ROOT = ROOT / "build" / "modrinth-pack"
 OVERRIDES = PACK_ROOT / "overrides"
 MODS = OVERRIDES / "mods"
+GRADLE_PROPERTIES = ROOT / "gradle.properties"
+
+
+def gradle_property(name: str) -> str:
+    for raw_line in GRADLE_PROPERTIES.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() == name:
+            return value.strip()
+    raise RuntimeError(f"Missing {name} in {GRADLE_PROPERTIES}")
+
 
 MINECRAFT_VERSION = "26.3"
 FABRIC_LOADER_VERSION = "0.19.5"
-PACK_VERSION = "1.0.1"
+PACK_VERSION = gradle_property("version")
 SERVER_NAME = "Blood on the Sharktower"
 SERVER_ADDRESS = "88.97.251.50"
 
@@ -160,6 +172,7 @@ def main():
 
     print(f"Created {output}")
     print(f"Embedded mod: {release_jar.name}")
+    print(f"Version source: gradle.properties -> {PACK_VERSION}")
     print(f"Preconfigured server: {SERVER_ADDRESS}")
     print(f"No Chat Restrictions version: {no_chat_restrictions.get('version_number', no_chat_restrictions.get('id'))}")
 
