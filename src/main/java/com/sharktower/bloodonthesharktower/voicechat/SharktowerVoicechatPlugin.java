@@ -10,6 +10,7 @@ import de.maxhenkel.voicechat.api.events.PlayerDisconnectedEvent;
 import de.maxhenkel.voicechat.api.events.SoundPacketEvent;
 import de.maxhenkel.voicechat.api.events.StaticSoundPacketEvent;
 import de.maxhenkel.voicechat.api.events.VoicechatServerStartedEvent;
+import de.maxhenkel.voicechat.api.events.VoiceDistanceEvent;
 import de.maxhenkel.voicechat.api.events.VoicechatServerStoppedEvent;
 
 import java.util.UUID;
@@ -57,6 +58,13 @@ public final class SharktowerVoicechatPlugin implements VoicechatPlugin {
 
         registration.registerEvent(PlayerDisconnectedEvent.class, event ->
                 NightChatManager.onVoicePlayerDisconnected(event.getPlayerUuid()));
+
+        // SVC starts each microphone packet with the configured normal/whisper
+        // distance. Scale that once here; never rewrite the persisted config.
+        registration.registerEvent(VoiceDistanceEvent.class, event -> {
+            if (event.getSenderConnection().getGroup() != null) return;
+            event.setDistance(event.getDistance() * (2.0F / 3.0F));
+        });
 
         // During Night, private Storyteller chats keep both participants in the
         // shared SVC group so the visible group-member heads never change. Filter
