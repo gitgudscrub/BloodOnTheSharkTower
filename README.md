@@ -94,11 +94,11 @@ When the Modrinth project is approved, whichever version is current at that poin
 
 Development is deliberately staged so that the core Clocktower rules are reliable before the project expands into the much larger Experimental and homebrew rulesets.
 
-### 1.0.2 — Session feedback and polish *(planned)*
+### 1.0.2 — Session feedback and polish *(in development)*
 
 Version **1.0.2** is the next feedback-driven patch following real multiplayer play on 1.0.1. Its scope is deliberately focused on issues and quality-of-life improvements found during live sessions, with room for additional feedback before release.
 
-Current planned work:
+Implemented on the 1.0.2 development branch, awaiting multiplayer validation:
 
 - fix the newest connected player sometimes missing the latest player/sidebar state until another refresh occurs;
 - fix **RMB Actions** in the Grimoire so right-click player actions work as advertised;
@@ -113,6 +113,8 @@ Current planned work:
 - keep player alignment notes completely separate from authoritative Storyteller game state so no hidden information can leak.
 
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
+
+Development builds use **1.0.2-dev**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
 
 ### 1.0.x — Base 3 full support *(current focus)*
 

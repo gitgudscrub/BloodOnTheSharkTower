@@ -23,6 +23,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.client.renderer.RenderPipelines;
+import org.lwjgl.sdl.SDLMouse;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -777,11 +778,9 @@ public class AssignRolesScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         MouseButtonEvent mapped = remapMouse(event);
 
-        // Minecraft 26.3's MouseButtonInfo uses 1-based button ids here:
-        // 1 = left, 2 = right, 3 = middle. Earlier Grim code assumed the old
-        // GLFW-style 0/1 ids, which made LMB open Player Actions and caused
-        // physical RMB to be ignored entirely.
-        if (mapped.buttonInfo().button() == 2) {
+        // Minecraft 26.3 uses SDL: left=1, middle=2, right=3.
+        // Use the named constant so middle-click cannot masquerade as RMB.
+        if (mapped.buttonInfo().button() == SDLMouse.SDL_BUTTON_RIGHT) {
             GrimHit hit = grimHitAt(mapped.x(), mapped.y());
             if (hit != null) {
                 GrimoirePlayerClicks.handleRight(

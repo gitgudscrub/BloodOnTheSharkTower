@@ -5,6 +5,7 @@ import com.sharktower.bloodonthesharktower.client.gui.GrimoireInteractionState;
 import com.sharktower.bloodonthesharktower.client.gui.GrimoirePlayerClicks;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
+import com.sharktower.bloodonthesharktower.core.AlignmentOverride;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.Minecraft;
@@ -51,6 +52,16 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             UiDrawing.deathShroud(graphics, getX(), getY(), this.width);
         }
 
+        // Keep this ring outside the token/shroud but inside nomination highlights.
+        AlignmentOverride alignment = ClientGrimoireEdits.visibleAlignmentFor(playerId);
+        int border = switch (alignment) {
+            case FORCE_GOOD -> UiDrawing.GOOD;
+            case FORCE_BAD -> UiDrawing.EVIL;
+            case DEFAULT -> UiDrawing.BORDER;
+        };
+        graphics.outline(getX() - 2, getY() - 2, this.width + 4, this.height + 4, border);
+        graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, border);
+
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
             graphics.outline(getX() - 3, getY() - 3, this.width + 6, this.height + 6, UiDrawing.YES);
             graphics.text(Minecraft.getInstance().font, "N",
@@ -67,7 +78,8 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
                 GrimoireHoverHints.set(name
                         + " role — LMB edit | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
             } else {
-                GrimoireHoverHints.set(name + " role — LMB edit | RMB actions");
+                GrimoireHoverHints.set(name + " role — LMB edit"
+                        + (ClientGrimoireEdits.isLocalStoryteller() ? " | RMB actions" : ""));
             }
         }
         } finally {

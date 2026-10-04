@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.2-dev — Session feedback and polish (unreleased)
+
+- Refresh joining players' full state and everyone's seat/Grimoire/directory state at the end of the server tick. Disconnect cleanup also waits for the updated live player list.
+- Fix Grimoire RMB Actions and Shift+RMB nomination shortcuts using Minecraft 26.3's SDL right-button constant.
+- Add blue Good, red Evil and neutral grey borders to Grimoire role tokens. Storytellers see real current alignment; player borders use only their personal reads.
+- Make personal Good/Evil reminders mutually exclusive and connect Read Good / Read Evil / Clear Read to the same notes. Removing the active reminder or clearing reminders restores a neutral border.
+- Keep personal reads separate from server roles and Spy/Widow shares; clear the notebook when leaving a server.
+
+## 1.0.1 — Live testing baseline
+
+The current community testing release. Further feedback is collected for 1.0.2 before release.
+
+## 1.0.0 — First playable Base 3 baseline
+
+The staged-port systems below became the first numbered playable baseline.
+
 ## 1.1.0-rc1 — A.12 Release Candidate
 
 A.11 is feature-complete and becomes the baseline for release-candidate testing.

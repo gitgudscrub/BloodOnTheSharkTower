@@ -42,11 +42,12 @@ public final class PlayerSetupScreen extends Screen {
                 .bounds(cx + gap, y, w, 20).build());
 
         y += 32;
-        this.addRenderableWidget(Button.builder(Component.literal("Default Alignment"), b -> action("alignment_default", Integer.toString(seat)))
+        boolean storyteller = ClientGrimoireEdits.isLocalStoryteller();
+        this.addRenderableWidget(Button.builder(Component.literal(storyteller ? "Default Alignment" : "Clear Read"), b -> action("alignment_default", Integer.toString(seat)))
                 .bounds(cx - 155, y, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Force Good"), b -> action("alignment_good", Integer.toString(seat)))
+        this.addRenderableWidget(Button.builder(Component.literal(storyteller ? "Force Good" : "Read Good"), b -> action("alignment_good", Integer.toString(seat)))
                 .bounds(cx - 50, y, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Force Evil"), b -> action("alignment_evil", Integer.toString(seat)))
+        this.addRenderableWidget(Button.builder(Component.literal(storyteller ? "Force Evil" : "Read Evil"), b -> action("alignment_evil", Integer.toString(seat)))
                 .bounds(cx + 55, y, 100, 20).build());
 
         y += 42;

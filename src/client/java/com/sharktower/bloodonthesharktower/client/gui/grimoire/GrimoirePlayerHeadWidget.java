@@ -56,7 +56,8 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
                 GrimoireHoverHints.set("Seat " + seat
                         + " player — LMB reminders | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
             } else {
-                GrimoireHoverHints.set("Seat " + seat + " player — LMB reminders | RMB actions");
+                GrimoireHoverHints.set("Seat " + seat + " player — LMB reminders"
+                        + (ClientGrimoireEdits.isLocalStoryteller() ? " | RMB actions" : ""));
             }
         }
     }

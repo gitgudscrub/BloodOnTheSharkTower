@@ -11,12 +11,14 @@ import com.sharktower.bloodonthesharktower.client.render.GhostPlayerEffects;
 import com.sharktower.bloodonthesharktower.client.render.RoleIconRenderer;
 import com.sharktower.bloodonthesharktower.client.render.VoteIndicatorRenderer;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 public final class BloodOnTheSharktowerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientSettings.load();
         CoreStateReceivers.register();
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientGrimoireEdits.clearSession());
         GrimoireReturnState.register();
         KeyInputHandler.register();
         SharktowerHudRenderer.register();
