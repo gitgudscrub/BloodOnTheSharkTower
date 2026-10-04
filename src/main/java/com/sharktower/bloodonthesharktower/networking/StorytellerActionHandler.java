@@ -100,6 +100,8 @@ public final class StorytellerActionHandler {
                 case "reset_for_next_game" -> resetForNextGame(server);
                 case "phase_night" -> asSetupResult(PhaseOperations.enterNight(server));
                 case "phase_day" -> asSetupResult(PhaseOperations.enterDay(server));
+                case "team_info_preview" -> TeamInfoSharing.preview(server, actor, arg);
+                case "team_info_share" -> TeamInfoSharing.share(server, actor, arg);
                 case "night_visit" -> nightVisit(server, actor, UUID.fromString(arg));
                 case "mark_dead" -> markDead(server, Integer.parseInt(arg), false);
                 case "reveal_deaths" -> revealDeaths(server);

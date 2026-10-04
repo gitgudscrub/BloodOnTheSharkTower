@@ -212,6 +212,10 @@ public class AssignRolesScreen extends Screen {
             y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
             addRightAction(rightX, y, "Send to Home", ChatFormatting.AQUA, "send_home");
         } else if (phase == GamePhase.NIGHT) {
+            y = addRightScreen(rightX, y, "Minion Info", ChatFormatting.RED,
+                    () -> this.minecraft.gui.setScreen(new NightTeamInfoScreen(false)));
+            y = addRightScreen(rightX, y, "Demon Info", ChatFormatting.RED,
+                    () -> this.minecraft.gui.setScreen(new NightTeamInfoScreen(true)));
             y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
             y = addRightAction(rightX, y, "Send to Home", ChatFormatting.AQUA, "send_home");
             this.addRenderableWidget(Button.builder(Component.literal("Start Day").withStyle(ChatFormatting.GOLD), b ->

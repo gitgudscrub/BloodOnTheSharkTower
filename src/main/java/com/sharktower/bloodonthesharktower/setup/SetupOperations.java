@@ -758,6 +758,7 @@ public final class SetupOperations {
         com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager.clear();
         ServerState.resetGeneration++;
         com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.clear();
+        com.sharktower.bloodonthesharktower.networking.TeamInfoSharing.clear();
         com.sharktower.bloodonthesharktower.networking.SocialStateManager.clear();
         DaytimeState.hardReset(ServerState.PLAYER_SEAT_NUMBERS.keySet(), Set.of());
         MatchSnapshotManager.refreshCurrentSetupState();

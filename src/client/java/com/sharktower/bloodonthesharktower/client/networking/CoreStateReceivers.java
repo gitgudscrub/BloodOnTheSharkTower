@@ -50,6 +50,10 @@ public final class CoreStateReceivers {
     }
 
     public static void register() {
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.TeamInfoPreviewPayload.TYPE, (payload, context) -> {
+            if (context.client().player != null && ClientState.storytellerPlayers.contains(context.client().player.getUUID()))
+                context.client().gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen(payload.token(), payload.text()));
+        });
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.NotebookPayload.TYPE, (payload, context) -> {
             ClientState.notebookGeneration = payload.generation();
             ClientState.notebookText = payload.text();

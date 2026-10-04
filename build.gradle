@@ -247,3 +247,11 @@ tasks.register('gameOneRegression', JavaExec) {
     mainClass = 'com.sharktower.bloodonthesharktower.GameOneRegression'
 }
 tasks.named('check') { dependsOn tasks.named('gameOneRegression') }
+
+// Private Minion/Demon delivery defaults and special-role information privacy.
+tasks.register('teamInformationRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.core.TeamInformationRegression'
+}
+tasks.named('check') { dependsOn tasks.named('teamInformationRegression') }
