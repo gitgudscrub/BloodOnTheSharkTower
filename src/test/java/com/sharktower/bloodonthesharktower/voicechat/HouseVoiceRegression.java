@@ -58,12 +58,77 @@ public final class HouseVoiceRegression {
         day.clear();
         check(NightChatManager.routeCode(a).equals("PROXIMITY"),"Leaving house at Night uses proximity");
         check(NightChatManager.sameNightRoom(a,out),"Exit immediately restores outside-room audio compatibility");
-        NightChatManager.onPlayerDisconnected(b);
+        NightChatManager.onMinecraftPlayerDisconnected(b);
         check(!houses.containsKey(b),"Minecraft disconnect clears house membership");
+        // Exercise real SVC assignment/reconnect/reset code with a small API
+        // double; no Minecraft client or audio hardware is required.
+        var voice=new FakeVoice(List.of(a,b,st));
+        VoicechatIntegrationState.onServerStarted(voice.api);
+        ServerState.PLAYER_SEAT_NUMBERS.put(a,1);ServerState.PLAYER_SEAT_NUMBERS.put(b,2);
+        houses.put(a,1);houses.put(b,2);houses.put(st,1);
+        var assign=NightChatManager.class.getDeclaredMethod("assignCurrentPrivateRoute",de.maxhenkel.voicechat.api.VoicechatServerApi.class,UUID.class);
+        assign.setAccessible(true);
+        for(UUID id:List.of(a,b,st)) assign.invoke(null,voice.api,id);
+        check(voice.assigned.get(a).getId().equals(voice.assigned.get(st).getId()),"ST actually joins owner's SVC house group");
+        check(!voice.assigned.get(a).getId().equals(voice.assigned.get(b).getId()),"Different houses receive different SVC groups");
+        NightChatManager.start();
+        check(voice.groups.values().stream().noneMatch(g->g.getName().equals("BOTS Night Chat")),"Legacy start never constructs a shared Night group");
+        var houseGroup=voice.assigned.get(a);
+        NightChatManager.stopForDawn();
+        check(voice.assigned.get(a)==houseGroup && houses.get(a)==1,"Dawn does not detach a house SVC connection");
+        NightChatManager.onVoicePlayerConnected(a);
+        check(!voice.assigned.get(a).getId().equals(houseGroup.getId()) && voice.assigned.get(st)==houseGroup,"Reconnect isolates player until their location is checked");
+        houses.put(a,2);assign.invoke(null,voice.api,a);
+        check(voice.assigned.get(a).getId().equals(voice.assigned.get(b).getId()),"Reconciliation uses current house rather than stale reconnect room");
         NightChatManager.resetAll();
+        check(voice.assigned.values().stream().allMatch(Objects::isNull),"Reset releases actual SVC house connections");
+        VoicechatIntegrationState.onServerStopped();ServerState.PLAYER_SEAT_NUMBERS.clear();
         check(houses.isEmpty() && !NightChatManager.isHouseRouted(st),"Full reset clears house rooms in daytime too");
         check(NightChatManager.routeCode(st).equals("PROXIMITY"),"Reset clears old house HUD route");
         ServerState.currentNight=ServerState.currentDay=0;
         System.out.println("PASS: "+checks+" physical house routing and phase/privacy checks");
     }
+    private static final class FakeVoice {
+        final Map<UUID,de.maxhenkel.voicechat.api.Group> groups=new HashMap<>(),assigned=new HashMap<>();
+        final Map<UUID,de.maxhenkel.voicechat.api.VoicechatConnection> connections=new HashMap<>();
+        final de.maxhenkel.voicechat.api.VoicechatServerApi api;
+        FakeVoice(List<UUID> ids) {
+            for(UUID id:ids) connections.put(id,(de.maxhenkel.voicechat.api.VoicechatConnection)java.lang.reflect.Proxy.newProxyInstance(
+                    getClass().getClassLoader(),new Class<?>[]{de.maxhenkel.voicechat.api.VoicechatConnection.class},(proxy,method,args)->{
+                        return switch(method.getName()) {
+                            case "isConnected", "isInstalled" -> true;
+                            case "getGroup" -> assigned.get(id);
+                            case "setGroup" -> {assigned.put(id,(de.maxhenkel.voicechat.api.Group)args[0]);yield null;}
+                            default -> null;
+                        };
+                    }));
+            api=(de.maxhenkel.voicechat.api.VoicechatServerApi)java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),
+                    new Class<?>[]{de.maxhenkel.voicechat.api.VoicechatServerApi.class},(proxy,method,args)->{
+                        return switch(method.getName()) {
+                            case "getConnectionOf" -> connections.get((UUID)args[0]);
+                            case "getGroups" -> new ArrayList<>(groups.values());
+                            case "removeGroup" -> {groups.remove((UUID)args[0]);yield method.getReturnType()==boolean.class ? true : null;}
+                            case "groupBuilder" -> builder(method.getReturnType());
+                            default -> null;
+                        };
+                    });
+        }
+        private Object builder(Class<?> type) {
+            var values=new HashMap<String,Object>();
+            return java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),new Class<?>[]{type},(proxy,method,args)->{
+                if (method.getName().equals("build")) {
+                    var group=(de.maxhenkel.voicechat.api.Group)java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),
+                            new Class<?>[]{de.maxhenkel.voicechat.api.Group.class},(g,m,a)->switch(m.getName()) {
+                                case "getId" -> values.get("setId");
+                                case "getName" -> values.get("setName");
+                                default -> null;
+                            });
+                    groups.put(group.getId(),group);return group;
+                }
+                if(args!=null && args.length==1)values.put(method.getName(),args[0]);
+                return method.getReturnType()==void.class ? null : proxy;
+            });
+        }
+    }
+
 }
