@@ -103,6 +103,7 @@ public final class StorytellerActionHandler {
                 case "night_visit" -> nightVisit(server, actor, UUID.fromString(arg));
                 case "mark_dead" -> markDead(server, Integer.parseInt(arg), false);
                 case "reveal_deaths" -> revealDeaths(server);
+                case "reveal_death" -> revealDeath(server, Integer.parseInt(arg));
                 case "st_spectator" -> StorytellerMovement.toggleSpectator(actor);
                 case "demon_kill" -> markDead(server, Integer.parseInt(arg), true);
                 case "revive_player" -> revivePlayer(server, Integer.parseInt(arg));
@@ -233,6 +234,20 @@ public final class StorytellerActionHandler {
 
         return SetupOperations.Result.ok("Privately marked seat " + seat + " dead; use Reveal Deaths during Day"
                 + (demonKill ? " (Demon kill)." : "."));
+    }
+
+    private static SetupOperations.Result revealDeath(MinecraftServer server, int seat) {
+        if (!PhaseOperations.isDay()) return SetupOperations.Result.fail("Reveal This Death is only available during Day.");
+        UUID target = playerAtSeat(seat);
+        if (target == null) return SetupOperations.Result.fail("No player is assigned to seat " + seat + ".");
+        if (!Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(target))
+                || !com.sharktower.bloodonthesharktower.states.DeathVisibility.pending().contains(target)) {
+            return SetupOperations.Result.fail("Seat " + seat + " has no pending death to reveal.");
+        }
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.remove(target);
+        StateBroadcaster.broadcastDeathStatus(server);
+        StateBroadcaster.broadcastVoteState(server);
+        return SetupOperations.Result.ok("Revealed the death of seat " + seat + ".");
     }
 
     private static SetupOperations.Result revealDeaths(MinecraftServer server) {

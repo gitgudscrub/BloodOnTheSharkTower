@@ -104,6 +104,14 @@ public final class GrimoirePlayerActionScreen extends Screen {
             }
 
             if (dead) {
+                if (ClientState.pendingDeaths.contains(playerId)
+                        && ClientState.phase() != GamePhase.NIGHT && ClientState.phase() != GamePhase.SETUP) {
+                    this.addRenderableWidget(Button.builder(
+                                    Component.literal("Reveal This Death").withStyle(ChatFormatting.RED), b ->
+                                            actionAndBack("reveal_death", Integer.toString(seat)))
+                            .bounds(cx - 90, y, 180, 20).build());
+                    y += 26;
+                }
                 this.addRenderableWidget(Button.builder(Component.literal("Revive Player").withStyle(ChatFormatting.GREEN), b ->
                                 actionAndBack("revive_player", Integer.toString(seat)))
                         .bounds(cx - 90, y, 180, 20).build());

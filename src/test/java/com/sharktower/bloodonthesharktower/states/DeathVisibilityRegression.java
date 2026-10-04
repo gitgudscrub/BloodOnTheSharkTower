@@ -25,6 +25,12 @@ public final class DeathVisibilityRegression {
         check(DeathVisibility.pending().size() == 1, "staging is idempotent");
         actual.put(second, true); DeathVisibility.stage(second);
         check(DeathVisibility.visible(actual, false).values().stream().noneMatch(Boolean.TRUE::equals), "multiple deaths hidden");
+        DeathVisibility.remove(first);
+        check(DeathVisibility.visible(actual, false).get(first), "individual reveal publishes selected death");
+        check(!DeathVisibility.visible(actual, false).get(second), "individual reveal keeps other death private");
+        check(actual.get(first) && actual.get(second), "individual reveal preserves authoritative deaths");
+        check(!DeathVisibility.pending().contains(first) && DeathVisibility.pending().contains(second), "individual reveal clears only selected indicator");
+        DeathVisibility.stage(first);
         DeathVisibility.remove(first); actual.put(first, false);
         check(!DeathVisibility.visible(actual, true).get(first), "correction revives immediately");
         check(!DeathVisibility.pending().contains(first), "correction clears pending indicator");

@@ -170,7 +170,7 @@ public class AssignRolesScreen extends Screen {
 
         y = addRightAction(rightX, y, "Spectator", ChatFormatting.GRAY, "st_spectator");
         if (phase != GamePhase.SETUP && phase != GamePhase.NIGHT && !ClientState.pendingDeaths.isEmpty()) {
-            y = addRightAction(rightX, y, "Reveal Deaths", ChatFormatting.RED, "reveal_deaths");
+            y = addRightAction(rightX, y, "Reveal All Deaths", ChatFormatting.RED, "reveal_deaths");
         }
 
         if (phase == GamePhase.SETUP) {
