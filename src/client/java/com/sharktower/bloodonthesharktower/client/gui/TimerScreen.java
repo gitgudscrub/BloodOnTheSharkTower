@@ -4,6 +4,7 @@ import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerAc
 import com.sharktower.bloodonthesharktower.timer.ClientTimerState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -17,6 +18,9 @@ import net.minecraft.network.chat.Component;
 public class TimerScreen extends Screen {
     private Button pauseResumeButton;
     private Button stopButton;
+    private EditBox customTime;
+    private Button startCustomButton;
+    private String customValue = "";
 
     public TimerScreen() {
         super(Component.literal("Clocktower Timer"));
@@ -25,7 +29,7 @@ public class TimerScreen extends Screen {
     @Override
     protected void init() {
         int cx = this.width / 2;
-        int top = this.height / 2 - 100;
+        int top = this.height / 2 - 110;
 
         addPreset(cx - 115, top, "30 sec", 30);
         addPreset(cx - 35, top, "1 min", 60);
@@ -34,22 +38,39 @@ public class TimerScreen extends Screen {
         addPreset(cx - 35, top + 30, "5 min", 300);
         addPreset(cx + 45, top + 30, "10 min", 600);
 
+        customTime = new EditBox(this.font, cx - 115, top + 60, 145, 20,
+                Component.literal("Custom timer: seconds or minutes:seconds"));
+        customTime.setMaxLength(8);
+        customTime.setHint(Component.literal("Seconds or m:ss"));
+        customTime.setValue(customValue);
+        customTime.setResponder(value -> {
+            customValue = value;
+            if (startCustomButton != null) startCustomButton.active = customSeconds(value) > 0;
+        });
+        this.addRenderableWidget(customTime);
+        startCustomButton = Button.builder(Component.literal("Start Custom"), b -> {
+                    int seconds = customSeconds(customTime.getValue());
+                    if (seconds > 0) ClientStorytellerActions.send("timer_start", Integer.toString(seconds));
+                }).bounds(cx + 35, top + 60, 90, 20).build();
+        startCustomButton.active = customSeconds(customValue) > 0;
+        this.addRenderableWidget(startCustomButton);
+
         pauseResumeButton = Button.builder(
                         Component.literal(ClientTimerState.isPaused ? "Resume" : "Pause"),
                         b -> ClientStorytellerActions.send(
                                 ClientTimerState.isPaused ? "timer_resume" : "timer_pause"))
-                .bounds(cx - 100, top + 100, 95, 20).build();
+                .bounds(cx - 100, top + 135, 95, 20).build();
         pauseResumeButton.active = ClientTimerState.isActive;
         this.addRenderableWidget(pauseResumeButton);
 
         stopButton = Button.builder(Component.literal("Stop"),
                         b -> ClientStorytellerActions.send("timer_stop"))
-                .bounds(cx + 5, top + 100, 95, 20).build();
+                .bounds(cx + 5, top + 135, 95, 20).build();
         stopButton.active = ClientTimerState.isActive;
         this.addRenderableWidget(stopButton);
 
         this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
-                .bounds(cx - 100, top + 145, 200, 20).build());
+                .bounds(cx - 100, top + 165, 200, 20).build());
     }
 
     private void addPreset(int x, int y, String label, int seconds) {
@@ -72,15 +93,33 @@ public class TimerScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         int cx = this.width / 2;
-        int top = this.height / 2 - 100;
+        int top = this.height / 2 - 110;
 
         drawCentered(graphics, "Clocktower Timer", top - 24, UiDrawing.TEXT, true);
         String status = !ClientTimerState.isActive ? "IDLE" : (ClientTimerState.isPaused ? "PAUSED" : "RUNNING");
-        drawCentered(graphics, status + "   " + format(ClientTimerState.remainingSeconds), top + 72,
+        drawCentered(graphics, status + "   " + format(ClientTimerState.remainingSeconds), top + 105,
                 ClientTimerState.isPaused ? UiDrawing.GOLD : UiDrawing.TEXT, true);
 
+        drawCentered(graphics, "Custom: 1–3600 seconds, e.g. 90 or 1:30", top + 85, UiDrawing.MUTED, false);
         drawCentered(graphics, "Server timer — visible to all players",
-                top + 76, UiDrawing.MUTED, false);
+                top + 119, UiDrawing.MUTED, false);
+    }
+
+    private static int customSeconds(String value) {
+        String text = value == null ? "" : value.trim();
+        if (!text.matches("[0-9]+(:[0-9]{1,2})?")) return -1;
+        try {
+            String[] parts = text.split(":");
+            long seconds = Long.parseLong(parts[0]);
+            if (parts.length == 2) {
+                int remainder = Integer.parseInt(parts[1]);
+                if (seconds > 60 || remainder >= 60) return -1;
+                seconds = seconds * 60 + remainder;
+            }
+            return seconds >= 1 && seconds <= 3600 ? (int) seconds : -1;
+        } catch (NumberFormatException ignored) {
+            return -1;
+        }
     }
 
     private static String format(int seconds) {
