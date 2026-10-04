@@ -460,4 +460,9 @@ public final class ClientState {
     public static int grimoirePlayerCount() {
         return grimoireRoles.size();
     }
+    public static com.sharktower.bloodonthesharktower.core.HandRaiseMode handRaiseMode() {
+        return com.sharktower.bloodonthesharktower.core.HandRaiseMode.determine(currentNight,currentDay,nominationsOpen,
+                currentNominee,voteInProgress,currentExileTarget,exileSupportVote || exileSupportInProgress,gameEnding);
+    }
+
 }

@@ -55,9 +55,9 @@ public final class VoteIndicatorRenderer {
         // Show intent as soon as a nomination/exile call exists, not only after
         // the Storyteller starts the clock. This lets everyone read raised/lowered
         // hands during the discussion period before the three-second countdown.
-        boolean electionPrepared = ClientState.currentNominee != null
-                || ClientState.currentExileTarget != null;
-        boolean attention = !electionPrepared && !ClientState.voteInProgress && !ClientState.exileSupportVote;
+        var mode = ClientState.handRaiseMode();
+        if (mode == com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF) return;
+        boolean attention = mode == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING;
         if (attention && ClientState.attentionHands.isEmpty()) return;
 
         Minecraft minecraft = Minecraft.getInstance();

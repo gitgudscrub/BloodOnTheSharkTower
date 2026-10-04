@@ -40,7 +40,7 @@ public final class PlayerSidebarHUD {
         if (players.isEmpty()) return;
 
         Font font = minecraft.font;
-        boolean electionVisible = hasElectionContext();
+        boolean electionVisible = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.VOTING;
         int width = calculateWidth(font, players, electionVisible);
         int height = players.size() * ROW_HEIGHT + PADDING * 2;
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
@@ -142,7 +142,8 @@ public final class PlayerSidebarHUD {
                 role == null ? UiDrawing.TEXT : UiDrawing.teamColor(role.getTeam())
         );
 
-        if (electionVisible ? shouldShowHand(id) : ClientState.attentionHands.containsKey(id)) {
+        if (electionVisible ? shouldShowHand(id) : ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING
+                && ClientState.attentionHands.containsKey(id)) {
             int handX = headX - 23;
             int handY = y + 3;
             drawHand(graphics, handX, handY, electionVisible ? UiDrawing.YES : UiDrawing.GOLD);

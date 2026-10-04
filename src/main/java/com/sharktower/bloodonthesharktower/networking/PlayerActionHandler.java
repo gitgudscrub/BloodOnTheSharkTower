@@ -67,12 +67,20 @@ public final class PlayerActionHandler {
             player.sendSystemMessage(Component.literal("Storytellers do not raise player voting hands."));
             return;
         }
+        var handMode = com.sharktower.bloodonthesharktower.core.HandRaiseMode.determine(
+                ServerState.currentNight,ServerState.currentDay,DaytimeState.areNominationsOpen(),
+                DaytimeState.getCurrentNominee(),DaytimeState.isVoteInProgress(),DaytimeState.getCurrentExileTarget(),
+                DaytimeState.isExileSupportInProgress(),ServerState.gameEnded);
+        if (handMode == com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF) {
+            player.sendSystemMessage(Component.literal("Hand raising is available during nominations."));
+            return;
+        }
         boolean exileVoting = DaytimeState.hasActiveExile() || DaytimeState.isExileSupportInProgress();
         if (DaytimeState.isExiledTraveler(id)) {
             player.sendSystemMessage(Component.literal("You have been exiled and are no longer participating in votes."));
             return;
         }
-        if (!DaytimeState.hasActiveNomination() && !DaytimeState.isVoteInProgress() && !exileVoting) {
+        if (handMode == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING) {
             boolean next = forcedState != null ? forcedState : !com.sharktower.bloodonthesharktower.daytime.AttentionHands.raised(id);
             com.sharktower.bloodonthesharktower.daytime.AttentionHands.set(id, next);
             SocialStateManager.broadcast(server);

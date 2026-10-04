@@ -103,7 +103,10 @@ public final class KeyInputHandler {
             while (openStorytellerToolsKey.consumeClick()) client.gui.setScreen(new StorytellerToolsScreen());
             while (openSettingsKey.consumeClick()) client.gui.setScreen(new SharktowerSettingsScreen(null));
             while (openNotebookKey.consumeClick()) client.gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.PersonalNotebookScreen(null));
-            while (toggleVoteHandKey.consumeClick()) ClientPlayerActions.send("toggle_hand");
+            while (toggleVoteHandKey.consumeClick()) {
+                if (ClientState.handRaiseMode() != com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF)
+                    ClientPlayerActions.send("toggle_hand");
+            }
             while (leavePrivateChatKey.consumeClick()) {
                 if (ClientState.voiceRoute != null && ClientState.voiceRoute.startsWith("PRIVATE")) {
                     ClientPlayerActions.send("leave_private");

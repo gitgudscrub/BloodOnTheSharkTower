@@ -643,10 +643,11 @@ public class AssignRolesScreen extends Screen {
                     notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()), true);
             if (dead) UiDrawing.deathShroud(graphics, headX, headY, HEAD_SIZE);
 
-            if (ClientState.currentNominee == null && ClientState.currentExileTarget == null
-                    ? ClientState.attentionHands.containsKey(uuid) : ClientState.isHandRaised(uuid)) {
+            boolean speaking = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING;
+            boolean voting = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.VOTING;
+            if (speaking && ClientState.attentionHands.containsKey(uuid) || voting && ClientState.isHandRaised(uuid)) {
                 drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY + 5);
-                if (ClientState.currentNominee == null && ClientState.currentExileTarget == null)
+                if (speaking)
                     graphics.text(this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
                             headX + HEAD_SIZE + 12, headY + 5, UiDrawing.GOLD, true);
             }

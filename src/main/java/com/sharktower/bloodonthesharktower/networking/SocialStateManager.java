@@ -22,6 +22,8 @@ public final class SocialStateManager {
     public static void tick(MinecraftServer server) {
         if (++ticks%5!=0) return;
         var before = AttentionHands.positions();
+        if (ServerState.gameEnded || ServerState.currentDay<=0 || ServerState.currentNight!=ServerState.currentDay
+                || !com.sharktower.bloodonthesharktower.daytime.DaytimeState.areNominationsOpen()) AttentionHands.clear();
         AttentionHands.positions().keySet().forEach(id->{ if (server.getPlayerList().getPlayer(id)==null || !ServerState.PLAYER_SEAT_NUMBERS.containsKey(id)) AttentionHands.set(id,false); });
         var state=talking(); if (!state.equals(lastTalking) || !before.equals(AttentionHands.positions())) { lastTalking=state; broadcast(server); }
     }
