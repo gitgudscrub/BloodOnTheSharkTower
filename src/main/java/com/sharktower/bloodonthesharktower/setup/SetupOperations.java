@@ -739,7 +739,7 @@ public final class SetupOperations {
                 ? MatchSnapshotManager.restorePrevious(server)
                 : MatchSnapshotManager.restoreCurrent(server);
         if (!restored.ok()) return Result.fail(restored.message());
-        if (NightChatManager.isActive()) NightChatManager.resetAll();
+        NightChatManager.resetAll();
         clearRolesForFreshSetup();
         StateBroadcaster.broadcastCurrentState(server);
         SeatPositionManager.sendAllToTownSquare(server, ServerState.PLAYER_SEAT_NUMBERS);

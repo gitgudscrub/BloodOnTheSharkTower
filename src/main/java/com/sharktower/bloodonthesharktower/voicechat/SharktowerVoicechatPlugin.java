@@ -23,9 +23,8 @@ import java.util.UUID;
 /**
  * Simple Voice Chat 2.6.x plugin entrypoint for Blood on the Sharktower.
  *
- * 1.0.2-dev uses server-side voice connection lifecycle events to keep shared
- * Night Chat authoritative and to tear down temporary private conversations
- * safely when either participant disconnects.
+ * Physical houses and manual private rooms stay isolated across phases and
+ * voice reconnects; outside routing follows the daytime/proximity policy.
  */
 public final class SharktowerVoicechatPlugin implements VoicechatPlugin {
     private static final java.util.Map<UUID,Boolean> WHISPERING = new java.util.concurrent.ConcurrentHashMap<>();
@@ -102,9 +101,8 @@ public final class SharktowerVoicechatPlugin implements VoicechatPlugin {
                     || (SoundPacketEvent.SOURCE_PROXIMITY.equals(event.getSource()) && StorytellerState.isStoryteller(receiver))) event.cancel();
         });
 
-        // During Night, private Storyteller chats keep both participants in the
-        // shared SVC group so the visible group-member heads never change. Filter
-        // the actual group audio per receiver instead of changing membership.
+        // House and manual room isolation applies in every phase. The group
+        // filter also protects against packets crossing during a route change.
         registration.registerEvent(StaticSoundPacketEvent.class, event -> {
             if (!SoundPacketEvent.SOURCE_GROUP.equals(event.getSource())) return;
             if (event.getSenderConnection() == null || event.getReceiverConnection() == null) return;

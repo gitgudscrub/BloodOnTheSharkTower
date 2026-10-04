@@ -37,14 +37,14 @@ public final class PhaseOperations {
         }
 
         NightChatManager.Result voice = NightChatManager.start();
-        NightChatManager.routeHouses(server);
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.makeVisibleAtNight(server);
+        NightChatManager.reconcile(server);
         StateBroadcaster.broadcastCurrentState(server);
 
         if (!voice.ok()) {
             return Result.ok((alreadyNight ? "Night " + ServerState.currentNight + " remains active. "
                     : "Dusk complete — Night " + ServerState.currentNight + " started. ")
-                    + "Night Chat is waiting for Simple Voice Chat and will reconcile automatically: "
+                    + "House voice routing is waiting for Simple Voice Chat and will reconcile automatically: "
                     + voice.message());
         }
         return Result.ok((alreadyNight ? "Night " + ServerState.currentNight + " resynced. "
@@ -70,10 +70,11 @@ public final class PhaseOperations {
         NightChatManager.Result voice = alreadyDay
                 ? NightChatManager.stop()
                 : NightChatManager.stopForDawn();
+        NightChatManager.reconcile(server);
         StateBroadcaster.broadcastCurrentState(server);
 
         if (!voice.ok()) {
-            return Result.fail("Day " + day + " started, but Night Chat cleanup could not complete: "
+            return Result.fail("Day " + day + " started, but Voice routing could not complete: "
                     + voice.message());
         }
         return Result.ok((alreadyDay ? "Day " + day + " resynced. "
@@ -89,6 +90,7 @@ public final class PhaseOperations {
         DaytimeState.resetDaily();
         StorytellerState.resetDailyNightInfo();
         NightChatManager.Result voice = NightChatManager.stop();
+        NightChatManager.reconcile(server);
         StateBroadcaster.broadcastCurrentState(server);
         return voice.ok()
                 ? Result.ok("Returned to SETUP test phase. " + voice.message())

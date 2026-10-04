@@ -329,35 +329,9 @@ public final class StorytellerActionHandler {
         // silently pushing a separate read-only screen to the player.
         String grimoireShare = promptTrueGrimoireShare(storyteller, target);
 
-        // If this player is already the Storyteller's active private partner, the
-        // visit is complete; do not create a duplicate invitation. Re-activating
-        // the visit still re-sends the snapshot, which gives the player a way to
-        // reopen it if they closed the view accidentally.
-        if (targetId.equals(NightChatManager.privatePartner(storyteller.getUUID()))) {
-            return SetupOperations.Result.ok("Visited " + target.getName().getString()
-                    + " (Seat " + seat + "); private chat already connected." + grimoireShare);
-        }
-
-        NightChatManager.InviteResult invite = NightChatManager.createStorytellerHouseInvite(
-                storyteller.getUUID(), targetId, seat);
-        if (!invite.ok()) {
-            return SetupOperations.Result.fail("Teleported to Seat " + seat
-                    + ", but could not create the private-chat invite: " + invite.message());
-        }
-
-        String acceptCommand = "/bots private accept " + invite.token();
-        Component message = Component.literal("The Storyteller wants to speak with you privately. ")
-                .withStyle(ChatFormatting.LIGHT_PURPLE)
-                .append(Component.literal("[JOIN PRIVATE CHAT]")
-                        .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD, ChatFormatting.UNDERLINE)
-                        .withStyle(style -> style
-                                .withClickEvent(new ClickEvent.RunCommand(acceptCommand))
-                                .withHoverEvent(new HoverEvent.ShowText(Component.literal(
-                                        "Join the Storyteller's private voice room")))));
-        target.sendSystemMessage(message);
-
-        return SetupOperations.Result.ok("Visited " + target.getName().getString()
-                + " (Seat " + seat + "); private-chat invite sent." + grimoireShare);
+        NightChatManager.reconcile(server);
+        return SetupOperations.Result.ok("Visited " + target.getName().getString() + " (Seat " + seat
+                + "). House voice joins automatically while both of you are inside." + grimoireShare);
     }
 
     /**

@@ -122,10 +122,9 @@ public final class DayChatZoneManager {
         tickCooldowns();
 
         if (NightChatManager.isActive()) {
-            // NightChatManager has already reassigned participants to the shared
-            // night group. Only forget daytime bookkeeping once; never null their
-            // Night group or repeatedly remove the same Day groups every tick.
-            if (!DAY_ROUTED.isEmpty() || !PLAYER_ZONE.isEmpty()) forgetDayRouting(api);
+            // Dusk releases daytime groups while physical houses and manual
+            // private sessions retain ownership of their connections.
+            if (!DAY_ROUTED.isEmpty() || !PLAYER_ZONE.isEmpty()) releaseDayRouting(api);
             return;
         }
 
@@ -148,7 +147,7 @@ public final class DayChatZoneManager {
         // Anyone no longer participating, or currently in a manual Storyteller
         // private session, must not be managed by the automatic day router.
         for (UUID id : new HashSet<>(DAY_ROUTED)) {
-            if (participants.contains(id) && NightChatManager.privatePartner(id) == null) continue;
+            if (participants.contains(id) && NightChatManager.privatePartner(id) == null && !NightChatManager.isHouseRouted(id)) continue;
             DAY_ROUTED.remove(id);
             PLAYER_ZONE.remove(id);
             EXIT_COOLDOWN.remove(id);
@@ -158,7 +157,7 @@ public final class DayChatZoneManager {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             UUID id = player.getUUID();
             if (!participants.contains(id)) continue;
-            if (NightChatManager.privatePartner(id) != null) continue;
+            if (NightChatManager.privatePartner(id) != null || NightChatManager.isHouseRouted(id)) continue;
 
             // Storytellers use the same physical private-area routing as players.
             // Crossing an entrance joins the existing zone group (if players are
@@ -248,6 +247,14 @@ public final class DayChatZoneManager {
      * VoiceRouteS2CPayload is deliberately reused so no extra networking packet
      * is needed just for the room label.
      */
+    /** Transfer ownership to a physical house without touching its SVC group. */
+    public static synchronized void yieldToHouse(UUID id) {
+        DAY_ROUTED.remove(id);
+        PLAYER_ZONE.remove(id);
+        EXIT_COOLDOWN.remove(id);
+        ENTRY_EXIT_GRACE.remove(id);
+    }
+
     public static synchronized String routeCode(UUID playerId) {
         if (playerId == null) return null;
         String zone = PLAYER_ZONE.get(playerId);
@@ -415,7 +422,7 @@ public final class DayChatZoneManager {
     private static void releaseDayRouting(VoicechatServerApi api) {
         for (UUID id : new HashSet<>(DAY_ROUTED)) {
             // Manual Storyteller private rooms own their own routing.
-            if (NightChatManager.privatePartner(id) != null) continue;
+            if (NightChatManager.privatePartner(id) != null || NightChatManager.isHouseRouted(id)) continue;
             try {
                 VoicechatConnection connection = api.getConnectionOf(id);
                 if (connection != null) connection.setGroup(null);

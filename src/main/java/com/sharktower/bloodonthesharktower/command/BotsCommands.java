@@ -422,9 +422,9 @@ public final class BotsCommands {
         send(context, "Voice server lifecycle: " + (VoicechatIntegrationState.isServerStarted() ? "ONLINE" : "WAITING"));
         send(context, "Dedicated-server note: client connection state is reported per online player below.");
         send(context, "Audio routing: " + (NightChatManager.isActive()
-                ? "BOTS SHARED NIGHT CHAT + TEMP PRIVATE ROOMS"
+                ? "PRIVATE HOUSE ROOMS + OUTSIDE PROXIMITY"
                 : (PhaseOperations.isDay()
-                    ? "BOTS SHARED DAY CHAT + AUTOMATIC PRIVATE ZONES"
+                    ? "PRIVATE HOUSE ROOMS + SHARED DAY CHAT + PRIVATE ZONES"
                     : "VANILLA SIMPLE VOICE CHAT")));
         send(context, NightChatManager.statusLine());
         send(context, DayChatZoneManager.statusLine());
@@ -1331,34 +1331,7 @@ public final class BotsCommands {
         }
         send(context, "Teleported to seat " + seat + " home.");
 
-        // During Night, moving between configured houses is also the Storyteller's
-        // private-chat lifecycle. Leaving one house detaches only the Storyteller
-        // back to public Night Chat; the previous player remains private until
-        // they choose to leave. Arriving at the new house sends the next invite.
-        if (NightChatManager.isActive() && StorytellerState.isStoryteller(player.getUUID())) {
-            UUID targetId = SetupOperations.playerBySeat(seat);
-            UUID currentPartner = NightChatManager.privatePartner(player.getUUID());
-
-            if (currentPartner != null && !currentPartner.equals(targetId)) {
-                NightChatManager.Result left = NightChatManager.leavePrivate(player.getUUID());
-                if (left.ok()) {
-                    ServerPlayer previous = connectedPlayerByUuid(context, currentPartner);
-                    if (previous != null) {
-                        previous.sendSystemMessage(Component.literal(
-                                "The Storyteller left your private voice chat. You remain private until you choose to leave.")
-                                .withStyle(ChatFormatting.GRAY));
-                    }
-                } else {
-                    send(context, "Could not close the previous private chat: " + left.message());
-                }
-            }
-
-            if (NightChatManager.privatePartner(player.getUUID()) == null
-                    && targetId != null && !targetId.equals(player.getUUID())
-                    && connectedPlayerByUuid(context, targetId) != null) {
-                sendPrivateInvite(context, player, seat, true);
-            }
-        }
+        NightChatManager.reconcile(context.getSource().getServer());
         return Command.SINGLE_SUCCESS;
     }
 
