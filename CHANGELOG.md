@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.2-dev — Session feedback and polish (unreleased)
+## 1.0.2-alpha.1 — Session feedback and polish (unreleased)
 
 - Refresh joining players' full state and everyone's seat/Grimoire/directory state at the end of the server tick. Disconnect cleanup also waits for the updated live player list.
 - Fix Grimoire RMB Actions and Shift+RMB nomination shortcuts using Minecraft 26.3's SDL right-button constant.

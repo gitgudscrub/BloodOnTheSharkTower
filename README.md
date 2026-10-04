@@ -114,7 +114,7 @@ Implemented on the 1.0.2 development branch, awaiting multiplayer validation:
 
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
 
-Development builds use **1.0.2-dev**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
+Development builds use **1.0.2-alpha.1**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
 
 ### 1.0.x — Base 3 full support *(current focus)*
 
