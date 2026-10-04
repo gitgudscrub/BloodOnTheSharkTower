@@ -33,6 +33,7 @@ public final class StateBroadcaster {
     }
 
     public static int sendCurrentStateTo(ServerPlayer player) {
+        com.sharktower.bloodonthesharktower.setup.FreshGameBooks.refreshIfPending(player);
         SocialStateManager.send(player);
         PlayerNotebooks.send(player);
         sendVisibilityTo(player);

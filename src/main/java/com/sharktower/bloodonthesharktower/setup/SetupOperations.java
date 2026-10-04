@@ -634,6 +634,7 @@ public final class SetupOperations {
         if (NightChatManager.isActive()) {
             NightChatManager.resync();
         }
+        FreshGameBooks.beginGame(server, ServerState.PLAYER_ROLES.keySet());
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
         return Result.ok("Committed " + ServerState.PLAYER_ROLES.size() + " role(s) and "
@@ -757,6 +758,7 @@ public final class SetupOperations {
         com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
         com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager.clear();
         ServerState.resetGeneration++;
+        FreshGameBooks.clear();
         com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.clear();
         com.sharktower.bloodonthesharktower.networking.TeamInfoSharing.clear();
         com.sharktower.bloodonthesharktower.networking.SocialStateManager.clear();
