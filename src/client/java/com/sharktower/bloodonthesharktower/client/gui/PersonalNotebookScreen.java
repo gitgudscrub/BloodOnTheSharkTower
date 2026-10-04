@@ -17,7 +17,7 @@ public final class PersonalNotebookScreen extends Screen {
     protected void init() {
         String text=editor==null ? sent : editor.getValue();
         int w=Math.min(420,this.width-24);
-        editor=new MultiLineEditBox.Builder().setX((this.width-w)/2).setY(34)
+        editor=MultiLineEditBox.builder().setX((this.width-w)/2).setY(34)
             .setPlaceholder(Component.literal("Your private game notes…")).build(this.font,w,Math.max(30,this.height-76),Component.literal("Private notes"));
         editor.setCharacterLimit(NotebookPayload.LIMIT); editor.setValue(text);
         this.addRenderableWidget(editor); this.setInitialFocus(editor);

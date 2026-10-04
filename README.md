@@ -128,7 +128,7 @@ Implementation notes and regression checks are tracked in `docs/1.0.2-session-fe
 
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
 
-Development builds use **1.0.2-alpha.2**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
+Development builds use **1.0.2-alpha.3**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
 
 ### 1.0.x — Base 3 full support *(current focus)*
 
@@ -250,3 +250,5 @@ Version **1.0.0** marks the first baseline where the Base 3 scripts were working
 Blood on the Sharktower uses and adapts code and assets from the original **Blood on the Blocktower** project with permission from its creators. Blood on the Clocktower is created by The Pandemonium Institute.
 
 This project is an independent community implementation and is not an official Blood on the Clocktower product.
+
+Game 1 playtest changes and retest steps: [Game 1 feedback](docs/game-1-feedback.md). Personal notebooks open with **B** by default.

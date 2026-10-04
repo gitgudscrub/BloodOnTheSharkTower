@@ -110,9 +110,18 @@ public final class FinalGrimoireScreen extends Screen {
                 double ra = Math.PI * 2 * n / Math.min(8, reminders.size());
                 int rx = roleX + ROLE_SIZE / 2 + (int)(25 * Math.cos(ra)) - 6;
                 int ry = roleY + ROLE_SIZE / 2 + (int)(25 * Math.sin(ra)) - 6;
-                UiDrawing.panel(graphics, rx, ry, 12, 12);
-                String text=reminders.get(n).text();
-                graphics.text(this.font, text.isEmpty()?"?":text.substring(0,1), rx+3, ry+2, UiDrawing.GOLD, true);
+                var reminder=reminders.get(n);
+                ScriptRole source=reminder.role().isPresent()?new ScriptRole.Official(reminder.role().get()):null;
+                if (source == null && reminder.customRoleId().isPresent() && ClientState.currentScript != null)
+                    source=ClientState.currentScript.allRoles().stream().filter(r->r.getId().equalsIgnoreCase(reminder.customRoleId().get())).findFirst().orElse(null);
+                if (source!=null) UiDrawing.roleToken(graphics,source,rx,ry,12);
+                else {
+                    UiDrawing.panel(graphics, rx, ry, 12, 12);
+                    String text=reminder.text();
+                    graphics.text(this.font, text.isEmpty()?"?":text.substring(0,1), rx+3, ry+2, UiDrawing.GOLD, true);
+                }
+                if (contains(mouseX,mouseY,rx,ry,12,12))
+                    hovered=new HoveredPlayer(id,seat,assignment,good,dead,exiled);
             }
             renderSeatNumber(graphics, seat, centerX, centerY, radius, angle);
 
@@ -211,6 +220,13 @@ public final class FinalGrimoireScreen extends Screen {
                 hovered.assignment == null ? UiDrawing.MUTED : UiDrawing.teamColor(hovered.assignment.getRoleType()), true);
         drawCentered(graphics, alignment + "  •  " + status, cy + 30,
                 hovered.good ? UiDrawing.GOOD : UiDrawing.EVIL, true);
+        var reminders = ClientState.grimoireReminders.getOrDefault(hovered.id, List.of());
+        for (int i=0; i<reminders.size(); i++) {
+            String text=reminders.get(i).text();
+            int yy=cy+44+i*11;
+            if (yy>=this.height-35) break;
+            drawCentered(graphics,text,yy,UiDrawing.GOLD,false);
+        }
     }
 
     private List<Map.Entry<UUID, Integer>> sortedSeats() {

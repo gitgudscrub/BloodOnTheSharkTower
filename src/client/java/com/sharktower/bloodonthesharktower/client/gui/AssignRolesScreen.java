@@ -125,8 +125,6 @@ public class AssignRolesScreen extends Screen {
             GrimoireRevealAnimation.beginScreen();
         }
         buildContextualControls();
-        this.addRenderableWidget(Button.builder(Component.literal("My Notebook"), b -> this.minecraft.gui.setScreen(new PersonalNotebookScreen(this)))
-                .bounds(MARGIN, MARGIN + 2 * (CONTROL_H + GAP), CONTROL_W, CONTROL_H).build());
         buildBluffVisibilityControl();
         buildPlayerWidgets();
         buildReminderWidgets();
@@ -144,12 +142,9 @@ public class AssignRolesScreen extends Screen {
         }
         String currentSignature = seatLayoutSignature();
         if (!currentSignature.equals(lastSeatLayoutSignature) && this.minecraft != null) {
-            // Role/head widgets are constructed in init(). Re-open this screen when
-            // the authoritative seat occupants change so the widgets follow them.
+            // Refresh live widgets in place; replacing the Screen disrupts player input.
             clearWidgets();
             buildContextualControls();
-        this.addRenderableWidget(Button.builder(Component.literal("My Notebook"), b -> this.minecraft.gui.setScreen(new PersonalNotebookScreen(this)))
-                .bounds(MARGIN, MARGIN + 2 * (CONTROL_H + GAP), CONTROL_W, CONTROL_H).build());
             buildBluffVisibilityControl();
             buildPlayerWidgets();
             buildReminderWidgets();
@@ -329,8 +324,8 @@ public class AssignRolesScreen extends Screen {
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
 
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
-            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             this.addRenderableWidget(new GrimoirePlayerHeadWidget(
                     headX, headY, HEAD_SIZE, uuid, seat, assignment
             ));
@@ -434,8 +429,8 @@ public class AssignRolesScreen extends Screen {
                     new int[]{left, nearTop}
             ));
 
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
-            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             final double roleCenterX = tokenCenterX;
             final double roleCenterY = tokenCenterY;
             final double outwardX = Math.cos(angle);
@@ -529,7 +524,7 @@ public class AssignRolesScreen extends Screen {
         }
         if (unseated.isEmpty()) return;
         int x = MARGIN;
-        int y = 42;
+        int y = 60;
         for (int i = 0; i < Math.min(8, unseated.size()); i++) {
             UUID id = unseated.get(i);
             String label = "+ " + ClientState.playerName(id, 0);
@@ -610,8 +605,8 @@ public class AssignRolesScreen extends Screen {
             UUID uuid = entry.getKey();
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
-            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
 
             float reveal = GrimoireRevealAnimation.progressForSeat(seat);
@@ -821,6 +816,12 @@ public class AssignRolesScreen extends Screen {
         // Minecraft 26.3 uses SDL: left=1, middle=2, right=3.
         // Use the named constant so middle-click cannot masquerade as RMB.
         if (mapped.buttonInfo().button() == SDLMouse.SDL_BUTTON_MIDDLE) {
+            for (var child : this.children()) {
+                if (child instanceof GrimoireBluffWidget bluff && bluff.isMouseOver(mapped.x(), mapped.y()) && bluff.displayRole() != null) {
+                    this.minecraft.gui.setScreen(new CharacterDetailsScreen(bluff.displayRole(), this));
+                    return true;
+                }
+            }
             GrimHit hit = grimHitAt(mapped.x(), mapped.y());
             if (hit != null && hit.assignment() != null) {
                 this.minecraft.gui.setScreen(new CharacterDetailsScreen(hit.assignment().getScriptRole(), this));
@@ -865,8 +866,8 @@ public class AssignRolesScreen extends Screen {
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
 
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
-            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle + Math.PI / Math.max(6, count))) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             if (inside(mouseX, mouseY, headX, headY, HEAD_SIZE, HEAD_SIZE)) {
                 return new GrimHit(uuid, seat, assignment);
             }
@@ -892,7 +893,7 @@ public class AssignRolesScreen extends Screen {
                         - PERCEIVED_ROLE_SIZE / 2;
                 if (inside(mouseX, mouseY, perceivedX, perceivedY,
                         PERCEIVED_ROLE_SIZE, PERCEIVED_ROLE_SIZE)) {
-                    return new GrimHit(uuid, seat, assignment);
+                    return new GrimHit(uuid, seat, ClientGrimoireEdits.perceivedRoleFor(uuid));
                 }
             } else {
                 int roleX = (int) Math.round(tokenCenterX) - ROLE_SIZE / 2;

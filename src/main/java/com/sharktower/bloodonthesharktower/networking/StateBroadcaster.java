@@ -133,7 +133,7 @@ public final class StateBroadcaster {
             perceivedRoles = java.util.Map.of();
             seats = ServerState.PLAYER_SEAT_NUMBERS;
             reminders = java.util.Map.of();
-            bluffs = isAssigned(actualOwn) && (actualOwn.getRoleType() == RoleType.DEMON || actualOwn.getRoleType() == RoleType.MINION)
+            bluffs = com.sharktower.bloodonthesharktower.core.InformationVisibility.canSeeBluffs(actualOwn, visibleOwn)
                     ? StorytellerState.DEMON_BLUFFS
                     : java.util.List.of();
         }

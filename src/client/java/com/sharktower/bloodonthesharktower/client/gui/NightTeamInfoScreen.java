@@ -10,6 +10,7 @@ public final class NightTeamInfoScreen extends Screen {
     private final boolean demon;
     public NightTeamInfoScreen(boolean demon) { super(Component.literal(demon?"Demon Info":"Minion Info")); this.demon=demon; }
     protected void init() {
+        if (this.minecraft.player == null || !ClientState.storytellerPlayers.contains(this.minecraft.player.getUUID())) return;
         int y=48;
         for (var entry:ClientState.grimoireRoles.entrySet().stream().sorted(java.util.Comparator.comparingInt(e->ClientState.grimoireSeatNumbers.getOrDefault(e.getKey(),0))).toList()) {
             if (entry.getValue()==null || entry.getValue().getRoleType()!=(demon?RoleType.DEMON:RoleType.MINION)) continue;

@@ -1,0 +1,60 @@
+package com.sharktower.bloodonthesharktower;
+import com.sharktower.bloodonthesharktower.daytime.*;
+import com.sharktower.bloodonthesharktower.states.*;
+import com.sharktower.bloodonthesharktower.voicechat.VoicePolicy;
+import com.sharktower.bloodonthesharktower.core.*;
+import java.util.*;
+public final class GameOneRegression {
+    private static int checks;
+    private static void check(boolean value,String message) { checks++; if(!value) throw new AssertionError(message); }
+    public static void main(String[] args) {
+        UUID a=UUID.randomUUID(),b=UUID.randomUUID(),c=UUID.randomUUID(),d=UUID.randomUUID();
+        AttentionHands.clear(); AttentionHands.set(a,true); AttentionHands.set(b,true); AttentionHands.set(a,true);
+        check(AttentionHands.positions().get(a)==1,"Repeated raise does not reorder");
+        check(AttentionHands.positions().get(b)==2,"Second player is second");
+        AttentionHands.set(a,false); check(AttentionHands.positions().get(b)==1,"Lowering compacts queue");
+        AttentionHands.set(a,true); check(AttentionHands.positions().get(a)==2,"Re-raise joins back");
+        DaytimeState.setRaisedHand(c,true); check(!AttentionHands.raised(c),"Vote hands never enter attention queue");
+        DaytimeState.clearRaisedHands(); check(AttentionHands.raised(a),"Clearing voting hands preserves attention queue");
+        Map<UUID,Integer> seats=Map.of(a,1,b,4,c,7,d,12);
+        check(VoicePolicy.neighbours(a,b,seats),"Clockwise neighbour across vacant seat numbers");
+        check(VoicePolicy.neighbours(a,d,seats),"Counterclockwise wraps around circle");
+        check(!VoicePolicy.neighbours(a,c,seats),"Opposite player cannot receive whisper");
+        check(!VoicePolicy.neighbours(a,a,seats),"Self is not neighbour");
+        check(!VoicePolicy.neighbours(a,UUID.randomUUID(),seats),"Unseated is not neighbour");
+        check(VoicePolicy.neighbours(a,b,Map.of(a,1,b,2)),"Two players are neighbours");
+        check(!VoicePolicy.neighbours(a,b,Map.of(a,1)),"Single seat has no neighbour");
+        check(VoicePolicy.mayJoinPrivate(a,List.of(b),seats,Set.of()),"Neighbour may join private area");
+        check(!VoicePolicy.mayJoinPrivate(a,List.of(c),seats,Set.of()),"Non-neighbour cannot initiate private area chat");
+        check(VoicePolicy.mayJoinPrivate(a,List.of(c),seats,Set.of(a)),"Storyteller may join any private area");
+        check(VoicePolicy.mayJoinPrivate(a,List.of(c),seats,Set.of(c)),"Player may enter room occupied by Storyteller");
+        var imp=new PendingRoleAssignment(Role.IMP,AlignmentOverride.DEFAULT);
+        var poisoner=new PendingRoleAssignment(Role.POISONER,AlignmentOverride.DEFAULT);
+        var marionette=new PendingRoleAssignment(Role.MARIONETTE,AlignmentOverride.DEFAULT);
+        var monk=new PendingRoleAssignment(Role.MONK,AlignmentOverride.DEFAULT);
+        check(InformationVisibility.canSeeBluffs(imp,imp),"Demon gets bluffs");
+        check(InformationVisibility.canSeeBluffs(poisoner,poisoner),"Minion gets same bluffs");
+        check(!InformationVisibility.canSeeBluffs(marionette,monk),"Marionette learns no bluffs through hidden actual role");
+        check(!InformationVisibility.canSeeBluffs(monk,monk),"Ordinary player receives no bluffs");
+        check(!InformationVisibility.canSeeBluffs(monk,imp),"Lunatic/perceived Demon receives no actual team bluff leak");
+        ServerState.PLAYER_SEAT_NUMBERS.putAll(seats);
+        DaytimeState.openNominations(seats.keySet(),Set.of(),List.of(),List.of());
+        DaytimeState.setCurrentNominator(a); DaytimeState.setCurrentNominee(b);
+        DaytimeState.useNomination(a); DaytimeState.setCanNominate(a,false); DaytimeState.setCanBeNominated(b,false);
+        DaytimeState.setRaisedHand(c,true); DaytimeState.lockVote(c,true);
+        NominationManager.cancelNominationState();
+        check(DaytimeState.canNominate(a),"Cancel restores nominator");
+        check(DaytimeState.canBeNominated(b),"Cancel permits same nominee");
+        check(DaytimeState.getNominationsRemaining(a)==1,"Cancel refunds nomination budget");
+        check(DaytimeState.getNominationsRemaining(c)==1,"Cancel does not change unrelated player budget");
+        check(DaytimeState.getCurrentNominee()==null && DaytimeState.getCurrentNominator()==null,"Cancel clears election targets");
+        check(DaytimeState.getRaisedHands().isEmpty() && DaytimeState.getLockedVotes().isEmpty(),"Cancel clears public voting state");
+        NominationManager.cancelNominationState(); check(DaytimeState.getNominationsRemaining(a)==1,"Repeated cancel does not refund twice");
+        DaytimeState.markGhostVoteUsed(d);
+        DaytimeState.setCurrentNominator(a);DaytimeState.setCurrentNominee(c);
+        NominationManager.cancelNominationState();check(DaytimeState.hasUsedGhostVote(d),"Cancellation keeps earlier ghost vote history");
+        AttentionHands.clear();check(AttentionHands.positions().isEmpty(),"Full attention reset clears previous game queue");
+        ServerState.PLAYER_SEAT_NUMBERS.clear();DaytimeState.hardReset(Set.of(),Set.of());
+        System.out.println("PASS: "+checks+" Game 1 queue, whisper, information and nomination checks");
+    }
+}

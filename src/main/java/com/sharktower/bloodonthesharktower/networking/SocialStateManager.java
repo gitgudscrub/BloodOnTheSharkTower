@@ -21,8 +21,9 @@ public final class SocialStateManager {
     public static void broadcast(MinecraftServer server) { for (ServerPlayer p:server.getPlayerList().getPlayers()) send(p); }
     public static void tick(MinecraftServer server) {
         if (++ticks%5!=0) return;
+        var before = AttentionHands.positions();
         AttentionHands.positions().keySet().forEach(id->{ if (server.getPlayerList().getPlayer(id)==null || !ServerState.PLAYER_SEAT_NUMBERS.containsKey(id)) AttentionHands.set(id,false); });
-        var state=talking(); if (!state.equals(lastTalking)) { lastTalking=state; broadcast(server); }
+        var state=talking(); if (!state.equals(lastTalking) || !before.equals(AttentionHands.positions())) { lastTalking=state; broadcast(server); }
     }
     public static void clear() { AttentionHands.clear(); TALKING_UNTIL.clear(); lastTalking=Map.of(); }
 }

@@ -239,3 +239,11 @@ tasks.register('reminderCatalogRegression', JavaExec) {
     mainClass = 'com.sharktower.bloodonthesharktower.core.ReminderCatalogRegression'
 }
 tasks.named('check') { dependsOn tasks.named('reminderCatalogRegression') }
+
+// Game 1 playtest regressions: attention queue, adjacency, bluff privacy and cancelled nominations.
+tasks.register('gameOneRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.GameOneRegression'
+}
+tasks.named('check') { dependsOn tasks.named('gameOneRegression') }

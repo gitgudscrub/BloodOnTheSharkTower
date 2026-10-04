@@ -55,6 +55,8 @@ public final class GrimoireBluffWidget extends AbstractWidget {
         defaultButtonNarrationText(output);
     }
 
+    public ScriptRole displayRole() { return resolve(roleId); }
+
     private static ScriptRole resolve(String id) {
         if (id == null || id.isBlank()) return null;
         if (ClientState.currentScript != null) {

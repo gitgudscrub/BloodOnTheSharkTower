@@ -208,6 +208,13 @@ public final class DayChatZoneManager {
             if (entering == null) {
                 assignSharedDay(api, id);
             } else {
+                var occupants = PLAYER_ZONE.entrySet().stream().filter(e -> entering.equals(e.getValue())).map(Map.Entry::getKey).toList();
+                if (!VoicePolicy.mayJoinPrivate(id, occupants, ServerState.PLAYER_SEAT_NUMBERS, StorytellerState.STORYTELLERS)) {
+                    assignSharedDay(api, id);
+                    EXIT_COOLDOWN.put(id, 40);
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Private chats are limited to your seated neighbours."));
+                    continue;
+                }
                 assignPrivateZone(api, id, entering);
                 ENTRY_EXIT_GRACE.put(id, ENTRY_EXIT_GRACE_TICKS);
             }

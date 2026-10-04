@@ -114,6 +114,13 @@ public final class NominationManager {
     }
 
     public static void cancelNomination(MinecraftServer server) {
+        cancelNominationState();
+        StateBroadcaster.broadcastDaytimeState(server);
+        StateBroadcaster.broadcastVoteState(server);
+    }
+
+    public static void cancelNominationState() {
+        if (!DaytimeState.hasActiveNomination()) return;
         UUID nominator = DaytimeState.getCurrentNominator();
         UUID nominee = DaytimeState.getCurrentNominee();
         if (nominator != null) {
@@ -126,7 +133,7 @@ public final class NominationManager {
         }
         DaytimeState.clearRaisedHands();
         VotingManager.clearLastResult();
-        resetNomination(server);
+        DaytimeState.resetNomination();
     }
 
     public static void resetNomination(MinecraftServer server) {
