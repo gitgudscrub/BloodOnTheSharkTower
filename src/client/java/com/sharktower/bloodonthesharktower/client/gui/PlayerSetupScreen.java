@@ -65,14 +65,14 @@ public final class PlayerSetupScreen extends Screen {
                                 b -> action("revive_player", Integer.toString(seat)))
                         .bounds(cx - 100, y, 200, 20).build());
             } else if (ClientState.phase() == GamePhase.NIGHT) {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead"),
+                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately"),
                                 b -> action("mark_dead", Integer.toString(seat)))
                         .bounds(cx - w - gap, y, w, 20).build());
                 this.addRenderableWidget(Button.builder(Component.literal("Demon Kill"),
                                 b -> action("demon_kill", Integer.toString(seat)))
                         .bounds(cx + gap, y, w, 20).build());
             } else {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead"),
+                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately"),
                                 b -> action("mark_dead", Integer.toString(seat)))
                         .bounds(cx - 100, y, 200, 20).build());
             }

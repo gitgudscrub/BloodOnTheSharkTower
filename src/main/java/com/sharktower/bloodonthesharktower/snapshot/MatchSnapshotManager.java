@@ -254,9 +254,10 @@ public final class MatchSnapshotManager {
 
     private static void restoreSetup(SetupSnapshot snapshot) {
         ServerState.updateSeats(snapshot.seats());
-        ServerState.updateRoles(snapshot.roles());
-        ServerState.updatePerceivedRoles(snapshot.perceivedRoles());
-        ServerState.updateDeathStatus(snapshot.deathStatus());
+        ServerState.updateRoles(Map.of());
+        ServerState.updatePerceivedRoles(Map.of());
+        ServerState.updateDeathStatus(Map.of());
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
         ServerState.currentScript = snapshot.script();
         ServerState.currentNight = 0;
         ServerState.currentDay = 0;
@@ -266,10 +267,8 @@ public final class MatchSnapshotManager {
         ServerState.rolesRevealed = false;
 
         StorytellerState.clearSetupState();
-        StorytellerState.STORYTELLERS.clear();
-        StorytellerState.STORYTELLERS.addAll(snapshot.storytellers());
-        snapshot.reminders().forEach((id, list) -> StorytellerState.REMINDERS.put(id, new ArrayList<>(list)));
-        StorytellerState.DEMON_BLUFFS.addAll(snapshot.bluffs());
+        // Current control ownership survives rollback; never resurrect a released Storyteller.
+        // Starting roles, reminders and bluffs are deliberately discarded on reset.
         SeatPositionManager.restoreConfiguration(snapshot.seatConfiguration());
     }
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2-alpha.2 — Expanded live feedback (unreleased)
+
+- Match bluff category colours, including custom roles.
+- Package pinned Fabric 26.3 Sodium, Lithium and FerriteCore builds in both pack workflows.
+- Release Storyteller control on Setup disconnect; grant scoped flight, spectator and `/tp <player>` controls without OP.
+- Resolve private deaths immediately and publish them only through Reveal Deaths during Day; keep pending markers Storyteller-only.
+- Clear all roles/perceived roles/personal snapshots on both resets and prevent checkpoint rollback from restoring them.
+- Add death-visibility regressions and a loopback server startup check to CI.
+
 ## 1.0.2-alpha.1 — Session feedback and polish (unreleased)
 
 - Refresh joining players' full state and everyone's seat/Grimoire/directory state at the end of the server tick. Disconnect cleanup also waits for the updated live player list.

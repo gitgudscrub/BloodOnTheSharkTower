@@ -68,6 +68,12 @@ def dependency_entry(spec: dict, game_version: str, loader: str) -> dict:
         f"(version id {version.get('id')})"
     )
 
+    if spec.get("validate_compatibility"):
+        if game_version not in version.get("game_versions", []) or loader not in version.get("loaders", []):
+            raise RuntimeError(f"Incompatible performance mod: {spec['name']}")
+        if any(dep.get("dependency_type") == "required" for dep in version.get("dependencies", [])):
+            raise RuntimeError(f"Review required dependencies before packaging {spec['name']}")
+
     file = primary_file(version)
     hashes = file.get("hashes") or {}
     if not hashes.get("sha1") or not hashes.get("sha512"):

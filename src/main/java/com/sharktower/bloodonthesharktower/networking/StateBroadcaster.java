@@ -25,7 +25,15 @@ import net.minecraft.server.level.ServerPlayer;
 public final class StateBroadcaster {
     private StateBroadcaster() {}
 
+    public static void sendVisibilityTo(ServerPlayer player) {
+        boolean privileged = StorytellerState.isStoryteller(player.getUUID());
+        java.util.Map<java.util.UUID, Boolean> pending = new java.util.HashMap<>();
+        if (privileged) for (java.util.UUID id : com.sharktower.bloodonthesharktower.states.DeathVisibility.pending()) pending.put(id, true);
+        ServerPlayNetworking.send(player, new GameVisibilityS2CPayload(ServerState.resetGeneration, pending));
+    }
+
     public static int sendCurrentStateTo(ServerPlayer player) {
+        sendVisibilityTo(player);
         ServerPlayNetworking.send(player, new SyncDayNightS2CPayload(
                 ServerState.currentNight,
                 ServerState.currentDay,
@@ -74,7 +82,8 @@ public final class StateBroadcaster {
     }
 
     public static void sendDeathStatusTo(ServerPlayer player) {
-        ServerPlayNetworking.send(player, new SendDeathStatusS2CPayload(ServerState.PLAYER_DEATH_STATUS));
+        ServerPlayNetworking.send(player, new SendDeathStatusS2CPayload(com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(
+                ServerState.PLAYER_DEATH_STATUS, StorytellerState.isStoryteller(player.getUUID()) || ServerState.rolesRevealed)));
     }
 
     public static void sendGrimoireTo(ServerPlayer player, boolean targeted) {
@@ -231,6 +240,21 @@ public final class StateBroadcaster {
         int threshold = exileActive ? ExileSupportManager.currentThreshold() : VotingManager.currentHandsRequired();
         int effectiveCount = exileSupport ? ExileSupportManager.effectiveSupportCount() : VotingManager.effectiveVoteCount();
         VotingManager.Result last = VotingManager.getLastResult();
+        boolean hidePending = !StorytellerState.isStoryteller(player.getUUID()) && !ServerState.rolesRevealed
+                && !com.sharktower.bloodonthesharktower.states.DeathVisibility.pending().isEmpty();
+        int visibleLastThreshold = last.threshold();
+        if (hidePending && !exileActive) {
+            java.util.Map<java.util.UUID, Boolean> visibleDeaths = com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(ServerState.PLAYER_DEATH_STATUS, false);
+            int publicAlive = 0;
+            for (java.util.UUID id : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
+                if (!DaytimeState.isTraveler(id) && !Boolean.TRUE.equals(visibleDeaths.get(id))) publicAlive++;
+            }
+            int base = VotingManager.calculateThreshold(publicAlive);
+            int markedVotes = DaytimeState.getStorytellerMFE() != null ? DaytimeState.getStorytellerMFEVotes() : DaytimeState.getVotesForMarkedPlayer();
+            boolean marked = DaytimeState.getStorytellerMFE() != null || DaytimeState.getMarkedForExecution() != null;
+            threshold = marked ? Math.max(base, markedVotes + 1) : base;
+            visibleLastThreshold = base;
+        }
         MinecraftServer server = player.level().getServer();
 
         SeatPositionManager.Position center = SeatPositionManager.clockCenter();
@@ -262,7 +286,7 @@ public final class StateBroadcaster {
                 last.result().name(),
                 last.nominee(),
                 last.votes(),
-                last.threshold(),
+                visibleLastThreshold,
                 center != null,
                 center == null ? 0.0D : center.x(),
                 center == null ? 0.0D : center.y(),
@@ -345,7 +369,8 @@ public final class StateBroadcaster {
     }
 
     public static int deadPlayerCount() {
-        return ServerState.deadPlayers().size();
+        return (int) com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(
+                ServerState.PLAYER_DEATH_STATUS, ServerState.rolesRevealed).values().stream().filter(Boolean.TRUE::equals).count();
     }
 
     private static boolean isAssigned(PendingRoleAssignment assignment) {
@@ -412,9 +437,9 @@ public final class StateBroadcaster {
     }
 
     public static void broadcastDeathStatus(MinecraftServer server) {
-        SendDeathStatusS2CPayload payload = new SendDeathStatusS2CPayload(ServerState.PLAYER_DEATH_STATUS);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            ServerPlayNetworking.send(player, payload);
+            sendVisibilityTo(player);
+            sendDeathStatusTo(player);
         }
         broadcastTriggeredNightOrder(server);
     }

@@ -26,6 +26,7 @@ public final class ExecutionManager {
         if (player == null) return;
         boolean wasDead = Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(player));
         ServerState.PLAYER_DEATH_STATUS.put(player, true);
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.remove(player);
         if (!wasDead) {
             TriggeredNightOrderManager.onDeath(player, TriggeredNightOrderManager.DeathCause.EXECUTION);
             PendingRoleAssignment executed = StorytellerState.effectiveGrimoireRoles().get(player);

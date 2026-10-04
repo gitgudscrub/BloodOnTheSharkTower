@@ -67,7 +67,7 @@ public final class DemonBluffSelectionScreen extends Screen {
 
             boolean chosen = selected.contains(key(role.getId()));
             Component label = Component.literal((chosen ? "✓ " : "") + role.getDisplayName())
-                    .withStyle(chosen ? ChatFormatting.GREEN : ChatFormatting.AQUA);
+                    .withStyle(style -> style.withColor(UiDrawing.teamColor(role.getTeam())));
 
             Button button = Button.builder(label, b -> toggle(role, actualPage))
                     .bounds(left + col * (width + gapX), top + row * (height + gapY), width, height)

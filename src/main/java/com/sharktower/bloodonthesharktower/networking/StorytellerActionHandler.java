@@ -74,7 +74,8 @@ public final class StorytellerActionHandler {
                 && !op.equals("end_game_cancel")
                 && !op.equals("reset_for_next_game")
                 && !op.equals("game_complete")
-                && !op.equals("reset_hard")) {
+                && !op.equals("reset_hard")
+                && !op.equals("st_spectator")) {
             return SetupOperations.Result.fail("End-game reveal is active. Reset for the next game or cancel the reveal first.");
         }
 
@@ -101,6 +102,8 @@ public final class StorytellerActionHandler {
                 case "phase_day" -> asSetupResult(PhaseOperations.enterDay(server));
                 case "night_visit" -> nightVisit(server, actor, UUID.fromString(arg));
                 case "mark_dead" -> markDead(server, Integer.parseInt(arg), false);
+                case "reveal_deaths" -> revealDeaths(server);
+                case "st_spectator" -> StorytellerMovement.toggleSpectator(actor);
                 case "demon_kill" -> markDead(server, Integer.parseInt(arg), true);
                 case "revive_player" -> revivePlayer(server, Integer.parseInt(arg));
                 case "nominations_open" -> openNominations(server);
@@ -218,6 +221,7 @@ public final class StorytellerActionHandler {
         }
 
         ServerState.PLAYER_DEATH_STATUS.put(target, true);
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.stage(target);
         TriggeredNightOrderManager.DeathCause cause = demonKill
                 ? TriggeredNightOrderManager.DeathCause.DEMON
                 : (PhaseOperations.isNight()
@@ -227,8 +231,17 @@ public final class StorytellerActionHandler {
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastGrimoire(server);
 
-        return SetupOperations.Result.ok("Marked seat " + seat + " dead"
+        return SetupOperations.Result.ok("Privately marked seat " + seat + " dead; use Reveal Deaths during Day"
                 + (demonKill ? " (Demon kill)." : "."));
+    }
+
+    private static SetupOperations.Result revealDeaths(MinecraftServer server) {
+        if (!PhaseOperations.isDay()) return SetupOperations.Result.fail("Reveal Deaths is only available during Day.");
+        int count = com.sharktower.bloodonthesharktower.states.DeathVisibility.pending().size();
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
+        StateBroadcaster.broadcastDeathStatus(server);
+        StateBroadcaster.broadcastVoteState(server);
+        return SetupOperations.Result.ok("Revealed " + count + " pending deaths.");
     }
 
     private static SetupOperations.Result revivePlayer(MinecraftServer server, int seat) {
@@ -239,6 +252,7 @@ public final class StorytellerActionHandler {
         }
 
         ServerState.PLAYER_DEATH_STATUS.put(target, false);
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.remove(target);
         TriggeredNightOrderManager.onRevived(target);
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastGrimoire(server);

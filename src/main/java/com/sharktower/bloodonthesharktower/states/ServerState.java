@@ -20,6 +20,7 @@ public final class ServerState {
     public static final Map<UUID, Integer> PLAYER_SEAT_NUMBERS = new HashMap<>();
     public static final Map<UUID, Boolean> PLAYER_DEATH_STATUS = new HashMap<>();
 
+    public static long resetGeneration = 0;
     public static int currentNight = 0;
     public static int currentDay = 0;
     public static Script currentScript = null;

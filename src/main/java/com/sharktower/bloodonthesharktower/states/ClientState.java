@@ -129,6 +129,8 @@ public final class ClientState {
     public static boolean demonVotedToday = false;
     public static boolean minionNominatedToday = false;
 
+    public static java.util.Set<UUID> pendingDeaths = java.util.Set.of();
+
     private ClientState() {}
 
     public static void updatePlayerState(

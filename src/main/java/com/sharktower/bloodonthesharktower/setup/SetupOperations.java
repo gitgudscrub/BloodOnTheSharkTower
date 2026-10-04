@@ -651,6 +651,7 @@ public final class SetupOperations {
 
         NightChatManager.resetAll();
         TimerManager.stopTimer(server);
+        clearRolesForFreshSetup();
         ServerState.PLAYER_ROLES.clear();
         ServerState.PLAYER_PERCEIVED_ROLES.clear();
         ServerState.PLAYER_DEATH_STATUS.clear();
@@ -731,9 +732,25 @@ public final class SetupOperations {
                 : MatchSnapshotManager.restoreCurrent(server);
         if (!restored.ok()) return Result.fail(restored.message());
         if (NightChatManager.isActive()) NightChatManager.resetAll();
+        clearRolesForFreshSetup();
         StateBroadcaster.broadcastCurrentState(server);
         SeatPositionManager.sendAllToTownSquare(server, ServerState.PLAYER_SEAT_NUMBERS);
         return Result.ok(restored.message() + " Runtime deaths, ghost votes, nominations, hands, voice rooms and vote state were discarded.");
+    }
+
+    public static void clearRolesForFreshSetup() {
+        ServerState.PLAYER_ROLES.clear();
+        ServerState.PLAYER_PERCEIVED_ROLES.clear();
+        ServerState.PLAYER_DEATH_STATUS.clear();
+        StorytellerState.PENDING_ROLES.clear();
+        StorytellerState.PENDING_PERCEIVED_ROLES.clear();
+        StorytellerState.REMINDERS.clear();
+        StorytellerState.DEMON_BLUFFS.clear();
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
+        com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager.clear();
+        ServerState.resetGeneration++;
+        DaytimeState.hardReset(ServerState.PLAYER_SEAT_NUMBERS.keySet(), Set.of());
+        MatchSnapshotManager.refreshCurrentSetupState();
     }
 
     public static UUID playerBySeat(int seat) {

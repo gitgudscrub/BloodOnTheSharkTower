@@ -77,7 +77,7 @@ public final class NightChatManager {
     public static synchronized String statusLine() {
         cleanupExpiredInvites();
         long deadSeated = ServerState.PLAYER_SEAT_NUMBERS.keySet().stream()
-                .filter(id -> Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(id)))
+                .filter(id -> Boolean.TRUE.equals(com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(ServerState.PLAYER_DEATH_STATUS, ServerState.rolesRevealed).get(id)))
                 .count();
         return "Night Chat: " + (active ? "ACTIVE" : "INACTIVE")
                 + ", sharedNight=" + (active ? "ON" : "OFF")

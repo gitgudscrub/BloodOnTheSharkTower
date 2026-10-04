@@ -161,6 +161,11 @@ public class AssignRolesScreen extends Screen {
         int y = MARGIN;
         GamePhase phase = ClientState.phase();
 
+        y = addRightAction(rightX, y, "Spectator", ChatFormatting.GRAY, "st_spectator");
+        if (phase != GamePhase.SETUP && phase != GamePhase.NIGHT && !ClientState.pendingDeaths.isEmpty()) {
+            y = addRightAction(rightX, y, "Reveal Deaths", ChatFormatting.RED, "reveal_deaths");
+        }
+
         if (phase == GamePhase.SETUP) {
             this.addRenderableWidget(Button.builder(Component.literal("Script Builder"), b ->
                             this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
@@ -265,6 +270,11 @@ public class AssignRolesScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
                         this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
                 .bounds(rightX - 60, layoutHeight - 30, 55, CONTROL_H).build());
+
+        y = addRightAction(rightX, y, "Spectator", ChatFormatting.GRAY, "st_spectator");
+        if (phase != GamePhase.SETUP && phase != GamePhase.NIGHT && !ClientState.pendingDeaths.isEmpty()) {
+            y = addRightAction(rightX, y, "Reveal Deaths", ChatFormatting.RED, "reveal_deaths");
+        }
 
         if (phase == GamePhase.SETUP) {
             this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->

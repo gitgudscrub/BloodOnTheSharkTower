@@ -45,6 +45,14 @@ public final class ModPackets {
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             java.util.UUID playerId = handler.player.getUUID();
+            StorytellerMovement.restore(handler.player);
+            if (com.sharktower.bloodonthesharktower.states.ServerState.currentNight == 0
+                    && com.sharktower.bloodonthesharktower.states.ServerState.currentDay == 0
+                    && !com.sharktower.bloodonthesharktower.states.ServerState.gameEnded
+                    && com.sharktower.bloodonthesharktower.states.StorytellerState.isStoryteller(playerId)) {
+                com.sharktower.bloodonthesharktower.states.StorytellerState.releaseStoryteller(playerId);
+                com.sharktower.bloodonthesharktower.snapshot.MatchSnapshotManager.refreshCurrentSetupState();
+            }
             NightChatManager.onMinecraftPlayerDisconnected(playerId);
             JOINED_PLAYERS.remove(playerId);
             DISCONNECTED_PLAYERS.add(playerId);

@@ -28,6 +28,8 @@ public final class GrimoireBluffWidget extends AbstractWidget {
         ScriptRole role = resolve(roleId);
         if (role != null) {
             UiDrawing.roleToken(graphics, role, getX(), getY(), this.width);
+            graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2,
+                    UiDrawing.opaque(UiDrawing.teamColor(role.getTeam())));
         } else {
             UiDrawing.emptyRoleSlot(graphics, getX(), getY(), this.width);
         }

@@ -75,7 +75,7 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Good/Evil winner selection.
 - Original-style end-game presentation.
 - Persistent Final Grimoire reveal.
-- Reset for Next Game restores the captured start-of-game state.
+- Reset for Next Game restores the captured map/setup while clearing player roles (1.0.2 development).
 
 ## Versioning
 
@@ -112,9 +112,23 @@ Implemented on the 1.0.2 development branch, awaiting multiplayer validation:
 - clearing the active player-side Good/Evil reminder returns that player's border to neutral;
 - keep player alignment notes completely separate from authoritative Storyteller game state so no hidden information can leak.
 
+### Additional live-session feedback (4 October 2026)
+
+The following work is **implemented on the draft 1.0.2 branch; live validation remains**:
+
+- **Role/bluff colours:** Make bluff selection and displayed bluffs use the same role-category colours as the rest of the UI, including custom roles. Keep category colours separate from alignment borders.
+- **Client performance mods:** Include compatible Minecraft 26.3 Fabric releases of Sodium, Lithium and FerriteCore after checking exact versions, dependencies and compatibility with Sharktower and Simple Voice Chat. Sodium is client-only; evaluate Lithium/FerriteCore separately for server use. Players reported roughly 30 FPS, dropping to 20–25 FPS with VSync disabled; after adding performance mods to their clients, players reported reaching 60 FPS. This is live-player feedback, not a controlled benchmark.
+- **Setup Storyteller disconnect:** Clear the Storyteller assignment when they disconnect during setup so another player can take over. Preserve the script, players and other setup choices. Reconnecting must not automatically reclaim a released assignment.
+- **Storyteller teleport:** Allow the assigned Storyteller to use `/tp <player>` to teleport themselves to an online player without operator permissions. Check current Storyteller access server-side on every use, support player-name suggestions, and handle players in another dimension. This permission covers self-teleporting to a player only; it does not grant coordinate teleporting, moving other players or unrestricted vanilla `/tp` access. Preserve voice routing and revoke access when Storyteller control is released.
+- **Storyteller flight and spectator:** Allow the assigned Storyteller to fly and enter/leave spectator mode without operator permissions. Validate access server-side, restore previous game mode/flight permissions when appropriate, and preserve Grimoire access and voice routing.
+- **Private deaths and manual reveal:** Let the Storyteller mark deaths privately with pending indicators in their Grimoire, then reveal deaths during the day when they choose using a Grimoire control. Resolved deaths must count for rules and abilities immediately, but public death displays must remain unrevealed until that action. Dawn must not automatically publish staged deaths; check reconnects and every public sync path for premature disclosure.
+- **Reset clears roles:** Both **Full Reset** and **Game Reset / Reset for Next Game** must clear all player role assignments rather than restore starting roles. Clear pending/setup and perceived-role assignments, personal role guesses and stale own-role/ability displays; prevent old snapshots or reconnects from repopulating them. Preserve each reset's other intended scope.
+
+Implementation notes and regression checks are tracked in `docs/1.0.2-session-feedback.md` on the draft 1.0.2 branch.
+
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
 
-Development builds use **1.0.2-alpha.1**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
+Development builds use **1.0.2-alpha.2**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
 
 ### 1.0.x — Base 3 full support *(current focus)*
 

@@ -141,6 +141,17 @@ def main():
     voice_chat = version(VOICE_CHAT_VERSION_ID)
     no_chat_restrictions = latest_ncr_version()
 
+    performance_specs = json.loads((ROOT / "modrinth" / "performance-mods.json").read_text())
+    performance_entries = []
+    for spec in performance_specs:
+        resolved = version(spec["version_id"])
+        if MINECRAFT_VERSION not in resolved.get("game_versions", []) or "fabric" not in resolved.get("loaders", []):
+            raise RuntimeError(f"Incompatible performance mod: {spec['name']}")
+        if any(dep.get("dependency_type") == "required" for dep in resolved.get("dependencies", [])):
+            raise RuntimeError(f"Review required dependencies before packaging {spec['name']}")
+        print(f"Performance mod: {spec['name']} {resolved['version_number']} ({resolved['id']})")
+        performance_entries.append(modrinth_file_entry(resolved, spec["client"], spec["server"]))
+
     index = {
         "formatVersion": 1,
         "game": "minecraft",
@@ -151,6 +162,7 @@ def main():
             modrinth_file_entry(fabric_api, "required", "required"),
             modrinth_file_entry(voice_chat, "required", "required"),
             modrinth_file_entry(no_chat_restrictions, "required", "unsupported"),
+            *performance_entries,
         ],
         "dependencies": {
             "minecraft": MINECRAFT_VERSION,

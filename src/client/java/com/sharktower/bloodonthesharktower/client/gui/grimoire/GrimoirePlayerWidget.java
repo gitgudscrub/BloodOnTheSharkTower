@@ -62,6 +62,10 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         graphics.outline(getX() - 2, getY() - 2, this.width + 4, this.height + 4, border);
         graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, border);
 
+        if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
+            graphics.text(Minecraft.getInstance().font, "?", getX() + 1, getY() + 1, UiDrawing.GOLD, true);
+        }
+
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
             graphics.outline(getX() - 3, getY() - 3, this.width + 6, this.height + 6, UiDrawing.YES);
             graphics.text(Minecraft.getInstance().font, "N",

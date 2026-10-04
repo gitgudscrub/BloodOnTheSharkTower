@@ -38,7 +38,23 @@ import net.minecraft.network.chat.Component;
 public final class CoreStateReceivers {
     private CoreStateReceivers() {}
 
+    private static long resetGeneration = Long.MIN_VALUE;
+
     public static void register() {
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.GameVisibilityS2CPayload.TYPE, (payload, context) -> {
+            if (resetGeneration != payload.generation()) {
+                resetGeneration = payload.generation();
+                ClientGrimoireEdits.clearSession();
+                ClientState.grimoireRoles = new java.util.HashMap<>();
+                ClientState.grimoirePerceivedRoles = new java.util.HashMap<>();
+                ClientState.grimoireReminders = new java.util.HashMap<>();
+                ClientState.demonBluffs = java.util.List.of();
+                ClientTriggeredNightOrder.update("");
+                GameEndAnimationHUD.reset();
+                com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
+            }
+            ClientState.pendingDeaths = java.util.Set.copyOf(payload.pendingDeaths().keySet());
+        });
         ClientPlayNetworking.registerGlobalReceiver(SyncDayNightS2CPayload.TYPE, (payload, context) ->
                 ClientState.updateDayNight(payload.night(), payload.day(), payload.executionToday())
         );
@@ -119,7 +135,9 @@ public final class CoreStateReceivers {
 
         ClientPlayNetworking.registerGlobalReceiver(AbilityGrimoireS2CPayload.TYPE, (payload, context) -> {
             Minecraft client = Minecraft.getInstance();
+            long receivedGeneration = resetGeneration;
             client.execute(() -> {
+                if (receivedGeneration != resetGeneration) return;
                 ClientGrimoireEdits.applyAbilityGrimoireSnapshot(
                         payload.roles(),
                         payload.reminders(),
@@ -265,6 +283,7 @@ public final class CoreStateReceivers {
                 else GameEndAnimationHUD.updateWinner(payload.winningTeam());
             } else {
                 GameEndAnimationHUD.reset();
+                com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
             }
 
             BloodOnTheSharktower.LOGGER.info(

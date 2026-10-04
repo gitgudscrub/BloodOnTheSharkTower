@@ -109,7 +109,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             } else if (ClientState.phase() == GamePhase.NIGHT) {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead"), b ->
+                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately"), b ->
                                 actionAndBack("mark_dead", Integer.toString(seat)))
                         .bounds(cx - w - gap / 2, y, w, 20).build());
 
@@ -125,7 +125,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             } else {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead").withStyle(ChatFormatting.RED), b ->
+                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately").withStyle(ChatFormatting.RED), b ->
                                 actionAndBack("mark_dead", Integer.toString(seat)))
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
