@@ -66,9 +66,9 @@ public final class KeyInputHandler {
         leavePrivateChatKey = bind("key.blood_on_the_sharktower.leave_private_chat", InputConstants.KEY_J);
         openSettingsKey = bind("key.blood_on_the_sharktower.open_settings", InputConstants.KEY_O);
         toggleNightHudKey = bind("key.blood_on_the_sharktower.toggle_night_hud", InputConstants.KEY_N);
-        nightHudNextKey = bind("key.blood_on_the_sharktower.night_hud_next", 262); // Right Arrow
-        nightHudPrevKey = bind("key.blood_on_the_sharktower.night_hud_prev", 263); // Left Arrow
-        nightHudActivateKey = bind("key.blood_on_the_sharktower.night_hud_teleport", 265); // Up Arrow
+        nightHudNextKey = bind("key.blood_on_the_sharktower.night_hud_next", InputConstants.KEY_RIGHT); // Right Arrow
+        nightHudPrevKey = bind("key.blood_on_the_sharktower.night_hud_prev", InputConstants.KEY_LEFT); // Left Arrow
+        nightHudActivateKey = bind("key.blood_on_the_sharktower.night_hud_teleport", InputConstants.KEY_UP); // Up Arrow
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
