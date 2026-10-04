@@ -94,6 +94,26 @@ When the Modrinth project is approved, whichever version is current at that poin
 
 Development is deliberately staged so that the core Clocktower rules are reliable before the project expands into the much larger Experimental and homebrew rulesets.
 
+### 1.0.2 — Session feedback and polish *(planned)*
+
+Version **1.0.2** is the next feedback-driven patch following real multiplayer play on 1.0.1. Its scope is deliberately focused on issues and quality-of-life improvements found during live sessions, with room for additional feedback before release.
+
+Current planned work:
+
+- fix the newest connected player sometimes missing the latest player/sidebar state until another refresh occurs;
+- fix **RMB Actions** in the Grimoire so right-click player actions work as advertised;
+- add at-a-glance alignment borders to Grimoire role tokens:
+  - **blue** for Good;
+  - **red** for Evil;
+- on the **Storyteller Grimoire**, the border represents the player's real current alignment and updates when Force Good/Force Evil changes it;
+- on a **player's own Grimoire**, the border represents only that player's personal alignment read and never exposes real hidden alignment;
+- tie player-side Good/Evil reminder tokens to those personal alignment borders;
+- make player-side Good and Evil reminders mutually exclusive, so adding one automatically removes the other;
+- clearing the active player-side Good/Evil reminder returns that player's border to neutral;
+- keep player alignment notes completely separate from authoritative Storyteller game state so no hidden information can leak.
+
+Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
+
 ### 1.0.x — Base 3 full support *(current focus)*
 
 Version **1.0.0** marked the first playable Base 3 baseline. The rest of the **1.0.x** line is focused on making **Trouble Brewing, Bad Moon Rising and Sects & Violets** fully supported and dependable in real games, while also finishing the core player experience needed for regular community play.
