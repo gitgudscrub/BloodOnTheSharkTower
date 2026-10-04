@@ -607,14 +607,10 @@ public final class StorytellerActionHandler {
         String name = label(server, marked);
         if (dies) {
             ExecutionManager.executePlayer(server, marked, false, null);
-            announce(server, Component.literal(name + " is executed and dies.")
-                    .withStyle(ChatFormatting.RED));
             return SetupOperations.Result.ok("Executed " + name + "; they died.");
         }
 
         ExecutionManager.executePlayerFail(server, marked, false, null);
-        announce(server, Component.literal(name + " is executed but does not die.")
-                .withStyle(ChatFormatting.GOLD));
         return SetupOperations.Result.ok("Executed " + name + "; they survived.");
     }
 

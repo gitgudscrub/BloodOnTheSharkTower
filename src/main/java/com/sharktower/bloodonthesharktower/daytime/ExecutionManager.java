@@ -8,6 +8,9 @@ import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
 import com.sharktower.bloodonthesharktower.sound.ModSounds;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.util.UUID;
 
@@ -38,6 +41,7 @@ public final class ExecutionManager {
         VotingManager.clearLastResult();
         BloodOnTheSharktower.LOGGER.info("Executed player {} (forced={}, butcher={})", player, forced, butcherUuid);
         ModSounds.playForAll(server, ModSounds.EXECUTION);
+        announceExecution(server, player, true);
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastVoteState(server);
         StateBroadcaster.broadcastDayNightState(server);
@@ -47,16 +51,31 @@ public final class ExecutionManager {
     }
 
     public static void executePlayerFail(MinecraftServer server, UUID player, boolean forced, UUID butcherUuid) {
+        if (player == null) return;
         ServerState.executionToday = true;
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
         VotingManager.clearLastResult();
         BloodOnTheSharktower.LOGGER.info("Execution failed/survived for {} (forced={}, butcher={})", player, forced, butcherUuid);
         ModSounds.playForAll(server, ModSounds.EXECUTION_SURVIVED);
+        announceExecution(server, player, false);
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastVoteState(server);
     }
+    private static void announceExecution(MinecraftServer server, UUID player, boolean died) {
+        ServerPlayer online = server.getPlayerList().getPlayer(player);
+        Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(player);
+        String name = online != null ? online.getName().getString()
+                : (seat == null ? "Player" : "Seat " + seat);
+        Component message = Component.literal(name + (died
+                ? " was executed and died" : " was executed and survived"))
+                .withStyle(died ? ChatFormatting.RED : ChatFormatting.GOLD);
+        for (ServerPlayer target : server.getPlayerList().getPlayers()) {
+            target.sendSystemMessage(message);
+        }
+    }
+
     public static void noExecution(MinecraftServer server) {
         DaytimeState.clearMarkedForExecution();
         DaytimeState.clearStorytellerMFE();
