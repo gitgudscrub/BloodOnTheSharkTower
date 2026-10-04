@@ -16,11 +16,20 @@ import net.minecraft.network.chat.Component;
  */
 public class CharacterDetailsScreen extends Screen {
     private final ScriptRole role;
+    private final Screen parent;
 
     public CharacterDetailsScreen(ScriptRole role) {
+        this(role, null);
+    }
+
+    public CharacterDetailsScreen(ScriptRole role, Screen parent) {
         super(Component.literal(role == null ? "Character Details" : role.getDisplayName()));
         this.role = role;
+        this.parent = parent;
     }
+
+    @Override
+    public void onClose() { this.minecraft.gui.setScreen(parent); }
 
     @Override
     protected void init() {

@@ -42,11 +42,22 @@ public final class CoreStateReceivers {
 
     public static void resetSession() {
         resetGeneration = Long.MIN_VALUE;
+        ClientState.notebookText = "";
+        ClientState.attentionHands = java.util.Map.of();
+        ClientState.talkingPlayers = java.util.Map.of();
         ClientState.pendingDeaths = java.util.Set.of();
         com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
     }
 
     public static void register() {
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.NotebookPayload.TYPE, (payload, context) -> {
+            ClientState.notebookGeneration = payload.generation();
+            ClientState.notebookText = payload.text();
+        });
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.SocialStateS2CPayload.TYPE, (payload, context) -> {
+            ClientState.attentionHands = payload.attention();
+            ClientState.talkingPlayers = payload.talking();
+        });
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.GameVisibilityS2CPayload.TYPE, (payload, context) -> {
             if (resetGeneration != payload.generation()) {
                 resetGeneration = payload.generation();

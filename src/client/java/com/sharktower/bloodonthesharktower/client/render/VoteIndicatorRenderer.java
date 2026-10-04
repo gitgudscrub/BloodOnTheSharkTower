@@ -57,7 +57,8 @@ public final class VoteIndicatorRenderer {
         // hands during the discussion period before the three-second countdown.
         boolean electionPrepared = ClientState.currentNominee != null
                 || ClientState.currentExileTarget != null;
-        if (!electionPrepared && !ClientState.voteInProgress && !ClientState.exileSupportVote) return;
+        boolean attention = !electionPrepared && !ClientState.voteInProgress && !ClientState.exileSupportVote;
+        if (attention && ClientState.attentionHands.isEmpty()) return;
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) return;
@@ -66,7 +67,7 @@ public final class VoteIndicatorRenderer {
         boolean localStoryteller = ClientState.storytellerPlayers.contains(localId);
 
         // Organ Grinder intentionally conceals individual votes from players.
-        if (ClientState.organGrinderMode && !localStoryteller) return;
+        if (!attention && ClientState.organGrinderMode && !localStoryteller) return;
 
         Vec3 camera = minecraft.gameRenderer.mainCamera().position();
 
@@ -76,6 +77,7 @@ public final class VoteIndicatorRenderer {
             if (!ClientState.playerSeatNumbers.containsKey(id)) continue;
             if (ClientState.storytellerPlayers.contains(id)) continue;
 
+            if (attention && !ClientState.attentionHands.containsKey(id)) continue;
             boolean yes;
             if (ClientState.lockedVotes.containsKey(id)) {
                 // Once the clock has passed a seat, its public marker is frozen.
@@ -92,7 +94,7 @@ public final class VoteIndicatorRenderer {
             }
             boolean dead = ClientState.playerDeathStatus.getOrDefault(id, false);
 
-            Identifier texture = yes
+            Identifier texture = attention ? Identifier.fromNamespaceAndPath(BloodOnTheSharktower.MOD_ID, "textures/hud/raised_hand.png") : yes
                     ? (dead ? GHOST_TEXTURE : YES_TEXTURE)
                     : NO_TEXTURE;
 
@@ -104,9 +106,10 @@ public final class VoteIndicatorRenderer {
                 size += CURRENT_VOTER_BONUS * pulse;
             }
 
-            double cx = player.getX();
-            double cy = player.getY() + player.getBbHeight() + HEAD_OFFSET;
-            double cz = player.getZ();
+            Vec3 position = player.getPosition(minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false));
+            double cx = position.x;
+            double cy = position.y + player.getBbHeight() + HEAD_OFFSET;
+            double cz = position.z;
             submitBillboard(collector, poseStack, camera, texture, cx, cy, cz, size);
         }
     }

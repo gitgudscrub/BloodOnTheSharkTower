@@ -100,6 +100,16 @@ public final class StorytellerMovement {
         return SetupOperations.Result.ok("Storyteller mode: " + mode.getName() + ".");
     }
 
+    public static void makeVisibleAtNight(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (!StorytellerState.isStoryteller(player.getUUID())) continue;
+            grant(player);
+            if (player.isSpectator()) player.setGameMode(GameType.SURVIVAL);
+            player.setInvisible(false);
+            grant(player);
+        }
+    }
+
     public static void restore(ServerPlayer player) {
         Previous previous = PREVIOUS.remove(player.getUUID());
         if (previous == null) return;

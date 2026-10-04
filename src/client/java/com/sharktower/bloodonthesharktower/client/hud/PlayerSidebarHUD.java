@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.hud;
 
 import com.sharktower.bloodonthesharktower.client.gui.PlayerFaceCompat;
+import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import com.sharktower.bloodonthesharktower.voicechat.VoicechatIntegrationState;
@@ -106,7 +107,7 @@ public final class PlayerSidebarHUD {
         graphics.text(font, seatText, x, textY, seatColour, false);
 
         int seatArea = Math.max(12, font.width(seatText));
-        int headX = x + seatArea + 5;
+        int headX = x + width - HEAD_SIZE;
         int headY = y + 2;
         boolean drewFace = PlayerFaceCompat.draw(graphics, id, headX, headY, HEAD_SIZE);
         if (!drewFace) {
@@ -127,9 +128,10 @@ public final class PlayerSidebarHUD {
             graphics.outline(headX - 1, headY - 1, HEAD_SIZE + 2, HEAD_SIZE + 2, 0xFFFFFFFF);
         }
 
-        int nameX = headX + HEAD_SIZE + 5;
-        int reservedRight = electionVisible ? HAND_WIDTH + 5 : 0;
-        int nameMaxWidth = Math.max(8, x + width - reservedRight - nameX);
+        int nameX = x + seatArea + 5;
+        int reservedRight = 24;
+        int nameMaxWidth = Math.max(8, headX - reservedRight - nameX);
+        var role = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(id));
         drawNameScaledToFit(
                 graphics,
                 font,
@@ -137,13 +139,14 @@ public final class PlayerSidebarHUD {
                 nameX,
                 textY,
                 nameMaxWidth,
-                dead ? UiDrawing.DEAD : UiDrawing.TEXT
+                role == null ? UiDrawing.TEXT : UiDrawing.teamColor(role.getTeam())
         );
 
-        if (electionVisible && shouldShowHand(id)) {
-            int handX = x + width - HAND_WIDTH;
+        if (electionVisible ? shouldShowHand(id) : ClientState.attentionHands.containsKey(id)) {
+            int handX = headX - 23;
             int handY = y + 3;
-            drawHand(graphics, handX, handY, UiDrawing.YES);
+            drawHand(graphics, handX, handY, electionVisible ? UiDrawing.YES : UiDrawing.GOLD);
+            if (!electionVisible) graphics.text(font, Integer.toString(ClientState.attentionHands.get(id)), handX + 9, textY, UiDrawing.GOLD, true);
         }
     }
 

@@ -47,6 +47,7 @@ public final class KeyInputHandler {
     // Arrow-key phase controls use rising-edge polling instead of consumeClick().
     // On 26.3 the registered arrow mappings can remain held/down without
     // reliably incrementing the click counter used by consumeClick().
+    private static KeyMapping openNotebookKey;
     private static boolean nightHudNextWasDown;
     private static boolean nightHudPrevWasDown;
     private static boolean nightHudActivateWasDown;
@@ -62,6 +63,7 @@ public final class KeyInputHandler {
         disableHudKey = bind("key.blood_on_the_sharktower.disable_hud", InputConstants.KEY_B);
         openTimerKey = bind("key.blood_on_the_sharktower.open_timer", InputConstants.KEY_Y);
         openStorytellerToolsKey = bind("key.blood_on_the_sharktower.open_storyteller_tools", InputConstants.KEY_I);
+        openNotebookKey = bind("key.blood_on_the_sharktower.notebook", InputConstants.KEY_B);
         toggleVoteHandKey = bind("key.blood_on_the_sharktower.toggle_vote_hand", InputConstants.KEY_U);
         leavePrivateChatKey = bind("key.blood_on_the_sharktower.leave_private_chat", InputConstants.KEY_J);
         openSettingsKey = bind("key.blood_on_the_sharktower.open_settings", InputConstants.KEY_O);
@@ -100,6 +102,7 @@ public final class KeyInputHandler {
             while (openTimerKey.consumeClick()) client.gui.setScreen(new TimerScreen());
             while (openStorytellerToolsKey.consumeClick()) client.gui.setScreen(new StorytellerToolsScreen());
             while (openSettingsKey.consumeClick()) client.gui.setScreen(new SharktowerSettingsScreen(null));
+            while (openNotebookKey.consumeClick()) client.gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.PersonalNotebookScreen(null));
             while (toggleVoteHandKey.consumeClick()) ClientPlayerActions.send("toggle_hand");
             while (leavePrivateChatKey.consumeClick()) {
                 if (ClientState.voiceRoute != null && ClientState.voiceRoute.startsWith("PRIVATE")) {

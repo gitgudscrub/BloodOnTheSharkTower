@@ -45,6 +45,7 @@ public final class NightChatManager {
     private static final Map<UUID, Invite> INVITES = new HashMap<>();
     private static final Map<UUID, PrivateSession> SESSIONS_BY_PARTICIPANT = new HashMap<>();
     private static final Map<UUID, String> LAST_SENT_ROUTES = new HashMap<>();
+    private static final Map<UUID,Integer> NIGHT_HOUSES = new HashMap<>();
     private static volatile boolean active;
     private static volatile String lastRoutingError;
     private static int houseCheckTicks;
@@ -119,6 +120,7 @@ public final class NightChatManager {
         if (participantId == null) return "Voice route: unknown participant.";
 
         PrivateSession session = SESSIONS_BY_PARTICIPANT.get(participantId);
+        if (active && NIGHT_HOUSES.containsKey(participantId) && session == null) return "NIGHT_HOUSE:" + NIGHT_HOUSES.get(participantId);
         if (session != null) {
             boolean storytellerAttached = isStorytellerAttached(session);
             if (session.playerId().equals(participantId) && !storytellerAttached) {
@@ -145,6 +147,7 @@ public final class NightChatManager {
         if (participantId == null) return "PROXIMITY";
 
         PrivateSession session = SESSIONS_BY_PARTICIPANT.get(participantId);
+        if (active && NIGHT_HOUSES.containsKey(participantId) && session == null) return "NIGHT_HOUSE:" + NIGHT_HOUSES.get(participantId);
         if (session != null) {
             if (session.playerId().equals(participantId) && !isStorytellerAttached(session)) {
                 return "PRIVATE_HOLD";
@@ -210,6 +213,7 @@ public final class NightChatManager {
     /** Clear bookkeeping if the voice server itself shuts down. */
     public static synchronized void onVoiceServerStopped() {
         active = false;
+        NIGHT_HOUSES.clear();
         INVITES.clear();
         SESSIONS_BY_PARTICIPANT.clear();
         MANAGED_CONNECTIONS.clear();
@@ -253,6 +257,7 @@ public final class NightChatManager {
     public static synchronized Result stop() {
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         active = false;
+        NIGHT_HOUSES.clear();
         lastRoutingError = null;
 
         int released = 0;
@@ -302,6 +307,7 @@ public final class NightChatManager {
     public static synchronized Result stopForDawn() {
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         active = false;
+        NIGHT_HOUSES.clear();
         lastRoutingError = null;
         INVITES.clear();
 
@@ -346,6 +352,7 @@ public final class NightChatManager {
     public static synchronized Result resetAll() {
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         active = false;
+        NIGHT_HOUSES.clear();
         lastRoutingError = null;
         INVITES.clear();
 
@@ -597,19 +604,13 @@ public final class NightChatManager {
         UUID groupId = UUID.nameUUIDFromBytes(("blood-on-the-sharktower:private:" + token)
                 .getBytes(StandardCharsets.UTF_8));
 
-        if (active) {
-            // Keep both participants in the shared Night Chat group so the group
-            // roster stays visually unchanged. The voice plugin cancels packets
-            // between this private pair and everyone else until the chat ends.
-            assignSharedNight(api, storytellerId);
-            assignSharedNight(api, playerId);
-        } else {
-            Group privateGroup = ensurePrivateGroup(api, groupId);
-            storyteller.setGroup(privateGroup);
-            player.setGroup(privateGroup);
-            MANAGED_CONNECTIONS.add(storytellerId);
-            MANAGED_CONNECTIONS.add(playerId);
-        }
+        Group privateGroup = ensurePrivateGroup(api, groupId);
+        storyteller.setGroup(privateGroup);
+        player.setGroup(privateGroup);
+        NIGHT_HOUSES.remove(storytellerId);
+        NIGHT_HOUSES.remove(playerId);
+        MANAGED_CONNECTIONS.add(storytellerId);
+        MANAGED_CONNECTIONS.add(playerId);
 
         PrivateSession session = new PrivateSession(groupId, storytellerId, playerId, invite.houseSeat());
         SESSIONS_BY_PARTICIPANT.put(storytellerId, session);
@@ -654,6 +655,7 @@ public final class NightChatManager {
         if (playerId == null) return;
         INVITES.entrySet().removeIf(entry -> entry.getValue().involves(playerId));
         LAST_SENT_ROUTES.remove(playerId);
+        NIGHT_HOUSES.remove(playerId);
 
         PrivateSession session = SESSIONS_BY_PARTICIPANT.get(playerId);
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
@@ -697,6 +699,7 @@ public final class NightChatManager {
         // through a 1.5-block trigger. Run it every server tick; only the Night
         // Storyteller-house automation remains throttled below.
         DayChatZoneManager.serverTick(server);
+        routeHouses(server);
 
         houseCheckTicks++;
         if (houseCheckTicks < HOUSE_CHECK_INTERVAL_TICKS) return;
@@ -763,6 +766,54 @@ public final class NightChatManager {
         syncRouteHud(server);
     }
 
+    public static synchronized void routeHouses(MinecraftServer server) {
+        if (!active || server == null) return;
+        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
+        if (api == null) return;
+        Set<UUID> online = new HashSet<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID id = player.getUUID(); online.add(id);
+            if (!publicNightParticipants().contains(id) || SESSIONS_BY_PARTICIPANT.containsKey(id)) continue;
+            Integer house = null;
+            if (StorytellerState.isStoryteller(id)) {
+                double nearest = Double.MAX_VALUE;
+                for (int seat : new java.util.TreeSet<>(ServerState.PLAYER_SEAT_NUMBERS.values())) {
+                    var home = SeatPositionManager.seatHome(seat);
+                    if (home == null || !SeatPositionManager.isPlayerNearHome(player, seat, HOUSE_EXIT_RADIUS)) continue;
+                    double d = player.distanceToSqr(home.x(), home.y(), home.z());
+                    if (d < nearest) { nearest = d; house = seat; }
+                }
+            } else {
+                Integer ownSeat = ServerState.PLAYER_SEAT_NUMBERS.get(id);
+                if (ownSeat != null && SeatPositionManager.isPlayerNearHome(player, ownSeat, HOUSE_EXIT_RADIUS)) house = ownSeat;
+            }
+            if (house == null) NIGHT_HOUSES.remove(id); else NIGHT_HOUSES.put(id, house);
+            VoicechatConnection connection = api.getConnectionOf(id);
+            if (connection == null || !connection.isConnected()) continue;
+            Group desired = house == null ? ensureSharedNightGroup(api) : ensureHouseGroup(api, house);
+            Group current = connection.getGroup();
+            if (current == null || !desired.getId().equals(current.getId())) connection.setGroup(desired);
+            MANAGED_CONNECTIONS.add(id);
+        }
+        NIGHT_HOUSES.keySet().retainAll(online);
+    }
+
+    private static UUID houseGroupId(int seat) {
+        return UUID.nameUUIDFromBytes(("blood-on-the-sharktower:night:house:" + seat).getBytes(StandardCharsets.UTF_8));
+    }
+    private static Group ensureHouseGroup(VoicechatServerApi api, int seat) {
+        Group existing = findRegisteredGroup(api, houseGroupId(seat));
+        if (existing != null) return existing;
+        return api.groupBuilder().setId(houseGroupId(seat)).setName("BOTS House " + seat)
+                .setPersistent(false).setHidden(true).setType(Group.Type.ISOLATED).build();
+    }
+    public static synchronized boolean sameNightRoom(UUID a, UUID b) {
+        if (!active) return true;
+        PrivateSession sa = SESSIONS_BY_PARTICIPANT.get(a), sb = SESSIONS_BY_PARTICIPANT.get(b);
+        if (sa != null || sb != null) return sa != null && sa == sb && isStorytellerAttached(sa);
+        return java.util.Objects.equals(NIGHT_HOUSES.get(a), NIGHT_HOUSES.get(b));
+    }
+
     private static void syncRouteHud(MinecraftServer server) {
         Set<UUID> online = new HashSet<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -825,7 +876,10 @@ public final class NightChatManager {
         try {
             VoicechatConnection connection = api.getConnectionOf(playerId);
             if (connection == null || !connection.isConnected()) return false;
-            connection.setGroup(ensureSharedNightGroup(api));
+            PrivateSession session = SESSIONS_BY_PARTICIPANT.get(playerId);
+            Integer house = NIGHT_HOUSES.get(playerId);
+            connection.setGroup(session != null ? ensurePrivateGroup(api, session.groupId())
+                    : house != null ? ensureHouseGroup(api, house) : ensureSharedNightGroup(api));
             MANAGED_CONNECTIONS.add(playerId);
             return true;
         } catch (Throwable t) {

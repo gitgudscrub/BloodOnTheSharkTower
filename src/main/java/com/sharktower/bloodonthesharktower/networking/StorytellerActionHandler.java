@@ -557,7 +557,7 @@ public final class StorytellerActionHandler {
 
     private static SetupOperations.Result cancelNomination(MinecraftServer server) {
         if (!DaytimeState.hasActiveNomination()) return SetupOperations.Result.fail("There is no active nomination.");
-        NominationManager.resetNomination(server);
+        NominationManager.cancelNomination(server);
         announce(server, Component.literal("The current nomination was cancelled by the Storyteller.")
                 .withStyle(ChatFormatting.GRAY));
         return SetupOperations.Result.ok("Current nomination cancelled.");

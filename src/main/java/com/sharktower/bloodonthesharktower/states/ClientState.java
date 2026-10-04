@@ -114,6 +114,10 @@ public final class ClientState {
     public static Map<UUID, Integer> grimoireSeatNumbers = new HashMap<>();
     public static Map<UUID, List<Reminder>> grimoireReminders = new HashMap<>();
     public static List<String> demonBluffs = List.of();
+    public static long notebookGeneration;
+    public static String notebookText = "";
+    public static Map<UUID,Integer> attentionHands = Map.of();
+    public static Map<UUID,Boolean> talkingPlayers = Map.of();
     public static boolean lastGrimoireSendTargeted = false;
 
     /** Connected-player directory used by the Grimoire for names/heads/unseated UI. */

@@ -3,7 +3,8 @@
   "package": "com.sharktower.bloodonthesharktower.client.mixin",
   "client": [
     "LivingEntityRendererMixin",
-    "AvatarRendererMixin"
+    "AvatarRendererMixin",
+    "EntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

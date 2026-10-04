@@ -49,7 +49,9 @@ public final class VoicechatIntegrationState {
      */
     public static boolean isPlayerTalking(java.util.UUID playerId) {
         VoicechatClientApi api = clientApi;
-        if (!clientConnected || api == null || playerId == null) return false;
+        if (playerId == null) return false;
+        if (com.sharktower.bloodonthesharktower.states.ClientState.talkingPlayers.getOrDefault(playerId, false)) return true;
+        if (!clientConnected || api == null) return false;
         try {
             return api.isTalking(playerId);
         } catch (Throwable ignored) {

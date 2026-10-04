@@ -48,8 +48,6 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             graphics.outline(getX() - 2, getY() - 2, this.width + 4, this.height + 4, 0xFFAAAAAA);
             graphics.text(Minecraft.getInstance().font, "E", getX() + this.width / 2 - 3,
                     getY() + this.height / 2 - 4, 0xFFFFFFFF, true);
-        } else if (currentDead) {
-            UiDrawing.deathShroud(graphics, getX(), getY(), this.width);
         }
 
         // Keep this ring outside the token/shroud but inside nomination highlights.

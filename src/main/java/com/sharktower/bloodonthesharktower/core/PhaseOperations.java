@@ -37,6 +37,8 @@ public final class PhaseOperations {
         }
 
         NightChatManager.Result voice = NightChatManager.start();
+        NightChatManager.routeHouses(server);
+        com.sharktower.bloodonthesharktower.networking.StorytellerMovement.makeVisibleAtNight(server);
         StateBroadcaster.broadcastCurrentState(server);
 
         if (!voice.ok()) {

@@ -33,6 +33,8 @@ public final class StateBroadcaster {
     }
 
     public static int sendCurrentStateTo(ServerPlayer player) {
+        SocialStateManager.send(player);
+        PlayerNotebooks.send(player);
         sendVisibilityTo(player);
         ServerPlayNetworking.send(player, new SyncDayNightS2CPayload(
                 ServerState.currentNight,
@@ -131,7 +133,7 @@ public final class StateBroadcaster {
             perceivedRoles = java.util.Map.of();
             seats = ServerState.PLAYER_SEAT_NUMBERS;
             reminders = java.util.Map.of();
-            bluffs = isAssigned(actualOwn) && actualOwn.getRoleType() == RoleType.DEMON
+            bluffs = isAssigned(actualOwn) && (actualOwn.getRoleType() == RoleType.DEMON || actualOwn.getRoleType() == RoleType.MINION)
                     ? StorytellerState.DEMON_BLUFFS
                     : java.util.List.of();
         }

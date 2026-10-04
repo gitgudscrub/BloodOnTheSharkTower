@@ -27,6 +27,8 @@ public final class NominationManager {
         if (!validateNomination(nominator, nominee, false)) return false;
         if (DaytimeState.hasActiveNomination()) resetNomination(server);
         VotingManager.clearLastResult();
+        DaytimeState.resetVote();
+        DaytimeState.clearRaisedHands();
 
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(nominee);
@@ -63,6 +65,8 @@ public final class NominationManager {
 
         if (DaytimeState.hasActiveNomination()) resetNomination(server);
         VotingManager.clearLastResult();
+        DaytimeState.resetVote();
+        DaytimeState.clearRaisedHands();
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(storyteller);
         ElectionState.beginElection(
@@ -89,6 +93,9 @@ public final class NominationManager {
 
     public static boolean executeNomination(MinecraftServer server, UUID nominator, UUID nominee, int alivePlayerCount, boolean override) {
         if (!override) return executeNomination(server, nominator, nominee, alivePlayerCount);
+        DaytimeState.resetVote();
+        DaytimeState.clearRaisedHands();
+        VotingManager.clearLastResult();
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(nominee);
         ElectionState.beginElection(ElectionType.VOTE, ElectionConfig.forVote(false), nominee, nominator, DaytimeState.getActiveElectionSeats());
@@ -104,6 +111,22 @@ public final class NominationManager {
         if (assignment == null || assignment.getRoleType() != RoleType.MINION) return;
         StorytellerState.minionNominatedToday = true;
         StateBroadcaster.broadcastStorytellerNightInfo(server);
+    }
+
+    public static void cancelNomination(MinecraftServer server) {
+        UUID nominator = DaytimeState.getCurrentNominator();
+        UUID nominee = DaytimeState.getCurrentNominee();
+        if (nominator != null) {
+            DaytimeState.setNominationsRemaining(nominator, DaytimeState.getNominationsRemaining(nominator) + 1);
+            if (!Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(nominator))) DaytimeState.setCanNominate(nominator, true);
+        }
+        if (nominee != null) {
+            if (StorytellerState.isStoryteller(nominee)) DaytimeState.setStorytellerCanBeNominated(true);
+            else DaytimeState.setCanBeNominated(nominee, true);
+        }
+        DaytimeState.clearRaisedHands();
+        VotingManager.clearLastResult();
+        resetNomination(server);
     }
 
     public static void resetNomination(MinecraftServer server) {

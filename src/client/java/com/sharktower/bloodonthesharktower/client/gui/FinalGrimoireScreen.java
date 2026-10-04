@@ -105,6 +105,15 @@ public final class FinalGrimoireScreen extends Screen {
 
             renderRoleToken(graphics, role, assignment, good, dead, exiled, roleX, roleY);
             renderPlayerHead(graphics, id, seat, dead, headX, headY);
+            var reminders = ClientState.grimoireReminders.getOrDefault(id, List.of());
+            for (int n = 0; n < Math.min(8, reminders.size()); n++) {
+                double ra = Math.PI * 2 * n / Math.min(8, reminders.size());
+                int rx = roleX + ROLE_SIZE / 2 + (int)(25 * Math.cos(ra)) - 6;
+                int ry = roleY + ROLE_SIZE / 2 + (int)(25 * Math.sin(ra)) - 6;
+                UiDrawing.panel(graphics, rx, ry, 12, 12);
+                String text=reminders.get(n).text();
+                graphics.text(this.font, text.isEmpty()?"?":text.substring(0,1), rx+3, ry+2, UiDrawing.GOLD, true);
+            }
             renderSeatNumber(graphics, seat, centerX, centerY, radius, angle);
 
             if (hovered == null
@@ -139,8 +148,6 @@ public final class FinalGrimoireScreen extends Screen {
         }
         if (exiled) {
             graphics.text(this.font, "E", x + ROLE_SIZE - 5, y - 6, UiDrawing.TEXT, true);
-        } else if (dead) {
-            graphics.text(this.font, "X", x + ROLE_SIZE - 5, y - 6, UiDrawing.DEAD, true);
         }
     }
 
@@ -161,9 +168,10 @@ public final class FinalGrimoireScreen extends Screen {
         }
 
         graphics.outline(x, y, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
+        if (dead) UiDrawing.deathShroud(graphics, x, y, HEAD_SIZE);
         String name = ClientState.playerName(id, seat);
         drawCenteredAt(graphics, name, x + HEAD_SIZE / 2, y + HEAD_SIZE + 2,
-                dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
+                UiDrawing.roleOf(ClientState.grimoireRoles.get(id)) == null ? UiDrawing.TEXT : UiDrawing.teamColor(UiDrawing.roleOf(ClientState.grimoireRoles.get(id)).getTeam()), true);
     }
 
     private void renderSeatNumber(

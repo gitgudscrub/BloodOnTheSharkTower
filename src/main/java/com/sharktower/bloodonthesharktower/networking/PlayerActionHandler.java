@@ -72,8 +72,10 @@ public final class PlayerActionHandler {
             player.sendSystemMessage(Component.literal("You have been exiled and are no longer participating in votes."));
             return;
         }
-        if (!DaytimeState.areNominationsOpen() && !DaytimeState.isVoteInProgress() && !exileVoting) {
-            player.sendSystemMessage(Component.literal("Voting hands are available during nominations or an exile call."));
+        if (!DaytimeState.hasActiveNomination() && !DaytimeState.isVoteInProgress() && !exileVoting) {
+            boolean next = forcedState != null ? forcedState : !com.sharktower.bloodonthesharktower.daytime.AttentionHands.raised(id);
+            com.sharktower.bloodonthesharktower.daytime.AttentionHands.set(id, next);
+            SocialStateManager.broadcast(server);
             return;
         }
         if (!exileVoting && Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(id)) && DaytimeState.hasUsedGhostVote(id)) {

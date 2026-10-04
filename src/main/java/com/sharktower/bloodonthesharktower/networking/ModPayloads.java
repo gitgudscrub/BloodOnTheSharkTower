@@ -7,6 +7,9 @@ public final class ModPayloads {
     private ModPayloads() {}
 
     public static void registerPayloads() {
+        PayloadTypeRegistry.clientboundPlay().register(NotebookPayload.TYPE, NotebookPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(NotebookPayload.TYPE, NotebookPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SocialStateS2CPayload.TYPE, SocialStateS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(GameVisibilityS2CPayload.TYPE, GameVisibilityS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SyncDayNightS2CPayload.TYPE, SyncDayNightS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SendScriptS2CPayload.TYPE, SendScriptS2CPayload.CODEC);
