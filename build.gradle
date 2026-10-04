@@ -230,3 +230,5 @@ tasks.register('deathVisibilityRegression', JavaExec) {
     mainClass = 'com.sharktower.bloodonthesharktower.states.DeathVisibilityRegression'
 }
 tasks.named('check') { dependsOn tasks.named('deathVisibilityRegression') }
+// The executable regression above is the test entry point; no JUnit engine is used.
+tasks.named('test') { failOnNoDiscoveredTests = false }

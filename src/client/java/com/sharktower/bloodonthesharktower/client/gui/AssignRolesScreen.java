@@ -142,6 +142,7 @@ public class AssignRolesScreen extends Screen {
         if (!currentSignature.equals(lastSeatLayoutSignature) && this.minecraft != null) {
             // Role/head widgets are constructed in init(). Re-open this screen when
             // the authoritative seat occupants change so the widgets follow them.
+            GrimoireReturnState.suppressNextReveal();
             this.minecraft.gui.setScreen(new AssignRolesScreen());
         }
     }
@@ -925,6 +926,9 @@ public class AssignRolesScreen extends Screen {
 
     private String seatLayoutSignature() {
         StringBuilder signature = new StringBuilder();
+        signature.append(ClientState.phase()).append('|')
+                .append(new java.util.TreeSet<>(ClientState.storytellerPlayers)).append('|')
+                .append(new java.util.TreeSet<>(ClientState.pendingDeaths)).append('|');
         for (Map.Entry<UUID, Integer> entry : sortedSeats()) {
             signature.append(entry.getValue()).append(':').append(entry.getKey()).append(';');
         }
