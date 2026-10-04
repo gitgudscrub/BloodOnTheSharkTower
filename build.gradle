@@ -232,3 +232,10 @@ tasks.register('deathVisibilityRegression', JavaExec) {
 tasks.named('check') { dependsOn tasks.named('deathVisibilityRegression') }
 // The executable regression above is the test entry point; no JUnit engine is used.
 tasks.named('test') { failOnNoDiscoveredTests = false }
+
+tasks.register('reminderCatalogRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.core.ReminderCatalogRegression'
+}
+tasks.named('check') { dependsOn tasks.named('reminderCatalogRegression') }

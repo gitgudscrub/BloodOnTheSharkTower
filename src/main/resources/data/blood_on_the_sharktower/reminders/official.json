@@ -1,0 +1,425 @@
+{
+  "steward": [
+    "Know"
+  ],
+  "knight": [
+    "Know"
+  ],
+  "noble": [
+    "Know"
+  ],
+  "investigator": [
+    "Minion",
+    "Wrong"
+  ],
+  "washerwoman": [
+    "Townsfolk",
+    "Wrong"
+  ],
+  "grandmother": [
+    "Grandchild",
+    "Dead"
+  ],
+  "librarian": [
+    "Outsider",
+    "Wrong"
+  ],
+  "pixie": [
+    "Mad",
+    "Has Ability"
+  ],
+  "bountyhunter": [
+    "Know"
+  ],
+  "sailor": [
+    "Drunk"
+  ],
+  "balloonist": [
+    "Know"
+  ],
+  "preacher": [
+    "No Ability"
+  ],
+  "villageidiot": [
+    "Drunk"
+  ],
+  "snakecharmer": [
+    "Poisoned"
+  ],
+  "mathematician": [
+    "Abnormal"
+  ],
+  "fortuneteller": [
+    "Red Herring"
+  ],
+  "flowergirl": [
+    "Demon Voted",
+    "Demon Not Voted"
+  ],
+  "towncrier": [
+    "Minions Not Nominated",
+    "Minion Nominated"
+  ],
+  "undertaker": [
+    "Died Today"
+  ],
+  "innkeeper": [
+    "Safe",
+    "Drunk"
+  ],
+  "monk": [
+    "Safe"
+  ],
+  "gambler": [
+    "Dead"
+  ],
+  "acrobat": [
+    "Dead",
+    "Chosen"
+  ],
+  "exorcist": [
+    "Chosen"
+  ],
+  "lycanthrope": [
+    "Faux Paw",
+    "Dead"
+  ],
+  "gossip": [
+    "Dead"
+  ],
+  "engineer": [
+    "No Ability"
+  ],
+  "nightwatchman": [
+    "No Ability"
+  ],
+  "courtier": [
+    "Drunk 3",
+    "Drunk 2",
+    "Drunk 1",
+    "No Ability"
+  ],
+  "seamstress": [
+    "No Ability"
+  ],
+  "philosopher": [
+    "Drunk",
+    "Is The Philosopher"
+  ],
+  "huntsman": [
+    "No Ability"
+  ],
+  "professor": [
+    "Alive",
+    "No Ability"
+  ],
+  "artist": [
+    "No Ability"
+  ],
+  "slayer": [
+    "No Ability"
+  ],
+  "fisherman": [
+    "No Ability"
+  ],
+  "princess": [
+    "Doesn't Kill"
+  ],
+  "juggler": [
+    "Correct"
+  ],
+  "alchemist": [
+    "Is The Alchemist"
+  ],
+  "cannibal": [
+    "Poisoned",
+    "Lunch"
+  ],
+  "amnesiac": [
+    "?"
+  ],
+  "minstrel": [
+    "Everyone Is Drunk"
+  ],
+  "banshee": [
+    "Has Ability"
+  ],
+  "tealady": [
+    "Cannot Die"
+  ],
+  "fool": [
+    "No Ability"
+  ],
+  "virgin": [
+    "No Ability"
+  ],
+  "poppygrower": [
+    "Evil Wakes"
+  ],
+  "hermit": [
+    "1",
+    "2",
+    "3"
+  ],
+  "butler": [
+    "Master"
+  ],
+  "goon": [
+    "Drunk"
+  ],
+  "ogre": [
+    "Friend"
+  ],
+  "lunatic": [
+    "Chosen"
+  ],
+  "drunk": [
+    "Is The Drunk"
+  ],
+  "tinker": [
+    "Dead"
+  ],
+  "golem": [
+    "May Not Nominate"
+  ],
+  "sweetheart": [
+    "Drunk"
+  ],
+  "plaguedoctor": [
+    "Storyteller Ability"
+  ],
+  "moonchild": [
+    "Dead"
+  ],
+  "barber": [
+    "Haircuts Tonight"
+  ],
+  "hatter": [
+    "Tea Party Tonight"
+  ],
+  "damsel": [
+    "Guess Used"
+  ],
+  "puzzlemaster": [
+    "Drunk",
+    "Guess Used"
+  ],
+  "mezepheles": [
+    "Turns Evil",
+    "No Ability"
+  ],
+  "godfather": [
+    "Died Today",
+    "Dead"
+  ],
+  "poisoner": [
+    "Poisoned"
+  ],
+  "devilsadvocate": [
+    "Survives Execution"
+  ],
+  "harpy": [
+    "Mad",
+    "2nd"
+  ],
+  "witch": [
+    "Cursed"
+  ],
+  "cerenovus": [
+    "Mad"
+  ],
+  "fearmonger": [
+    "Fear"
+  ],
+  "assassin": [
+    "Dead",
+    "No Ability"
+  ],
+  "wizard": [
+    "?"
+  ],
+  "widow": [
+    "Poisoned",
+    "Know"
+  ],
+  "xaan": [
+    "Night 1",
+    "Night 2",
+    "Night 3",
+    "X"
+  ],
+  "marionette": [
+    "Is The Marionette"
+  ],
+  "summoner": [
+    "Night 1",
+    "Night 2",
+    "Night 3"
+  ],
+  "eviltwin": [
+    "Twin"
+  ],
+  "goblin": [
+    "Claimed"
+  ],
+  "scarletwoman": [
+    "Is The Demon"
+  ],
+  "organgrinder": [
+    "About To Die",
+    "Drunk"
+  ],
+  "yaggababble": [
+    "Dead"
+  ],
+  "pukka": [
+    "Poisoned",
+    "Dead"
+  ],
+  "lilmonsta": [
+    "Is The Demon",
+    "Dead"
+  ],
+  "nodashii": [
+    "Dead",
+    "Poisoned"
+  ],
+  "imp": [
+    "Dead"
+  ],
+  "shabaloth": [
+    "Dead",
+    "Alive"
+  ],
+  "ojo": [
+    "Dead"
+  ],
+  "kazali": [
+    "Dead"
+  ],
+  "po": [
+    "Dead",
+    "3 Attacks"
+  ],
+  "zombuul": [
+    "Died Today",
+    "Dead"
+  ],
+  "vigormortis": [
+    "Dead",
+    "Has Ability",
+    "Poisoned"
+  ],
+  "vortox": [
+    "Dead"
+  ],
+  "legion": [
+    "Dead",
+    "About To Die"
+  ],
+  "fanggu": [
+    "Dead",
+    "Once"
+  ],
+  "lordoftyphon": [
+    "Dead"
+  ],
+  "lleech": [
+    "Dead",
+    "Poisoned"
+  ],
+  "alhadikhia": [
+    "1",
+    "2",
+    "3"
+  ],
+  "riot": [
+    "Day 1",
+    "Day 2",
+    "Day 3"
+  ],
+  "leviathan": [
+    "Day 1",
+    "Day 2",
+    "Day 3",
+    "Day 4",
+    "Day 5",
+    "Good Player Executed"
+  ],
+  "thief": [
+    "Negative Vote"
+  ],
+  "bureaucrat": [
+    "3 Votes"
+  ],
+  "barista": [
+    "Sober & Healthy",
+    "Acts Twice",
+    "?"
+  ],
+  "harlot": [
+    "Dead"
+  ],
+  "cacklejack": [
+    "Not Me"
+  ],
+  "bonecollector": [
+    "No Ability",
+    "Has Ability"
+  ],
+  "judge": [
+    "No Ability"
+  ],
+  "apprentice": [
+    "Is The Apprentice"
+  ],
+  "gnome": [
+    "Amigo"
+  ],
+  "bishop": [
+    "Nominate Good",
+    "Nominate Evil"
+  ],
+  "angel": [
+    "Protected",
+    "Something Bad"
+  ],
+  "deusexfiasco": [
+    "Whoopsie"
+  ],
+  "duchess": [
+    "Visitor",
+    "False Info"
+  ],
+  "fibbin": [
+    "No Ability"
+  ],
+  "hellslibrarian": [
+    "Something Bad"
+  ],
+  "revolutionary": [
+    "Register Falsely?",
+    "Aligned"
+  ],
+  "spiritofivory": [
+    "No More Evil"
+  ],
+  "toymaker": [
+    "Final Night: No Attack"
+  ],
+  "bootlegger": [
+    "?"
+  ],
+  "godofug": [
+    "Hat"
+  ],
+  "stormcatcher": [
+    "Stormcaught"
+  ],
+  "ventriloquist": [
+    "Mad"
+  ],
+  "zenomancer": [
+    "Goal"
+  ]
+}

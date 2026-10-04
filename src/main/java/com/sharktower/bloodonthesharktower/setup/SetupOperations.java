@@ -518,6 +518,14 @@ public final class SetupOperations {
         String cleaned = text == null ? "" : text.trim();
         if (cleaned.isEmpty()) return Result.fail("Reminder text cannot be blank.");
 
+        if (com.sharktower.bloodonthesharktower.core.ReminderCatalog.selfOnly(sourceRole.getId(), cleaned)) {
+            PendingRoleAssignment target = workingRoles().get(player);
+            if (target == null || !com.sharktower.bloodonthesharktower.core.ReminderCatalog.normalize(target.getRoleId())
+                    .equals(com.sharktower.bloodonthesharktower.core.ReminderCatalog.normalize(sourceRole.getId()))) {
+                return Result.fail("This reminder only applies to " + sourceRole.getDisplayName() + ".");
+            }
+        }
+
         Reminder reminder;
         if (sourceRole instanceof ScriptRole.Official official) {
             // The Butler's Master is represented directly by the player carrying
