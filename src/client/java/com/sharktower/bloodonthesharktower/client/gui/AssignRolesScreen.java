@@ -196,10 +196,10 @@ public class AssignRolesScreen extends Screen {
             y += CONTROL_H + GAP + 10;
 
             y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
-            addRightAction(rightX, y, "Send Home", ChatFormatting.AQUA, "send_home");
+            addRightAction(rightX, y, "Send to Home", ChatFormatting.AQUA, "send_home");
         } else if (phase == GamePhase.NIGHT) {
             y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
-            y = addRightAction(rightX, y, "Send Home", ChatFormatting.AQUA, "send_home");
+            y = addRightAction(rightX, y, "Send to Home", ChatFormatting.AQUA, "send_home");
             this.addRenderableWidget(Button.builder(Component.literal("Start Day").withStyle(ChatFormatting.GOLD), b ->
                             action("phase_day"))
                     .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
@@ -271,11 +271,6 @@ public class AssignRolesScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
                         this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
                 .bounds(rightX - 60, layoutHeight - 30, 55, CONTROL_H).build());
-
-        y = addRightAction(rightX, y, "Spectator", ChatFormatting.GRAY, "st_spectator");
-        if (phase != GamePhase.SETUP && phase != GamePhase.NIGHT && !ClientState.pendingDeaths.isEmpty()) {
-            y = addRightAction(rightX, y, "Reveal Deaths", ChatFormatting.RED, "reveal_deaths");
-        }
 
         if (phase == GamePhase.SETUP) {
             this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
