@@ -36,6 +36,31 @@ public final class DeathVisibilityRegression {
         actual.clear();
         check(snapshot.size() == 2, "payload snapshot remains immutable after reset");
         check(DeathVisibility.visible(actual, false).isEmpty(), "reset cannot repopulate roles/deaths");
-        System.out.println("PASS: " + checks + " death visibility regression checks");
+        // Exercise the same clear helper used after both reset paths/rollback.
+        var role = new com.sharktower.bloodonthesharktower.core.PendingRoleAssignment(
+                com.sharktower.bloodonthesharktower.core.Role.DRUNK,
+                com.sharktower.bloodonthesharktower.core.AlignmentOverride.DEFAULT);
+        ServerState.PLAYER_ROLES.put(first, role);
+        ServerState.PLAYER_PERCEIVED_ROLES.put(first, role);
+        ServerState.PLAYER_DEATH_STATUS.put(first, true);
+        StorytellerState.PENDING_ROLES.put(first, role);
+        StorytellerState.PENDING_PERCEIVED_ROLES.put(first, role);
+        StorytellerState.REMINDERS.put(first, java.util.List.of(new com.sharktower.bloodonthesharktower.core.Reminder("Good", java.util.Optional.empty())));
+        StorytellerState.DEMON_BLUFFS.add(new com.sharktower.bloodonthesharktower.core.ScriptRole.Official(com.sharktower.bloodonthesharktower.core.Role.EMPATH));
+        ServerState.PLAYER_SEAT_NUMBERS.put(first, 1);
+        StorytellerState.claimStoryteller(second);
+        DeathVisibility.stage(first);
+        long generation = ServerState.resetGeneration;
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.clearRolesForFreshSetup();
+        check(ServerState.PLAYER_ROLES.isEmpty(), "reset clears actual roles");
+        check(ServerState.PLAYER_PERCEIVED_ROLES.isEmpty(), "reset clears perceived roles");
+        check(StorytellerState.PENDING_ROLES.isEmpty(), "reset clears pending roles");
+        check(StorytellerState.PENDING_PERCEIVED_ROLES.isEmpty(), "reset clears pending perceived roles");
+        check(StorytellerState.REMINDERS.isEmpty() && StorytellerState.DEMON_BLUFFS.isEmpty(), "reset clears reminders and bluffs");
+        check(ServerState.PLAYER_DEATH_STATUS.isEmpty() && DeathVisibility.pending().isEmpty(), "reset clears staged deaths");
+        check(ServerState.resetGeneration == generation + 1, "reset invalidates client notebook generation");
+        check(ServerState.PLAYER_SEAT_NUMBERS.get(first) == 1, "role clearing retains seats");
+        check(StorytellerState.isStoryteller(second), "role clearing retains current Storyteller");
+        System.out.println("PASS: " + checks + " death visibility/reset regression checks");
     }
 }

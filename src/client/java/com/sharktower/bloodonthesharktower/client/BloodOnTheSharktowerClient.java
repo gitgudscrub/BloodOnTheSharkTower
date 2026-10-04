@@ -18,7 +18,10 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientSettings.load();
         CoreStateReceivers.register();
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientGrimoireEdits.clearSession());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientGrimoireEdits.clearSession();
+            CoreStateReceivers.resetSession();
+        });
         GrimoireReturnState.register();
         KeyInputHandler.register();
         SharktowerHudRenderer.register();

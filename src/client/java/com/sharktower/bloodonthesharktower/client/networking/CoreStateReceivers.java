@@ -40,6 +40,12 @@ public final class CoreStateReceivers {
 
     private static long resetGeneration = Long.MIN_VALUE;
 
+    public static void resetSession() {
+        resetGeneration = Long.MIN_VALUE;
+        ClientState.pendingDeaths = java.util.Set.of();
+        com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
+    }
+
     public static void register() {
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.GameVisibilityS2CPayload.TYPE, (payload, context) -> {
             if (resetGeneration != payload.generation()) {

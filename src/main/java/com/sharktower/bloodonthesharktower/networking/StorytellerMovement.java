@@ -48,9 +48,14 @@ public final class StorytellerMovement {
             root.sharktowerLiterals().remove("tp");
             LiteralCommandNode<CommandSourceStack> tp = Commands.literal("tp")
                     .requires(source -> allowed(source) || (vanilla != null && vanilla.canUse(source)))
-                    .then(Commands.argument("destination", EntityArgument.player()).executes(context -> {
+                    .then(Commands.argument("destination", EntityArgument.entity()).executes(context -> {
                         ServerPlayer actor = context.getSource().getPlayer();
-                        if (actor == null || (!allowed(context.getSource()) && (vanilla == null || !vanilla.canUse(context.getSource())))) return 0;
+                        if (!allowed(context.getSource())) {
+                            if (vanilla == null || !vanilla.canUse(context.getSource())) return 0;
+                            CommandNode<CommandSourceStack> destination = vanilla.getChild("destination");
+                            return destination == null || destination.getCommand() == null ? 0 : destination.getCommand().run(context);
+                        }
+                        if (actor == null) return 0;
                         ServerPlayer target = EntityArgument.getPlayer(context, "destination");
                         actor.teleportTo(target.level(), target.getX(), target.getY(), target.getZ(),
                                 Set.of(), target.getYRot(), target.getXRot(), true);
