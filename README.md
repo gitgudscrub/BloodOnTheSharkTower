@@ -112,6 +112,19 @@ Current planned work:
 - clearing the active player-side Good/Evil reminder returns that player's border to neutral;
 - keep player alignment notes completely separate from authoritative Storyteller game state so no hidden information can leak.
 
+### Additional live-session feedback (4 October 2026)
+
+The following work is **pending implementation and validation** for 1.0.2:
+
+- **Role/bluff colours:** Make bluff selection and displayed bluffs use the same role-category colours as the rest of the UI, including custom roles. Keep category colours separate from alignment borders.
+- **Client performance mods:** Include compatible Minecraft 26.3 Fabric releases of Sodium, Lithium and FerriteCore after checking exact versions, dependencies and compatibility with Sharktower and Simple Voice Chat. Sodium is client-only; evaluate Lithium/FerriteCore separately for server use. Players reported roughly 30 FPS, dropping to 20–25 FPS with VSync disabled; after adding performance mods to their clients, players reported reaching 60 FPS. This is live-player feedback, not a controlled benchmark.
+- **Setup Storyteller disconnect:** Clear the Storyteller assignment when they disconnect during setup so another player can take over. Preserve the script, players and other setup choices. Reconnecting must not automatically reclaim a released assignment.
+- **Storyteller flight and spectator:** Allow the assigned Storyteller to fly and enter/leave spectator mode without operator permissions. Validate access server-side, restore previous game mode/flight permissions when appropriate, and preserve Grimoire access and voice routing.
+- **Private deaths and manual reveal:** Let the Storyteller mark deaths privately with pending indicators in their Grimoire, then reveal deaths during the day when they choose using a Grimoire control. Resolved deaths must count for rules and abilities immediately, but public death displays must remain unrevealed until that action. Dawn must not automatically publish staged deaths; check reconnects and every public sync path for premature disclosure.
+- **Reset clears roles:** Both **Full Reset** and **Game Reset / Reset for Next Game** must clear all player role assignments rather than restore starting roles. Clear pending/setup and perceived-role assignments, personal role guesses and stale own-role/ability displays; prevent old snapshots or reconnects from repopulating them. Preserve each reset's other intended scope.
+
+Implementation notes and regression checks are tracked in `docs/1.0.2-session-feedback.md` on the draft 1.0.2 branch.
+
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
 
 ### 1.0.x — Base 3 full support *(current focus)*
