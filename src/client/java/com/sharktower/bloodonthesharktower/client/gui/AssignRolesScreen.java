@@ -162,6 +162,12 @@ public class AssignRolesScreen extends Screen {
         int y = MARGIN;
         GamePhase phase = ClientState.phase();
 
+        // Direct access to winner selection and post-game reveal/reset controls.
+        this.addRenderableWidget(Button.builder(
+                        Component.literal("Game End").withStyle(ChatFormatting.RED), b ->
+                                this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
+                .bounds(MARGIN, MARGIN + CONTROL_H + GAP, CONTROL_W, CONTROL_H).build());
+
         y = addRightAction(rightX, y, "Spectator", ChatFormatting.GRAY, "st_spectator");
         if (phase != GamePhase.SETUP && phase != GamePhase.NIGHT && !ClientState.pendingDeaths.isEmpty()) {
             y = addRightAction(rightX, y, "Reveal Deaths", ChatFormatting.RED, "reveal_deaths");
