@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.gui.grimoire;
 
 import com.sharktower.bloodonthesharktower.client.gui.DemonBluffSelectionScreen;
+import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
@@ -35,15 +36,18 @@ public final class GrimoireBluffWidget extends AbstractWidget {
         }
         if (isHovered()) {
             graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
+            boolean editable = ClientGrimoireEdits.isLocalStoryteller();
             GrimoireHoverHints.set(role == null
-                    ? "Demon bluff slot " + (index + 1) + " — click to choose bluffs"
-                    : "Demon bluff: " + role.getDisplayName() + " — click to edit all three");
+                    ? "Demon bluff slot " + (index + 1) + (editable ? " — click to choose bluffs" : "")
+                    : "Demon bluff: " + role.getDisplayName() + (editable ? " — click to edit all three" : ""));
         }
     }
 
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        Minecraft.getInstance().gui.setScreen(new DemonBluffSelectionScreen());
+        if (ClientGrimoireEdits.isLocalStoryteller()) {
+            Minecraft.getInstance().gui.setScreen(new DemonBluffSelectionScreen());
+        }
     }
 
     @Override

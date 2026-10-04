@@ -73,6 +73,7 @@ public class AssignRolesScreen extends Screen {
     private static boolean showUnseated = true;
     private static boolean showSelf = true;
     private static boolean showBluffs = true;
+    private boolean showPlayerBluffs = true;
 
     // The Grim can stay open while seats are populated/shuffled. Keep a small
     // signature so widget instances are rebuilt as soon as the live seat map changes.
@@ -124,6 +125,7 @@ public class AssignRolesScreen extends Screen {
             GrimoireRevealAnimation.beginScreen();
         }
         buildContextualControls();
+        buildBluffVisibilityControl();
         buildPlayerWidgets();
         buildReminderWidgets();
         buildStorytellerWidgets();
@@ -261,13 +263,6 @@ public class AssignRolesScreen extends Screen {
                     () -> this.minecraft.gui.setScreen(new ExileControlScreen()));
             addRightAction(rightX, y, "Reset Exile", ChatFormatting.GRAY, "exile_reset");
         }
-
-        // Original bottom-left bluff visibility toggle.
-        this.addRenderableWidget(Button.builder(
-                        Component.literal("Bluffs: " + (showBluffs ? "SHOW" : "HIDE")), b -> {
-                    showBluffs = !showBluffs;
-                    this.minecraft.gui.setScreen(new AssignRolesScreen());
-                }).bounds(MARGIN, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
 
         // Keep advanced/recovery controls available without permanently filling
         // the main Grim with management buttons.
@@ -534,8 +529,23 @@ public class AssignRolesScreen extends Screen {
         }
     }
 
+    private boolean shouldShowBluffs() {
+        return ClientGrimoireEdits.isLocalStoryteller() ? showBluffs : showPlayerBluffs;
+    }
+
+    private void buildBluffVisibilityControl() {
+        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
+        this.addRenderableWidget(Button.builder(
+                        Component.literal("Bluffs: " + (shouldShowBluffs() ? "SHOW" : "HIDE")), b -> {
+                    if (ClientGrimoireEdits.isLocalStoryteller()) showBluffs = !showBluffs;
+                    else showPlayerBluffs = !showPlayerBluffs;
+                    GrimoireRevealAnimation.showImmediately();
+                    this.rebuildWidgets();
+                }).bounds(MARGIN, layoutHeight() - 30, CONTROL_W, CONTROL_H).build());
+    }
+
     private void buildBluffWidgets() {
-        if (!showBluffs) return;
+        if (!shouldShowBluffs()) return;
         if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
         int startY = Math.max(55, layoutHeight() / 2 + 18);
         for (int i = 0; i < 3; i++) {
@@ -929,7 +939,8 @@ public class AssignRolesScreen extends Screen {
         StringBuilder signature = new StringBuilder();
         signature.append(ClientState.phase()).append('|')
                 .append(new java.util.TreeSet<>(ClientState.storytellerPlayers)).append('|')
-                .append(new java.util.TreeSet<>(ClientState.pendingDeaths)).append('|');
+                .append(new java.util.TreeSet<>(ClientState.pendingDeaths)).append('|')
+                .append(ClientGrimoireEdits.visibleDemonBluffs()).append('|');
         for (Map.Entry<UUID, Integer> entry : sortedSeats()) {
             signature.append(entry.getValue()).append(':').append(entry.getKey()).append(';');
         }
