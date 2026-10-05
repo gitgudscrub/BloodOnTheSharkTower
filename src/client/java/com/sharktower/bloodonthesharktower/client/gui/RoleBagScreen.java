@@ -101,7 +101,7 @@ public final class RoleBagScreen extends Screen {
                 }).bounds(this.width / 2 - (narrow ? 80 : 220), navY, 36, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
                     if (page < maxPage) this.minecraft.gui.setScreen(new RoleBagScreen(page + 1));
-                }).bounds(this.width / 2 - (narrow ? 38 : -178), navY, 36, 20).build());
+                }).bounds(this.width / 2 - (narrow ? 38 : 178), navY, 36, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Clear"), b -> {
                     clearSelection();
