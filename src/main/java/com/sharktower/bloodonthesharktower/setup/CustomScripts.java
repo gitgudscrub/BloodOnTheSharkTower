@@ -16,6 +16,7 @@ import java.util.*;
 public final class CustomScripts {
     private CustomScripts() {}
     private record Pending(String token, String json, String filename, String previous, long expiry) {}
+    private record ScriptSummary(String filename, String name) {}
     private static final Map<UUID,Pending> pending = new HashMap<>();
     private static final Set<UUID> downloading = new HashSet<>();
     private static Path folder() throws Exception {
@@ -42,11 +43,31 @@ public final class CustomScripts {
     }
     private static void send(ServerPlayer actor,String kind,String text,String token) { ServerPlayNetworking.send(actor,new CustomScriptsPayload(kind,text,token)); }
     public static SetupOperations.Result list(ServerPlayer actor) throws Exception {
+        List<Path> paths;
         try (var files = Files.list(folder())) {
-            var names = files.filter(p -> Files.isRegularFile(p,LinkOption.NOFOLLOW_LINKS) && p.getFileName().toString().endsWith(".json"))
-                    .map(p -> p.getFileName().toString()).filter(n -> n.length() <= 120).sorted(String.CASE_INSENSITIVE_ORDER).limit(1500).toList();
-            send(actor,"list",new Gson().toJson(names),"");
+            paths = files.filter(p -> Files.isRegularFile(p,LinkOption.NOFOLLOW_LINKS) && p.getFileName().toString().endsWith(".json"))
+                    .filter(p -> p.getFileName().toString().length() <= 120)
+                    .sorted(Comparator.comparing(p -> p.getFileName().toString(), String.CASE_INSENSITIVE_ORDER))
+                    .limit(1500)
+                    .toList();
         }
+
+        List<ScriptSummary> scripts = new ArrayList<>(paths.size());
+        for (Path path : paths) {
+            String filename = path.getFileName().toString();
+            String name = filename.substring(0, filename.length() - 5);
+            try {
+                var saved = com.sharktower.bloodonthesharktower.core.Script.fromJson(read(path));
+                if (saved.isPresent() && saved.get().name() != null && !saved.get().name().isBlank()) {
+                    name = saved.get().name();
+                }
+            } catch (Exception ignored) {
+                // Keep malformed local files visible/searchable by filename so the
+                // Storyteller can still identify them and see the load error.
+            }
+            scripts.add(new ScriptSummary(filename, name));
+        }
+        send(actor,"list",new Gson().toJson(scripts),"");
         return SetupOperations.Result.ok("Custom scripts refreshed.");
     }
     public static SetupOperations.Result load(ServerPlayer actor,String name) throws Exception {
