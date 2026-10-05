@@ -1,7 +1,6 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.client.ClientLunaticBluffs;
-import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -16,7 +15,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Set;
 
 /** Separate three-bluff picker used only for an assigned Lunatic. */
@@ -106,7 +104,7 @@ public final class LunaticBluffSelectionScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        String heading = "Choose 3 fake out-of-play good roles for the Lunatic";
+        String heading = "Choose 3 fake good roles for the Lunatic — in-play roles are allowed";
         graphics.text(this.font, heading,
                 (this.width - this.font.width(heading)) / 2, 16, UiDrawing.GOLD, true);
         String count = selected.size() + "/3 selected";
@@ -169,25 +167,13 @@ public final class LunaticBluffSelectionScreen extends Screen {
 
     private static List<ScriptRole> availableRoles() {
         if (ClientState.currentScript == null) return List.of();
-        Set<String> unavailable = new java.util.HashSet<>();
-        ClientState.grimoireRoles.values().stream()
-                .filter(Objects::nonNull)
-                .map(PendingRoleAssignment::getRoleId)
-                .filter(Objects::nonNull)
-                .map(LunaticBluffSelectionScreen::key)
-                .forEach(unavailable::add);
-        ClientState.grimoirePerceivedRoles.values().stream()
-                .filter(Objects::nonNull)
-                .map(PendingRoleAssignment::getRoleId)
-                .filter(Objects::nonNull)
-                .map(LunaticBluffSelectionScreen::key)
-                .forEach(unavailable::add);
 
+        // Lunatic bluff information may be false in exactly this way: unlike a
+        // real Demon's bluff set, an in-play good character is a valid fake bluff.
         List<ScriptRole> roles = new ArrayList<>();
         for (ScriptRole role : ClientState.currentScript.allRoles()) {
             if (role == null) continue;
             if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) continue;
-            if (unavailable.contains(key(role.getId()))) continue;
             roles.add(role);
         }
         roles.sort(Comparator
