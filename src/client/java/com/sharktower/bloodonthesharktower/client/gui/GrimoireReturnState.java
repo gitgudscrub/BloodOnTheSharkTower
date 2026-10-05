@@ -1,7 +1,6 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.Minecraft;
 
 /**
  * Navigation coordinator for Grimoire sub-flows.
@@ -26,6 +25,17 @@ public final class GrimoireReturnState {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (deferredOpenTicks < 0) return;
             if (deferredOpenTicks-- > 0) return;
+
+            // A stale editor-return request must never replace an unrelated modal
+            // screen that the Storyteller deliberately opened afterwards. This was
+            // closing Custom Scripts and Team Info preview when a late full-state
+            // Grimoire packet arrived after their dedicated response.
+            if (client.gui.screen() instanceof CustomScriptsScreen
+                    || client.gui.screen() instanceof TeamInfoPreviewScreen
+                    || client.gui.screen() instanceof ScriptImportConflictScreen) {
+                deferredOpenTicks = -1;
+                return;
+            }
 
             deferredOpenTicks = -1;
             suppressNextReveal = true;
