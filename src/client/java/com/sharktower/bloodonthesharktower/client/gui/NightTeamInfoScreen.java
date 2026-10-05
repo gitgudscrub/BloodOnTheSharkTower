@@ -23,8 +23,20 @@ public final class NightTeamInfoScreen extends Screen {
         this.demon = demon;
     }
 
+    @Override
     protected void init() {
-        if (this.minecraft.player == null || !ClientState.storytellerPlayers.contains(this.minecraft.player.getUUID())) return;
+        build(true);
+    }
+
+    /** Refresh after the server returns the ST-only Lunatic bluff snapshot. */
+    public void refreshLunaticBluffs() {
+        clearWidgets();
+        build(false);
+    }
+
+    private void build(boolean requestLunaticBluffs) {
+        if (this.minecraft == null || this.minecraft.player == null
+                || !ClientState.storytellerPlayers.contains(this.minecraft.player.getUUID())) return;
 
         boolean manualLunaticDemon = demon && lunaticOnScript();
         int controlY = 48;
@@ -32,7 +44,7 @@ public final class NightTeamInfoScreen extends Screen {
         if (manualLunaticDemon) {
             // Lunatic makes Demon setup a judgment call: false Minions and fake
             // bluffs must never be inferred by the automatic real-team sender.
-            ClientLunaticBluffs.request();
+            if (requestLunaticBluffs) ClientLunaticBluffs.request();
 
             if (roleInPlay(Role.LUNATIC)) {
                 int bluffCount = ClientLunaticBluffs.current().size();
@@ -105,12 +117,12 @@ public final class NightTeamInfoScreen extends Screen {
             this.addRenderableWidget(Button.builder(Component.literal("Previous Visits"), b -> {
                 page = Math.max(0, page - 1);
                 clearWidgets();
-                init();
+                build(false);
             }).bounds(this.width / 2 - 110, this.height - 54, 106, 20).build());
             this.addRenderableWidget(Button.builder(Component.literal("Next Visits"), b -> {
                 page = Math.min(pages - 1, page + 1);
                 clearWidgets();
-                init();
+                build(false);
             }).bounds(this.width / 2 + 4, this.height - 54, 106, 20).build());
         }
         this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> onClose()).bounds(this.width / 2 - 45, this.height - 28, 90, 20).build());
@@ -146,13 +158,14 @@ public final class NightTeamInfoScreen extends Screen {
                 .anyMatch(role -> role != null && role.getId().equalsIgnoreCase(Role.LUNATIC.getId()));
     }
 
+    @Override
     public void extractRenderState(GuiGraphicsExtractor g, int x, int y, float delta) {
         super.extractRenderState(g, x, y, delta);
         boolean manualLunaticDemon = demon && lunaticOnScript();
         String title = manualLunaticDemon ? "Demon Info — Manual" : (demon ? "Demon Info" : "Minion Info");
         g.text(this.font, title, (this.width - this.font.width(title)) / 2, 15, UiDrawing.GOLD, true);
         if (manualLunaticDemon) {
-            String line = "Lunatic is on the script: use manual visits so false Demon information stays under ST control.";
+            String line = "Lunatic on script: Demon Info is manual.";
             g.text(this.font, line, (this.width - this.font.width(line)) / 2, 30, UiDrawing.MUTED, false);
         } else if (ClientState.activePlayerCount < 7) {
             g.text(this.font, "No starting evil-team information below 7 players unless the ST overrides it.", 12, 30, UiDrawing.MUTED, false);
