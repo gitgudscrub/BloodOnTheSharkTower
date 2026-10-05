@@ -71,6 +71,7 @@ public class AssignRolesScreen extends Screen {
             BloodOnTheSharktower.MOD_ID, "textures/icons/original/nominations.png");
 
     private static boolean showUnseated = true;
+    private static int unseatedPage;
     private static boolean showSelf = true;
     private static boolean showBluffs = true;
     private boolean showPlayerBluffs = true;
@@ -171,7 +172,7 @@ public class AssignRolesScreen extends Screen {
         this.addRenderableWidget(Button.builder(
                         Component.literal("Game End").withStyle(ChatFormatting.RED), b ->
                                 this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
-                .bounds(MARGIN, MARGIN + CONTROL_H + GAP, CONTROL_W, CONTROL_H).build());
+                .bounds(MARGIN, 48, CONTROL_W, CONTROL_H).build());
 
         y = addRightAction(rightX, y, "Spectator", ChatFormatting.GRAY, "st_spectator");
         if (phase != GamePhase.SETUP && phase != GamePhase.NIGHT && !ClientState.pendingDeaths.isEmpty()) {
@@ -432,14 +433,31 @@ public class AssignRolesScreen extends Screen {
                             headY
                     )).reversed());
 
-            List<Reminder> reminders = ClientGrimoireEdits.remindersFor(uuid);
-            int reminderCount = Math.min(candidates.size(), reminders.size());
-            for (int r = 0; r < reminderCount; r++) {
-                int[] position = candidates.get(r);
-                this.addRenderableWidget(new GrimoireReminderWidget(
-                        position[0], position[1], REMINDER_SIZE, uuid, seat, reminders.get(r)
-                ));
+            // Extra slots give true/believed pairs room without covering either token.
+            for (int step=-2; step<=2; step++) {
+                candidates.add(new int[]{roleX + step*16,roleY-32});
+                candidates.add(new int[]{roleX + step*16,roleY+ROLE_SIZE+18});
+                candidates.add(new int[]{roleX-32,roleY+step*16});
+                candidates.add(new int[]{roleX+ROLE_SIZE+18,roleY+step*16});
             }
+            candidates.sort(Comparator.comparingDouble((int[] p) ->
+                    reminderPlacementScore(p,roleCenterX,roleCenterY,outwardX,outwardY,headX,headY)
+                    - 0.08*(Math.pow(p[0]+REMINDER_SIZE/2.0-roleCenterX,2)+Math.pow(p[1]+REMINDER_SIZE/2.0-roleCenterY,2))).reversed());
+            List<Reminder> reminders = ClientGrimoireEdits.remindersFor(uuid);
+            int index=0;
+            for (int[] position:candidates) {
+                if (index>=Math.min(8,reminders.size())) break;
+                int[] area={position[0]-1,position[1]-1,REMINDER_SIZE+2,REMINDER_SIZE+2};
+                if (area[0]<120 || area[0]+area[2]>layoutWidth()-110 || area[1]<44 || area[1]+area[3]>layoutHeight()-44) continue;
+                boolean collision=false;
+                for (var child:this.children()) {
+                    if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
+                            && overlaps(area,new int[]{widget.getX()-1,widget.getY()-1,widget.getWidth()+2,widget.getHeight()+2})) {collision=true;break;}
+                }
+                if (collision) continue;
+                this.addRenderableWidget(new GrimoireReminderWidget(position[0],position[1],REMINDER_SIZE,uuid,seat,reminders.get(index++)));
+            }
+
         }
     }
 
@@ -473,7 +491,7 @@ public class AssignRolesScreen extends Screen {
         int gap = 8;
         int totalW = visible * widgetW + Math.max(0, visible - 1) * gap;
         int startX = layoutWidth() / 2 - totalW / 2;
-        int y = layoutHeight() / 2 - 40;
+        int y = layoutHeight() / 2 - 42;
 
         for (int i = 0; i < visible; i++) {
             UUID storytellerId = storytellers.get(i);
@@ -504,14 +522,27 @@ public class AssignRolesScreen extends Screen {
         }
         if (unseated.isEmpty()) return;
         int x = MARGIN;
-        int y = 60;
-        for (int i = 0; i < Math.min(8, unseated.size()); i++) {
+        int y = 76;
+        int endY = shouldShowBluffs() ? bluffStartY() - 20 : layoutHeight() - 44;
+        int rows = Math.max(1, (endY - y - 26) / 24);
+        int pages = Math.max(1, (unseated.size() + rows - 1) / rows);
+        unseatedPage = Math.min(unseatedPage, pages - 1);
+        int start = unseatedPage * rows;
+        for (int i = start; i < Math.min(start + rows, unseated.size()); i++) {
             UUID id = unseated.get(i);
-            String label = "+ " + ClientState.playerName(id, 0);
+            String name = ClientState.playerName(id, 0);
+            String label = "+ " + this.font.plainSubstrByWidth(name, CONTROL_W - 16);
             this.addRenderableWidget(Button.builder(Component.literal(label), b -> {
                         ClientStorytellerActions.send("seat_player", id.toString());
-                    })
-                    .bounds(x, y + i * 23, 110, 20).build());
+                    }).bounds(x, y + (i - start) * 24, CONTROL_W, 20)
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(name))).build());
+        }
+        if (pages > 1) {
+            int navY = y + rows * 24;
+            this.addRenderableWidget(Button.builder(Component.literal("<"), b -> { unseatedPage=Math.max(0,unseatedPage-1);rebuildWidgets(); })
+                    .bounds(x,navY,42,20).build());
+            this.addRenderableWidget(Button.builder(Component.literal(">"), b -> { unseatedPage=Math.min(pages-1,unseatedPage+1);rebuildWidgets(); })
+                    .bounds(x+48,navY,42,20).build());
         }
     }
 
@@ -531,7 +562,7 @@ public class AssignRolesScreen extends Screen {
     }
 
     private int bluffStartY() {
-        return Math.max(58, layoutHeight() / 2 - 10);
+        return Math.max(85, layoutHeight() / 2 - 10);
     }
 
     private void buildBluffWidgets() {
@@ -585,7 +616,7 @@ public class AssignRolesScreen extends Screen {
             int innerRadius = layout.headRadius();
 
             renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
-            renderSeatNumbers(graphics, seats, centerX, centerY, radius);
+            renderSeatNumbers(graphics, seats, centerX, centerY, innerRadius);
             renderCenterStatus(graphics, seats.size());
             renderBluffLabels(graphics);
             renderPhaseIndicator(graphics);
@@ -597,7 +628,10 @@ public class AssignRolesScreen extends Screen {
     }
 
     private void renderBluffLabels(GuiGraphicsExtractor graphics) {
-        if (!shouldShowBluffs() || !ClientGrimoireEdits.isLocalStoryteller() || !lunaticAssignedInGrim()) return;
+        if (!shouldShowBluffs() || !ClientGrimoireEdits.isLocalStoryteller()) return;
+        if (!lunaticAssignedInGrim()) {
+            graphics.text(this.font,"Bluffs",MARGIN,bluffStartY()-11,UiDrawing.MUTED,false);return;
+        }
         int y = bluffStartY() - 11;
         graphics.text(this.font, "Demon", MARGIN, y, UiDrawing.MUTED, false);
         graphics.text(this.font, "Lunatic", MARGIN + 44, y, UiDrawing.MUTED, false);
@@ -606,6 +640,17 @@ public class AssignRolesScreen extends Screen {
     private void renderPlayerHeadRing(GuiGraphicsExtractor graphics, List<Map.Entry<UUID, Integer>> seats,
                                       int centerX, int centerY, int innerRadius) {
         int count = seats.size();
+        List<int[]> labelAreas = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
+            int badgeX = (int)Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2 - 10;
+            int badgeY = (int)Math.round(centerY + innerRadius * Math.sin(angle));
+            labelAreas.add(new int[]{badgeX-8,badgeY-8,16,16});
+            int handX=(int)Math.round(centerX+innerRadius*Math.cos(angle))+HEAD_SIZE/2+2;
+            int handY=(int)Math.round(centerY+innerRadius*Math.sin(angle))-HEAD_SIZE/2-18;
+            labelAreas.add(new int[]{handX,handY,24,16});
+        }
+        labelAreas.add(new int[]{centerX-70,layoutHeight()/2+16,140,28});
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
             UUID uuid = entry.getKey();
@@ -621,37 +666,74 @@ public class AssignRolesScreen extends Screen {
                 continue;
             }
             try {
-                boolean drewFace = PlayerFaceCompat.draw(graphics, uuid, headX, headY, HEAD_SIZE);
-                if (!drewFace) {
-                    graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, 0xCC15151A);
-                    drawCenteredAt(graphics, Integer.toString(seat), headX + HEAD_SIZE / 2,
-                            headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
-                }
-                graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
-                if (GrimoireInteractionState.isSelectedNominator(uuid)) {
-                    graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.YES);
-                } else if (uuid.equals(ClientState.currentNominee)) {
-                    graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.GOLD);
-                }
-                String name = ClientState.playerName(uuid, seat);
-                int nameY = headY + HEAD_SIZE + 2;
-                var notedRole = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(uuid));
-                drawCenteredAt(graphics, name, headX + HEAD_SIZE / 2, nameY,
-                        notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()), true);
-                if (dead) UiDrawing.deathShroud(graphics, headX, headY, HEAD_SIZE);
 
-                boolean speaking = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING;
-                boolean voting = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.VOTING;
-                if (speaking && ClientState.attentionHands.containsKey(uuid) || voting && ClientState.isHandRaised(uuid)) {
-                    drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY + 5);
-                    if (speaking)
-                        graphics.text(this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
-                                headX + HEAD_SIZE + 12, headY + 5, UiDrawing.GOLD, true);
-                }
+            // Do not gate face rendering on connectedPlayers. That list can arrive a
+            // tick later than the seat map, and PlayerFaceCompat already fails safely
+            // when a profile/skin is not available yet. This lets a newly seated
+            // player's head appear as soon as Minecraft knows their profile.
+            boolean drewFace = PlayerFaceCompat.draw(graphics, uuid, headX, headY, HEAD_SIZE);
+            if (!drewFace) {
+                graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, 0xCC15151A);
+                drawCenteredAt(graphics, Integer.toString(seat), headX + HEAD_SIZE / 2,
+                        headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
+            }
+            graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
+            if (GrimoireInteractionState.isSelectedNominator(uuid)) {
+                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.YES);
+            } else if (uuid.equals(ClientState.currentNominee)) {
+                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.GOLD);
+            }
+            String name = ClientState.playerName(uuid, seat);
+            // Use real widget bounds when placing labels, including believed roles/reminders.
+            int nameWidth = Math.max(30, Math.min(96, (int)(2 * innerRadius * Math.sin(Math.PI / Math.max(2,count))) - 10));
+            var notedRole = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(uuid));
+            for (int width = nameWidth; width >= 30; width -= 12) {
+                String label = fitLabel(name,width);
+                int[] area = nameArea(label,headX,headY,angle,labelAreas);
+                if (area == null) continue;
+                labelAreas.add(area);
+                graphics.fill(area[0],area[1],area[0]+area[2],area[1]+area[3],0xB015151A);
+                graphics.text(this.font,label,area[0]+3,area[1]+2,
+                        notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()),true);
+                break;
+            }
+            if (dead) UiDrawing.deathShroud(graphics, headX, headY, HEAD_SIZE);
+
+            boolean speaking = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING;
+            boolean voting = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.VOTING;
+            if (speaking && ClientState.attentionHands.containsKey(uuid) || voting && ClientState.isHandRaised(uuid)) {
+                drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY - 16);
+                if (speaking)
+                    graphics.text(this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
+                            headX + HEAD_SIZE + 14, headY - 16, UiDrawing.GOLD, true);
+            }
             } finally {
                 GrimoireRevealAnimation.endElement(graphics);
             }
         }
+    }
+
+    private int[] nameArea(String name,int headX,int headY,double angle,List<int[]> reserved) {
+        int width=this.font.width(name)+6;
+        int left=headX+HEAD_SIZE/2-width/2;
+        int above=headY-17,below=headY+HEAD_SIZE+6;
+        int preferred=Math.sin(angle)>0.25?above:below;
+        int alternate=preferred==above?below:above;
+        int[][] candidates={{left,preferred,width,12},{left,alternate,width,12},
+                {headX+HEAD_SIZE+6,headY+6,width,12},{headX-width-6,headY+6,width,12}};
+        for (int[] area:candidates) {
+            if (area[0]<120 || area[0]+area[2]>layoutWidth()-110 || area[1]<44 || area[1]+area[3]>layoutHeight()-44) continue;
+            boolean collision=reserved.stream().anyMatch(other -> overlaps(area,other));
+            if (!collision) for (var child:this.children()) {
+                if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
+                        && overlaps(area,new int[]{widget.getX()-2,widget.getY()-2,widget.getWidth()+4,widget.getHeight()+4})) { collision=true;break; }
+            }
+            if (!collision) return area;
+        }
+        return null; // The portrait's hover hint retains the full name when space is exhausted.
+    }
+    private static boolean overlaps(int[] a,int[] b) {
+        return a[0]<b[0]+b[2] && a[0]+a[2]>b[0] && a[1]<b[1]+b[3] && a[1]+a[3]>b[1];
     }
 
     private void renderSeatNumbers(GuiGraphicsExtractor graphics,
@@ -664,16 +746,17 @@ public class AssignRolesScreen extends Screen {
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
 
-            int seatRadius = radius + 20;
-            int sx = (int) Math.round(centerX + seatRadius * Math.cos(angle));
-            int sy = (int) Math.round(centerY + seatRadius * Math.sin(angle));
+            int sx = (int) Math.round(centerX + radius * Math.cos(angle)) - HEAD_SIZE / 2 - 10;
+            int sy = (int) Math.round(centerY + radius * Math.sin(angle));
 
             float reveal = GrimoireRevealAnimation.progressForSeat(seat);
             if (!GrimoireRevealAnimation.beginElement(graphics, sx - 6, sy - 6, 12, 12, reveal)) {
                 continue;
             }
             try {
-                drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, true);
+                graphics.fill(sx - 7, sy - 7, sx + 7, sy + 7, 0xE015151A);
+                graphics.outline(sx - 7, sy - 7, 14, 14, UiDrawing.BORDER);
+                drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.GOLD, true);
             } finally {
                 GrimoireRevealAnimation.endElement(graphics);
             }
@@ -699,8 +782,11 @@ public class AssignRolesScreen extends Screen {
         }
 
         if (hint == null || hint.isBlank()) return;
-        int y = layoutHeight() - 19;
-        drawCentered(graphics, hint, y, UiDrawing.MUTED, false);
+        int hintWidth = Math.max(80, layoutWidth() - 320);
+        int hintLeft = (layoutWidth() - hintWidth) / 2;
+        var lines = this.font.split(Component.literal(hint), hintWidth);
+        for (int i=0; i<Math.min(2,lines.size()); i++)
+            graphics.text(this.font, lines.get(i), hintLeft, layoutHeight() - 29 + i*10, UiDrawing.MUTED, false);
     }
 
     private void renderPhaseIndicator(GuiGraphicsExtractor graphics) {
@@ -787,7 +873,17 @@ public class AssignRolesScreen extends Screen {
         float viewportScale = Math.min(widthScale, heightScale);
         viewportScale = Math.max(GRIMOIRE_MIN_VIEWPORT_SCALE,
                 Math.min(GRIMOIRE_MAX_VIEWPORT_SCALE, viewportScale));
-        return (GRIMOIRE_REFERENCE_GUI_SCALE * viewportScale) / (float) activeGuiScale;
+        float reference = (GRIMOIRE_REFERENCE_GUI_SCALE * viewportScale) / (float) activeGuiScale;
+        int count=sortedSeats().size();
+        if (count<10) return reference;
+        int minWidth=520+Math.min(15,count)*20;
+        int minHeight=300+Math.min(15,count)*12;
+        return Math.min(reference,Math.min(this.width/(float)minWidth,this.height/(float)minHeight));
+    }
+
+    private String fitLabel(String name,int width) {
+        if (this.font.width(name) <= width) return name;
+        return this.font.plainSubstrByWidth(name,Math.max(0,width-this.font.width("…")))+"…";
     }
 
     private int layoutWidth() {

@@ -20,3 +20,11 @@ Simple Voice Chat's foreign-group nametag icon is suppressed during a synced Sha
 - During Setup, U and all hand prompts/icons remain off; start nominations and confirm speaking/voting hands return at the correct time.
 
 Automated compilation/regressions and server startup do not replace graphical multiplayer/audio checks. BotC Scripts may reject requests with HTTP 403; the importer reports this and local JSON loading remains available.
+
+## Grimoire layout follow-up — alpha.8
+
+Player labels avoid the actual bounds of portraits, roles, believed roles, reminder tokens, Storytellers and controls. Seat numbers have separate dark badges beside portraits. Long names shorten with ellipses; portrait hover retains the full name and reminder count. If no safe label slot fits in a crowded layout, the name remains available on hover. Density-aware canvas scaling keeps the seating ring usable; the same transform is used for rendering and mouse targets.
+
+The unseated list pages within the left rail above the labelled bluff section. Game End clears the phase header, hover instructions stay within the centre footer, and Storyteller targets match the rendered portrait/name area. Reminder tokens use free nearby slots; they never cover another widget. The portrait reminder menu retains the complete list when not every token can fit.
+
+Retest the screenshot's five-player Setup with long names, then 7/10/15 players, Drunk/Marionette role pairs, eight reminders, three Storytellers, hand queues and unseated players. Resize and vary GUI scale; check LMB/RMB/middle-click still target what is drawn. Graphical live testing remains required.

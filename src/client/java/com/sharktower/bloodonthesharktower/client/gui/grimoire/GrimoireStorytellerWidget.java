@@ -19,7 +19,7 @@ public final class GrimoireStorytellerWidget extends AbstractWidget {
     private final Consumer<UUID> onPress;
 
     public GrimoireStorytellerWidget(int x, int y, int size, UUID storytellerId, Consumer<UUID> onPress) {
-        super(x, y, size, size + 22, Component.literal("Storyteller"));
+        super(x, y, size, 50, Component.literal("Storyteller"));
         this.storytellerId = storytellerId;
         this.onPress = onPress;
     }
@@ -44,6 +44,8 @@ public final class GrimoireStorytellerWidget extends AbstractWidget {
                 isHovered() ? UiDrawing.GOLD : UiDrawing.TEXT);
 
         String name = ClientState.playerName(storytellerId, 0);
+        var font = Minecraft.getInstance().font;
+        if (font.width(name) > this.width - 6) name = font.plainSubstrByWidth(name,this.width - 6 - font.width("…")) + "…";
         int nameX = getX() + this.width / 2 - Minecraft.getInstance().font.width(name) / 2;
         graphics.text(Minecraft.getInstance().font, name, nameX, headY + headSize + 3, UiDrawing.TEXT, true);
 
