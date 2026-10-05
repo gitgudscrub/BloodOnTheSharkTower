@@ -26,7 +26,10 @@ public final class ClientLunaticBluffs {
     }
 
     public static void set(List<String> ids) {
-        ClientPlayNetworking.send(new LunaticBluffActionC2SPayload("set", String.join("|", ids)));
+        // Optimistic local update keeps the manual Demon Info screen responsive;
+        // the server immediately sends back its authoritative set after validation.
+        roleIds = ids == null ? List.of() : List.copyOf(ids);
+        ClientPlayNetworking.send(new LunaticBluffActionC2SPayload("set", String.join("|", roleIds)));
     }
 
     public static void sendToLunatic() {
