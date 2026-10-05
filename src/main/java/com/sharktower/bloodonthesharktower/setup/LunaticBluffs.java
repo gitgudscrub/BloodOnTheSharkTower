@@ -19,11 +19,11 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Separate fake bluff set used only for an in-play Lunatic.
+ * Separate fake bluff set used only for a Lunatic.
  *
- * These never share storage or client sync with the real Demon bluffs. The ST
- * chooses three plausible out-of-play good characters and explicitly sends them
- * to the Lunatic as ordinary Demon information.
+ * These never share storage or player sync with the real Demon bluffs. The ST
+ * can prepare the three fake bluffs during setup as soon as a Lunatic is in the
+ * working Grim, then explicitly send them after roles are committed.
  */
 public final class LunaticBluffs {
     private static Script selectedForScript;
@@ -33,7 +33,7 @@ public final class LunaticBluffs {
     public static SetupOperations.Result set(List<String> roleIds) {
         Script script = ServerState.currentScript;
         if (script == null) return SetupOperations.Result.fail("Load a script before choosing Lunatic bluffs.");
-        if (!lunaticInPlay()) return SetupOperations.Result.fail("There is no Lunatic in the committed game.");
+        if (!lunaticAssigned()) return SetupOperations.Result.fail("There is no Lunatic in the current setup.");
         if (roleIds == null || roleIds.size() != 3) {
             return SetupOperations.Result.fail("Choose exactly 3 Lunatic bluffs.");
         }
@@ -93,10 +93,9 @@ public final class LunaticBluffs {
     }
 
     public static List<ScriptRole> current() {
-        // A full/reset-for-next-game clears committed roles before this screen is
-        // opened again. Drop the old fake set immediately even if the same script
-        // remains loaded for the next game.
-        if (!lunaticInPlay()) {
+        // A reset clears both committed and pending roles. Drop the old fake set
+        // once there is no Lunatic in either the working setup or live game.
+        if (!lunaticAssigned()) {
             clear();
             return List.of();
         }
@@ -113,6 +112,11 @@ public final class LunaticBluffs {
     public static void clear() {
         StorytellerState.LUNATIC_BLUFFS.clear();
         selectedForScript = null;
+    }
+
+    /** True while a Lunatic is in the pending setup or committed live game. */
+    public static boolean lunaticAssigned() {
+        return SetupOperations.workingRoles().values().stream().anyMatch(LunaticBluffs::isLunatic);
     }
 
     public static boolean lunaticInPlay() {
