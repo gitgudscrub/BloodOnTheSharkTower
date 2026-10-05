@@ -5,8 +5,7 @@
     "LivingEntityRendererMixin",
     "AvatarRendererMixin",
     "EntityRendererMixin",
-    "VoiceGroupIconMixin",
-    "AssignRolesScreenScaleMixin"
+    "VoiceGroupIconMixin"
   ],
   "injectors": {
     "defaultRequire": 1
