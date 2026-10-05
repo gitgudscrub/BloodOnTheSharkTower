@@ -30,15 +30,21 @@ public final class DemonBluffSelectionScreen extends Screen {
 
     private final LinkedHashSet<String> selected;
     private final int page;
+    private final Screen returnScreen;
 
     public DemonBluffSelectionScreen() {
-        this(initialSelection(), 0);
+        this(null);
     }
 
-    private DemonBluffSelectionScreen(Set<String> selected, int page) {
+    public DemonBluffSelectionScreen(Screen returnScreen) {
+        this(initialSelection(), 0, returnScreen);
+    }
+
+    private DemonBluffSelectionScreen(Set<String> selected, int page, Screen returnScreen) {
         super(Component.literal("Choose 3 Demon Bluffs"));
         this.selected = new LinkedHashSet<>(selected);
         this.page = Math.max(0, page);
+        this.returnScreen = returnScreen;
     }
 
     @Override
@@ -81,19 +87,19 @@ public final class DemonBluffSelectionScreen extends Screen {
 
         int navY = this.height - 78;
         Button previous = Button.builder(Component.literal("<"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage - 1)))
+                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage - 1, returnScreen)))
                 .bounds(this.width / 2 - 120, navY, 40, 20).build();
         previous.active = actualPage > 0;
         this.addRenderableWidget(previous);
 
         Button next = Button.builder(Component.literal(">"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage + 1)))
+                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage + 1, returnScreen)))
                 .bounds(this.width / 2 + 80, navY, 40, 20).build();
         next.active = actualPage < maxPage;
         this.addRenderableWidget(next);
 
         this.addRenderableWidget(Button.builder(Component.literal("Clear Selection"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(Set.of(), actualPage)))
+                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(Set.of(), actualPage, returnScreen)))
                 .bounds(this.width / 2 - 72, navY, 144, 20).build());
 
         Button confirm = Button.builder(Component.literal("Confirm 3 Bluffs").withStyle(ChatFormatting.GREEN), b ->
@@ -142,20 +148,28 @@ public final class DemonBluffSelectionScreen extends Screen {
             next.add(id);
         }
 
-        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(next, currentPage));
+        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(next, currentPage, returnScreen));
     }
 
     private void confirm() {
         if (selected.size() != 3) return;
 
-        GrimoireReturnState.requestAfterNextGrimoireSync();
         ClientStorytellerActions.send("set_bluffs", String.join("|", selected));
+        if (returnScreen != null) {
+            this.minecraft.gui.setScreen(returnScreen);
+        } else {
+            GrimoireReturnState.requestAfterNextGrimoireSync();
+        }
     }
 
     private void back() {
         if (this.minecraft == null) return;
-        GrimoireReturnState.suppressNextReveal();
-        this.minecraft.gui.setScreen(new AssignRolesScreen());
+        if (returnScreen != null) {
+            this.minecraft.gui.setScreen(returnScreen);
+        } else {
+            GrimoireReturnState.suppressNextReveal();
+            this.minecraft.gui.setScreen(new AssignRolesScreen());
+        }
     }
 
     private String selectedNames() {
