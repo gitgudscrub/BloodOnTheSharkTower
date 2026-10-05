@@ -2,7 +2,6 @@ package com.sharktower.bloodonthesharktower.client;
 
 import com.sharktower.bloodonthesharktower.networking.LunaticBluffActionC2SPayload;
 import com.sharktower.bloodonthesharktower.networking.LunaticBluffsS2CPayload;
-import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import java.util.List;
@@ -23,13 +22,9 @@ public final class ClientLunaticBluffs {
     }
 
     public static List<String> current() {
-        // A new/reset game returns to Setup before Night 1. Drop any previous
-        // Lunatic set here so a player who becomes Lunatic again cannot see the
-        // previous game's fake bluffs before the Storyteller chooses new ones.
-        if (ClientState.currentNight == 0 && ClientState.currentDay == 0 && !roleIds.isEmpty()) {
-            roleIds = List.of();
-            revision++;
-        }
+        // Reset-generation sync clears this cache through ClientGrimoireEdits.clearSession().
+        // Do not clear merely because the game is still in Setup: the ST may prepare
+        // the Lunatic's fake bluff set before SEND ROLES.
         return roleIds;
     }
 
@@ -51,6 +46,10 @@ public final class ClientLunaticBluffs {
 
     public static void sendToLunatic() {
         ClientPlayNetworking.send(new LunaticBluffActionC2SPayload("send", ""));
+    }
+
+    public static void sendToDemon() {
+        ClientPlayNetworking.send(new LunaticBluffActionC2SPayload("send_demon", ""));
     }
 
     public static void clear() {
