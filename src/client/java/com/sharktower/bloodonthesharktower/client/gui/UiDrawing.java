@@ -49,9 +49,6 @@ public final class UiDrawing {
     /** Draws the full role texture scaled to the requested square. */
     public static void roleIcon(GuiGraphicsExtractor graphics, ScriptRole role, int x, int y, int size) {
         if (role == null || role.getIcon() == null || size <= 0) return;
-        // In 26.2 the final texture-size arguments define the source texture
-        // coordinate space. Using 108 here sampled only the upper-left corner
-        // of the original 108px role art. BOTB renders the whole texture.
         graphics.blit(RenderPipelines.GUI_TEXTURED, role.getIcon(), x, y, 0, 0, size, size, size, size);
     }
 
@@ -69,10 +66,6 @@ public final class UiDrawing {
         return EMPTY_ROLE_SLOT;
     }
 
-    /**
-     * Original BOTB-style token: team colour square/backplate with the icon
-     * inset by one pixel. The original catalog uses 40px tiles with 38px art.
-     */
     public static void roleToken(GuiGraphicsExtractor graphics, ScriptRole role, int x, int y, int size) {
         if (role == null || role.getIcon() == null) {
             emptyRoleSlot(graphics, x, y, size);
@@ -84,40 +77,40 @@ public final class UiDrawing {
     }
 
     /**
-     * High-contrast BOTC-style death shroud placed over a role token.
+     * Compact BOTC-style death marker over a player portrait.
      *
-     * The old red X disappeared on red Minion/Demon backplates. This dims the
-     * whole token and adds a pale hood/drape silhouette that remains readable
-     * regardless of the underlying team colour.
+     * Only half of the supplied portrait is covered so the player's face stays
+     * visible while the shroud remains an immediate dead-player cue.
      */
     public static void deathShroud(GuiGraphicsExtractor graphics, int x, int y, int size) {
         if (size <= 0) return;
 
-        graphics.fill(x, y, x + size, y + size, 0x99101014);
+        int markerSize = Math.max(8, size / 2);
+        int markerX = x + (size - markerSize) / 2;
+        int markerY = y + (size - markerSize) / 2;
 
-        int left = x + Math.max(2, size / 6);
-        int right = x + size - Math.max(2, size / 6);
-        int hoodLeft = x + size / 3;
-        int hoodRight = x + size - size / 3;
-        int hoodTop = y + Math.max(2, size / 7);
-        int shoulderTop = y + size / 3;
-        int lowerTop = y + (size * 2) / 3;
-        int bottom = y + size - Math.max(2, size / 10);
+        graphics.fill(markerX, markerY, markerX + markerSize, markerY + markerSize, 0xAA101014);
+
+        int left = markerX + Math.max(1, markerSize / 6);
+        int right = markerX + markerSize - Math.max(1, markerSize / 6);
+        int hoodLeft = markerX + markerSize / 3;
+        int hoodRight = markerX + markerSize - markerSize / 3;
+        int hoodTop = markerY + Math.max(1, markerSize / 7);
+        int shoulderTop = markerY + markerSize / 3;
+        int lowerTop = markerY + (markerSize * 2) / 3;
+        int bottom = markerY + markerSize - Math.max(1, markerSize / 10);
 
         int cloth = 0xFFE2E2E8;
         int shadow = 0xFF34343C;
 
-        // Stepped pixel-art hood and drape.
-        graphics.fill(hoodLeft, hoodTop, hoodRight, shoulderTop + 2, cloth);
-        graphics.fill(x + size / 4, shoulderTop, x + size - size / 4, lowerTop, cloth);
+        graphics.fill(hoodLeft, hoodTop, hoodRight, shoulderTop + 1, cloth);
+        graphics.fill(markerX + markerSize / 4, shoulderTop,
+                markerX + markerSize - markerSize / 4, lowerTop, cloth);
         graphics.fill(left, lowerTop - 1, right, bottom, cloth);
-
-        // Dark face opening makes the hood read as a shroud rather than a white box.
-        graphics.fill(x + size / 3, shoulderTop, x + size - size / 3,
-                y + size / 2 + 1, shadow);
-
-        // Strong neutral border, independent of team colour.
-        graphics.outline(x - 2, y - 2, size + 4, size + 4, 0xFFF2F2F4);
+        graphics.fill(markerX + markerSize / 3, shoulderTop,
+                markerX + markerSize - markerSize / 3,
+                markerY + markerSize / 2 + 1, shadow);
+        graphics.outline(markerX - 1, markerY - 1, markerSize + 2, markerSize + 2, 0xFFF2F2F4);
     }
 
     public static ScriptRole roleOf(PendingRoleAssignment assignment) {
