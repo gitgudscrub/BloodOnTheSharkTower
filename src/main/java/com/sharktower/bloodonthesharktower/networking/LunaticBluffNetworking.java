@@ -15,7 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Arrays;
 import java.util.List;
 
-/** Dedicated private control channel for fake Lunatic Demon bluffs. */
+/** Dedicated private control channel for fake Lunatic Demon bluffs and manual bluff delivery. */
 public final class LunaticBluffNetworking {
     private LunaticBluffNetworking() {}
 
@@ -26,7 +26,7 @@ public final class LunaticBluffNetworking {
             if (server == null) return;
 
             if (!StorytellerState.isStoryteller(actor.getUUID())) {
-                actor.sendSystemMessage(Component.literal("Lunatic bluff controls are Storyteller-only.")
+                actor.sendSystemMessage(Component.literal("Bluff controls are Storyteller-only.")
                         .withStyle(ChatFormatting.GRAY));
                 return;
             }
@@ -50,7 +50,8 @@ public final class LunaticBluffNetworking {
                     result = LunaticBluffs.send(server);
                     if (result.ok()) syncLunaticPlayers(server);
                 }
-                default -> result = SetupOperations.Result.fail("Unknown Lunatic bluff action: " + payload.action());
+                case "send_demon" -> result = TeamInfoSharing.sendDemonBluffs(server, actor);
+                default -> result = SetupOperations.Result.fail("Unknown bluff action: " + payload.action());
             }
 
             actor.sendSystemMessage(Component.literal(result.message())
