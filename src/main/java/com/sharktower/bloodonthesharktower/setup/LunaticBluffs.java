@@ -38,7 +38,6 @@ public final class LunaticBluffs {
             return SetupOperations.Result.fail("Choose exactly 3 Lunatic bluffs.");
         }
 
-        Set<String> unavailable = unavailableRoleIds();
         Set<String> seen = new HashSet<>();
         List<ScriptRole> chosen = new ArrayList<>();
 
@@ -54,10 +53,9 @@ public final class LunaticBluffs {
             if (!seen.add(key)) {
                 return SetupOperations.Result.fail(role.getDisplayName() + " was selected more than once.");
             }
-            if (unavailable.contains(key)) {
-                return SetupOperations.Result.fail(role.getDisplayName()
-                        + " is in play or shown as a believed role and cannot be a Lunatic bluff.");
-            }
+            // Lunatic bluff information is allowed to be false. In-play good
+            // characters (including believed-role identities) are therefore
+            // valid fake bluffs, unlike the real Demon's bluff set.
             chosen.add(role);
         }
 
@@ -128,23 +126,6 @@ public final class LunaticBluffs {
         return script != null && script.allRoles().stream()
                 .filter(Objects::nonNull)
                 .anyMatch(role -> role.getId().equalsIgnoreCase(Role.LUNATIC.getId()));
-    }
-
-    private static Set<String> unavailableRoleIds() {
-        Set<String> unavailable = new HashSet<>();
-        SetupOperations.workingRoles().values().stream()
-                .filter(Objects::nonNull)
-                .map(PendingRoleAssignment::getRoleId)
-                .filter(Objects::nonNull)
-                .map(LunaticBluffs::key)
-                .forEach(unavailable::add);
-        SetupOperations.workingPerceivedRoles().values().stream()
-                .filter(Objects::nonNull)
-                .map(PendingRoleAssignment::getRoleId)
-                .filter(Objects::nonNull)
-                .map(LunaticBluffs::key)
-                .forEach(unavailable::add);
-        return unavailable;
     }
 
     private static boolean isLunatic(PendingRoleAssignment assignment) {
