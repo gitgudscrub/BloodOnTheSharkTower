@@ -4,7 +4,9 @@ import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.client.config.ClientSettings;
 import com.sharktower.bloodonthesharktower.client.event.KeyInputHandler;
 import com.sharktower.bloodonthesharktower.client.hud.SharktowerHudRenderer;
+import com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen;
 import com.sharktower.bloodonthesharktower.client.gui.GrimoireReturnState;
+import com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen;
 import com.sharktower.bloodonthesharktower.client.networking.CoreStateReceivers;
 import com.sharktower.bloodonthesharktower.client.render.ClockHandsRenderer;
 import com.sharktower.bloodonthesharktower.client.render.GhostPlayerEffects;
@@ -23,6 +25,8 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
             CoreStateReceivers.resetSession();
         });
         GrimoireReturnState.register();
+        CustomScriptsScreen.register();
+        TeamInfoPreviewScreen.register();
         KeyInputHandler.register();
         SharktowerHudRenderer.register();
         ClockHandsRenderer.register();
