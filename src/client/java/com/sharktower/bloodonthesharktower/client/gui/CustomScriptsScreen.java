@@ -17,6 +17,10 @@ public final class CustomScriptsScreen extends Screen {
     private static int deferredOpenTicks = -1;
     private static boolean refreshWhenOpened;
     private static boolean registered;
+    // Full Storyteller state syncs can arrive for several ticks after the list
+    // response. Keep this screen authoritative during that short window so a
+    // late sync cannot dump the ST back into the world/Grimoire.
+    private static int keepOpenTicks;
 
     private int page;
     private String link = "";
@@ -28,14 +32,24 @@ public final class CustomScriptsScreen extends Screen {
         if (registered) return;
         registered = true;
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (deferredOpenTicks < 0) return;
-            if (deferredOpenTicks-- > 0) return;
+            if (deferredOpenTicks >= 0) {
+                if (deferredOpenTicks-- > 0) return;
 
-            deferredOpenTicks = -1;
-            client.gui.setScreen(new CustomScriptsScreen());
-            if (refreshWhenOpened) {
-                refreshWhenOpened = false;
-                ClientStorytellerActions.send("custom_scripts_list", "");
+                deferredOpenTicks = -1;
+                keepOpenTicks = 20;
+                client.gui.setScreen(new CustomScriptsScreen());
+                if (refreshWhenOpened) {
+                    refreshWhenOpened = false;
+                    ClientStorytellerActions.send("custom_scripts_list", "");
+                }
+                return;
+            }
+
+            if (keepOpenTicks <= 0) return;
+            keepOpenTicks--;
+            if (!(client.gui.screen() instanceof CustomScriptsScreen)
+                    && !(client.gui.screen() instanceof ScriptImportConflictScreen)) {
+                client.gui.setScreen(new CustomScriptsScreen());
             }
         });
     }
@@ -47,6 +61,7 @@ public final class CustomScriptsScreen extends Screen {
     public static void openAndRefresh() {
         refreshWhenOpened = true;
         deferredOpenTicks = 1;
+        keepOpenTicks = 0;
     }
 
     public static void clear() {
@@ -54,6 +69,7 @@ public final class CustomScriptsScreen extends Screen {
         status = "Refresh to list server scripts.";
         deferredOpenTicks = -1;
         refreshWhenOpened = false;
+        keepOpenTicks = 0;
     }
 
     public static void receive(CustomScriptsPayload payload) {
@@ -64,16 +80,23 @@ public final class CustomScriptsScreen extends Screen {
                 status = files.isEmpty()
                         ? "No JSON files in the server custom-scripts folder."
                         : files.size() + " saved scripts";
+                keepOpenTicks = Math.max(keepOpenTicks, 20);
                 if (client.gui.screen() instanceof CustomScriptsScreen screen) {
                     screen.clearWidgets();
                     screen.init();
+                } else if (!(client.gui.screen() instanceof ScriptImportConflictScreen)) {
+                    client.gui.setScreen(new CustomScriptsScreen());
                 }
             }
             case "loaded" -> {
+                keepOpenTicks = 0;
                 ScriptBuilderScreen.invalidateSelectionCache();
                 client.gui.setScreen(new ScriptBuilderScreen());
             }
-            case "conflict" -> client.gui.setScreen(new ScriptImportConflictScreen(payload.token(), payload.text()));
+            case "conflict" -> {
+                keepOpenTicks = 0;
+                client.gui.setScreen(new ScriptImportConflictScreen(payload.token(), payload.text()));
+            }
             case "status" -> status = payload.text();
         }
     }
@@ -89,21 +112,24 @@ public final class CustomScriptsScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(Component.literal("Import from BotC Scripts"), b -> {
             status = "Downloading…";
+            keepOpenTicks = 20;
             ClientStorytellerActions.send("custom_script_import", link);
         }).bounds(left, 62, w - 90, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Refresh"), b ->
-                ClientStorytellerActions.send("custom_scripts_list", ""))
-                .bounds(left + w - 84, 62, 84, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Refresh"), b -> {
+            keepOpenTicks = 20;
+            ClientStorytellerActions.send("custom_scripts_list", "");
+        }).bounds(left + w - 84, 62, 84, 20).build());
 
         int rows = Math.max(1, (this.height - 102 - 58) / 24);
         int pages = Math.max(1, (files.size() + rows - 1) / rows);
         page = Math.min(page, pages - 1);
         for (int i = page * rows; i < Math.min(files.size(), (page + 1) * rows); i++) {
             String file = files.get(i);
-            this.addRenderableWidget(Button.builder(Component.literal(file), b ->
-                    ClientStorytellerActions.send("custom_script_load", file))
-                    .bounds(left, 102 + (i - page * rows) * 24, w, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal(file), b -> {
+                keepOpenTicks = 20;
+                ClientStorytellerActions.send("custom_script_load", file);
+            }).bounds(left, 102 + (i - page * rows) * 24, w, 20).build());
         }
 
         this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
@@ -120,7 +146,11 @@ public final class CustomScriptsScreen extends Screen {
                 .bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
     }
 
+    @Override
     public void onClose() {
+        keepOpenTicks = 0;
+        deferredOpenTicks = -1;
+        refreshWhenOpened = false;
         this.minecraft.gui.setScreen(new ScriptBuilderScreen());
     }
 
