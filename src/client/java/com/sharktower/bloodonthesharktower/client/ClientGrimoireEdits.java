@@ -125,6 +125,15 @@ public final class ClientGrimoireEdits {
         if (isLocalStoryteller() || ClientState.rolesRevealed) {
             return ClientState.demonBluffs;
         }
+
+        // The Lunatic receives a separate private bluff payload. Prefer that
+        // fake set over the ordinary Demon-bluff channel so their personal Grim
+        // looks exactly like a Demon's without leaking the real bluffs.
+        if (ClientState.myRole == Role.LUNATIC) {
+            List<String> lunaticBluffs = ClientLunaticBluffs.current();
+            if (!lunaticBluffs.isEmpty()) return lunaticBluffs;
+        }
+
         return SHARED_ABILITY_DEMON_BLUFFS.isEmpty()
                 ? ClientState.demonBluffs
                 : SHARED_ABILITY_DEMON_BLUFFS;
@@ -218,6 +227,7 @@ public final class ClientGrimoireEdits {
         REMINDER_OVERRIDES.clear();
         SHARED_ABILITY_REMINDERS.clear();
         SHARED_ABILITY_DEMON_BLUFFS = List.of();
+        ClientLunaticBluffs.clear();
     }
 
     public static void addReminder(UUID playerId, String text) {
