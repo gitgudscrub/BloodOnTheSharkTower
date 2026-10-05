@@ -46,11 +46,11 @@ import java.util.UUID;
  */
 public class AssignRolesScreen extends Screen {
     /**
-     * The Grimoire layout is tuned at GUI Scale 4. Minecraft Auto may choose a
-     * larger scale on high-resolution displays, making the usable Screen canvas
-     * smaller and causing the circular Grim to collapse into the centre.
+     * Keep the Grimoire at the same physical footprint as Minecraft GUI Scale 2.
+     * The screen then remains visually stable on Auto/1x/2x/3x/4x instead of
+     * collapsing inward as Minecraft changes the size of the GUI canvas.
      */
-    private static final int GRIMOIRE_REFERENCE_GUI_SCALE = 4;
+    private static final int GRIMOIRE_REFERENCE_GUI_SCALE = 2;
     private static final int ROLE_SIZE = 32;
     private static final int PERCEIVED_ROLE_SIZE = 20;
     // Original BOTB reminder tokens are 14px with 2px padding around the 32px role token.
@@ -578,7 +578,7 @@ public class AssignRolesScreen extends Screen {
         graphics.pose().scale(scale, scale);
         try {
             // Render the widgets and custom Grim drawing through the same virtual
-            // Scale-4 canvas. This keeps text, tokens, tooltips and controls in
+            // Scale-2 canvas. This keeps text, tokens, tooltips and controls in
             // the same proportions instead of letting Auto GUI scale enlarge them.
             GrimoireHoverHints.clear();
             super.extractRenderState(graphics, scaledMouseX, scaledMouseY, delta);
@@ -790,13 +790,13 @@ public class AssignRolesScreen extends Screen {
 
 
     /**
-     * Normalize GUI scales above 4 back to the Scale-4 physical footprint.
-     * Scales 1-4 keep their native sizing so smaller windows are never enlarged.
+     * Convert Minecraft's active GUI scale to the Scale-2 physical footprint.
+     * Because Screen width/height are already divided by the active GUI scale,
+     * the inverse render transform also gives layout code a stable virtual canvas.
      */
     private float grimoireUiScale() {
         if (this.minecraft == null) return 1.0F;
         int activeGuiScale = Math.max(1, this.minecraft.getWindow().getGuiScale());
-        if (activeGuiScale <= GRIMOIRE_REFERENCE_GUI_SCALE) return 1.0F;
         return GRIMOIRE_REFERENCE_GUI_SCALE / (float) activeGuiScale;
     }
 
