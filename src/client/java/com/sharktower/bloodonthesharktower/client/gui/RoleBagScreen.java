@@ -9,6 +9,7 @@ import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -44,6 +45,8 @@ public final class RoleBagScreen extends Screen {
 
     private static final Set<String> SELECTED = new LinkedHashSet<>();
     private static String scriptIdentity = "";
+    private static String searchQuery = "";
+    private static boolean focusSearchAfterRefresh;
     private static boolean drunkReserved;
     private static boolean marionetteReserved;
     private static boolean openGrimoireAfterDistributionSync;
@@ -62,10 +65,29 @@ public final class RoleBagScreen extends Screen {
     @Override
     protected void init() {
         prepareSelection();
-        List<ScriptRole> roles = roles();
+        List<ScriptRole> roles = filteredRoles();
 
-        int top = hiddenSetupActive() ? 70 : 62;
         boolean narrow = this.width < 460;
+        int searchY = hiddenSetupActive() ? 70 : 58;
+        int searchWidth = Math.min(260, Math.max(120, this.width - 24));
+        EditBox search = new EditBox(this.font, (this.width - searchWidth) / 2, searchY, searchWidth, 20,
+                Component.literal("Search roles"));
+        search.setHint(Component.literal("Search roles...").withStyle(ChatFormatting.DARK_GRAY));
+        search.setMaxLength(80);
+        search.setValue(searchQuery);
+        search.setResponder(value -> {
+            if (value.equals(searchQuery)) return;
+            searchQuery = value;
+            focusSearchAfterRefresh = true;
+            this.minecraft.gui.setScreen(new RoleBagScreen(0));
+        });
+        this.addRenderableWidget(search);
+        if (focusSearchAfterRefresh) {
+            search.setFocused(true);
+            focusSearchAfterRefresh = false;
+        }
+
+        int top = searchY + 26;
         int bottomReserve = narrow ? 100 : 78;
         int rows = Math.max(1, (this.height - top - bottomReserve) / (CELL_H + GAP_Y));
         int columns = Math.max(1, (this.width - 24 + GAP_X) / (CELL_W + GAP_X));
@@ -164,6 +186,7 @@ public final class RoleBagScreen extends Screen {
         if (!identity.equals(scriptIdentity)) {
             clearSelection();
             scriptIdentity = identity;
+            searchQuery = "";
             selectCurrentSetup();
         } else {
             Set<String> valid = new java.util.HashSet<>();
@@ -226,6 +249,19 @@ public final class RoleBagScreen extends Screen {
         return roles;
     }
 
+    private List<ScriptRole> filteredRoles() {
+        List<ScriptRole> roles = new ArrayList<>(roles());
+        String query = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
+        if (query.isEmpty()) return roles;
+        roles.removeIf(role -> !roleSearchText(role).contains(query));
+        return roles;
+    }
+
+    private static String roleSearchText(ScriptRole role) {
+        String ability = role.getAbility() == null ? "" : role.getAbility();
+        return (role.getDisplayName() + " " + role.getId() + " " + ability).toLowerCase(Locale.ROOT);
+    }
+
     private static boolean isBagRole(ScriptRole role) {
         if (role == null) return false;
         return switch (role.getTeam()) {
@@ -246,6 +282,10 @@ public final class RoleBagScreen extends Screen {
         return role != null && normalizedId(role).equals("marionette");
     }
 
+    private static boolean isXaan(ScriptRole role) {
+        return role != null && normalizedId(role).equals("xaan");
+    }
+
     private static String normalizedId(ScriptRole role) {
         return role.getId().toLowerCase(Locale.ROOT).replace("_", "").replace("-", "");
     }
@@ -258,6 +298,15 @@ public final class RoleBagScreen extends Screen {
 
     private boolean hiddenSetupActive() {
         return drunkReserved || marionetteReserved;
+    }
+
+    private boolean xaanSelected() {
+        if (ClientState.currentScript == null) return false;
+        for (String id : SELECTED) {
+            ScriptRole role = ClientState.currentScript.getScriptRole(id).orElse(null);
+            if (isXaan(role)) return true;
+        }
+        return false;
     }
 
     private boolean scriptHasRole(String id) {
@@ -282,8 +331,9 @@ public final class RoleBagScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
+        int searchY = hiddenSetupActive() ? 70 : 58;
         // Keep setup details readable against bright world backgrounds.
-        graphics.fill(6, 4, this.width - 6, hiddenSetupActive() ? 69 : 59, UiDrawing.PANEL);
+        graphics.fill(6, 4, this.width - 6, searchY + 23, UiDrawing.PANEL);
 
         String title = "Role Bag — " + ClientState.displayScriptName();
         drawCentered(graphics, title, 8, UiDrawing.GOLD, true);
@@ -313,20 +363,26 @@ public final class RoleBagScreen extends Screen {
         }
         drawCentered(graphics, counts, 34, UiDrawing.TEXT, true);
 
-        OutsiderSetup outsiderSetup = outsiderSetup();
-        if (base != null && (outsiderSetup.unknown() || !outsiderSetup.values().equals(Set.of(0)))) {
-            String setupText;
-            if (outsiderSetup.unknown()) {
-                setupText = "Outsider setup modifier: ?  •  choose the composition manually";
-            } else {
-                int min = outsiderSetup.values().stream().min(Integer::compareTo).orElse(0);
-                int max = outsiderSetup.values().stream().max(Integer::compareTo).orElse(0);
-                int chosen = (int) outsiders - base.outsiders();
-                String range = min == max ? signed(min) : signed(min) + " to " + signed(max);
-                setupText = "Outsider setup modifier: " + range;
-                if (outsiderSetup.values().contains(chosen)) setupText += "  •  current " + signed(chosen);
+        if (base != null && xaanSelected()) {
+            drawCentered(graphics,
+                    "Xaan: X = " + outsiders + "  •  other Outsider setup modifiers ignored",
+                    46, UiDrawing.GOLD, true);
+        } else {
+            OutsiderSetup outsiderSetup = outsiderSetup();
+            if (base != null && (outsiderSetup.unknown() || !outsiderSetup.values().equals(Set.of(0)))) {
+                String setupText;
+                if (outsiderSetup.unknown()) {
+                    setupText = "Outsider setup modifier: ?  •  choose the composition manually";
+                } else {
+                    int min = outsiderSetup.values().stream().min(Integer::compareTo).orElse(0);
+                    int max = outsiderSetup.values().stream().max(Integer::compareTo).orElse(0);
+                    int chosen = (int) outsiders - base.outsiders();
+                    String range = min == max ? signed(min) : signed(min) + " to " + signed(max);
+                    setupText = "Outsider setup modifier: " + range;
+                    if (outsiderSetup.values().contains(chosen)) setupText += "  •  current " + signed(chosen);
+                }
+                drawCentered(graphics, setupText, 46, UiDrawing.TEXT, true);
             }
-            drawCentered(graphics, setupText, 46, UiDrawing.TEXT, true);
         }
 
         if (hiddenSetupActive()) {
@@ -360,6 +416,12 @@ public final class RoleBagScreen extends Screen {
     }
 
     private SetupExpectation setupExpectation(RoleCounts.RoleCountInfo base, long actualOutsiders) {
+        if (xaanSelected()) {
+            int x = (int) actualOutsiders;
+            int townsfolkTarget = seatedCount() - base.minions() - base.demons() - x;
+            return new SetupExpectation(Integer.toString(townsfolkTarget), Integer.toString(x));
+        }
+
         OutsiderSetup modifiers = outsiderSetup();
         if (modifiers.unknown()) return new SetupExpectation("?", "?");
 
@@ -379,6 +441,11 @@ public final class RoleBagScreen extends Screen {
         Set<Integer> totals = new TreeSet<>();
         totals.add(0);
         if (ClientState.currentScript == null) return new OutsiderSetup(totals, false);
+
+        // Xaan's X is chosen by the Storyteller via the number of Outsiders in
+        // the actual setup. While Xaan is selected, other Outsider setup
+        // modifiers do not alter that choice.
+        if (xaanSelected()) return new OutsiderSetup(totals, false);
 
         for (String id : SELECTED) {
             ScriptRole role = ClientState.currentScript.getScriptRole(id).orElse(null);
