@@ -15,7 +15,10 @@ import java.util.List;
 public final class TeamInfoPreviewScreen extends Screen {
     private static String pendingToken;
     private static String pendingText;
+    private static String activeToken;
+    private static String activeText;
     private static int deferredOpenTicks = -1;
+    private static int keepOpenTicks;
     private static boolean registered;
 
     private final String token;
@@ -33,17 +36,28 @@ public final class TeamInfoPreviewScreen extends Screen {
         if (registered) return;
         registered = true;
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (deferredOpenTicks < 0) return;
-            if (deferredOpenTicks-- > 0) return;
+            if (deferredOpenTicks >= 0) {
+                if (deferredOpenTicks-- > 0) return;
 
-            String token = pendingToken;
-            String text = pendingText;
-            pendingToken = null;
-            pendingText = null;
-            deferredOpenTicks = -1;
-            if (token == null || text == null) return;
+                String token = pendingToken;
+                String text = pendingText;
+                pendingToken = null;
+                pendingText = null;
+                deferredOpenTicks = -1;
+                if (token == null || text == null) return;
 
-            client.gui.setScreen(new TeamInfoPreviewScreen(token, text));
+                activeToken = token;
+                activeText = text;
+                keepOpenTicks = 20;
+                client.gui.setScreen(new TeamInfoPreviewScreen(token, text));
+                return;
+            }
+
+            if (keepOpenTicks <= 0 || activeToken == null || activeText == null) return;
+            keepOpenTicks--;
+            if (!(client.gui.screen() instanceof TeamInfoPreviewScreen)) {
+                client.gui.setScreen(new TeamInfoPreviewScreen(activeToken, activeText));
+            }
         });
     }
 
@@ -55,12 +69,25 @@ public final class TeamInfoPreviewScreen extends Screen {
         pendingToken = token;
         pendingText = text;
         deferredOpenTicks = 1;
+        keepOpenTicks = 0;
     }
 
     public static void clearPending() {
         pendingToken = null;
         pendingText = null;
+        activeToken = null;
+        activeText = null;
         deferredOpenTicks = -1;
+        keepOpenTicks = 0;
+    }
+
+    private static void finishPreview() {
+        pendingToken = null;
+        pendingText = null;
+        activeToken = null;
+        activeText = null;
+        deferredOpenTicks = -1;
+        keepOpenTicks = 0;
     }
 
     private int pageSize() {
@@ -83,11 +110,18 @@ public final class TeamInfoPreviewScreen extends Screen {
                 page = Math.min((lines.size() - 1) / pageSize(), page + 1))
                 .bounds(this.width - 92, this.height - 58, 80, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Share Privately"), b -> {
+            finishPreview();
             ClientStorytellerActions.send("team_info_share", token);
-            onClose();
+            this.minecraft.gui.setScreen(new AssignRolesScreen());
         }).bounds(this.width / 2 - 110, this.height - 30, 130, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal("Cancel"), b -> onClose())
                 .bounds(this.width / 2 + 30, this.height - 30, 80, 20).build());
+    }
+
+    @Override
+    public void onClose() {
+        finishPreview();
+        this.minecraft.gui.setScreen(new AssignRolesScreen());
     }
 
     public void extractRenderState(GuiGraphicsExtractor g, int x, int y, float delta) {
