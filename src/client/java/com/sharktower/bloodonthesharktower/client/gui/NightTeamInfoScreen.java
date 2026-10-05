@@ -17,6 +17,7 @@ public final class NightTeamInfoScreen extends Screen {
     private boolean releasePoppyGrower;
     private boolean smallGameOverride;
     private int page;
+    private int lastLunaticBluffRevision = -1;
 
     public NightTeamInfoScreen(boolean demon) {
         super(Component.literal(demon ? "Demon Info" : "Minion Info"));
@@ -25,11 +26,17 @@ public final class NightTeamInfoScreen extends Screen {
 
     @Override
     protected void init() {
+        lastLunaticBluffRevision = ClientLunaticBluffs.revision();
         build(true);
     }
 
-    /** Refresh after the server returns the ST-only Lunatic bluff snapshot. */
-    public void refreshLunaticBluffs() {
+    @Override
+    public void tick() {
+        super.tick();
+        if (!demon || !lunaticOnScript()) return;
+        int revision = ClientLunaticBluffs.revision();
+        if (revision == lastLunaticBluffRevision) return;
+        lastLunaticBluffRevision = revision;
         clearWidgets();
         build(false);
     }
