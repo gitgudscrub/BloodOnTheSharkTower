@@ -126,13 +126,12 @@ public final class ClientGrimoireEdits {
             return ClientState.demonBluffs;
         }
 
-        // Older Lunatic test builds used a dedicated client payload. Prefer it
-        // when present; current builds also place the fake set on the normal
-        // player-facing bluff channel so a believed-Demon Lunatic looks normal.
-        if (ClientState.myRole == Role.LUNATIC) {
-            List<String> lunaticBluffs = ClientLunaticBluffs.current();
-            if (!lunaticBluffs.isEmpty()) return lunaticBluffs;
-        }
+        // The real Lunatic client receives its fake bluffs through a dedicated
+        // private payload, while its visible role is the Demon it believes it is.
+        // Prefer that private set whenever present instead of checking myRole,
+        // because myRole intentionally contains the believed Demon identity.
+        List<String> lunaticBluffs = ClientLunaticBluffs.current();
+        if (!lunaticBluffs.isEmpty()) return lunaticBluffs;
 
         return SHARED_ABILITY_DEMON_BLUFFS.isEmpty()
                 ? ClientState.demonBluffs
