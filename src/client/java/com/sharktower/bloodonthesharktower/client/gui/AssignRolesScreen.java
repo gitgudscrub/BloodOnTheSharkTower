@@ -109,9 +109,9 @@ public class AssignRolesScreen extends Screen {
 
         int horizontal = Math.max(54, centerX - CONTROL_W - MARGIN - ROLE_SIZE/2 - REMINDER_SIZE);
         int roleRadius = Math.min(horizontal, Math.max(54, baseRoleRadius - inward));
-        int headRadius = Math.max(28, roleRadius - 32);
+        int headRadius = Math.max(28, roleRadius - 48);
         return new GrimLayout(centerX, baseCenterY - lift, roleRadius, headRadius, horizontal,
-                Math.max(28,horizontal - 32));
+                Math.max(28,horizontal - 48));
     }
 
     public AssignRolesScreen() {
@@ -493,7 +493,7 @@ public class AssignRolesScreen extends Screen {
         int gap = 8;
         int totalW = visible * widgetW + Math.max(0, visible - 1) * gap;
         int startX = layoutWidth() / 2 - totalW / 2;
-        int y = layoutHeight() / 2 - 42;
+        int y = layoutHeight() / 2 - 40;
 
         for (int i = 0; i < visible; i++) {
             UUID storytellerId = storytellers.get(i);
@@ -652,7 +652,13 @@ public class AssignRolesScreen extends Screen {
             int handY=(int)Math.round(centerY+innerRadius*Math.sin(angle))-HEAD_SIZE/2-18;
             labelAreas.add(new int[]{handX,handY,24,16});
         }
-        labelAreas.add(new int[]{centerX-70,layoutHeight()/2+16,140,28});
+        if (ClientState.phase()==GamePhase.SETUP) {
+            String[] status={"Players: "+count,"Storytellers: "+ClientState.storytellerPlayers.size()};
+            for (int i=0;i<status.length;i++) {
+                int w=this.font.width(status[i])+6;
+                labelAreas.add(new int[]{centerX-w/2,layoutHeight()/2+34+i*12,w,12});
+            }
+        }
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
             UUID uuid = entry.getKey();
@@ -687,7 +693,7 @@ public class AssignRolesScreen extends Screen {
             }
             String name = ClientState.playerName(uuid, seat);
             // Use real widget bounds when placing labels, including believed roles/reminders.
-            int nameWidth = Math.max(30, Math.min(96, (int)(2 * innerRadius * Math.sin(Math.PI / Math.max(2,count))) - 10));
+            int nameWidth = 96;
             var notedRole = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(uuid));
             for (int width = nameWidth; width >= 30; width -= 12) {
                 String label = fitLabel(name,width);
