@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
-/** Separate three-bluff picker used only for an in-play Lunatic. */
+/** Separate three-bluff picker used only for an assigned Lunatic. */
 public final class LunaticBluffSelectionScreen extends Screen {
     private int perPage() {
         return Math.max(1, (this.width - 24 + 6) / 128)
@@ -28,15 +28,21 @@ public final class LunaticBluffSelectionScreen extends Screen {
 
     private final LinkedHashSet<String> selected;
     private final int page;
+    private final Screen returnScreen;
 
     public LunaticBluffSelectionScreen() {
-        this(initialSelection(), 0);
+        this(new NightTeamInfoScreen(true));
     }
 
-    private LunaticBluffSelectionScreen(Set<String> selected, int page) {
+    public LunaticBluffSelectionScreen(Screen returnScreen) {
+        this(initialSelection(), 0, returnScreen);
+    }
+
+    private LunaticBluffSelectionScreen(Set<String> selected, int page, Screen returnScreen) {
         super(Component.literal("Choose 3 Lunatic Bluffs"));
         this.selected = new LinkedHashSet<>(selected);
         this.page = Math.max(0, page);
+        this.returnScreen = returnScreen;
     }
 
     @Override
@@ -73,19 +79,19 @@ public final class LunaticBluffSelectionScreen extends Screen {
 
         int navY = this.height - 78;
         Button previous = Button.builder(Component.literal("<"), b ->
-                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(selected, actualPage - 1)))
+                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(selected, actualPage - 1, returnScreen)))
                 .bounds(this.width / 2 - 120, navY, 40, 20).build();
         previous.active = actualPage > 0;
         this.addRenderableWidget(previous);
 
         Button next = Button.builder(Component.literal(">"), b ->
-                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(selected, actualPage + 1)))
+                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(selected, actualPage + 1, returnScreen)))
                 .bounds(this.width / 2 + 80, navY, 40, 20).build();
         next.active = actualPage < maxPage;
         this.addRenderableWidget(next);
 
         this.addRenderableWidget(Button.builder(Component.literal("Clear Selection"), b ->
-                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(Set.of(), actualPage)))
+                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(Set.of(), actualPage, returnScreen)))
                 .bounds(this.width / 2 - 72, navY, 144, 20).build());
 
         Button confirm = Button.builder(Component.literal("Confirm 3 Bluffs").withStyle(ChatFormatting.GREEN), b -> confirm())
@@ -124,7 +130,7 @@ public final class LunaticBluffSelectionScreen extends Screen {
         LinkedHashSet<String> next = new LinkedHashSet<>(selected);
         if (next.contains(id)) next.remove(id);
         else if (next.size() < 3) next.add(id);
-        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(next, currentPage));
+        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(next, currentPage, returnScreen));
     }
 
     private void confirm() {
@@ -134,7 +140,7 @@ public final class LunaticBluffSelectionScreen extends Screen {
     }
 
     private void back() {
-        if (this.minecraft != null) this.minecraft.gui.setScreen(new NightTeamInfoScreen(true));
+        if (this.minecraft != null) this.minecraft.gui.setScreen(returnScreen != null ? returnScreen : new NightTeamInfoScreen(true));
     }
 
     private String selectedNames() {
