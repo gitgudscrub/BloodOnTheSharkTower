@@ -134,9 +134,17 @@ public final class StateBroadcaster {
             perceivedRoles = java.util.Map.of();
             seats = ServerState.PLAYER_SEAT_NUMBERS;
             reminders = java.util.Map.of();
-            bluffs = com.sharktower.bloodonthesharktower.core.InformationVisibility.canSeeBluffs(actualOwn, visibleOwn)
-                    ? StorytellerState.DEMON_BLUFFS
-                    : java.util.List.of();
+
+            // A Lunatic must receive only the fake bluff set selected for their
+            // false Demon world. Never expose the real Demon's bluffs through the
+            // normal entitlement check, even though their visible token is Demon.
+            if (actualOwn != null && actualOwn.isOfficialRole() && actualOwn.role() == Role.LUNATIC) {
+                bluffs = StorytellerState.LUNATIC_BLUFFS;
+            } else {
+                bluffs = com.sharktower.bloodonthesharktower.core.InformationVisibility.canSeeBluffs(actualOwn, visibleOwn)
+                        ? StorytellerState.DEMON_BLUFFS
+                        : java.util.List.of();
+            }
         }
 
         ServerPlayNetworking.send(player, SendGrimoireS2CPayload.fromStoryteller(
@@ -152,9 +160,11 @@ public final class StateBroadcaster {
     private static PendingRoleAssignment playerFacingAssignment(
             java.util.UUID playerId, PendingRoleAssignment actual) {
         if (!isAssigned(actual) || ServerState.rolesRevealed) return actual;
-        if (!actual.isCustomRole() && (actual.role() == Role.DRUNK || actual.role() == Role.MARIONETTE)) {
+        if (!actual.isCustomRole() && (actual.role() == Role.DRUNK
+                || actual.role() == Role.MARIONETTE
+                || actual.role() == Role.LUNATIC)) {
             PendingRoleAssignment perceived = ServerState.PLAYER_PERCEIVED_ROLES.get(playerId);
-            // Never leak the true Drunk/Marionette token if setup data is incomplete.
+            // Never leak a hidden true identity if setup data is incomplete.
             return isAssigned(perceived)
                     ? perceived
                     : new PendingRoleAssignment(Role.NO_ROLE, AlignmentOverride.DEFAULT);
