@@ -20,8 +20,10 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientSettings.load();
         CoreStateReceivers.register();
+        ClientLunaticBluffs.register();
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientGrimoireEdits.clearSession();
+            ClientLunaticBluffs.clear();
             CoreStateReceivers.resetSession();
         });
         GrimoireReturnState.register();
