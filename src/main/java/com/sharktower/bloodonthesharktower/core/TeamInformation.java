@@ -10,14 +10,14 @@ public final class TeamInformation {
 
     public static Plan plan(Map<UUID, PendingRoleAssignment> roles, Map<UUID, Integer> seats,
                             Map<UUID, Boolean> deaths, boolean demonInfo,
-                            boolean allowMagician, boolean allowWithheld) {
+                            boolean allowMagician, boolean releasePoppyGrower, boolean smallGameOverride) {
         var players = roles.keySet().stream().filter(seats::containsKey)
                 .sorted(Comparator.<UUID>comparingInt(seats::get).thenComparing(UUID::toString)).toList();
         long count = players.stream().filter(id -> roles.get(id).getRoleType() != RoleType.TRAVELER).count();
-        if (count < 7 && !allowWithheld) throw new IllegalArgumentException("No starting team information below 7 players. The ST may explicitly override this rule.");
+        if (count < 7 && !smallGameOverride) throw new IllegalArgumentException("No starting team information below 7 players. The ST may explicitly override this rule.");
         if (players.stream().anyMatch(id -> is(roles.get(id), Role.LEGION)))
             throw new IllegalArgumentException("Legion needs different information. Use a manual night visit for this setup.");
-        boolean withheld = !allowWithheld && players.stream().anyMatch(id -> is(roles.get(id), Role.POPPY_GROWER));
+        boolean withheld = !releasePoppyGrower && players.stream().anyMatch(id -> is(roles.get(id), Role.POPPY_GROWER));
         // Keep Poppy Grower identities withheld even after death until the ST explicitly
         // authorizes them: a drunk/poisoned death does not automatically release info.
         boolean magician = allowMagician

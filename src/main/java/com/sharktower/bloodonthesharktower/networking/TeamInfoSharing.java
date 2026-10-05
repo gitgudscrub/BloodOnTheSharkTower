@@ -26,20 +26,22 @@ public final class TeamInfoSharing {
         if (!StorytellerState.isStoryteller(actor.getUUID())) return SetupOperations.Result.fail("Storyteller only.");
         previews.remove(actor.getUUID());
         String[] options = argument.split("\\|", -1);
-        if (options.length != 3 || !(options[0].equals("demon") || options[0].equals("minion"))
+        if (options.length != 4 || !(options[0].equals("demon") || options[0].equals("minion"))
                 || !(options[1].equals("true") || options[1].equals("false"))
-                || !(options[2].equals("true") || options[2].equals("false")))
+                || !(options[2].equals("true") || options[2].equals("false"))
+                || !(options[3].equals("true") || options[3].equals("false")))
             return SetupOperations.Result.fail("Invalid team information options.");
         boolean demon = options[0].equals("demon");
         State state = state();
         var plan = TeamInformation.plan(state.roles(), state.seats(), state.deaths(), demon,
-                Boolean.parseBoolean(options[1]), Boolean.parseBoolean(options[2]));
+                Boolean.parseBoolean(options[1]), Boolean.parseBoolean(options[2]), Boolean.parseBoolean(options[3]));
         Map<UUID,String> messages = new LinkedHashMap<>();
         String header = demon ? "Demon Info" : "Minion Info";
         StringBuilder text = new StringBuilder("Review the exact private messages below. These use committed roles.\n");
         text.append("Magician misinformation: ").append(plan.magician() ? "active" : "off").append(".\n");
         if (plan.withheld()) text.append("Poppy Grower: identities withheld. Demon still receives bluffs.\n");
-        if (Boolean.parseBoolean(options[2])) text.append("ST override: withheld identities/small-game restriction lifted.\n");
+        if (Boolean.parseBoolean(options[2])) text.append("Poppy Grower: ST released identities.\n");
+        if (Boolean.parseBoolean(options[3])) text.append("Small Game: ST Override.\n");
         text.append("For drunk/poisoned characters, Lunatic or other special rulings, review your choices or use a manual visit.\n\n");
         for (var entry : plan.recipients().entrySet()) {
             String message = "[" + header + "]\n";

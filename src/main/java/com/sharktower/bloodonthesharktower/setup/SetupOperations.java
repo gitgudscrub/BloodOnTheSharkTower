@@ -761,6 +761,7 @@ public final class SetupOperations {
         FreshGameBooks.clear();
         com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.clear();
         com.sharktower.bloodonthesharktower.networking.TeamInfoSharing.clear();
+        CustomScripts.clearPending();
         com.sharktower.bloodonthesharktower.networking.SocialStateManager.clear();
         DaytimeState.hardReset(ServerState.PLAYER_SEAT_NUMBERS.keySet(), Set.of());
         MatchSnapshotManager.refreshCurrentSetupState();

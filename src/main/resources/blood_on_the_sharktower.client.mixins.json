@@ -4,7 +4,8 @@
   "client": [
     "LivingEntityRendererMixin",
     "AvatarRendererMixin",
-    "EntityRendererMixin"
+    "EntityRendererMixin",
+    "VoiceGroupIconMixin"
   ],
   "injectors": {
     "defaultRequire": 1

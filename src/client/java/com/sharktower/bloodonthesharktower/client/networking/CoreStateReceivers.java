@@ -47,13 +47,18 @@ public final class CoreStateReceivers {
         ClientState.talkingPlayers = java.util.Map.of();
         ClientState.pendingDeaths = java.util.Set.of();
         com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
+        com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen.clear();
     }
 
     public static void register() {
-        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.TeamInfoPreviewPayload.TYPE, (payload, context) -> {
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.CustomScriptsPayload.TYPE, (payload, context) -> context.client().execute(() -> {
+            if (context.client().player != null && ClientState.storytellerPlayers.contains(context.client().player.getUUID()))
+                com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen.receive(payload);
+        }));
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.TeamInfoPreviewPayload.TYPE, (payload, context) -> context.client().execute(() -> {
             if (context.client().player != null && ClientState.storytellerPlayers.contains(context.client().player.getUUID()))
                 context.client().gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen(payload.token(), payload.text()));
-        });
+        }));
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.NotebookPayload.TYPE, (payload, context) -> {
             ClientState.notebookGeneration = payload.generation();
             ClientState.notebookText = payload.text();

@@ -9,25 +9,29 @@ import net.minecraft.network.chat.Component;
 public final class NightTeamInfoScreen extends Screen {
     private final boolean demon;
     private boolean useMagician = true;
-    private boolean allowWithheld;
+    private boolean releasePoppyGrower;
+    private boolean smallGameOverride;
     private int page;
     public NightTeamInfoScreen(boolean demon) { super(Component.literal(demon?"Demon Info":"Minion Info")); this.demon=demon; }
     protected void init() {
         if (this.minecraft.player == null || !ClientState.storytellerPlayers.contains(this.minecraft.player.getUUID())) return;
         this.addRenderableWidget(Button.builder(Component.literal(demon ? "Demon Info — Preview" : "Minion Info — Preview"), b ->
-                ClientStorytellerActions.send("team_info_preview", (demon ? "demon" : "minion") + "|" + useMagician + "|" + allowWithheld))
+                ClientStorytellerActions.send("team_info_preview", (demon ? "demon" : "minion") + "|" + useMagician + "|" + releasePoppyGrower + "|" + smallGameOverride))
                 .bounds(this.width/2-110,48,220,20).build());
         this.addRenderableWidget(Button.builder(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"), b -> {
             useMagician=!useMagician; b.setMessage(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"));
         }).bounds(this.width/2-110,72,220,20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(allowWithheld ? "Withheld Info: ST Allows Sharing" : "Withheld Info: Keep Withheld"), b -> {
-            allowWithheld=!allowWithheld; b.setMessage(Component.literal(allowWithheld ? "Withheld Info: ST Allows Sharing" : "Withheld Info: Keep Withheld"));
+        this.addRenderableWidget(Button.builder(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"), b -> {
+            releasePoppyGrower=!releasePoppyGrower; b.setMessage(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"));
         }).bounds(this.width/2-110,96,220,20).build());
-        int y=124;
+        this.addRenderableWidget(Button.builder(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"), b -> {
+            smallGameOverride=!smallGameOverride; b.setMessage(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"));
+        }).bounds(this.width/2-110,120,220,20).build());
+        int y=148;
         var visits=ClientState.grimoireRoles.entrySet().stream()
                 .filter(e->e.getValue()!=null && e.getValue().getRoleType()==(demon?RoleType.DEMON:RoleType.MINION))
                 .sorted(java.util.Comparator.comparingInt(e->ClientState.grimoireSeatNumbers.getOrDefault(e.getKey(),0))).toList();
-        int rows=Math.max(1,(this.height-180)/24);
+        int rows=Math.max(1,(this.height-204)/24);
         int pages=Math.max(1,(visits.size()+rows-1)/rows);
         page=Math.min(page,pages-1);
         for (var entry:visits.subList(Math.min(visits.size(),page*rows),Math.min(visits.size(),(page+1)*rows))) {

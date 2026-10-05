@@ -270,3 +270,11 @@ tasks.register('handRaiseModeRegression', JavaExec) {
     mainClass = 'com.sharktower.bloodonthesharktower.core.HandRaiseModeRegression'
 }
 tasks.named('check') { dependsOn tasks.named('handRaiseModeRegression') }
+
+// URL allowlist, distinct page/version IDs, filenames and strict script validation.
+tasks.register('scriptImportRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.setup.ScriptImportRegression'
+}
+tasks.named('check') { dependsOn tasks.named('scriptImportRegression') }

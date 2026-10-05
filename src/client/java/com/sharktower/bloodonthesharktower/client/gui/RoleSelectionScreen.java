@@ -20,7 +20,7 @@ import java.util.List;
 public final class RoleSelectionScreen extends Screen {
     private enum Mode { PLAYER, PERCEIVED, BLUFF }
 
-    private static final int PAGE_SIZE = 24;
+    private int perPage() { return Math.max(1, (this.width - 24 + 6) / 128) * Math.max(1, (this.height - 44 - 82) / 25); }
     private final Mode mode;
     private final int seat;
     private final int bluffIndex;
@@ -67,12 +67,12 @@ public final class RoleSelectionScreen extends Screen {
     @Override
     protected void init() {
         List<ScriptRole> roles = roles();
-        int maxPage = Math.max(0, (roles.size() - 1) / PAGE_SIZE);
+        int maxPage = Math.max(0, (roles.size() - 1) / perPage());
         if (page > maxPage) page = maxPage;
 
-        int start = page * PAGE_SIZE;
-        int end = Math.min(roles.size(), start + PAGE_SIZE);
-        int columns = 4;
+        int start = page * perPage();
+        int end = Math.min(roles.size(), start + perPage());
+        int columns = Math.max(1, (this.width - 24 + 6) / 128);
         int width = 122;
         int height = 20;
         int gapX = 6;
@@ -221,7 +221,7 @@ public final class RoleSelectionScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         List<ScriptRole> roles = roles();
-        int maxPage = Math.max(0, (roles.size() - 1) / PAGE_SIZE);
+        int maxPage = Math.max(0, (roles.size() - 1) / perPage());
         String heading = switch (mode) {
             case PLAYER -> "Assign role to seat " + seat;
             case PERCEIVED -> "Choose what seat " + seat + " believes they are";

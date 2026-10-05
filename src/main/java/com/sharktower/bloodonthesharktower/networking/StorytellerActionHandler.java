@@ -193,6 +193,12 @@ public final class StorytellerActionHandler {
                     yield SetupOperations.removeReminder(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
                 }
                 case "seat_player" -> SetupOperations.seatNext(java.util.UUID.fromString(arg));
+                case "custom_scripts_list" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.list(actor);
+                case "custom_script_load" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.load(actor,arg);
+                case "custom_script_import" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.start(server,actor,arg);
+                case "custom_script_confirm" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.confirm(actor,arg);
+                case "load_script_selection" -> SetupOperations.loadScriptJson(com.sharktower.bloodonthesharktower.core.ScriptSelection.build(
+                        ServerState.currentScript,new java.util.LinkedHashSet<>(java.util.Arrays.asList(arg.split("\\|")))));
                 case "load_script_json" -> SetupOperations.loadScriptJson(arg);
                 case "load_base3" -> BaseThreeScripts.load(arg);
                 case "add_bluff" -> SetupOperations.addBluff(arg);
@@ -205,7 +211,7 @@ public final class StorytellerActionHandler {
                 }
                 default -> SetupOperations.Result.fail("Unknown Storyteller UI action: " + action);
             };
-        } catch (RuntimeException ex) {
+        } catch (Exception ex) {
             return SetupOperations.Result.fail("Could not perform Storyteller action: " + ex.getMessage());
         }
     }

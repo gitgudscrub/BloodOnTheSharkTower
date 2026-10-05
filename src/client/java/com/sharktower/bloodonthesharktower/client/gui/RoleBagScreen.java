@@ -27,8 +27,7 @@ import java.util.Set;
  * random. The result remains pending in the Grimoire until SEND ROLES.
  */
 public final class RoleBagScreen extends Screen {
-    private static final int COLUMNS = 5;
-    private static final int CELL_W = 82;
+        private static final int CELL_W = 82;
     private static final int CELL_H = 61;
     private static final int GAP_X = 5;
     private static final int GAP_Y = 4;
@@ -54,13 +53,15 @@ public final class RoleBagScreen extends Screen {
         List<ScriptRole> roles = roles();
 
         int top = 54;
-        int bottomReserve = 78;
+        boolean narrow = this.width < 460;
+        int bottomReserve = narrow ? 100 : 78;
         int rows = Math.max(1, (this.height - top - bottomReserve) / (CELL_H + GAP_Y));
-        int perPage = rows * COLUMNS;
+        int columns = Math.max(1, (this.width - 24 + GAP_X) / (CELL_W + GAP_X));
+        int perPage = rows * columns;
         int maxPage = Math.max(0, (roles.size() - 1) / perPage);
         if (page > maxPage) page = maxPage;
 
-        int gridWidth = COLUMNS * CELL_W + (COLUMNS - 1) * GAP_X;
+        int gridWidth = columns * CELL_W + (columns - 1) * GAP_X;
         int left = (this.width - gridWidth) / 2;
         int start = page * perPage;
         int end = Math.min(roles.size(), start + perPage);
@@ -68,8 +69,8 @@ public final class RoleBagScreen extends Screen {
         for (int i = start; i < end; i++) {
             ScriptRole role = roles.get(i);
             int local = i - start;
-            int col = local % COLUMNS;
-            int row = local / COLUMNS;
+            int col = local % columns;
+            int row = local / columns;
             int x = left + col * (CELL_W + GAP_X);
             int y = top + row * (CELL_H + GAP_Y);
             this.addRenderableWidget(new RoleBagRoleWidget(
@@ -82,30 +83,30 @@ public final class RoleBagScreen extends Screen {
             ));
         }
 
-        int navY = this.height - 66;
+        int navY = this.height - (narrow ? 90 : 66);
         this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
                     if (page > 0) this.minecraft.gui.setScreen(new RoleBagScreen(page - 1));
-                }).bounds(this.width / 2 - 220, navY, 36, 20).build());
+                }).bounds(this.width / 2 - (narrow ? 80 : 220), navY, 36, 20).build());
         this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
                     if (page < maxPage) this.minecraft.gui.setScreen(new RoleBagScreen(page + 1));
-                }).bounds(this.width / 2 - 178, navY, 36, 20).build());
+                }).bounds(this.width / 2 - (narrow ? 38 : 178), navY, 36, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Clear"), b -> {
                     SELECTED.clear();
                     this.minecraft.gui.setScreen(new RoleBagScreen(page));
-                }).bounds(this.width / 2 - 132, navY, 72, 20).build());
+                }).bounds(this.width / 2 + (narrow ? 4 : -132), navY, 72, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Current Setup"), b -> {
                     selectCurrentSetup();
                     this.minecraft.gui.setScreen(new RoleBagScreen(page));
-                }).bounds(this.width / 2 - 54, navY, 105, 20).build());
+                }).bounds(this.width / 2 - (narrow ? 120 : 54), navY + (narrow ? 24 : 0), 105, 20).build());
 
         boolean ready = seatedCount() > 0 && SELECTED.size() == seatedCount();
         Button distribute = Button.builder(
                         Component.literal(ready ? "Distribute Bag" : "Need " + seatedCount() + " roles")
                                 .withStyle(ready ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY),
                         b -> distribute())
-                .bounds(this.width / 2 + 57, navY, 128, 20).build();
+                .bounds(this.width / 2 + (narrow ? -9 : 57), navY + (narrow ? 24 : 0), 128, 20).build();
         distribute.active = ready;
         this.addRenderableWidget(distribute);
 

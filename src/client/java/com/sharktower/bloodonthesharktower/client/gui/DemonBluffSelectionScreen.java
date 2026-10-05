@@ -26,7 +26,7 @@ import java.util.Set;
  * avoiding the old slot-by-slot flow that repeatedly closed the Grimoire.
  */
 public final class DemonBluffSelectionScreen extends Screen {
-    private static final int PAGE_SIZE = 24;
+    private int perPage() { return Math.max(1, (this.width - 24 + 6) / 128) * Math.max(1, (this.height - 50 - 90) / 25); }
 
     private final LinkedHashSet<String> selected;
     private final int page;
@@ -44,13 +44,13 @@ public final class DemonBluffSelectionScreen extends Screen {
     @Override
     protected void init() {
         List<ScriptRole> roles = availableRoles();
-        int maxPage = Math.max(0, (roles.size() - 1) / PAGE_SIZE);
+        int maxPage = Math.max(0, (roles.size() - 1) / perPage());
         int actualPage = Math.min(page, maxPage);
 
-        int start = actualPage * PAGE_SIZE;
-        int end = Math.min(roles.size(), start + PAGE_SIZE);
+        int start = actualPage * perPage();
+        int end = Math.min(roles.size(), start + perPage());
 
-        int columns = 4;
+        int columns = Math.max(1, (this.width - 24 + 6) / 128);
         int width = 122;
         int height = 20;
         int gapX = 6;

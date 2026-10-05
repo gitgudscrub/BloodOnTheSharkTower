@@ -7,6 +7,7 @@ public final class ModPayloads {
     private ModPayloads() {}
 
     public static void registerPayloads() {
+        PayloadTypeRegistry.clientboundPlay().register(CustomScriptsPayload.TYPE, CustomScriptsPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(TeamInfoPreviewPayload.TYPE, TeamInfoPreviewPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(NotebookPayload.TYPE, NotebookPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(NotebookPayload.TYPE, NotebookPayload.CODEC);
