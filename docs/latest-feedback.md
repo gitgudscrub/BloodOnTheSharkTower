@@ -34,3 +34,9 @@ Retest the screenshot's five-player Setup with long names, then 7/10/15 players,
 - Role Bag setup counts and Outsider modifiers use white shadowed text on a dark header backing.
 - Assign-role labels use the shared role-category palette, including custom roles, rather than grouping good/evil categories together.
 - Retest assignment menus with Townsfolk, Outsiders, Minions and Demons; check Role Bag headers against bright terrain.
+
+## Hidden-role conversion and centre spacing (alpha.10)
+
+- Move Setup player/ST counts closer to the central Storyteller, keeping name exclusion bounds in sync.
+- Changing an assigned Townsfolk to Drunk, or Townsfolk/Outsider to Marionette, automatically carries the previous character into the believed-role slot. Existing valid beliefs remain; incompatible or missing covers still need manual selection. Covers use default alignment and include custom characters. Changes remain pending until Send Roles.
+- Retest Empath to Drunk/Marionette, Outsider to Marionette, existing believed-role edits and small-window four-player Setup.

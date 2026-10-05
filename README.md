@@ -128,7 +128,7 @@ Implementation notes and regression checks are tracked in `docs/1.0.2-session-fe
 
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
 
-Development builds use **1.0.2-alpha.9**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
+Development builds use **1.0.2-alpha.10**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
 
 ### 1.0.x — Base 3 full support *(current focus)*
 

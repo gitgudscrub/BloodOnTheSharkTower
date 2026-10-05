@@ -656,7 +656,7 @@ public class AssignRolesScreen extends Screen {
             String[] status={"Players: "+count,"Storytellers: "+ClientState.storytellerPlayers.size()};
             for (int i=0;i<status.length;i++) {
                 int w=this.font.width(status[i])+6;
-                labelAreas.add(new int[]{centerX-w/2,layoutHeight()/2+34+i*12,w,12});
+                labelAreas.add(new int[]{centerX-w/2,layoutHeight()/2+14+i*12,w,12});
             }
         }
         for (int i = 0; i < count; i++) {
@@ -776,7 +776,7 @@ public class AssignRolesScreen extends Screen {
 
         String players = "Players: " + playerCount;
         String storytellers = "Storytellers: " + ClientState.storytellerPlayers.size();
-        int baseY = layoutHeight() / 2 + 36;
+        int baseY = layoutHeight() / 2 + 16;
         drawCentered(graphics, players, baseY, UiDrawing.TEXT, true);
         drawCentered(graphics, storytellers, baseY + 12, UiDrawing.MUTED, true);
     }

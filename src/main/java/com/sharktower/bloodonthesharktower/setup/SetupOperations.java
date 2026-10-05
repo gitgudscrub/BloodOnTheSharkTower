@@ -130,10 +130,20 @@ public final class SetupOperations {
         if (role == null) return Result.fail("Unknown role '" + roleId + "' for the current script.");
         beginEditingFromLiveState();
         PendingRoleAssignment assigned = assignment(role, AlignmentOverride.DEFAULT);
+        PendingRoleAssignment previous = StorytellerState.PENDING_ROLES.get(player);
         StorytellerState.PENDING_ROLES.put(player, assigned);
         PendingRoleAssignment perceived = StorytellerState.PENDING_PERCEIVED_ROLES.get(player);
         if (!requiresPerceivedRole(assigned) || (isAssigned(perceived) && !perceivedRoleAllowed(assigned, perceived))) {
             StorytellerState.PENDING_PERCEIVED_ROLES.remove(player);
+        }
+        // Changing a cover character into Drunk/Marionette keeps what they believe.
+        // Keep an existing valid belief when editing an already deceived character.
+        boolean carryCover = !assigned.isCustomRole()
+                && (assigned.role() == Role.DRUNK || assigned.role() == Role.MARIONETTE);
+        if (carryCover && !perceivedRoleAllowed(assigned, perceived)
+                && perceivedRoleAllowed(assigned, previous)) {
+            StorytellerState.PENDING_PERCEIVED_ROLES.put(player,
+                    new PendingRoleAssignment(previous.role(), previous.customRole(), AlignmentOverride.DEFAULT));
         }
         return Result.ok("Assigned " + role.getDisplayName() + " to seat " + seat + " (pending).");
     }

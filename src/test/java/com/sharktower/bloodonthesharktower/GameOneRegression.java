@@ -55,6 +55,35 @@ public final class GameOneRegression {
         NominationManager.cancelNominationState();check(DaytimeState.hasUsedGhostVote(d),"Cancellation keeps earlier ghost vote history");
         AttentionHands.clear();check(AttentionHands.positions().isEmpty(),"Full attention reset clears previous game queue");
         ServerState.PLAYER_SEAT_NUMBERS.clear();DaytimeState.hardReset(Set.of(),Set.of());
+        // Exercise authoritative cover conversion, including pending/live state boundaries.
+        StorytellerState.PENDING_SEAT_NUMBERS.clear(); StorytellerState.PENDING_ROLES.clear();
+        StorytellerState.PENDING_PERCEIVED_ROLES.clear(); ServerState.PLAYER_ROLES.clear();
+        ServerState.PLAYER_PERCEIVED_ROLES.clear(); ServerState.PLAYER_SEAT_NUMBERS.put(a,1);
+        ServerState.PLAYER_ROLES.put(a,new PendingRoleAssignment(Role.EMPATH,AlignmentOverride.DEFAULT));
+        var drunk=com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.DRUNK.getId());
+        check(drunk.ok(),"Empath converts to Drunk");
+        check(StorytellerState.PENDING_PERCEIVED_ROLES.get(a).role()==Role.EMPATH,"Drunk retains Empath cover from live state");
+        check(ServerState.PLAYER_ROLES.get(a).role()==Role.EMPATH && ServerState.PLAYER_PERCEIVED_ROLES.isEmpty(),"Conversion does not reveal pending changes before Send Roles");
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.MARIONETTE.getId());
+        check(StorytellerState.PENDING_PERCEIVED_ROLES.get(a).role()==Role.EMPATH,"Changing hidden role keeps existing valid cover");
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.RECLUSE.getId());
+        check(!StorytellerState.PENDING_PERCEIVED_ROLES.containsKey(a),"Ordinary role clears belief");
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.MARIONETTE.getId());
+        check(StorytellerState.PENDING_PERCEIVED_ROLES.get(a).role()==Role.RECLUSE,"Marionette carries Outsider cover");
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.DRUNK.getId());
+        check(!StorytellerState.PENDING_PERCEIVED_ROLES.containsKey(a),"Drunk rejects Outsider cover");
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.IMP.getId());
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.MARIONETTE.getId());
+        check(!StorytellerState.PENDING_PERCEIVED_ROLES.containsKey(a),"Marionette cannot copy a Demon cover");
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.clearRole(1);
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.DRUNK.getId());
+        check(!StorytellerState.PENDING_PERCEIVED_ROLES.containsKey(a),"No old character leaves belief for manual assignment");
+        StorytellerState.PENDING_ROLES.put(a,new PendingRoleAssignment(Role.EMPATH,AlignmentOverride.FORCE_BAD));
+        com.sharktower.bloodonthesharktower.setup.SetupOperations.assignRole(1,Role.DRUNK.getId());
+        check(StorytellerState.PENDING_PERCEIVED_ROLES.get(a).override()==AlignmentOverride.DEFAULT,"Cover does not inherit old actual alignment override");
+        StorytellerState.PENDING_SEAT_NUMBERS.clear(); StorytellerState.PENDING_ROLES.clear();
+        StorytellerState.PENDING_PERCEIVED_ROLES.clear(); ServerState.PLAYER_ROLES.clear();
+        ServerState.PLAYER_PERCEIVED_ROLES.clear(); ServerState.PLAYER_SEAT_NUMBERS.clear();
         System.out.println("PASS: "+checks+" Game 1 queue, whisper, information and nomination checks");
     }
 }
