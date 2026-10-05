@@ -833,8 +833,14 @@ public class AssignRolesScreen extends Screen {
         if (!ClientState.nominationsOpen && !ClientState.voteInProgress) return;
 
         int x = layoutWidth() - CONTROL_W - MARGIN;
-        int y = 225;
         int h = ClientState.voteInProgress ? 70 : 48;
+        int railBottom=10;
+        for (var child:this.children()) {
+            if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
+                    && widget.getX()>=x && widget.getY()<layoutHeight()-40)
+                railBottom=Math.max(railBottom,widget.getY()+widget.getHeight());
+        }
+        int y=Math.max(railBottom+10,Math.min(225,layoutHeight()-h-40));
         UiDrawing.panel(graphics, x, y, CONTROL_W, h);
         drawCenteredAt(graphics, ClientState.voteClockComplete ? "VOTE READY" : "VOTING",
                 x + CONTROL_W / 2, y + 6, UiDrawing.GOLD, true);
@@ -875,9 +881,8 @@ public class AssignRolesScreen extends Screen {
                 Math.min(GRIMOIRE_MAX_VIEWPORT_SCALE, viewportScale));
         float reference = (GRIMOIRE_REFERENCE_GUI_SCALE * viewportScale) / (float) activeGuiScale;
         int count=sortedSeats().size();
-        if (count<10) return reference;
-        int minWidth=520+Math.min(15,count)*20;
-        int minHeight=300+Math.min(15,count)*12;
+        int minWidth=count<10?500:520+Math.min(15,count)*20;
+        int minHeight=count<10?288:300+Math.min(15,count)*12;
         return Math.min(reference,Math.min(this.width/(float)minWidth,this.height/(float)minHeight));
     }
 
