@@ -79,8 +79,24 @@ public final class TeamInfoSharing {
             if (server.getPlayerList().getPlayer(id) == null)
                 return SetupOperations.Result.fail("A recipient is offline. No information was sent; preview again when they reconnect.");
         }
-        preview.messages().forEach((id,message) -> server.getPlayerList().getPlayer(id).sendSystemMessage(Component.literal(message)));
-        return SetupOperations.Result.ok("Shared private team information with " + preview.messages().size() + " player(s).");
+
+        int booksGiven = 0;
+        for (var entry : preview.messages().entrySet()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+            String message = entry.getValue();
+            player.sendSystemMessage(Component.literal(message));
+            String kind = message.startsWith("[Demon Info]") ? "demon" : "minion";
+            if (TeamInfoBookManager.give(player, kind, message)) booksGiven++;
+        }
+
+        String result = "Shared private team information with " + preview.messages().size() + " player(s).";
+        if (booksGiven == preview.messages().size()) {
+            result += " Each recipient also received a temporary book until Day.";
+        } else {
+            result += " Temporary books were added for " + booksGiven + "/" + preview.messages().size()
+                    + " recipient(s); anyone without inventory space still has the same information in chat.";
+        }
+        return SetupOperations.Result.ok(result);
     }
 
     /**
