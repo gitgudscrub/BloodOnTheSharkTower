@@ -50,6 +50,18 @@ public final class NightTeamInfoScreen extends Screen {
         boolean manualLunaticInfo = lunaticOnScript();
         int controlY = 48;
 
+        // Bluff-only delivery is useful both in ordinary games and in the manual
+        // Lunatic workflow. It always targets actual committed Demon characters,
+        // never a Lunatic who merely believes they are a Demon.
+        if (demon) {
+            Button sendDemonBluffs = Button.builder(Component.literal("Send Demon Bluffs"), b ->
+                            ClientLunaticBluffs.sendToDemon())
+                    .bounds(this.width / 2 - 110, controlY, 220, 20).build();
+            sendDemonBluffs.active = ClientState.demonBluffs.size() == 3 && demonInPlay();
+            this.addRenderableWidget(sendDemonBluffs);
+            controlY += 24;
+        }
+
         if (manualLunaticInfo) {
             // A possible Lunatic makes the complete starting team-information
             // sequence a judgment call. Do not infer either the real or false
@@ -159,6 +171,11 @@ public final class NightTeamInfoScreen extends Screen {
     private static boolean roleInPlay(Role role) {
         return ClientState.grimoireRoles.values().stream()
                 .anyMatch(value -> isRole(value, role));
+    }
+
+    private static boolean demonInPlay() {
+        return ClientState.grimoireRoles.values().stream()
+                .anyMatch(value -> value != null && value.getRoleType() == RoleType.DEMON);
     }
 
     private static boolean isRole(PendingRoleAssignment value, Role role) {
