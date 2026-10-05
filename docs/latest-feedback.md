@@ -28,3 +28,9 @@ Player labels avoid the actual bounds of portraits, roles, believed roles, remin
 The unseated list pages within the left rail above the labelled bluff section. Game End clears the phase header, hover instructions stay within the centre footer, and Storyteller targets match the rendered portrait/name area. Reminder tokens use free nearby slots; they never cover another widget. The portrait reminder menu retains the complete list when not every token can fit.
 
 Retest the screenshot's five-player Setup with long names, then 7/10/15 players, Drunk/Marionette role pairs, eight reminders, three Storytellers, hand queues and unseated players. Resize and vary GUI scale; check LMB/RMB/middle-click still target what is drawn. Graphical live testing remains required.
+
+## Role menu readability (alpha.9)
+
+- Role Bag setup counts and Outsider modifiers use white shadowed text on a dark header backing.
+- Assign-role labels use the shared role-category palette, including custom roles, rather than grouping good/evil categories together.
+- Retest assignment menus with Townsfolk, Outsiders, Minions and Demons; check Role Bag headers against bright terrain.

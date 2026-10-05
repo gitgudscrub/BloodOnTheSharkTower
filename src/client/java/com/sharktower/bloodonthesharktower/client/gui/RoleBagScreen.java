@@ -282,6 +282,9 @@ public final class RoleBagScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
+        // Keep setup details readable against bright world backgrounds.
+        graphics.fill(6, 4, this.width - 6, hiddenSetupActive() ? 69 : 59, UiDrawing.PANEL);
+
         String title = "Role Bag — " + ClientState.displayScriptName();
         drawCentered(graphics, title, 8, UiDrawing.GOLD, true);
 
@@ -308,7 +311,7 @@ public final class RoleBagScreen extends Screen {
                     + minions + "/" + base.minions() + " Minion   •   "
                     + demons + "/" + base.demons() + " Demon";
         }
-        drawCentered(graphics, counts, 34, UiDrawing.MUTED, false);
+        drawCentered(graphics, counts, 34, UiDrawing.TEXT, true);
 
         OutsiderSetup outsiderSetup = outsiderSetup();
         if (base != null && (outsiderSetup.unknown() || !outsiderSetup.values().equals(Set.of(0)))) {
@@ -323,7 +326,7 @@ public final class RoleBagScreen extends Screen {
                 setupText = "Outsider setup modifier: " + range;
                 if (outsiderSetup.values().contains(chosen)) setupText += "  •  current " + signed(chosen);
             }
-            drawCentered(graphics, setupText, 46, UiDrawing.MUTED, false);
+            drawCentered(graphics, setupText, 46, UiDrawing.TEXT, true);
         }
 
         if (hiddenSetupActive()) {

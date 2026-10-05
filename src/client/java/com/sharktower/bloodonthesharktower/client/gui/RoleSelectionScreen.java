@@ -3,10 +3,9 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.Role;
-import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
+import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.states.ClientState;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -86,7 +85,7 @@ public final class RoleSelectionScreen extends Screen {
             int local = index - start;
             int col = local % columns;
             int row = local / columns;
-            Component label = Component.literal(role.getDisplayName()).withStyle(colour(role.getTeam()));
+            Component label = Component.literal(role.getDisplayName()).withStyle(style -> style.withColor(UiDrawing.teamColor(role.getTeam())));
             this.addRenderableWidget(Button.builder(label, b -> choose(role))
                     .bounds(left + col * (width + gapX), top + row * (height + gapY), width, height)
                     .build());
@@ -233,12 +232,4 @@ public final class RoleSelectionScreen extends Screen {
         graphics.text(this.font, pageText, (this.width - this.font.width(pageText)) / 2, 30, UiDrawing.MUTED, false);
     }
 
-    private static ChatFormatting colour(RoleType type) {
-        return switch (type) {
-            case TOWNSFOLK, OUTSIDER -> ChatFormatting.AQUA;
-            case MINION, DEMON -> ChatFormatting.RED;
-            case TRAVELER -> ChatFormatting.LIGHT_PURPLE;
-            default -> ChatFormatting.WHITE;
-        };
-    }
 }
