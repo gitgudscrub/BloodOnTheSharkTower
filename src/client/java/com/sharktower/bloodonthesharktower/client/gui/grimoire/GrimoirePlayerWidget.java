@@ -61,7 +61,7 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, border);
 
         if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
-            graphics.text(Minecraft.getInstance().font, "?", getX() + 1, getY() + 1, UiDrawing.GOLD, true);
+            drawPendingDeathQuestionMark(graphics, getX() + 1, getY() + 1);
         }
 
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
@@ -87,6 +87,24 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         } finally {
             GrimoireRevealAnimation.endElement(graphics);
         }
+    }
+
+    /**
+     * Larger pixel-art pending-death marker. This is intentionally about 50%
+     * larger than Minecraft's normal '?' glyph so the ST can spot an unrevealed
+     * death at a glance without changing the surrounding role-token size.
+     */
+    private static void drawPendingDeathQuestionMark(GuiGraphicsExtractor graphics, int x, int y) {
+        drawQuestionMarkPixels(graphics, x + 1, y + 1, 0xCC3A2D0A);
+        drawQuestionMarkPixels(graphics, x, y, UiDrawing.GOLD);
+    }
+
+    private static void drawQuestionMarkPixels(GuiGraphicsExtractor graphics, int x, int y, int colour) {
+        graphics.fill(x + 2, y, x + 8, y + 2, colour);
+        graphics.fill(x + 8, y + 2, x + 10, y + 6, colour);
+        graphics.fill(x + 5, y + 6, x + 10, y + 8, colour);
+        graphics.fill(x + 4, y + 8, x + 6, y + 11, colour);
+        graphics.fill(x + 4, y + 12, x + 6, y + 14, colour);
     }
 
     @Override
