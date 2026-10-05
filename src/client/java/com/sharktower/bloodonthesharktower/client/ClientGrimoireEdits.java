@@ -52,7 +52,7 @@ public final class ClientGrimoireEdits {
     }
 
     /**
-     * Secondary "believed role" token for Drunk/Marionette.
+     * Secondary "believed role" token for Drunk, Marionette and Lunatic.
      * Storytellers read the authoritative server map; ordinary players keep a
      * completely local notebook value that is never sent to the server.
      */
@@ -126,9 +126,9 @@ public final class ClientGrimoireEdits {
             return ClientState.demonBluffs;
         }
 
-        // The Lunatic receives a separate private bluff payload. Prefer that
-        // fake set over the ordinary Demon-bluff channel so their personal Grim
-        // looks exactly like a Demon's without leaking the real bluffs.
+        // Older Lunatic test builds used a dedicated client payload. Prefer it
+        // when present; current builds also place the fake set on the normal
+        // player-facing bluff channel so a believed-Demon Lunatic looks normal.
         if (ClientState.myRole == Role.LUNATIC) {
             List<String> lunaticBluffs = ClientLunaticBluffs.current();
             if (!lunaticBluffs.isEmpty()) return lunaticBluffs;
@@ -162,6 +162,7 @@ public final class ClientGrimoireEdits {
         if (actualRole == Role.MARIONETTE
                 && role.getTeam() != com.sharktower.bloodonthesharktower.core.RoleType.TOWNSFOLK
                 && role.getTeam() != com.sharktower.bloodonthesharktower.core.RoleType.OUTSIDER) return;
+        if (actualRole == Role.LUNATIC && role.getTeam() != com.sharktower.bloodonthesharktower.core.RoleType.DEMON) return;
 
         PendingRoleAssignment perceived = role.isCustom()
                 ? new PendingRoleAssignment(role.asCustomRole(), AlignmentOverride.DEFAULT)
@@ -175,7 +176,9 @@ public final class ClientGrimoireEdits {
 
     private static boolean isDeceivedCharacter(PendingRoleAssignment assignment) {
         return assignment != null && !assignment.isCustomRole()
-                && (assignment.role() == Role.DRUNK || assignment.role() == Role.MARIONETTE);
+                && (assignment.role() == Role.DRUNK
+                || assignment.role() == Role.MARIONETTE
+                || assignment.role() == Role.LUNATIC);
     }
 
     public static void clearRole(UUID playerId) {
