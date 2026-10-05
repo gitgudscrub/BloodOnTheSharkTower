@@ -18,6 +18,7 @@ public final class NightTeamInfoScreen extends Screen {
     private boolean smallGameOverride;
     private int page;
     private int lastLunaticBluffRevision = -1;
+    private String lastDemonBluffSignature = "";
 
     public NightTeamInfoScreen(boolean demon) {
         super(Component.literal(demon ? "Demon Info" : "Minion Info"));
@@ -27,18 +28,23 @@ public final class NightTeamInfoScreen extends Screen {
     @Override
     protected void init() {
         lastLunaticBluffRevision = ClientLunaticBluffs.revision();
+        lastDemonBluffSignature = demonBluffSignature();
         build(true);
     }
 
     @Override
     public void tick() {
         super.tick();
-        // Only the Demon-info page owns the Lunatic bluff controls, but both
-        // Minion and Demon information become manual when Lunatic is on-script.
-        if (!demon || !lunaticOnScript()) return;
-        int revision = ClientLunaticBluffs.revision();
-        if (revision == lastLunaticBluffRevision) return;
-        lastLunaticBluffRevision = revision;
+        if (!demon) return;
+
+        int lunaticRevision = ClientLunaticBluffs.revision();
+        String demonSignature = demonBluffSignature();
+        boolean lunaticChanged = lunaticOnScript() && lunaticRevision != lastLunaticBluffRevision;
+        boolean demonChanged = !demonSignature.equals(lastDemonBluffSignature);
+        if (!lunaticChanged && !demonChanged) return;
+
+        lastLunaticBluffRevision = lunaticRevision;
+        lastDemonBluffSignature = demonSignature;
         clearWidgets();
         build(false);
     }
@@ -50,14 +56,20 @@ public final class NightTeamInfoScreen extends Screen {
         boolean manualLunaticInfo = lunaticOnScript();
         int controlY = 48;
 
-        // Bluff-only delivery is useful both in ordinary games and in the manual
-        // Lunatic workflow. It always targets actual committed Demon characters,
-        // never a Lunatic who merely believes they are a Demon.
+        // Keep real Demon bluff configuration and delivery together on Demon Info.
+        // This mirrors the Lunatic controls when a Lunatic is actually in play.
         if (demon) {
+            int demonBluffCount = ClientState.demonBluffs.size();
+            this.addRenderableWidget(Button.builder(
+                            Component.literal("Demon Bluffs: " + demonBluffCount + "/3"), b ->
+                                    this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(this)))
+                    .bounds(this.width / 2 - 110, controlY, 220, 20).build());
+            controlY += 24;
+
             Button sendDemonBluffs = Button.builder(Component.literal("Send Demon Bluffs"), b ->
                             ClientLunaticBluffs.sendToDemon())
                     .bounds(this.width / 2 - 110, controlY, 220, 20).build();
-            sendDemonBluffs.active = ClientState.demonBluffs.size() == 3 && demonInPlay();
+            sendDemonBluffs.active = demonBluffCount == 3 && demonInPlay();
             this.addRenderableWidget(sendDemonBluffs);
             controlY += 24;
         }
@@ -74,7 +86,7 @@ public final class NightTeamInfoScreen extends Screen {
                 int bluffCount = ClientLunaticBluffs.current().size();
                 this.addRenderableWidget(Button.builder(
                                 Component.literal("Lunatic Bluffs: " + bluffCount + "/3"), b ->
-                                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen()))
+                                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(this)))
                         .bounds(this.width / 2 - 110, controlY, 220, 20).build());
                 controlY += 24;
 
@@ -156,9 +168,14 @@ public final class NightTeamInfoScreen extends Screen {
         if (!manualLunaticInfo) {
             return assignment.getRoleType() == (demon ? RoleType.DEMON : RoleType.MINION);
         }
-        return assignment.getRoleType() == RoleType.DEMON
-                || assignment.getRoleType() == RoleType.MINION
-                || isRole(assignment, Role.LUNATIC);
+
+        // Manual Lunatic games mirror the actual starting-information visits:
+        // Minion Info is for Minions only; Demon Info is for the real Demon and
+        // the Lunatic who is being shown a false Demon world.
+        if (demon) {
+            return assignment.getRoleType() == RoleType.DEMON || isRole(assignment, Role.LUNATIC);
+        }
+        return assignment.getRoleType() == RoleType.MINION;
     }
 
     private static String visitPrefix(PendingRoleAssignment assignment) {
@@ -185,6 +202,10 @@ public final class NightTeamInfoScreen extends Screen {
     private static boolean lunaticOnScript() {
         return ClientState.currentScript != null && ClientState.currentScript.allRoles().stream()
                 .anyMatch(role -> role != null && role.getId().equalsIgnoreCase(Role.LUNATIC.getId()));
+    }
+
+    private static String demonBluffSignature() {
+        return String.join("|", ClientState.demonBluffs);
     }
 
     @Override
