@@ -28,9 +28,10 @@ public final class GrimoireReturnState {
 
             // A stale editor-return request must never replace an unrelated modal
             // screen that the Storyteller deliberately opened afterwards. This was
-            // closing Custom Scripts and Team Info preview when a late full-state
-            // Grimoire packet arrived after their dedicated response.
+            // closing Custom Scripts and the Minion/Demon information flow when a
+            // late full-state Grimoire packet arrived after their dedicated action.
             if (client.gui.screen() instanceof CustomScriptsScreen
+                    || client.gui.screen() instanceof NightTeamInfoScreen
                     || client.gui.screen() instanceof TeamInfoPreviewScreen
                     || client.gui.screen() instanceof ScriptImportConflictScreen) {
                 deferredOpenTicks = -1;
