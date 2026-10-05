@@ -131,6 +131,7 @@ public final class RoleSelectionScreen extends Screen {
                 if (actualRole == Role.MARIONETTE) {
                     return role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER;
                 }
+                if (actualRole == Role.LUNATIC) return role.getTeam() != RoleType.DEMON;
                 return true;
             });
         } else {
@@ -143,9 +144,9 @@ public final class RoleSelectionScreen extends Screen {
                         .map(id -> id.toLowerCase(java.util.Locale.ROOT))
                         .forEach(unavailableBluffs::add);
 
-                // Drunk/Marionette believed-role tokens are also withheld from
-                // bluff choices, matching the existing random-bluff logic and
-                // avoiding a "bluff" that a good player has already been shown.
+                // Believed-role tokens are also withheld from bluff choices,
+                // matching the existing random-bluff logic and avoiding a
+                // "bluff" that another player has already been shown.
                 ClientState.grimoirePerceivedRoles.values().stream()
                         .filter(java.util.Objects::nonNull)
                         .map(com.sharktower.bloodonthesharktower.core.PendingRoleAssignment::getRoleId)
