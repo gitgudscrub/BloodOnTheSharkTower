@@ -55,10 +55,9 @@ public final class CoreStateReceivers {
             if (context.client().player != null && ClientState.storytellerPlayers.contains(context.client().player.getUUID()))
                 com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen.receive(payload);
         }));
-        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.TeamInfoPreviewPayload.TYPE, (payload, context) -> context.client().execute(() -> {
-            if (context.client().player != null && ClientState.storytellerPlayers.contains(context.client().player.getUUID()))
-                context.client().gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen(payload.token(), payload.text()));
-        }));
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.TeamInfoPreviewPayload.TYPE, (payload, context) -> context.client().execute(() ->
+                context.client().gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen(payload.token(), payload.text()))
+        ));
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.NotebookPayload.TYPE, (payload, context) -> {
             ClientState.notebookGeneration = payload.generation();
             ClientState.notebookText = payload.text();
@@ -169,8 +168,6 @@ public final class CoreStateReceivers {
                         payload.reminders(),
                         payload.demonBluffs()
                 );
-                // Open the normal personal Grimoire so the Spy/Widow sees the
-                // shared information in the same place they keep their own notes.
                 client.gui.setScreen(new AssignRolesScreen());
             });
             BloodOnTheSharktower.LOGGER.info(
@@ -199,9 +196,6 @@ public final class CoreStateReceivers {
                     payload.isTargetedSend()
             );
 
-            // Role Bag workflow: after the server has actually shuffled and
-            // synchronised the pending assignments, return the Storyteller to
-            // the Grimoire so the result is visible immediately.
             boolean roleBagReturn = RoleBagScreen.consumeOpenGrimoireAfterDistributionSync();
             boolean editorReturn = GrimoireReturnState.consumeAfterGrimoireSync();
 
@@ -209,9 +203,6 @@ public final class CoreStateReceivers {
                 Minecraft client = Minecraft.getInstance();
                 client.execute(() -> client.gui.setScreen(new AssignRolesScreen()));
             }
-            // editorReturn intentionally performs no immediate setScreen here.
-            // GrimoireReturnState will reopen the Grim from END_CLIENT_TICK after
-            // the current network/input lifecycle has completely finished.
         });
 
         ClientPlayNetworking.registerGlobalReceiver(SyncDaytimeStateS2CPayload.TYPE, (payload, context) -> {
@@ -348,24 +339,14 @@ public final class CoreStateReceivers {
             int scriptRoleCount = ClientState.scriptRoleCount();
 
             ClientPlayNetworking.send(new NetworkSyncAckC2SPayload(
-                    payload.sequence(),
+                    payload.nonce(),
                     phase,
                     scriptName,
-                    scriptRoleCount,
-                    ClientState.seatedPlayerCount(),
-                    ClientState.deadPlayerCount(),
-                    ClientState.grimoirePlayerCount()
+                    scriptRoleCount
             ));
-
-            BloodOnTheSharktower.LOGGER.info(
-                    "Client acknowledged bulk core sync {}: phase={}, script={}, roles={}, seats={}, dead={}, grimoire={}",
-                    payload.sequence(),
-                    phase,
-                    scriptName,
-                    scriptRoleCount,
-                    ClientState.seatedPlayerCount(),
-                    ClientState.deadPlayerCount(),
-                    ClientState.grimoirePlayerCount()
+            BloodOnTheSharktower.LOGGER.debug(
+                    "Responded to network sync probe {}: phase={}, script='{}', roles={}",
+                    payload.nonce(), phase, scriptName, scriptRoleCount
             );
         });
     }
