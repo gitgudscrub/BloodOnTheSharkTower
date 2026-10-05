@@ -28,7 +28,7 @@ import java.util.Set;
  * later Sharktower enhancement.
  */
 public final class ScriptBuilderScreen extends Screen {
-        private static final Gson GSON = new Gson();
+    private static final Gson GSON = new Gson();
     private static final Set<String> SELECTED = new LinkedHashSet<>();
     private static String seededScriptIdentity = "";
 
@@ -53,7 +53,7 @@ public final class ScriptBuilderScreen extends Screen {
         int maxPage = Math.max(0, (roles.size() - 1) / perPage);
         if (page > maxPage) page = maxPage;
 
-                int w = 125;
+        int w = 125;
         int h = 20;
         int gapX = 6;
         int gapY = 5;
@@ -81,10 +81,10 @@ public final class ScriptBuilderScreen extends Screen {
                         this.minecraft.gui.setScreen(new BaseThreeScreen()))
                 .bounds(this.width - 108, 10, 96, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Custom Scripts"), b -> {
-            this.minecraft.gui.setScreen(new CustomScriptsScreen());
-            ClientStorytellerActions.send("custom_scripts_list", "");
-        }).bounds(this.width - 108, 34, 96, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Custom Scripts"), b ->
+                        CustomScriptsScreen.openAndRefresh())
+                .bounds(this.width - 108, 34, 96, 20).build());
+
         int navY = this.height - 70;
         this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
             if (page > 0) this.minecraft.gui.setScreen(new ScriptBuilderScreen(page - 1));
@@ -116,14 +116,15 @@ public final class ScriptBuilderScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String heading = "Script Builder";
         graphics.text(this.font, heading, 12, 14, UiDrawing.GOLD, true);
-        String info = SELECTED.size() + " roles selected   •   Click roles to add/remove";
         graphics.text(this.font, "Selected: " + SELECTED.size(), 12, 32, UiDrawing.MUTED, false);
     }
 
     private static List<ScriptRole> palette() {
-        Map<String,ScriptRole> merged = new LinkedHashMap<>();
-        for (Role role : Role.SELECTABLE_ROLES) merged.put(role.getId(),new ScriptRole.Official(role));
-        if (ClientState.currentScript != null) for (ScriptRole role : ClientState.currentScript.allRoles()) merged.put(role.getId(),role);
+        Map<String, ScriptRole> merged = new LinkedHashMap<>();
+        for (Role role : Role.SELECTABLE_ROLES) merged.put(role.getId(), new ScriptRole.Official(role));
+        if (ClientState.currentScript != null) {
+            for (ScriptRole role : ClientState.currentScript.allRoles()) merged.put(role.getId(), role);
+        }
         List<ScriptRole> roles = new ArrayList<>(merged.values());
         roles.removeIf(role -> role.getTeam() == RoleType.FABLED || role.getTeam() == RoleType.LORIC);
         roles.sort(Comparator.comparingInt((ScriptRole r) -> r.getTeam().ordinal())
