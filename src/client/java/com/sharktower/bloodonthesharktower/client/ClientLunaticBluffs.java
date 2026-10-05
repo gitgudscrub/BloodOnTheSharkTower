@@ -1,5 +1,6 @@
 package com.sharktower.bloodonthesharktower.client;
 
+import com.sharktower.bloodonthesharktower.client.gui.NightTeamInfoScreen;
 import com.sharktower.bloodonthesharktower.networking.LunaticBluffActionC2SPayload;
 import com.sharktower.bloodonthesharktower.networking.LunaticBluffsS2CPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -14,7 +15,12 @@ public final class ClientLunaticBluffs {
 
     public static void register() {
         ClientPlayNetworking.registerGlobalReceiver(LunaticBluffsS2CPayload.TYPE, (payload, context) ->
-                context.client().execute(() -> roleIds = List.copyOf(payload.roleIds())));
+                context.client().execute(() -> {
+                    roleIds = List.copyOf(payload.roleIds());
+                    if (context.client().screen instanceof NightTeamInfoScreen screen) {
+                        screen.refreshLunaticBluffs();
+                    }
+                }));
     }
 
     public static List<String> current() {
