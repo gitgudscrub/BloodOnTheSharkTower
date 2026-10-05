@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Separate fake bluff set used only for an in-play Lunatic.
@@ -94,6 +93,13 @@ public final class LunaticBluffs {
     }
 
     public static List<ScriptRole> current() {
+        // A full/reset-for-next-game clears committed roles before this screen is
+        // opened again. Drop the old fake set immediately even if the same script
+        // remains loaded for the next game.
+        if (!lunaticInPlay()) {
+            clear();
+            return List.of();
+        }
         if (selectedForScript != null && selectedForScript != ServerState.currentScript) {
             clear();
         }
