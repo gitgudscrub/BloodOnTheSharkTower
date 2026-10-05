@@ -1,6 +1,5 @@
 package com.sharktower.bloodonthesharktower.client;
 
-import com.sharktower.bloodonthesharktower.client.gui.NightTeamInfoScreen;
 import com.sharktower.bloodonthesharktower.networking.LunaticBluffActionC2SPayload;
 import com.sharktower.bloodonthesharktower.networking.LunaticBluffsS2CPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -10,6 +9,7 @@ import java.util.List;
 /** Storyteller-only client cache for the Lunatic's separate fake bluff set. */
 public final class ClientLunaticBluffs {
     private static List<String> roleIds = List.of();
+    private static int revision;
 
     private ClientLunaticBluffs() {}
 
@@ -17,14 +17,16 @@ public final class ClientLunaticBluffs {
         ClientPlayNetworking.registerGlobalReceiver(LunaticBluffsS2CPayload.TYPE, (payload, context) ->
                 context.client().execute(() -> {
                     roleIds = List.copyOf(payload.roleIds());
-                    if (context.client().screen instanceof NightTeamInfoScreen screen) {
-                        screen.refreshLunaticBluffs();
-                    }
+                    revision++;
                 }));
     }
 
     public static List<String> current() {
         return roleIds;
+    }
+
+    public static int revision() {
+        return revision;
     }
 
     public static void request() {
@@ -35,6 +37,7 @@ public final class ClientLunaticBluffs {
         // Optimistic local update keeps the manual Demon Info screen responsive;
         // the server immediately sends back its authoritative set after validation.
         roleIds = ids == null ? List.of() : List.copyOf(ids);
+        revision++;
         ClientPlayNetworking.send(new LunaticBluffActionC2SPayload("set", String.join("|", roleIds)));
     }
 
@@ -44,5 +47,6 @@ public final class ClientLunaticBluffs {
 
     public static void clear() {
         roleIds = List.of();
+        revision++;
     }
 }
