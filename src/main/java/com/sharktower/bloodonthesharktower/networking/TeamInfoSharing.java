@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.networking;
 
 import com.sharktower.bloodonthesharktower.core.*;
+import com.sharktower.bloodonthesharktower.setup.LunaticBluffs;
 import com.sharktower.bloodonthesharktower.setup.SetupOperations;
 import com.sharktower.bloodonthesharktower.states.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -32,6 +33,10 @@ public final class TeamInfoSharing {
                 || !(options[3].equals("true") || options[3].equals("false")))
             return SetupOperations.Result.fail("Invalid team information options.");
         boolean demon = options[0].equals("demon");
+        if (demon && LunaticBluffs.lunaticOnScript()) {
+            return SetupOperations.Result.fail(
+                    "Lunatic is on the current script. Demon Info is manual so the Storyteller can control false Minions and fake bluffs.");
+        }
         State state = state();
         var plan = TeamInformation.plan(state.roles(), state.seats(), state.deaths(), demon,
                 Boolean.parseBoolean(options[1]), Boolean.parseBoolean(options[2]), Boolean.parseBoolean(options[3]));
@@ -42,7 +47,7 @@ public final class TeamInfoSharing {
         if (plan.withheld()) text.append("Poppy Grower: identities withheld. Demon still receives bluffs.\n");
         if (Boolean.parseBoolean(options[2])) text.append("Poppy Grower: ST released identities.\n");
         if (Boolean.parseBoolean(options[3])) text.append("Small Game: ST Override.\n");
-        text.append("For drunk/poisoned characters, Lunatic or other special rulings, review your choices or use a manual visit.\n\n");
+        text.append("For drunk/poisoned characters or other special rulings, review your choices or use a manual visit.\n\n");
         for (var entry : plan.recipients().entrySet()) {
             String message = "[" + header + "]\n";
             var info = entry.getValue();
