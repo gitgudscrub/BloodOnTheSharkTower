@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
+import com.sharktower.bloodonthesharktower.client.ClientLunaticBluffs;
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireBluffWidget;
 import com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoireHoverHints;
@@ -14,6 +15,7 @@ import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerAc
 import com.sharktower.bloodonthesharktower.core.GamePhase;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
+import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -34,15 +36,10 @@ import java.util.UUID;
 /**
  * 0.8.0 direct visual/interaction port of BOTB's AssignRolesScreen.
  *
- * The original layout constants have been preserved from the 1.21.1 mod:
- *  - role tokens 32px
- *  - player/head markers 24px
- *  - circular role radius min(width/2,height/2)-50
- *  - inner player radius roleRadius-35
- *  - 90x20 Storyteller controls with 5px vertical gaps
- *  - contextual Storyteller controls that change with the active game phase
- *  - Script Builder top-left during Setup, bluffs bottom-left, compact utility
- *    controls along the bottom edge.
+ * The Grim uses its own responsive virtual canvas so Minecraft's GUI-scale
+ * preference does not distort the circle. Token/control sizes stay consistent
+ * relative to the physical window while the internal rings keep enough room for
+ * player names, the centre Storyteller panel and the bluff rail.
  */
 public class AssignRolesScreen extends Screen {
     /**
@@ -57,7 +54,6 @@ public class AssignRolesScreen extends Screen {
     private static final float GRIMOIRE_MAX_VIEWPORT_SCALE = 3.0F;
     private static final int ROLE_SIZE = 32;
     private static final int PERCEIVED_ROLE_SIZE = 20;
-    // Original BOTB reminder tokens are 14px with 2px padding around the 32px role token.
     private static final int REMINDER_SIZE = 14;
     private static final int REMINDER_PADDING = 2;
     private static final int DECEIVED_ROLE_GAP = 4;
@@ -79,25 +75,23 @@ public class AssignRolesScreen extends Screen {
     private static boolean showBluffs = true;
     private boolean showPlayerBluffs = true;
 
-    // The Grim can stay open while seats are populated/shuffled. Keep a small
-    // signature so widget instances are rebuilt as soon as the live seat map changes.
     private String lastSeatLayoutSignature = "";
+    private int lastLunaticBluffRevision = -1;
 
     private record GrimHit(UUID playerId, int seat, PendingRoleAssignment assignment) {}
 
     private record GrimLayout(int centerX, int centerY, int roleRadius, int headRadius) {}
 
     /**
-     * Preserve the original BOTB token/head sizes, but give very large games a
-     * little more breathing room at the bottom edge. At 13-15 players the role
-     * ring moves slightly inward and the whole player circle lifts a few pixels.
-     * The head ring keeps its original radius so role tokens sit a little closer
-     * to their player portraits instead of feeling detached.
+     * Keep the same physical composition across window sizes, but use a slightly
+     * wider ring for small games so names do not pile into the Storyteller in the
+     * centre. Large games retain the safer outer margin and slight upward lift.
      */
     private GrimLayout grimoireLayout(int playerCount) {
         int centerX = layoutWidth() / 2;
         int baseCenterY = layoutHeight() / 2;
-        int baseRoleRadius = Math.max(54, Math.min(centerX, baseCenterY) - 50);
+        int edgeMargin = playerCount <= 6 ? 42 : playerCount <= 9 ? 45 : 50;
+        int baseRoleRadius = Math.max(54, Math.min(centerX, baseCenterY) - edgeMargin);
 
         int inward = switch (playerCount) {
             case 15 -> 8;
@@ -113,7 +107,7 @@ public class AssignRolesScreen extends Screen {
         };
 
         int roleRadius = Math.max(54, baseRoleRadius - inward);
-        int headRadius = Math.max(24, baseRoleRadius - 47);
+        int headRadius = Math.max(28, roleRadius - 32);
         return new GrimLayout(centerX, baseCenterY - lift, roleRadius, headRadius);
     }
 
@@ -127,6 +121,10 @@ public class AssignRolesScreen extends Screen {
             GrimoireRevealAnimation.showImmediately();
         } else {
             GrimoireRevealAnimation.beginScreen();
+        }
+        lastLunaticBluffRevision = ClientLunaticBluffs.revision();
+        if (ClientGrimoireEdits.isLocalStoryteller() && lunaticAssignedInGrim()) {
+            ClientLunaticBluffs.request();
         }
         buildContextualControls();
         buildBluffVisibilityControl();
@@ -145,8 +143,9 @@ public class AssignRolesScreen extends Screen {
             GrimoireInteractionState.clearNominator();
         }
         String currentSignature = seatLayoutSignature();
-        if (!currentSignature.equals(lastSeatLayoutSignature) && this.minecraft != null) {
-            // Refresh live widgets in place; replacing the Screen disrupts player input.
+        int lunaticRevision = ClientLunaticBluffs.revision();
+        if ((!currentSignature.equals(lastSeatLayoutSignature)
+                || lunaticRevision != lastLunaticBluffRevision) && this.minecraft != null) {
             clearWidgets();
             buildContextualControls();
             buildBluffVisibilityControl();
@@ -156,15 +155,10 @@ public class AssignRolesScreen extends Screen {
             buildUnseatedWidgets();
             buildBluffWidgets();
             lastSeatLayoutSignature = currentSignature;
+            lastLunaticBluffRevision = lunaticRevision;
         }
     }
 
-    /**
-     * Original BOTB uses the Grimoire itself as the primary game console.
-     * Instead of leaving every Storyteller action visible at once, the right
-     * rail changes with the current GamePhase. Advanced/recovery tools remain
-     * one click away through TOOLS.
-     */
     private void buildContextualControls() {
         if (!ClientGrimoireEdits.isLocalStoryteller()) return;
 
@@ -174,7 +168,6 @@ public class AssignRolesScreen extends Screen {
         int y = MARGIN;
         GamePhase phase = ClientState.phase();
 
-        // Direct access to winner selection and post-game reveal/reset controls.
         this.addRenderableWidget(Button.builder(
                         Component.literal("Game End").withStyle(ChatFormatting.RED), b ->
                                 this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
@@ -278,11 +271,6 @@ public class AssignRolesScreen extends Screen {
             addRightAction(rightX, y, "Reset Exile", ChatFormatting.GRAY, "exile_reset");
         }
 
-        // Keep advanced/recovery controls available without permanently filling
-        // the main Grim with management buttons.
-        // Keep the main Grim's bottom strip minimal. End Game remains
-        // available inside TOOLS; duplicating it here made the small-width
-        // Scale-4 layout unnecessarily cramped.
         this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
                         this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
                 .bounds(rightX - 60, layoutHeight - 30, 55, CONTROL_H).build());
@@ -339,10 +327,6 @@ public class AssignRolesScreen extends Screen {
             ));
 
             if (isDeceivedCharacter(assignment)) {
-                // Centre the TRUE + BELIEVED pair around the player's normal radial
-                // token position. Previously the true token stayed on-centre and the
-                // believed token was added to one side, which made the pair look
-                // visually offset around the Grim.
                 double tangentX = -Math.sin(angle);
                 double tangentY = Math.cos(angle);
                 double trueOffset = -(PERCEIVED_ROLE_SIZE + DECEIVED_ROLE_GAP) / 2.0;
@@ -373,16 +357,11 @@ public class AssignRolesScreen extends Screen {
 
     private static boolean isDeceivedCharacter(PendingRoleAssignment assignment) {
         return assignment != null && !assignment.isCustomRole()
-                && (assignment.role() == com.sharktower.bloodonthesharktower.core.Role.DRUNK
-                || assignment.role() == com.sharktower.bloodonthesharktower.core.Role.MARIONETTE);
+                && (assignment.role() == Role.DRUNK
+                || assignment.role() == Role.MARIONETTE
+                || assignment.role() == Role.LUNATIC);
     }
 
-    /**
-     * BOTB reminder tokens hug the 32px role token rather than forming a second
-     * radial ring around the Grim. Eight compact slots surround each role token;
-     * the outward-facing slots are preferred so reminders naturally avoid the
-     * player's head/name on the inner side of the circle.
-     */
     private void buildReminderWidgets() {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return;
@@ -404,8 +383,6 @@ public class AssignRolesScreen extends Screen {
             double tokenCenterY = centerY + radius * Math.sin(angle);
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
 
-            // Match the true-role position used by buildPlayerWidgets for
-            // Drunk/Marionette true+believed role pairs.
             if (isDeceivedCharacter(assignment)) {
                 double tangentX = -Math.sin(angle);
                 double tangentY = Math.cos(angle);
@@ -487,7 +464,6 @@ public class AssignRolesScreen extends Screen {
         return overlapsHead ? score - 1000.0 : score;
     }
 
-
     private void buildStorytellerWidgets() {
         List<UUID> storytellers = ClientState.storytellerPlayers;
         if (storytellers == null || storytellers.isEmpty()) return;
@@ -497,7 +473,7 @@ public class AssignRolesScreen extends Screen {
         int gap = 8;
         int totalW = visible * widgetW + Math.max(0, visible - 1) * gap;
         int startX = layoutWidth() / 2 - totalW / 2;
-        int y = layoutHeight() / 2 - 54;
+        int y = layoutHeight() / 2 - 40;
 
         for (int i = 0; i < visible; i++) {
             UUID storytellerId = storytellers.get(i);
@@ -514,10 +490,6 @@ public class AssignRolesScreen extends Screen {
     private void buildUnseatedWidgets() {
         if (!ClientGrimoireEdits.isLocalStoryteller() || !showUnseated) return;
 
-        // playerSeatNumbers is the live, server-authoritative seating map. During
-        // Setup, grimoireSeatNumbers may intentionally lag behind it so the Grim
-        // can preserve role state across reconnects. Prefer the live map whenever
-        // it is available so sitting down / standing up updates immediately.
         java.util.Set<UUID> seated = new java.util.HashSet<>();
         if (!ClientState.playerSeatNumbers.isEmpty()) {
             seated.addAll(ClientState.playerSeatNumbers.keySet());
@@ -558,14 +530,35 @@ public class AssignRolesScreen extends Screen {
                 }).bounds(MARGIN, layoutHeight() - 30, CONTROL_W, CONTROL_H).build());
     }
 
+    private int bluffStartY() {
+        return Math.max(58, layoutHeight() / 2 - 10);
+    }
+
     private void buildBluffWidgets() {
         if (!shouldShowBluffs()) return;
-        if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
-        int startY = Math.max(55, layoutHeight() / 2 + 18);
+        boolean storyteller = ClientGrimoireEdits.isLocalStoryteller();
+        if (!storyteller && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
+
+        int startY = bluffStartY();
+        List<String> demonBluffs = ClientGrimoireEdits.visibleDemonBluffs();
         for (int i = 0; i < 3; i++) {
-            String roleId = i < ClientGrimoireEdits.visibleDemonBluffs().size() ? ClientGrimoireEdits.visibleDemonBluffs().get(i) : "";
+            String roleId = i < demonBluffs.size() ? demonBluffs.get(i) : "";
             this.addRenderableWidget(new GrimoireBluffWidget(MARGIN, startY + i * 42, 32, i, roleId));
         }
+
+        if (storyteller && lunaticAssignedInGrim()) {
+            int x = MARGIN + 44;
+            List<String> lunaticBluffs = ClientLunaticBluffs.current();
+            for (int i = 0; i < 3; i++) {
+                String roleId = i < lunaticBluffs.size() ? lunaticBluffs.get(i) : "";
+                this.addRenderableWidget(new GrimoireBluffWidget(x, startY + i * 42, 32, i, roleId, true));
+            }
+        }
+    }
+
+    private boolean lunaticAssignedInGrim() {
+        return ClientState.grimoireRoles.values().stream()
+                .anyMatch(value -> value != null && value.isOfficialRole() && value.role() == Role.LUNATIC);
     }
 
     private void action(String action) {
@@ -581,8 +574,6 @@ public class AssignRolesScreen extends Screen {
         graphics.pose().pushMatrix();
         graphics.pose().scale(scale, scale);
         try {
-            // Render widgets and custom Grim drawing through one responsive virtual
-            // canvas so text, tokens, controls, reminders and hitboxes scale together.
             GrimoireHoverHints.clear();
             super.extractRenderState(graphics, scaledMouseX, scaledMouseY, delta);
 
@@ -596,12 +587,20 @@ public class AssignRolesScreen extends Screen {
             renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
             renderSeatNumbers(graphics, seats, centerX, centerY, radius);
             renderCenterStatus(graphics, seats.size());
+            renderBluffLabels(graphics);
             renderPhaseIndicator(graphics);
             renderHoverHint(graphics);
             renderHandVotingPanel(graphics);
         } finally {
             graphics.pose().popMatrix();
         }
+    }
+
+    private void renderBluffLabels(GuiGraphicsExtractor graphics) {
+        if (!shouldShowBluffs() || !ClientGrimoireEdits.isLocalStoryteller() || !lunaticAssignedInGrim()) return;
+        int y = bluffStartY() - 11;
+        graphics.text(this.font, "Demon", MARGIN, y, UiDrawing.MUTED, false);
+        graphics.text(this.font, "Lunatic", MARGIN + 44, y, UiDrawing.MUTED, false);
     }
 
     private void renderPlayerHeadRing(GuiGraphicsExtractor graphics, List<Map.Entry<UUID, Integer>> seats,
@@ -622,38 +621,33 @@ public class AssignRolesScreen extends Screen {
                 continue;
             }
             try {
+                boolean drewFace = PlayerFaceCompat.draw(graphics, uuid, headX, headY, HEAD_SIZE);
+                if (!drewFace) {
+                    graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, 0xCC15151A);
+                    drawCenteredAt(graphics, Integer.toString(seat), headX + HEAD_SIZE / 2,
+                            headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
+                }
+                graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
+                if (GrimoireInteractionState.isSelectedNominator(uuid)) {
+                    graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.YES);
+                } else if (uuid.equals(ClientState.currentNominee)) {
+                    graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.GOLD);
+                }
+                String name = ClientState.playerName(uuid, seat);
+                int nameY = headY + HEAD_SIZE + 2;
+                var notedRole = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(uuid));
+                drawCenteredAt(graphics, name, headX + HEAD_SIZE / 2, nameY,
+                        notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()), true);
+                if (dead) UiDrawing.deathShroud(graphics, headX, headY, HEAD_SIZE);
 
-            // Do not gate face rendering on connectedPlayers. That list can arrive a
-            // tick later than the seat map, and PlayerFaceCompat already fails safely
-            // when a profile/skin is not available yet. This lets a newly seated
-            // player's head appear as soon as Minecraft knows their profile.
-            boolean drewFace = PlayerFaceCompat.draw(graphics, uuid, headX, headY, HEAD_SIZE);
-            if (!drewFace) {
-                graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, 0xCC15151A);
-                drawCenteredAt(graphics, Integer.toString(seat), headX + HEAD_SIZE / 2,
-                        headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
-            }
-            graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
-            if (GrimoireInteractionState.isSelectedNominator(uuid)) {
-                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.YES);
-            } else if (uuid.equals(ClientState.currentNominee)) {
-                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.GOLD);
-            }
-            String name = ClientState.playerName(uuid, seat);
-            int nameY = headY + HEAD_SIZE + 2;
-            var notedRole = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(uuid));
-            drawCenteredAt(graphics, name, headX + HEAD_SIZE / 2, nameY,
-                    notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()), true);
-            if (dead) UiDrawing.deathShroud(graphics, headX, headY, HEAD_SIZE);
-
-            boolean speaking = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING;
-            boolean voting = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.VOTING;
-            if (speaking && ClientState.attentionHands.containsKey(uuid) || voting && ClientState.isHandRaised(uuid)) {
-                drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY + 5);
-                if (speaking)
-                    graphics.text(this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
-                            headX + HEAD_SIZE + 12, headY + 5, UiDrawing.GOLD, true);
-            }
+                boolean speaking = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING;
+                boolean voting = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.VOTING;
+                if (speaking && ClientState.attentionHands.containsKey(uuid) || voting && ClientState.isHandRaised(uuid)) {
+                    drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY + 5);
+                    if (speaking)
+                        graphics.text(this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
+                                headX + HEAD_SIZE + 12, headY + 5, UiDrawing.GOLD, true);
+                }
             } finally {
                 GrimoireRevealAnimation.endElement(graphics);
             }
@@ -687,23 +681,17 @@ public class AssignRolesScreen extends Screen {
     }
 
     private void renderCenterStatus(GuiGraphicsExtractor graphics, int playerCount) {
-        // The original Grim only needs setup counts before play begins. Keeping
-        // these off the live-game Grim leaves the centre focused on the ST head.
         if (ClientState.phase() != GamePhase.SETUP) return;
 
         String players = "Players: " + playerCount;
         String storytellers = "Storytellers: " + ClientState.storytellerPlayers.size();
-        int baseY = layoutHeight() / 2 + 18;
+        int baseY = layoutHeight() / 2 + 36;
         drawCentered(graphics, players, baseY, UiDrawing.TEXT, true);
         drawCentered(graphics, storytellers, baseY + 12, UiDrawing.MUTED, true);
     }
 
     private void renderHoverHint(GuiGraphicsExtractor graphics) {
         String hint = GrimoireHoverHints.current();
-
-        // A selected nominator is state rather than a generic instruction, so
-        // keep that confirmation visible even when the mouse is not hovering a
-        // token. Everything else is target-specific and disappears when idle.
         UUID selected = GrimoireInteractionState.selectedNominator();
         if ((hint == null || hint.isBlank()) && selected != null && ClientState.nominationsOpen) {
             int seat = ClientState.playerSeatNumbers.getOrDefault(selected, 0);
@@ -778,7 +766,6 @@ public class AssignRolesScreen extends Screen {
         }
     }
 
-    /** Small pixel-art hand marker so we do not depend on emoji font support. */
     private void drawRaisedHand(GuiGraphicsExtractor graphics, int x, int y) {
         int gold = 0xFFFFC857;
         int dark = 0xFF4A3410;
@@ -791,12 +778,6 @@ public class AssignRolesScreen extends Screen {
         graphics.outline(x, y - 1, 10, 12, dark);
     }
 
-
-    /**
-     * Cancel Minecraft GUI-scale changes while still responding to the physical
-     * window size. 1024x576 preserves the current compact layout; a 2048x1152
-     * window renders the whole Grim at roughly twice that physical size.
-     */
     private float grimoireUiScale() {
         if (this.minecraft == null) return 1.0F;
         var window = this.minecraft.getWindow();
@@ -827,8 +808,6 @@ public class AssignRolesScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         MouseButtonEvent mapped = remapMouse(event);
 
-        // Minecraft 26.3 uses SDL: left=1, middle=2, right=3.
-        // Use the named constant so middle-click cannot masquerade as RMB.
         if (mapped.buttonInfo().button() == SDLMouse.SDL_BUTTON_MIDDLE) {
             for (var child : this.children()) {
                 if (child instanceof GrimoireBluffWidget bluff && bluff.isMouseOver(mapped.x(), mapped.y()) && bluff.displayRole() != null) {
@@ -858,10 +837,6 @@ public class AssignRolesScreen extends Screen {
         return super.mouseClicked(mapped, doubleClick);
     }
 
-    /**
-     * Resolve the visible player element under a Grim-space mouse coordinate.
-     * Covers portraits, true role tokens and Drunk/Marionette believed tokens.
-     */
     private GrimHit grimHitAt(double mouseX, double mouseY) {
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) return null;
@@ -947,12 +922,6 @@ public class AssignRolesScreen extends Screen {
     }
 
     private List<Map.Entry<UUID, Integer>> sortedSeats() {
-        // playerSeatNumbers is the live, server-authoritative seating map and must
-        // win completely while it contains data. Merging stale grimoire occupants
-        // into it meant that an *unseated* player could remain visible indefinitely:
-        // there was no new occupant to overwrite the old seat. Falling back to the
-        // Grim snapshot only when the live map is genuinely unavailable preserves
-        // reconnect compatibility without making Setup seating sticky.
         java.util.TreeMap<Integer, UUID> occupantBySeat = new java.util.TreeMap<>();
         Map<UUID, Integer> source = !ClientState.playerSeatNumbers.isEmpty()
                 ? ClientState.playerSeatNumbers
@@ -980,7 +949,8 @@ public class AssignRolesScreen extends Screen {
         signature.append(ClientState.phase()).append('|')
                 .append(new java.util.TreeSet<>(ClientState.storytellerPlayers)).append('|')
                 .append(new java.util.TreeSet<>(ClientState.pendingDeaths)).append('|')
-                .append(ClientGrimoireEdits.visibleDemonBluffs()).append('|');
+                .append(ClientGrimoireEdits.visibleDemonBluffs()).append('|')
+                .append(ClientLunaticBluffs.current()).append('|');
         for (var entry : sortedSeats()) {
             var id = entry.getKey();
             signature.append(ClientGrimoireEdits.roleFor(id)).append(ClientGrimoireEdits.perceivedRoleFor(id))
