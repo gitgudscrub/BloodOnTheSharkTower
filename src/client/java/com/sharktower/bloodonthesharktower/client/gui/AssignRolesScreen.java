@@ -81,7 +81,7 @@ public class AssignRolesScreen extends Screen {
 
     private record GrimHit(UUID playerId, int seat, PendingRoleAssignment assignment) {}
 
-    private record GrimLayout(int centerX, int centerY, int roleRadius, int headRadius) {}
+    private record GrimLayout(int centerX, int centerY, int roleRadius, int headRadius, int roleRadiusX, int headRadiusX) {}
 
     /**
      * Keep the same physical composition across window sizes, but use a slightly
@@ -107,9 +107,11 @@ public class AssignRolesScreen extends Screen {
             default -> 0;
         };
 
-        int roleRadius = Math.max(54, baseRoleRadius - inward);
+        int horizontal = Math.max(54, centerX - CONTROL_W - MARGIN - ROLE_SIZE/2 - REMINDER_SIZE);
+        int roleRadius = Math.min(horizontal, Math.max(54, baseRoleRadius - inward));
         int headRadius = Math.max(28, roleRadius - 32);
-        return new GrimLayout(centerX, baseCenterY - lift, roleRadius, headRadius);
+        return new GrimLayout(centerX, baseCenterY - lift, roleRadius, headRadius, horizontal,
+                Math.max(28,horizontal - 32));
     }
 
     public AssignRolesScreen() {
@@ -316,12 +318,12 @@ public class AssignRolesScreen extends Screen {
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
 
-            double tokenCenterX = centerX + radius * Math.cos(angle);
+            double tokenCenterX = centerX + layout.roleRadiusX() * Math.cos(angle);
             double tokenCenterY = centerY + radius * Math.sin(angle);
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
 
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + layout.headRadiusX() * Math.cos(angle)) - HEAD_SIZE / 2;
             int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             this.addRenderableWidget(new GrimoirePlayerHeadWidget(
                     headX, headY, HEAD_SIZE, uuid, seat, assignment
@@ -380,7 +382,7 @@ public class AssignRolesScreen extends Screen {
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
 
-            double tokenCenterX = centerX + radius * Math.cos(angle);
+            double tokenCenterX = centerX + layout.roleRadiusX() * Math.cos(angle);
             double tokenCenterY = centerY + radius * Math.sin(angle);
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
 
@@ -415,7 +417,7 @@ public class AssignRolesScreen extends Screen {
                     new int[]{left, nearTop}
             ));
 
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + layout.headRadiusX() * Math.cos(angle)) - HEAD_SIZE / 2;
             int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             final double roleCenterX = tokenCenterX;
             final double roleCenterY = tokenCenterY;
@@ -615,8 +617,8 @@ public class AssignRolesScreen extends Screen {
             int radius = layout.roleRadius();
             int innerRadius = layout.headRadius();
 
-            renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius);
-            renderSeatNumbers(graphics, seats, centerX, centerY, innerRadius);
+            renderPlayerHeadRing(graphics, seats, centerX, centerY, innerRadius, layout.headRadiusX());
+            renderSeatNumbers(graphics, seats, centerX, centerY, innerRadius, layout.headRadiusX());
             renderCenterStatus(graphics, seats.size());
             renderBluffLabels(graphics);
             renderPhaseIndicator(graphics);
@@ -638,15 +640,15 @@ public class AssignRolesScreen extends Screen {
     }
 
     private void renderPlayerHeadRing(GuiGraphicsExtractor graphics, List<Map.Entry<UUID, Integer>> seats,
-                                      int centerX, int centerY, int innerRadius) {
+                                      int centerX, int centerY, int innerRadius, int innerRadiusX) {
         int count = seats.size();
         List<int[]> labelAreas = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
-            int badgeX = (int)Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2 - 10;
+            int badgeX = (int)Math.round(centerX + innerRadiusX * Math.cos(angle)) - HEAD_SIZE / 2 - 10;
             int badgeY = (int)Math.round(centerY + innerRadius * Math.sin(angle));
             labelAreas.add(new int[]{badgeX-8,badgeY-8,16,16});
-            int handX=(int)Math.round(centerX+innerRadius*Math.cos(angle))+HEAD_SIZE/2+2;
+            int handX=(int)Math.round(centerX+innerRadiusX*Math.cos(angle))+HEAD_SIZE/2+2;
             int handY=(int)Math.round(centerY+innerRadius*Math.sin(angle))-HEAD_SIZE/2-18;
             labelAreas.add(new int[]{handX,handY,24,16});
         }
@@ -656,7 +658,7 @@ public class AssignRolesScreen extends Screen {
             UUID uuid = entry.getKey();
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + innerRadiusX * Math.cos(angle)) - HEAD_SIZE / 2;
             int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
 
@@ -738,7 +740,7 @@ public class AssignRolesScreen extends Screen {
 
     private void renderSeatNumbers(GuiGraphicsExtractor graphics,
                                    List<Map.Entry<UUID, Integer>> seats,
-                                   int centerX, int centerY, int radius) {
+                                   int centerX, int centerY, int radius, int radiusX) {
         int count = seats.size();
         for (int i = 0; i < count; i++) {
             Map.Entry<UUID, Integer> entry = seats.get(i);
@@ -746,7 +748,7 @@ public class AssignRolesScreen extends Screen {
             int seat = entry.getValue() == null ? i + 1 : entry.getValue();
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
 
-            int sx = (int) Math.round(centerX + radius * Math.cos(angle)) - HEAD_SIZE / 2 - 10;
+            int sx = (int) Math.round(centerX + radiusX * Math.cos(angle)) - HEAD_SIZE / 2 - 10;
             int sy = (int) Math.round(centerY + radius * Math.sin(angle));
 
             float reveal = GrimoireRevealAnimation.progressForSeat(seat);
@@ -956,13 +958,13 @@ public class AssignRolesScreen extends Screen {
             PendingRoleAssignment assignment = ClientGrimoireEdits.roleFor(uuid);
             double angle = (Math.PI * 2.0 / count) * i - Math.PI / 2.0;
 
-            int headX = (int) Math.round(centerX + innerRadius * Math.cos(angle)) - HEAD_SIZE / 2;
+            int headX = (int) Math.round(centerX + layout.headRadiusX() * Math.cos(angle)) - HEAD_SIZE / 2;
             int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
             if (inside(mouseX, mouseY, headX, headY, HEAD_SIZE, HEAD_SIZE)) {
                 return new GrimHit(uuid, seat, assignment);
             }
 
-            double tokenCenterX = centerX + radius * Math.cos(angle);
+            double tokenCenterX = centerX + layout.roleRadiusX() * Math.cos(angle);
             double tokenCenterY = centerY + radius * Math.sin(angle);
 
             if (isDeceivedCharacter(assignment)) {
