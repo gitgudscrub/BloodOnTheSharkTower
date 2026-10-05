@@ -1,5 +1,6 @@
 package com.sharktower.bloodonthesharktower.setup;
 
+import com.sharktower.bloodonthesharktower.networking.PlayerNotebooks;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,6 +17,12 @@ public final class FreshGameBooks {
     public static void beginGame(MinecraftServer server, Collection<UUID> players) {
         if (ServerState.currentNight != 0 || ServerState.currentDay != 0
                 || refreshedGeneration == ServerState.resetGeneration) return;
+
+        // SEND ROLES is the definitive start-of-match boundary. Even if the ST
+        // somehow reached this setup without using the normal reset flow, ensure
+        // every private notebook is blank before the new roles become playable.
+        PlayerNotebooks.ensureFreshForGameStart();
+
         refreshedGeneration = ServerState.resetGeneration;
         PENDING.clear(); PENDING.addAll(players);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) refreshIfPending(player);
