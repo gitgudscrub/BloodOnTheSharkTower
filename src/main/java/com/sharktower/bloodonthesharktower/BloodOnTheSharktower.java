@@ -8,6 +8,7 @@ import com.sharktower.bloodonthesharktower.daytime.ElectionManager;
 import com.sharktower.bloodonthesharktower.daytime.DayPublicInfoBookManager;
 import com.sharktower.bloodonthesharktower.networking.ModPackets;
 import com.sharktower.bloodonthesharktower.networking.ModPayloads;
+import com.sharktower.bloodonthesharktower.networking.TeamInfoBookManager;
 import com.sharktower.bloodonthesharktower.setup.DuskHomeCompassManager;
 import com.sharktower.bloodonthesharktower.setup.MapConfigurationStore;
 import com.sharktower.bloodonthesharktower.sound.ModSounds;
@@ -51,6 +52,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(PhasePresentation::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(DuskHomeCompassManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(DayPublicInfoBookManager::serverTick);
-        LOGGER.info("Night-chat automation, world clock-hand voting, enforced vote seating, dusk Home Compass routing and temporary public-info books registered.");
+        ServerTickEvents.END_SERVER_TICK.register(TeamInfoBookManager::serverTick);
+        LOGGER.info("Night-chat automation, world clock-hand voting, enforced vote seating, dusk Home Compass routing and temporary info books registered.");
     }
 }
