@@ -82,6 +82,40 @@ public final class TeamInfoSharing {
         preview.messages().forEach((id,message) -> server.getPlayerList().getPlayer(id).sendSystemMessage(Component.literal(message)));
         return SetupOperations.Result.ok("Shared private team information with " + preview.messages().size() + " player(s).");
     }
+
+    /**
+     * Manual bluff-only delivery for the real Demon world. This deliberately
+     * checks the actual committed role, so a Lunatic who merely believes they
+     * are a Demon can never receive the real bluff set through this path.
+     */
+    public static SetupOperations.Result sendDemonBluffs(MinecraftServer server, ServerPlayer actor) {
+        if (!StorytellerState.isStoryteller(actor.getUUID())) return SetupOperations.Result.fail("Storyteller only.");
+        if (StorytellerState.DEMON_BLUFFS.size() != 3) {
+            return SetupOperations.Result.fail("Choose 3 Demon bluffs before sending them.");
+        }
+
+        List<ServerPlayer> recipients = new ArrayList<>();
+        for (var entry : ServerState.PLAYER_ROLES.entrySet()) {
+            PendingRoleAssignment assignment = entry.getValue();
+            if (assignment == null || assignment.getRoleType() != RoleType.DEMON) continue;
+            if (!ServerState.PLAYER_SEAT_NUMBERS.containsKey(entry.getKey())) continue;
+            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+            if (player == null) {
+                return SetupOperations.Result.fail("The Demon is offline. No bluff information was sent.");
+            }
+            recipients.add(player);
+        }
+        if (recipients.isEmpty()) return SetupOperations.Result.fail("There is no committed Demon to receive bluffs.");
+
+        String names = String.join(", ", StorytellerState.DEMON_BLUFFS.stream()
+                .map(ScriptRole::getDisplayName)
+                .toList());
+        Component message = Component.literal("[Demon Info]\nBluffs: " + names);
+        recipients.forEach(player -> player.sendSystemMessage(message));
+        return SetupOperations.Result.ok("Sent the 3 Demon bluffs privately to "
+                + recipients.size() + " Demon player(s).");
+    }
+
     private static String names(MinecraftServer server,List<UUID> ids,Map<UUID,Integer> seats) {
         return ids.isEmpty() ? "None" : String.join(", ",ids.stream().map(id -> name(server,id,seats)).toList());
     }
