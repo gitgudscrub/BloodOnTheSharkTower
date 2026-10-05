@@ -60,7 +60,7 @@ public final class KeyInputHandler {
         openCatalogKey = bind("key.blood_on_the_sharktower.open_catalog", InputConstants.KEY_K);
         openScriptKey = bind("key.blood_on_the_sharktower.open_script", InputConstants.KEY_C);
         openMyRoleDetailsKey = bind("key.blood_on_the_sharktower.open_my_role_details", InputConstants.KEY_X);
-        disableHudKey = bind("key.blood_on_the_sharktower.disable_hud", InputConstants.KEY_B);
+        disableHudKey = bind("key.blood_on_the_sharktower.disable_hud", InputConstants.UNKNOWN.getValue());
         openTimerKey = bind("key.blood_on_the_sharktower.open_timer", InputConstants.KEY_Y);
         openStorytellerToolsKey = bind("key.blood_on_the_sharktower.open_storyteller_tools", InputConstants.KEY_I);
         openNotebookKey = bind("key.blood_on_the_sharktower.notebook", InputConstants.KEY_B);
