@@ -23,6 +23,7 @@ public final class ModPackets {
     public static void registerC2SReceivers() {
         NetworkDiagnostics.registerServerReceiver();
         StorytellerActionHandler.register();
+        LunaticBluffNetworking.register();
         PlayerActionHandler.register();
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
