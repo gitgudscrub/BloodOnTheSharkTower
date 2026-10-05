@@ -46,11 +46,15 @@ import java.util.UUID;
  */
 public class AssignRolesScreen extends Screen {
     /**
-     * Keep the Grimoire at the same physical footprint as Minecraft GUI Scale 2.
-     * The screen then remains visually stable on Auto/1x/2x/3x/4x instead of
-     * collapsing inward as Minecraft changes the size of the GUI canvas.
+     * The compact multiplayer test window (~1024x576) is the reference viewport.
+     * The Grim ignores Minecraft's global GUI scale, but grows/shrinks with the
+     * physical window so it occupies roughly the same percentage of the screen.
      */
     private static final int GRIMOIRE_REFERENCE_GUI_SCALE = 2;
+    private static final int GRIMOIRE_REFERENCE_WIDTH = 1024;
+    private static final int GRIMOIRE_REFERENCE_HEIGHT = 576;
+    private static final float GRIMOIRE_MIN_VIEWPORT_SCALE = 0.75F;
+    private static final float GRIMOIRE_MAX_VIEWPORT_SCALE = 3.0F;
     private static final int ROLE_SIZE = 32;
     private static final int PERCEIVED_ROLE_SIZE = 20;
     // Original BOTB reminder tokens are 14px with 2px padding around the 32px role token.
@@ -577,9 +581,8 @@ public class AssignRolesScreen extends Screen {
         graphics.pose().pushMatrix();
         graphics.pose().scale(scale, scale);
         try {
-            // Render the widgets and custom Grim drawing through the same virtual
-            // Scale-2 canvas. This keeps text, tokens, tooltips and controls in
-            // the same proportions instead of letting Auto GUI scale enlarge them.
+            // Render widgets and custom Grim drawing through one responsive virtual
+            // canvas so text, tokens, controls, reminders and hitboxes scale together.
             GrimoireHoverHints.clear();
             super.extractRenderState(graphics, scaledMouseX, scaledMouseY, delta);
 
@@ -790,14 +793,20 @@ public class AssignRolesScreen extends Screen {
 
 
     /**
-     * Convert Minecraft's active GUI scale to the Scale-2 physical footprint.
-     * Because Screen width/height are already divided by the active GUI scale,
-     * the inverse render transform also gives layout code a stable virtual canvas.
+     * Cancel Minecraft GUI-scale changes while still responding to the physical
+     * window size. 1024x576 preserves the current compact layout; a 2048x1152
+     * window renders the whole Grim at roughly twice that physical size.
      */
     private float grimoireUiScale() {
         if (this.minecraft == null) return 1.0F;
-        int activeGuiScale = Math.max(1, this.minecraft.getWindow().getGuiScale());
-        return GRIMOIRE_REFERENCE_GUI_SCALE / (float) activeGuiScale;
+        var window = this.minecraft.getWindow();
+        int activeGuiScale = Math.max(1, window.getGuiScale());
+        float widthScale = window.getWidth() / (float) GRIMOIRE_REFERENCE_WIDTH;
+        float heightScale = window.getHeight() / (float) GRIMOIRE_REFERENCE_HEIGHT;
+        float viewportScale = Math.min(widthScale, heightScale);
+        viewportScale = Math.max(GRIMOIRE_MIN_VIEWPORT_SCALE,
+                Math.min(GRIMOIRE_MAX_VIEWPORT_SCALE, viewportScale));
+        return (GRIMOIRE_REFERENCE_GUI_SCALE * viewportScale) / (float) activeGuiScale;
     }
 
     private int layoutWidth() {
