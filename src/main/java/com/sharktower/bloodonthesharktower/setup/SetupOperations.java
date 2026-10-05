@@ -144,15 +144,19 @@ public final class SetupOperations {
         beginEditingFromLiveState();
         PendingRoleAssignment actual = StorytellerState.PENDING_ROLES.get(player);
         if (!requiresPerceivedRole(actual)) {
-            return Result.fail("Seat " + seat + " is not the Drunk or Marionette.");
+            return Result.fail("Seat " + seat + " is not the Drunk, Marionette or Lunatic.");
         }
         ScriptRole perceivedRole = resolveScriptRole(roleId);
         if (perceivedRole == null) return Result.fail("Unknown believed role '" + roleId + "' for the current script.");
         PendingRoleAssignment perceived = assignment(perceivedRole, AlignmentOverride.DEFAULT);
         if (!perceivedRoleAllowed(actual, perceived)) {
-            return Result.fail(actual.role() == Role.DRUNK
-                    ? "The Drunk must believe they are a Townsfolk character."
-                    : "The Marionette must believe they are a good Townsfolk or Outsider character.");
+            if (actual.role() == Role.DRUNK) {
+                return Result.fail("The Drunk must believe they are a Townsfolk character.");
+            }
+            if (actual.role() == Role.LUNATIC) {
+                return Result.fail("The Lunatic must believe they are a Demon character.");
+            }
+            return Result.fail("The Marionette must believe they are a good Townsfolk or Outsider character.");
         }
         StorytellerState.PENDING_PERCEIVED_ROLES.put(player, perceived);
         return Result.ok("Seat " + seat + " will be shown " + perceived.getDisplayName() + ".");
@@ -565,6 +569,7 @@ public final class SetupOperations {
         StorytellerState.PENDING_ROLES.clear();
         StorytellerState.PENDING_PERCEIVED_ROLES.clear();
         StorytellerState.DEMON_BLUFFS.clear();
+        StorytellerState.LUNATIC_BLUFFS.clear();
         return Result.ok("Loaded script: " + ServerState.currentScript.name() + " ("
                 + ServerState.currentScript.allRoles().size() + " roles).");
     }
@@ -755,6 +760,7 @@ public final class SetupOperations {
         StorytellerState.PENDING_PERCEIVED_ROLES.clear();
         StorytellerState.REMINDERS.clear();
         StorytellerState.DEMON_BLUFFS.clear();
+        StorytellerState.LUNATIC_BLUFFS.clear();
         com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
         com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager.clear();
         ServerState.resetGeneration++;
@@ -834,13 +840,16 @@ public final class SetupOperations {
 
     private static boolean requiresPerceivedRole(PendingRoleAssignment assignment) {
         return assignment != null && !assignment.isCustomRole()
-                && (assignment.role() == Role.DRUNK || assignment.role() == Role.MARIONETTE);
+                && (assignment.role() == Role.DRUNK
+                || assignment.role() == Role.MARIONETTE
+                || assignment.role() == Role.LUNATIC);
     }
 
     private static boolean perceivedRoleAllowed(PendingRoleAssignment actual, PendingRoleAssignment perceived) {
         if (!requiresPerceivedRole(actual) || !isAssigned(perceived)) return false;
         RoleType type = perceived.getRoleType();
         if (actual.role() == Role.DRUNK) return type == RoleType.TOWNSFOLK;
+        if (actual.role() == Role.LUNATIC) return type == RoleType.DEMON;
         return type == RoleType.TOWNSFOLK || type == RoleType.OUTSIDER;
     }
 
