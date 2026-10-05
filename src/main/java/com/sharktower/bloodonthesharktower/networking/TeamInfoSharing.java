@@ -33,9 +33,9 @@ public final class TeamInfoSharing {
                 || !(options[3].equals("true") || options[3].equals("false")))
             return SetupOperations.Result.fail("Invalid team information options.");
         boolean demon = options[0].equals("demon");
-        if (demon && LunaticBluffs.lunaticOnScript()) {
+        if (LunaticBluffs.lunaticOnScript()) {
             return SetupOperations.Result.fail(
-                    "Lunatic is on the current script. Demon Info is manual so the Storyteller can control false Minions and fake bluffs.");
+                    "Lunatic is on the current script. Minion and Demon Info are manual so the Storyteller can control the real and false starting worlds.");
         }
         State state = state();
         var plan = TeamInformation.plan(state.roles(), state.seats(), state.deaths(), demon,
