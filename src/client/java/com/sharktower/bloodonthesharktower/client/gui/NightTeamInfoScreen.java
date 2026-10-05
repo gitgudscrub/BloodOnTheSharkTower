@@ -1,6 +1,8 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
+import com.sharktower.bloodonthesharktower.client.ClientLunaticBluffs;
 import com.sharktower.bloodonthesharktower.states.ClientState;
+import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
@@ -24,49 +26,76 @@ public final class NightTeamInfoScreen extends Screen {
     protected void init() {
         if (this.minecraft.player == null || !ClientState.storytellerPlayers.contains(this.minecraft.player.getUUID())) return;
 
-        this.addRenderableWidget(Button.builder(Component.literal(demon ? "Demon Info — Preview" : "Minion Info — Preview"), b ->
-                ClientStorytellerActions.send("team_info_preview", (demon ? "demon" : "minion") + "|" + useMagician + "|" + releasePoppyGrower + "|" + smallGameOverride))
-                .bounds(this.width / 2 - 110, 48, 220, 20).build());
+        boolean manualLunaticDemon = demon && lunaticOnScript();
+        int controlY = 48;
 
-        int controlY = 72;
-        boolean magicianInPlay = roleInPlay(Role.MAGICIAN);
-        boolean poppyGrowerInPlay = roleInPlay(Role.POPPY_GROWER);
+        if (manualLunaticDemon) {
+            // Lunatic makes Demon setup a judgment call: false Minions and fake
+            // bluffs must never be inferred by the automatic real-team sender.
+            ClientLunaticBluffs.request();
 
-        if (magicianInPlay) {
-            this.addRenderableWidget(Button.builder(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"), b -> {
-                useMagician = !useMagician;
-                b.setMessage(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"));
-            }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
+            if (roleInPlay(Role.LUNATIC)) {
+                int bluffCount = ClientLunaticBluffs.current().size();
+                this.addRenderableWidget(Button.builder(
+                                Component.literal("Lunatic Bluffs: " + bluffCount + "/3"), b ->
+                                        this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen()))
+                        .bounds(this.width / 2 - 110, controlY, 220, 20).build());
+                controlY += 24;
+
+                Button sendBluffs = Button.builder(Component.literal("Send Lunatic Bluffs"), b ->
+                                ClientLunaticBluffs.sendToLunatic())
+                        .bounds(this.width / 2 - 110, controlY, 220, 20).build();
+                sendBluffs.active = bluffCount == 3;
+                this.addRenderableWidget(sendBluffs);
+                controlY += 24;
+            }
+        } else {
+            this.addRenderableWidget(Button.builder(Component.literal(demon ? "Demon Info — Preview" : "Minion Info — Preview"), b ->
+                    ClientStorytellerActions.send("team_info_preview", (demon ? "demon" : "minion") + "|" + useMagician + "|" + releasePoppyGrower + "|" + smallGameOverride))
+                    .bounds(this.width / 2 - 110, controlY, 220, 20).build());
             controlY += 24;
-        }
 
-        if (poppyGrowerInPlay) {
-            this.addRenderableWidget(Button.builder(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"), b -> {
-                releasePoppyGrower = !releasePoppyGrower;
-                b.setMessage(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"));
-            }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
-            controlY += 24;
-        }
+            boolean magicianInPlay = roleInPlay(Role.MAGICIAN);
+            boolean poppyGrowerInPlay = roleInPlay(Role.POPPY_GROWER);
 
-        if (ClientState.activePlayerCount < 7) {
-            this.addRenderableWidget(Button.builder(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"), b -> {
-                smallGameOverride = !smallGameOverride;
-                b.setMessage(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"));
-            }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
-            controlY += 24;
+            if (magicianInPlay) {
+                this.addRenderableWidget(Button.builder(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"), b -> {
+                    useMagician = !useMagician;
+                    b.setMessage(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"));
+                }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
+                controlY += 24;
+            }
+
+            if (poppyGrowerInPlay) {
+                this.addRenderableWidget(Button.builder(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"), b -> {
+                    releasePoppyGrower = !releasePoppyGrower;
+                    b.setMessage(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"));
+                }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
+                controlY += 24;
+            }
+
+            if (ClientState.activePlayerCount < 7) {
+                this.addRenderableWidget(Button.builder(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"), b -> {
+                    smallGameOverride = !smallGameOverride;
+                    b.setMessage(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"));
+                }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
+                controlY += 24;
+            }
         }
 
         int y = controlY + 4;
         var visits = ClientState.grimoireRoles.entrySet().stream()
-                .filter(e -> e.getValue() != null && e.getValue().getRoleType() == (demon ? RoleType.DEMON : RoleType.MINION))
-                .sorted(java.util.Comparator.comparingInt(e -> ClientState.grimoireSeatNumbers.getOrDefault(e.getKey(), 0))).toList();
+                .filter(entry -> entry.getValue() != null && visitRelevant(entry.getValue(), manualLunaticDemon))
+                .sorted(java.util.Comparator.comparingInt(entry -> ClientState.grimoireSeatNumbers.getOrDefault(entry.getKey(), 0)))
+                .toList();
         int rows = Math.max(1, (this.height - y - 56) / 24);
         int pages = Math.max(1, (visits.size() + rows - 1) / rows);
         page = Math.min(page, pages - 1);
         for (var entry : visits.subList(Math.min(visits.size(), page * rows), Math.min(visits.size(), (page + 1) * rows))) {
             var id = entry.getKey();
             int seat = ClientState.grimoireSeatNumbers.getOrDefault(id, 0);
-            this.addRenderableWidget(Button.builder(Component.literal("Visit " + ClientState.playerName(id, seat)), b -> {
+            String prefix = manualLunaticDemon ? visitPrefix(entry.getValue()) : "Visit";
+            this.addRenderableWidget(Button.builder(Component.literal(prefix + " " + ClientState.playerName(id, seat)), b -> {
                 ClientStorytellerActions.send("night_visit", id.toString());
                 this.onClose();
             }).bounds(this.width / 2 - 110, y, 220, 20).build());
@@ -87,16 +116,46 @@ public final class NightTeamInfoScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> onClose()).bounds(this.width / 2 - 45, this.height - 28, 90, 20).build());
     }
 
+    private boolean visitRelevant(PendingRoleAssignment assignment, boolean manualLunaticDemon) {
+        if (!manualLunaticDemon) {
+            return assignment.getRoleType() == (demon ? RoleType.DEMON : RoleType.MINION);
+        }
+        return assignment.getRoleType() == RoleType.DEMON
+                || assignment.getRoleType() == RoleType.MINION
+                || isRole(assignment, Role.LUNATIC);
+    }
+
+    private static String visitPrefix(PendingRoleAssignment assignment) {
+        if (isRole(assignment, Role.LUNATIC)) return "Visit Lunatic —";
+        if (assignment.getRoleType() == RoleType.DEMON) return "Visit Demon —";
+        if (assignment.getRoleType() == RoleType.MINION) return "Visit Minion —";
+        return "Visit —";
+    }
+
     private static boolean roleInPlay(Role role) {
         return ClientState.grimoireRoles.values().stream()
-                .anyMatch(value -> value != null && value.isOfficialRole() && value.role() == role);
+                .anyMatch(value -> isRole(value, role));
+    }
+
+    private static boolean isRole(PendingRoleAssignment value, Role role) {
+        return value != null && value.isOfficialRole() && value.role() == role;
+    }
+
+    private static boolean lunaticOnScript() {
+        return ClientState.currentScript != null && ClientState.currentScript.allRoles().stream()
+                .anyMatch(role -> role != null && role.getId().equalsIgnoreCase(Role.LUNATIC.getId()));
     }
 
     public void extractRenderState(GuiGraphicsExtractor g, int x, int y, float delta) {
         super.extractRenderState(g, x, y, delta);
-        String title = demon ? "Demon Info" : "Minion Info";
+        boolean manualLunaticDemon = demon && lunaticOnScript();
+        String title = manualLunaticDemon ? "Demon Info — Manual" : (demon ? "Demon Info" : "Minion Info");
         g.text(this.font, title, (this.width - this.font.width(title)) / 2, 15, UiDrawing.GOLD, true);
-        if (ClientState.activePlayerCount < 7)
+        if (manualLunaticDemon) {
+            String line = "Lunatic is on the script: use manual visits so false Demon information stays under ST control.";
+            g.text(this.font, line, (this.width - this.font.width(line)) / 2, 30, UiDrawing.MUTED, false);
+        } else if (ClientState.activePlayerCount < 7) {
             g.text(this.font, "No starting evil-team information below 7 players unless the ST overrides it.", 12, 30, UiDrawing.MUTED, false);
+        }
     }
 }
