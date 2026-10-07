@@ -25,6 +25,7 @@
   },
   "icon": "assets/blood_on_the_sharktower/icon.png",
   "mixins": [
-    "blood_on_the_sharktower.client.mixins.json"
+    "blood_on_the_sharktower.client.mixins.json",
+    "blood_on_the_sharktower.mixins.json"
   ]
 }

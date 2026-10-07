@@ -123,6 +123,7 @@ public final class DaytimeState {
             List<UUID> mayNotNominate
     ) {
         nominationsOpen = true;
+        AttentionHands.clear();
         resetNomination();
         canNominate.clear();
         canBeNominated.clear();
@@ -147,6 +148,7 @@ public final class DaytimeState {
     }
 
     public static void closeNominations() {
+        AttentionHands.clear();
         nominationsOpen = false;
         resetNomination();
         resetVote();
@@ -226,6 +228,7 @@ public final class DaytimeState {
     }
 
     public static void resetDaily() {
+        AttentionHands.clear();
         resetNomination();
         VotingManager.clearLastResult();
         nominationsOpen = false;

@@ -26,31 +26,37 @@ import java.util.Set;
  * avoiding the old slot-by-slot flow that repeatedly closed the Grimoire.
  */
 public final class DemonBluffSelectionScreen extends Screen {
-    private static final int PAGE_SIZE = 24;
+    private int perPage() { return Math.max(1, (this.width - 24 + 6) / 128) * Math.max(1, (this.height - 50 - 90) / 25); }
 
     private final LinkedHashSet<String> selected;
     private final int page;
+    private final Screen returnScreen;
 
     public DemonBluffSelectionScreen() {
-        this(initialSelection(), 0);
+        this(null);
     }
 
-    private DemonBluffSelectionScreen(Set<String> selected, int page) {
+    public DemonBluffSelectionScreen(Screen returnScreen) {
+        this(initialSelection(), 0, returnScreen);
+    }
+
+    private DemonBluffSelectionScreen(Set<String> selected, int page, Screen returnScreen) {
         super(Component.literal("Choose 3 Demon Bluffs"));
         this.selected = new LinkedHashSet<>(selected);
         this.page = Math.max(0, page);
+        this.returnScreen = returnScreen;
     }
 
     @Override
     protected void init() {
         List<ScriptRole> roles = availableRoles();
-        int maxPage = Math.max(0, (roles.size() - 1) / PAGE_SIZE);
+        int maxPage = Math.max(0, (roles.size() - 1) / perPage());
         int actualPage = Math.min(page, maxPage);
 
-        int start = actualPage * PAGE_SIZE;
-        int end = Math.min(roles.size(), start + PAGE_SIZE);
+        int start = actualPage * perPage();
+        int end = Math.min(roles.size(), start + perPage());
 
-        int columns = 4;
+        int columns = Math.max(1, (this.width - 24 + 6) / 128);
         int width = 122;
         int height = 20;
         int gapX = 6;
@@ -67,7 +73,7 @@ public final class DemonBluffSelectionScreen extends Screen {
 
             boolean chosen = selected.contains(key(role.getId()));
             Component label = Component.literal((chosen ? "✓ " : "") + role.getDisplayName())
-                    .withStyle(chosen ? ChatFormatting.GREEN : ChatFormatting.AQUA);
+                    .withStyle(style -> style.withColor(UiDrawing.teamColor(role.getTeam())));
 
             Button button = Button.builder(label, b -> toggle(role, actualPage))
                     .bounds(left + col * (width + gapX), top + row * (height + gapY), width, height)
@@ -81,19 +87,19 @@ public final class DemonBluffSelectionScreen extends Screen {
 
         int navY = this.height - 78;
         Button previous = Button.builder(Component.literal("<"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage - 1)))
+                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage - 1, returnScreen)))
                 .bounds(this.width / 2 - 120, navY, 40, 20).build();
         previous.active = actualPage > 0;
         this.addRenderableWidget(previous);
 
         Button next = Button.builder(Component.literal(">"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage + 1)))
+                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage + 1, returnScreen)))
                 .bounds(this.width / 2 + 80, navY, 40, 20).build();
         next.active = actualPage < maxPage;
         this.addRenderableWidget(next);
 
         this.addRenderableWidget(Button.builder(Component.literal("Clear Selection"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(Set.of(), actualPage)))
+                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(Set.of(), actualPage, returnScreen)))
                 .bounds(this.width / 2 - 72, navY, 144, 20).build());
 
         Button confirm = Button.builder(Component.literal("Confirm 3 Bluffs").withStyle(ChatFormatting.GREEN), b ->
@@ -142,20 +148,29 @@ public final class DemonBluffSelectionScreen extends Screen {
             next.add(id);
         }
 
-        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(next, currentPage));
+        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(next, currentPage, returnScreen));
     }
 
     private void confirm() {
         if (selected.size() != 3) return;
 
-        GrimoireReturnState.requestAfterNextGrimoireSync();
+        if (returnScreen == null) {
+            GrimoireReturnState.requestAfterNextGrimoireSync();
+        }
         ClientStorytellerActions.send("set_bluffs", String.join("|", selected));
+        if (returnScreen != null) {
+            this.minecraft.gui.setScreen(returnScreen);
+        }
     }
 
     private void back() {
         if (this.minecraft == null) return;
-        GrimoireReturnState.suppressNextReveal();
-        this.minecraft.gui.setScreen(new AssignRolesScreen());
+        if (returnScreen != null) {
+            this.minecraft.gui.setScreen(returnScreen);
+        } else {
+            GrimoireReturnState.suppressNextReveal();
+            this.minecraft.gui.setScreen(new AssignRolesScreen());
+        }
     }
 
     private String selectedNames() {

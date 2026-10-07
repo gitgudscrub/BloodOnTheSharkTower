@@ -36,7 +36,7 @@ public class RoleCatalogScreen extends Screen {
                             page = 0;
                             b.setMessage(Component.literal(showingExtraRoles ? "Main Roles" : "Extra Roles"));
                         })
-                .bounds(center + 105, 20, 90, 20).build());
+                .bounds(this.width - 102, 20, 90, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
                     if (page > 0) page--;
@@ -53,13 +53,14 @@ public class RoleCatalogScreen extends Screen {
         drawCentered(graphics, this.title.getString(), 8, UiDrawing.TEXT, true);
 
         List<Role> roles = currentRoles();
-        int listWidth = Math.min(375, Math.max(75, this.width - 20));
-        int cellWidth = listWidth / 5;
+        int columns = Math.max(1, (this.width - 24) / 100);
+        int cellWidth = 100;
+        int listWidth = columns * cellWidth;
         int rowHeight = 70;
         int top = 50;
         int bottomReserve = 38;
         int rowsVisible = Math.max(1, (this.height - top - bottomReserve) / rowHeight);
-        int perPage = rowsVisible * 5;
+        int perPage = rowsVisible * columns;
         int maxPage = Math.max(0, (roles.size() - 1) / perPage);
         if (page > maxPage) page = maxPage;
 
@@ -71,8 +72,8 @@ public class RoleCatalogScreen extends Screen {
         for (int i = start; i < end; i++) {
             Role role = roles.get(i);
             int local = i - start;
-            int col = local % 5;
-            int row = local / 5;
+            int col = local % columns;
+            int row = local / columns;
             int cellX = listX + col * cellWidth;
             int cellY = top + row * rowHeight;
             int tokenX = cellX + (cellWidth - 40) / 2;

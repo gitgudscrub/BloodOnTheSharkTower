@@ -345,6 +345,10 @@ public final class NightOrderHUD {
                     ClientStorytellerActions.send("nominations_open");
                 }
             }
+            case MINION_INFO, DEMON_INFO -> {
+                if (ClientState.phase() == GamePhase.NIGHT) minecraft.gui.setScreen(
+                        new com.sharktower.bloodonthesharktower.client.gui.NightTeamInfoScreen(visit.kind == Kind.DEMON_INFO));
+            }
             case ROLE -> {
                 if (ClientState.phase() != GamePhase.NIGHT) {
                     minecraft.player.sendSystemMessage(Component.literal("Night role visits are only available during Night.")
@@ -492,6 +496,10 @@ public final class NightOrderHUD {
         }
         }
 
+        if (showRoleVisits && firstNight) {
+            roleVisits.add(Visit.staticVisit(Kind.MINION_INFO, Identifier.fromNamespaceAndPath(BloodOnTheSharktower.MOD_ID, "textures/icons/minion_info.png"), scriptOrder.getOrDefault("minioninfo", 10.5D)));
+            roleVisits.add(Visit.staticVisit(Kind.DEMON_INFO, Identifier.fromNamespaceAndPath(BloodOnTheSharktower.MOD_ID, "textures/icons/demon_info.png"), scriptOrder.getOrDefault("demoninfo", 10.6D)));
+        }
         roleVisits.sort(Comparator
                 .comparingDouble((Visit visit) -> visit.sortOrder)
                 .thenComparingInt(visit -> visit.seat)
@@ -566,6 +574,8 @@ public final class NightOrderHUD {
 
     private enum Kind {
         DUSK,
+        MINION_INFO,
+        DEMON_INFO,
         ROLE,
         DAWN,
         NOMINATIONS

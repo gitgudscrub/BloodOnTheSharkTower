@@ -61,9 +61,10 @@ public final class RoleIconRenderer {
                     ? iconOrPlaceholder(perceived)
                     : null;
 
-            double cx = player.getX();
-            double cy = player.getY() + player.getBbHeight() + HEAD_OFFSET;
-            double cz = player.getZ();
+            Vec3 position = player.getPosition(minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false));
+            double cx = position.x;
+            double cy = position.y + player.getBbHeight() + HEAD_OFFSET;
+            double cz = position.z;
 
             if (actualTexture != null && perceivedTexture != null) {
                 // Centre the pair as a unit, but keep the true role visibly larger.
@@ -89,7 +90,8 @@ public final class RoleIconRenderer {
         return assignment != null
                 && assignment.getRoleId() != null
                 && !assignment.getRoleId().isBlank()
-                && !"none".equalsIgnoreCase(assignment.getRoleId());
+                && !"none".equalsIgnoreCase(assignment.getRoleId())
+                && !"norole".equalsIgnoreCase(assignment.getRoleId().replace("_", ""));
     }
 
     private static Identifier iconOrPlaceholder(PendingRoleAssignment assignment) {
@@ -103,10 +105,7 @@ public final class RoleIconRenderer {
     }
 
     private static boolean shouldShowPerceivedSlot(PendingRoleAssignment actual, PendingRoleAssignment perceived) {
-        if (perceived != null && !"none".equalsIgnoreCase(perceived.getRoleId())) return true;
-        if (actual == null || actual.getRoleId() == null) return false;
-        return "drunk".equalsIgnoreCase(actual.getRoleId())
-                || "marionette".equalsIgnoreCase(actual.getRoleId());
+        return hasAssignedRole(perceived);
     }
 
     private static void submitBillboard(

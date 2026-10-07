@@ -130,10 +130,20 @@ public final class SetupOperations {
         if (role == null) return Result.fail("Unknown role '" + roleId + "' for the current script.");
         beginEditingFromLiveState();
         PendingRoleAssignment assigned = assignment(role, AlignmentOverride.DEFAULT);
+        PendingRoleAssignment previous = StorytellerState.PENDING_ROLES.get(player);
         StorytellerState.PENDING_ROLES.put(player, assigned);
         PendingRoleAssignment perceived = StorytellerState.PENDING_PERCEIVED_ROLES.get(player);
         if (!requiresPerceivedRole(assigned) || (isAssigned(perceived) && !perceivedRoleAllowed(assigned, perceived))) {
             StorytellerState.PENDING_PERCEIVED_ROLES.remove(player);
+        }
+        // Changing a cover character into Drunk/Marionette keeps what they believe.
+        // Keep an existing valid belief when editing an already deceived character.
+        boolean carryCover = !assigned.isCustomRole()
+                && (assigned.role() == Role.DRUNK || assigned.role() == Role.MARIONETTE);
+        if (carryCover && !perceivedRoleAllowed(assigned, perceived)
+                && perceivedRoleAllowed(assigned, previous)) {
+            StorytellerState.PENDING_PERCEIVED_ROLES.put(player,
+                    new PendingRoleAssignment(previous.role(), previous.customRole(), AlignmentOverride.DEFAULT));
         }
         return Result.ok("Assigned " + role.getDisplayName() + " to seat " + seat + " (pending).");
     }
@@ -144,15 +154,19 @@ public final class SetupOperations {
         beginEditingFromLiveState();
         PendingRoleAssignment actual = StorytellerState.PENDING_ROLES.get(player);
         if (!requiresPerceivedRole(actual)) {
-            return Result.fail("Seat " + seat + " is not the Drunk or Marionette.");
+            return Result.fail("Seat " + seat + " is not the Drunk, Marionette or Lunatic.");
         }
         ScriptRole perceivedRole = resolveScriptRole(roleId);
         if (perceivedRole == null) return Result.fail("Unknown believed role '" + roleId + "' for the current script.");
         PendingRoleAssignment perceived = assignment(perceivedRole, AlignmentOverride.DEFAULT);
         if (!perceivedRoleAllowed(actual, perceived)) {
-            return Result.fail(actual.role() == Role.DRUNK
-                    ? "The Drunk must believe they are a Townsfolk character."
-                    : "The Marionette must believe they are a good Townsfolk or Outsider character.");
+            if (actual.role() == Role.DRUNK) {
+                return Result.fail("The Drunk must believe they are a Townsfolk character.");
+            }
+            if (actual.role() == Role.LUNATIC) {
+                return Result.fail("The Lunatic must believe they are a Demon character.");
+            }
+            return Result.fail("The Marionette must believe they are a good Townsfolk or Outsider character.");
         }
         StorytellerState.PENDING_PERCEIVED_ROLES.put(player, perceived);
         return Result.ok("Seat " + seat + " will be shown " + perceived.getDisplayName() + ".");
@@ -518,6 +532,14 @@ public final class SetupOperations {
         String cleaned = text == null ? "" : text.trim();
         if (cleaned.isEmpty()) return Result.fail("Reminder text cannot be blank.");
 
+        if (com.sharktower.bloodonthesharktower.core.ReminderCatalog.selfOnly(sourceRole.getId(), cleaned)) {
+            PendingRoleAssignment target = workingRoles().get(player);
+            if (target == null || !com.sharktower.bloodonthesharktower.core.ReminderCatalog.normalize(target.getRoleId())
+                    .equals(com.sharktower.bloodonthesharktower.core.ReminderCatalog.normalize(sourceRole.getId()))) {
+                return Result.fail("This reminder only applies to " + sourceRole.getDisplayName() + ".");
+            }
+        }
+
         Reminder reminder;
         if (sourceRole instanceof ScriptRole.Official official) {
             // The Butler's Master is represented directly by the player carrying
@@ -557,6 +579,7 @@ public final class SetupOperations {
         StorytellerState.PENDING_ROLES.clear();
         StorytellerState.PENDING_PERCEIVED_ROLES.clear();
         StorytellerState.DEMON_BLUFFS.clear();
+        StorytellerState.LUNATIC_BLUFFS.clear();
         return Result.ok("Loaded script: " + ServerState.currentScript.name() + " ("
                 + ServerState.currentScript.allRoles().size() + " roles).");
     }
@@ -626,6 +649,7 @@ public final class SetupOperations {
         if (NightChatManager.isActive()) {
             NightChatManager.resync();
         }
+        FreshGameBooks.beginGame(server, ServerState.PLAYER_ROLES.keySet());
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
         return Result.ok("Committed " + ServerState.PLAYER_ROLES.size() + " role(s) and "
@@ -651,6 +675,7 @@ public final class SetupOperations {
 
         NightChatManager.resetAll();
         TimerManager.stopTimer(server);
+        clearRolesForFreshSetup();
         ServerState.PLAYER_ROLES.clear();
         ServerState.PLAYER_PERCEIVED_ROLES.clear();
         ServerState.PLAYER_DEATH_STATUS.clear();
@@ -730,10 +755,32 @@ public final class SetupOperations {
                 ? MatchSnapshotManager.restorePrevious(server)
                 : MatchSnapshotManager.restoreCurrent(server);
         if (!restored.ok()) return Result.fail(restored.message());
-        if (NightChatManager.isActive()) NightChatManager.resetAll();
+        NightChatManager.resetAll();
+        clearRolesForFreshSetup();
         StateBroadcaster.broadcastCurrentState(server);
         SeatPositionManager.sendAllToTownSquare(server, ServerState.PLAYER_SEAT_NUMBERS);
         return Result.ok(restored.message() + " Runtime deaths, ghost votes, nominations, hands, voice rooms and vote state were discarded.");
+    }
+
+    public static void clearRolesForFreshSetup() {
+        ServerState.PLAYER_ROLES.clear();
+        ServerState.PLAYER_PERCEIVED_ROLES.clear();
+        ServerState.PLAYER_DEATH_STATUS.clear();
+        StorytellerState.PENDING_ROLES.clear();
+        StorytellerState.PENDING_PERCEIVED_ROLES.clear();
+        StorytellerState.REMINDERS.clear();
+        StorytellerState.DEMON_BLUFFS.clear();
+        StorytellerState.LUNATIC_BLUFFS.clear();
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
+        com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager.clear();
+        ServerState.resetGeneration++;
+        FreshGameBooks.clear();
+        com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.clear();
+        com.sharktower.bloodonthesharktower.networking.TeamInfoSharing.clear();
+        CustomScripts.clearPending();
+        com.sharktower.bloodonthesharktower.networking.SocialStateManager.clear();
+        DaytimeState.hardReset(ServerState.PLAYER_SEAT_NUMBERS.keySet(), Set.of());
+        MatchSnapshotManager.refreshCurrentSetupState();
     }
 
     public static UUID playerBySeat(int seat) {
@@ -803,13 +850,16 @@ public final class SetupOperations {
 
     private static boolean requiresPerceivedRole(PendingRoleAssignment assignment) {
         return assignment != null && !assignment.isCustomRole()
-                && (assignment.role() == Role.DRUNK || assignment.role() == Role.MARIONETTE);
+                && (assignment.role() == Role.DRUNK
+                || assignment.role() == Role.MARIONETTE
+                || assignment.role() == Role.LUNATIC);
     }
 
     private static boolean perceivedRoleAllowed(PendingRoleAssignment actual, PendingRoleAssignment perceived) {
         if (!requiresPerceivedRole(actual) || !isAssigned(perceived)) return false;
         RoleType type = perceived.getRoleType();
         if (actual.role() == Role.DRUNK) return type == RoleType.TOWNSFOLK;
+        if (actual.role() == Role.LUNATIC) return type == RoleType.DEMON;
         return type == RoleType.TOWNSFOLK || type == RoleType.OUTSIDER;
     }
 

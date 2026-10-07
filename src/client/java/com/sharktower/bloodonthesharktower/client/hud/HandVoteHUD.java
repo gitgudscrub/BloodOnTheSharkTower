@@ -14,8 +14,9 @@ public final class HandVoteHUD {
 
     public static void render(GuiGraphicsExtractor graphics, Minecraft minecraft) {
         if (!ClientState.isHudEnabled || minecraft.player == null) return;
+        var mode = ClientState.handRaiseMode();
+        if (mode == com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF) return;
         boolean exileVoting = ClientState.currentExileTarget != null || ClientState.exileSupportVote;
-        if (!ClientState.nominationsOpen && !ClientState.voteInProgress && !exileVoting) return;
 
         UUID self = minecraft.player.getUUID();
         if (!ClientState.playerSeatNumbers.containsKey(self)) return;
@@ -33,7 +34,12 @@ public final class HandVoteHUD {
         String state;
         String hint;
         int colour;
-        if (ghostUsed) {
+        if (mode == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING) {
+            int position = ClientState.attentionHands.getOrDefault(self, 0);
+            state = position > 0 ? "HAND RAISED — #" + position : "HAND LOWERED";
+            hint = "[" + key + "] Join / Leave Speaking Queue";
+            colour = position > 0 ? UiDrawing.GOLD : UiDrawing.MUTED;
+        } else if (ghostUsed) {
             state = "GHOST VOTE USED";
             hint = "You cannot vote again.";
             colour = UiDrawing.DEAD;

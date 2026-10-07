@@ -20,7 +20,7 @@
   "key.blood_on_the_sharktower.teleport_town_square": "Teleport to Town Square",
   "key.blood_on_the_sharktower.open_storyteller_tools": "Open Storyteller Tools",
   "key.blood_on_the_sharktower.toggle_vote_hand": "Raise / Lower Voting Hand",
-  "key.blood_on_the_sharktower.leave_private_chat": "Leave Private Chat",
+  "key.blood_on_the_sharktower.leave_private_chat": "Leave Private Storyteller Chat",
   "key.blood_on_the_sharktower.open_settings": "Open Sharktower Settings",
   "role.blood_on_the_sharktower.norole": "No Role",
   "role.blood_on_the_sharktower.chef": "CHEF",
@@ -2400,6 +2400,5 @@
   "roletype.blood_on_the_sharktower.fabled.short": "F",
   "roletype.blood_on_the_sharktower.loric.short": "L",
   "roletype.blood_on_the_sharktower.none.short": "N",
-  "key.blood_on_the_sharktower.toggle_vote_hand": "Raise / Lower Voting Hand",
-  "key.blood_on_the_sharktower.leave_private_chat": "Leave Private Storyteller Chat"
+  "key.blood_on_the_sharktower.notebook": "Open My Notebook"
 }

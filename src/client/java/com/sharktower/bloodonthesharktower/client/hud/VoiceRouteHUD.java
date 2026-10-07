@@ -41,6 +41,7 @@ public final class VoiceRouteHUD {
 
         if ("PROXIMITY".equals(route) || "DAY_SHARED".equals(route)) return null;
 
+        if (route.startsWith("HOUSE:")) return new RouteLabel("PRIVATE HOUSE CHAT", ROUTE_GREEN);
         if (route.startsWith("DAY_ZONE:")) {
             String zone = route.substring("DAY_ZONE:".length()).trim();
             if (zone.isEmpty() || ClientState.nominationsOpen) return null;
@@ -48,8 +49,6 @@ public final class VoiceRouteHUD {
         }
 
         return switch (route) {
-            case "SHARED_NIGHT" -> new RouteLabel("NIGHT CHAT", ROUTE_GREEN);
-            case "SHARED_NIGHT_STORYTELLER" -> new RouteLabel("NIGHT CHAT - STORYTELLER", ROUTE_GOLD);
             case "PRIVATE" -> new RouteLabel("PRIVATE CHAT", ROUTE_GOLD);
             case "PRIVATE_STORYTELLER" -> new RouteLabel("PRIVATE CHAT - STORYTELLER", ROUTE_GOLD);
             case "PRIVATE_HOLD" -> new RouteLabel(privateHoldText(), ROUTE_GOLD);

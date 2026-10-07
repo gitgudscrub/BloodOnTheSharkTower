@@ -28,7 +28,6 @@ import java.util.Set;
  * later Sharktower enhancement.
  */
 public final class ScriptBuilderScreen extends Screen {
-    private static final int PAGE_SIZE = 24;
     private static final Gson GSON = new Gson();
     private static final Set<String> SELECTED = new LinkedHashSet<>();
     private static String seededScriptIdentity = "";
@@ -47,23 +46,25 @@ public final class ScriptBuilderScreen extends Screen {
 
     @Override
     protected void init() {
-        List<Role> roles = palette();
-        int maxPage = Math.max(0, (roles.size() - 1) / PAGE_SIZE);
+        List<ScriptRole> roles = palette();
+        int columns = Math.max(1, (this.width - 24 + 6) / 131);
+        int rows = Math.max(1, (this.height - 64 - 78) / 25);
+        int perPage = columns * rows;
+        int maxPage = Math.max(0, (roles.size() - 1) / perPage);
         if (page > maxPage) page = maxPage;
 
-        int columns = 4;
         int w = 125;
         int h = 20;
         int gapX = 6;
         int gapY = 5;
         int gridW = columns * w + (columns - 1) * gapX;
         int left = (this.width - gridW) / 2;
-        int top = 48;
-        int start = page * PAGE_SIZE;
-        int end = Math.min(roles.size(), start + PAGE_SIZE);
+        int top = 64;
+        int start = page * perPage;
+        int end = Math.min(roles.size(), start + perPage);
 
         for (int i = start; i < end; i++) {
-            Role role = roles.get(i);
+            ScriptRole role = roles.get(i);
             int local = i - start;
             int col = local % columns;
             int row = local / columns;
@@ -79,6 +80,10 @@ public final class ScriptBuilderScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Base 3"), b ->
                         this.minecraft.gui.setScreen(new BaseThreeScreen()))
                 .bounds(this.width - 108, 10, 96, 20).build());
+
+        this.addRenderableWidget(Button.builder(Component.literal("Custom Scripts"), b ->
+                        CustomScriptsScreen.openAndRefresh())
+                .bounds(this.width - 108, 34, 96, 20).build());
 
         int navY = this.height - 70;
         this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
@@ -102,14 +107,7 @@ public final class ScriptBuilderScreen extends Screen {
 
     private void load() {
         if (SELECTED.isEmpty()) return;
-        List<Object> json = new ArrayList<>();
-        Map<String, Object> meta = new LinkedHashMap<>();
-        meta.put("id", "_meta");
-        meta.put("name", "Sharktower Custom Script");
-        meta.put("author", "Private Sharktower Builder");
-        json.add(meta);
-        json.addAll(SELECTED);
-        ClientStorytellerActions.send("load_script_json", GSON.toJson(json));
+        ClientStorytellerActions.send("load_script_selection", String.join("|", SELECTED));
         this.minecraft.gui.setScreen(new AssignRolesScreen());
     }
 
@@ -117,16 +115,20 @@ public final class ScriptBuilderScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String heading = "Script Builder";
-        graphics.text(this.font, heading, (this.width - this.font.width(heading)) / 2, 14, UiDrawing.GOLD, true);
-        String info = SELECTED.size() + " roles selected   •   Click roles to add/remove";
-        graphics.text(this.font, info, (this.width - this.font.width(info)) / 2, 29, UiDrawing.MUTED, false);
+        graphics.text(this.font, heading, 12, 14, UiDrawing.GOLD, true);
+        graphics.text(this.font, "Selected: " + SELECTED.size(), 12, 32, UiDrawing.MUTED, false);
     }
 
-    private static List<Role> palette() {
-        List<Role> roles = new ArrayList<>(Role.SELECTABLE_ROLES);
-        roles.removeIf(role -> role.getType() == RoleType.FABLED || role.getType() == RoleType.LORIC);
-        roles.sort(Comparator.comparingInt((Role r) -> r.getType().ordinal())
-                .thenComparing(Role::getDisplayName, String.CASE_INSENSITIVE_ORDER));
+    private static List<ScriptRole> palette() {
+        Map<String, ScriptRole> merged = new LinkedHashMap<>();
+        for (Role role : Role.SELECTABLE_ROLES) merged.put(role.getId(), new ScriptRole.Official(role));
+        if (ClientState.currentScript != null) {
+            for (ScriptRole role : ClientState.currentScript.allRoles()) merged.put(role.getId(), role);
+        }
+        List<ScriptRole> roles = new ArrayList<>(merged.values());
+        roles.removeIf(role -> role.getTeam() == RoleType.FABLED || role.getTeam() == RoleType.LORIC);
+        roles.sort(Comparator.comparingInt((ScriptRole r) -> r.getTeam().ordinal())
+                .thenComparing(ScriptRole::getDisplayName, String.CASE_INSENSITIVE_ORDER));
         return roles;
     }
 

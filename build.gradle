@@ -78,6 +78,7 @@ loom {
 }
 
 repositories {
+    maven { url = "https://api.modrinth.com/maven" }
     maven {
         name = "Henkelmax"
         url = "https://maven.maxhenkel.de/repository/public"
@@ -95,6 +96,11 @@ dependencies {
 
     // Compile against the Simple Voice Chat API. The actual voice chat mod is runtime-only.
     implementation "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+
+    // Pinned performance mods in the dev harness for compatibility smoke tests.
+    runtimeOnly "maven.modrinth:sodium:bAZQdGpg"
+    runtimeOnly "maven.modrinth:lithium:xS0Q8LSi"
+    runtimeOnly "maven.modrinth:ferrite-core:d5ddUdiB"
 
     // Development runtime: Simple Voice Chat 2.6.23+26.3 (CurseForge file 8886980).
     runtimeOnly "curse.maven:simple-voice-chat-416089:${project.voicechat_curse_file_id}"
@@ -216,3 +222,59 @@ enable-command-block=true
 tasks.matching { it.name in ["runDevServer", "runStoryteller", "runPlayer1", "runPlayer2", "runPlayer3", "runPlayer4", "runPlayer5"] }.configureEach {
     dependsOn tasks.named("prepareSharktowerDevHarness")
 }
+
+// Exercises private/public death separation without bootstrapping a Minecraft client.
+tasks.register('deathVisibilityRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.states.DeathVisibilityRegression'
+}
+tasks.named('check') { dependsOn tasks.named('deathVisibilityRegression') }
+// The executable regression above is the test entry point; no JUnit engine is used.
+tasks.named('test') { failOnNoDiscoveredTests = false }
+
+tasks.register('reminderCatalogRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.core.ReminderCatalogRegression'
+}
+tasks.named('check') { dependsOn tasks.named('reminderCatalogRegression') }
+
+// Game 1 playtest regressions: attention queue, adjacency, bluff privacy and cancelled nominations.
+tasks.register('gameOneRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.GameOneRegression'
+}
+tasks.named('check') { dependsOn tasks.named('gameOneRegression') }
+
+// Private Minion/Demon delivery defaults and special-role information privacy.
+tasks.register('teamInformationRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.core.TeamInformationRegression'
+}
+tasks.named('check') { dependsOn tasks.named('teamInformationRegression') }
+
+// Houses remain isolated through Dusk/Dawn; outside uses existing public routing.
+tasks.register('houseVoiceRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.voicechat.HouseVoiceRegression'
+}
+tasks.named('check') { dependsOn tasks.named('houseVoiceRegression') }
+
+tasks.register('handRaiseModeRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.core.HandRaiseModeRegression'
+}
+tasks.named('check') { dependsOn tasks.named('handRaiseModeRegression') }
+
+// URL allowlist, distinct page/version IDs, filenames and strict script validation.
+tasks.register('scriptImportRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.setup.ScriptImportRegression'
+}
+tasks.named('check') { dependsOn tasks.named('scriptImportRegression') }

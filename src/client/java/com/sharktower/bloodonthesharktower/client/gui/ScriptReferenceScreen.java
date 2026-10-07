@@ -27,8 +27,8 @@ public class ScriptReferenceScreen extends Screen {
     @Override
     protected void init() {
         int center = this.width / 2;
-        int buttonWidth = 90;
-        int gap = 10;
+        int gap = 4;
+        int buttonWidth = Math.min(90, (this.width - 16 - gap * 2) / 3);
         int y = 25;
 
         // Match the original BOTB tab geometry: three 90px buttons separated
@@ -78,15 +78,29 @@ public class ScriptReferenceScreen extends Screen {
                 RoleType.TRAVELER, RoleType.FABLED, RoleType.LORIC
         };
 
-        int listWidth = Math.min(400, this.width - 16);
-        int x0 = (this.width - listWidth) / 2;
-        int y = 54;
+        int totalHeight = 0;
+        for (RoleType type : order) {
+            int n = groups.getOrDefault(type, List.of()).size();
+            if (n > 0) totalHeight += 14 + ((n + Math.min(5, n) - 1) / Math.min(5, n)) * 67;
+        }
+        float scale = Math.min(1.0F, Math.min((this.width - 16) / 400.0F,
+                Math.max(1, this.height - 76) / (float) Math.max(1, totalHeight)));
+        int nativeWidth = this.width;
+        int canvasWidth = 400;
+        int left = (nativeWidth - Math.round(canvasWidth * scale)) / 2;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(left, 54);
+        graphics.pose().scale(scale, scale);
+        mouseX = (int) ((mouseX - left) / scale);
+        mouseY = (int) ((mouseY - 54) / scale);
+        int x0 = 0;
+        int y = 0;
         ScriptRole hovered = null;
 
         for (RoleType type : order) {
             List<ScriptRole> roles = groups.getOrDefault(type, List.of());
             if (roles.isEmpty()) continue;
-            if (y + 62 > this.height - 20) break;
+
 
             String header = type.getDisplayName() + " (" + roles.size() + ")";
             graphics.text(this.font, header, x0 + 4, y, UiDrawing.teamColor(type), true);
@@ -100,7 +114,7 @@ public class ScriptReferenceScreen extends Screen {
                 int rowStart = row * columns;
                 int rowCount = Math.min(columns, roles.size() - rowStart);
                 int rowWidth = rowCount * cellWidth;
-                int rowX = this.width / 2 - rowWidth / 2;
+                int rowX = canvasWidth / 2 - rowWidth / 2;
 
                 for (int col = 0; col < rowCount; col++) {
                     ScriptRole role = roles.get(rowStart + col);
@@ -110,7 +124,7 @@ public class ScriptReferenceScreen extends Screen {
                     UiDrawing.roleToken(graphics, role, tokenX, tokenY, 40);
                     String name = role.getDisplayName();
                     graphics.text(this.font, name, cellX + (cellWidth - this.font.width(name)) / 2,
-                            tokenY + 45, UiDrawing.TEXT, false);
+                            tokenY + 45, UiDrawing.teamColor(type), false);
                     if (mouseX >= cellX && mouseX < cellX + cellWidth
                             && mouseY >= tokenY && mouseY < tokenY + 62) {
                         hovered = role;
@@ -119,6 +133,10 @@ public class ScriptReferenceScreen extends Screen {
             }
             y += rows * 67;
         }
+
+        graphics.pose().popMatrix();
+        mouseX = Math.round(left + mouseX * scale);
+        mouseY = Math.round(54 + mouseY * scale);
 
         if (script.bootlegger() != null && !script.bootlegger().isEmpty()) {
             String rules = "Bootlegger: " + String.join("  •  ", script.bootlegger());
@@ -136,56 +154,53 @@ public class ScriptReferenceScreen extends Screen {
 
         List<String> first = script.firstNightOrder() == null ? List.of() : script.firstNightOrder();
         List<String> other = script.otherNightOrder() == null ? List.of() : script.otherNightOrder();
-        int maxRows = Math.max(1, (this.height - top - 28) / 13);
+        int maxRows = Math.max(first.size(), other.size());
+        float rowScale = Math.min(1F, Math.max(1, this.height - top - 28) / (float) Math.max(1, maxRows * 13));
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(0, top + 18);
+        graphics.pose().scale(rowScale, rowScale);
         for (int i = 0; i < Math.min(maxRows, first.size()); i++) {
             String line = (i + 1) + ". " + first.get(i);
-            graphics.text(this.font, line, 16, top + 18 + i * 13, UiDrawing.TEXT, false);
+            graphics.text(this.font, line, 16, i * 13, UiDrawing.TEXT, false);
         }
         for (int i = 0; i < Math.min(maxRows, other.size()); i++) {
             String line = (i + 1) + ". " + other.get(i);
-            graphics.text(this.font, line, half + 16, top + 18 + i * 13, UiDrawing.TEXT, false);
+            graphics.text(this.font, line, (int)((half + 16) / rowScale), i * 13, UiDrawing.TEXT, false);
         }
+        graphics.pose().popMatrix();
         if (first.isEmpty() && other.isEmpty()) {
             drawCentered(graphics, "This script does not provide custom night-order data.", top + 42, UiDrawing.MUTED, false);
         }
     }
 
     private void drawJinxes(GuiGraphicsExtractor graphics, Script script) {
-        int y = 60;
-        drawCentered(graphics, "Jinxes / Special Rules", y, UiDrawing.GOLD, true);
-        y += 22;
-
-        boolean drew = false;
-        if (script.bootlegger() != null) {
-            for (String rule : script.bootlegger()) {
-                y = drawWrapped(graphics, "• " + rule, 30, y, this.width - 60, 11, 5);
-                y += 5;
-                drew = true;
-            }
+        List<net.minecraft.util.FormattedCharSequence> lines = new ArrayList<>();
+        if (script.bootlegger() != null) for (String rule : script.bootlegger())
+            lines.addAll(this.font.split(Component.literal("• " + rule), 360));
+        List<ScriptRole> extras = new ArrayList<>();
+        extras.addAll(script.fabled()); extras.addAll(script.loric());
+        int contentHeight = Math.max(30, lines.size() * 12 + extras.size() * 32 + 24);
+        float scale = Math.min(1F, Math.min((this.width - 20) / 400F, Math.max(1,this.height - 68) / (float) contentHeight));
+        graphics.pose().pushMatrix();
+        graphics.pose().translate((this.width - 400 * scale) / 2, 54);
+        graphics.pose().scale(scale, scale);
+        int y=0;
+        graphics.text(this.font,"Jinxes / Special Rules",20,y,UiDrawing.GOLD,true); y+=20;
+        for (var line : lines) { graphics.text(this.font,line,20,y,UiDrawing.TEXT,false); y+=12; }
+        for (ScriptRole role : extras) {
+            UiDrawing.roleToken(graphics,role,20,y,26);
+            graphics.text(this.font,role.getDisplayName(),54,y+8,UiDrawing.teamColor(role.getTeam()),false); y+=32;
         }
-        if (!script.fabled().isEmpty() || !script.loric().isEmpty()) {
-            graphics.text(this.font, "Fabled / Loric in play:", 30, y, UiDrawing.TEXT, true);
-            y += 15;
-            List<ScriptRole> extras = new ArrayList<>();
-            extras.addAll(script.fabled());
-            extras.addAll(script.loric());
-            for (ScriptRole role : extras) {
-                UiDrawing.roleToken(graphics, role, 34, y, 26);
-                graphics.text(this.font, role.getDisplayName(), 68, y + 8, UiDrawing.TEXT, false);
-                y += 31;
-                drew = true;
-                if (y > this.height - 30) break;
-            }
-        }
-        if (!drew) drawCentered(graphics, "No jinx or special-rule data is present on this script.", y + 10, UiDrawing.MUTED, false);
+        if (lines.isEmpty() && extras.isEmpty()) graphics.text(this.font,"No special-rule data on this script.",20,y,UiDrawing.MUTED,false);
+        graphics.pose().popMatrix();
     }
 
     private void drawRoleHover(GuiGraphicsExtractor graphics, ScriptRole role, int mouseX, int mouseY) {
         String ability = role.getAbility();
         if (ability == null || ability.isBlank()) return;
         int width = Math.min(190, this.width - 20);
-        int x = Math.min(mouseX + 12, this.width - width - 6);
-        int y = Math.min(mouseY + 10, this.height - 74);
+        int x = Math.max(6, Math.min(mouseX + 12, this.width - width - 6));
+        int y = Math.max(6, Math.min(mouseY + 10, this.height - 74));
         UiDrawing.panel(graphics, x, y, width, 66);
         graphics.text(this.font, role.getDisplayName(), x + 6, y + 6, UiDrawing.teamColor(role.getTeam()), true);
         drawWrapped(graphics, ability, x + 6, y + 20, width - 12, 10, 4);

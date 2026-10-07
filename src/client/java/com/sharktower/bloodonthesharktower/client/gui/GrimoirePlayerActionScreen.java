@@ -104,12 +104,20 @@ public final class GrimoirePlayerActionScreen extends Screen {
             }
 
             if (dead) {
+                if (ClientState.pendingDeaths.contains(playerId)
+                        && ClientState.phase() != GamePhase.NIGHT && ClientState.phase() != GamePhase.SETUP) {
+                    this.addRenderableWidget(Button.builder(
+                                    Component.literal("Reveal This Death").withStyle(ChatFormatting.RED), b ->
+                                            actionAndBack("reveal_death", Integer.toString(seat)))
+                            .bounds(cx - 90, y, 180, 20).build());
+                    y += 26;
+                }
                 this.addRenderableWidget(Button.builder(Component.literal("Revive Player").withStyle(ChatFormatting.GREEN), b ->
                                 actionAndBack("revive_player", Integer.toString(seat)))
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             } else if (ClientState.phase() == GamePhase.NIGHT) {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead"), b ->
+                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately"), b ->
                                 actionAndBack("mark_dead", Integer.toString(seat)))
                         .bounds(cx - w - gap / 2, y, w, 20).build());
 
@@ -125,7 +133,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             } else {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead").withStyle(ChatFormatting.RED), b ->
+                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately").withStyle(ChatFormatting.RED), b ->
                                 actionAndBack("mark_dead", Integer.toString(seat)))
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;

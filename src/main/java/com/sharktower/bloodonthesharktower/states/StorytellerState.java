@@ -26,6 +26,8 @@ public final class StorytellerState {
     public static final Map<UUID, Integer> PENDING_SEAT_NUMBERS = new HashMap<>();
     public static final Map<UUID, List<Reminder>> REMINDERS = new HashMap<>();
     public static final List<ScriptRole> DEMON_BLUFFS = new ArrayList<>();
+    /** Fake Demon bluffs shown only to an in-play Lunatic. Never merged with DEMON_BLUFFS. */
+    public static final List<ScriptRole> LUNATIC_BLUFFS = new ArrayList<>();
     public static final Set<UUID> MARKED_PLAYERS = new HashSet<>();
     /** Players currently acting as Storytellers for setup/grimoire permissions. */
     public static final Set<UUID> STORYTELLERS = new HashSet<>();
@@ -96,6 +98,7 @@ public final class StorytellerState {
         PENDING_SEAT_NUMBERS.clear();
         REMINDERS.clear();
         DEMON_BLUFFS.clear();
+        LUNATIC_BLUFFS.clear();
         MARKED_PLAYERS.clear();
         nextSeatNumber = 1;
         setupOutsiderCount = 0;

@@ -34,6 +34,9 @@ jobs:
           chmod +x gradlew
           ./gradlew clean build --stacktrace
 
+      - name: Smoke test dev server
+        run: python3 tools/smoke_dev_server.py
+
       - name: Build Modrinth client pack
         run: python3 tools/package_modrinth_client.py
 

@@ -51,12 +51,15 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
     ) {
         // Intentionally invisible. AssignRolesScreen renders the face and labels.
         if (isHovered()) {
+            int reminderCount=ClientGrimoireEdits.remindersFor(playerId).size();
+            String reminderHint=reminderCount==0 ? "" : " | " + reminderCount + " reminder(s)";
             if (ClientGrimoireEdits.isLocalStoryteller()
                     && com.sharktower.bloodonthesharktower.states.ClientState.nominationsOpen) {
-                GrimoireHoverHints.set("Seat " + seat
-                        + " player — LMB reminders | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
+                GrimoireHoverHints.set(com.sharktower.bloodonthesharktower.states.ClientState.playerName(playerId,seat) + " — Seat " + seat
+                        + " player — LMB reminders | RMB actions | Shift+LMB nominator | Shift+RMB nominee" + reminderHint);
             } else {
-                GrimoireHoverHints.set("Seat " + seat + " player — LMB reminders | RMB actions");
+                GrimoireHoverHints.set(com.sharktower.bloodonthesharktower.states.ClientState.playerName(playerId,seat) + " — Seat " + seat + " player — LMB reminders"
+                        + (ClientGrimoireEdits.isLocalStoryteller() ? " | RMB actions" : "") + reminderHint);
             }
         }
     }

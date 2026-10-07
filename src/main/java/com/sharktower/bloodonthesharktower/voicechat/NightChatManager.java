@@ -22,21 +22,12 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Shared Night Chat + temporary private Storyteller conversations.
- *
- * During NIGHT all seated players and active Storytellers are placed into one
- * hidden isolated Simple Voice Chat group. Storytellers therefore hear the public
- * night conversation automatically while they move between houses.
- *
- * A house-bound private conversation temporarily moves the Storyteller and one
- * player into an isolated room. When the Storyteller leaves that house, only the
- * Storyteller is detached and returned to public Night Chat. The player remains
- * isolated until they explicitly leave, avoiding an abrupt return to public audio.
- * Manual private conversations remain phase-independent.
+ * Physical house voice rooms and manual ST conversations.
+ * Houses remain private across phase changes. Outside uses normal Night
+ * proximity or the existing daytime router; there is no shared Night group.
+ * The legacy class/command name is retained for compatibility.
  */
 public final class NightChatManager {
-    private static final UUID SHARED_NIGHT_GROUP_ID = UUID.nameUUIDFromBytes(
-            "blood-on-the-sharktower:night:shared".getBytes(StandardCharsets.UTF_8));
     private static final long INVITE_TTL_MS = 60_000L;
     private static final double HOUSE_EXIT_RADIUS = 8.0D;
     private static final int HOUSE_CHECK_INTERVAL_TICKS = 5;
@@ -45,9 +36,11 @@ public final class NightChatManager {
     private static final Map<UUID, Invite> INVITES = new HashMap<>();
     private static final Map<UUID, PrivateSession> SESSIONS_BY_PARTICIPANT = new HashMap<>();
     private static final Map<UUID, String> LAST_SENT_ROUTES = new HashMap<>();
+    private static final Map<UUID,Integer> HOUSE_ROOMS = new HashMap<>();
     private static volatile boolean active;
     private static volatile String lastRoutingError;
     private static int houseCheckTicks;
+    private static MinecraftServer routingServer;
 
     private NightChatManager() {}
 
@@ -77,10 +70,10 @@ public final class NightChatManager {
     public static synchronized String statusLine() {
         cleanupExpiredInvites();
         long deadSeated = ServerState.PLAYER_SEAT_NUMBERS.keySet().stream()
-                .filter(id -> Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(id)))
+                .filter(id -> Boolean.TRUE.equals(com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(ServerState.PLAYER_DEATH_STATUS, ServerState.rolesRevealed).get(id)))
                 .count();
-        return "Night Chat: " + (active ? "ACTIVE" : "INACTIVE")
-                + ", sharedNight=" + (active ? "ON" : "OFF")
+        return "House voice rooms: " + HOUSE_ROOMS.size()
+                + ", sharedNight=REMOVED"
                 + ", seated=" + ServerState.PLAYER_SEAT_NUMBERS.size()
                 + " (dead=" + deadSeated + ")"
                 + ", privateSessions=" + uniquePrivateSessionCount()
@@ -116,58 +109,20 @@ public final class NightChatManager {
 
     /** Human-readable route for diagnostics and multiplayer smoke tests. */
     public static synchronized String participantStatus(UUID participantId) {
-        if (participantId == null) return "Voice route: unknown participant.";
-
-        PrivateSession session = SESSIONS_BY_PARTICIPANT.get(participantId);
-        if (session != null) {
-            boolean storytellerAttached = isStorytellerAttached(session);
-            if (session.playerId().equals(participantId) && !storytellerAttached) {
-                return "Voice route: PRIVATE HOLD. The Storyteller has left; use /bots private leave when ready.";
-            }
-            UUID partner = session.storytellerId().equals(participantId)
-                    ? session.playerId()
-                    : session.storytellerId();
-            return "Voice route: PRIVATE with " + partner + ".";
-        }
-        if (active && (StorytellerState.isStoryteller(participantId)
-                || ServerState.PLAYER_SEAT_NUMBERS.containsKey(participantId))) {
-            return MANAGED_CONNECTIONS.contains(participantId)
-                    ? (StorytellerState.isStoryteller(participantId)
-                        ? "Voice route: SHARED NIGHT CHAT (Storyteller monitoring)."
-                        : "Voice route: SHARED NIGHT CHAT.")
-                    : "Voice route: waiting for Simple Voice Chat connection; shared Night Chat will restore automatically.";
-        }
-        return "Voice route: proximity voice.";
+        return "Voice route: " + routeCode(participantId) + ".";
     }
 
     /** Stable route code sent only to the participant whose HUD it describes. */
     public static synchronized String routeCode(UUID participantId) {
         if (participantId == null) return "PROXIMITY";
-
         PrivateSession session = SESSIONS_BY_PARTICIPANT.get(participantId);
         if (session != null) {
-            if (session.playerId().equals(participantId) && !isStorytellerAttached(session)) {
-                return "PRIVATE_HOLD";
-            }
-            return session.storytellerId().equals(participantId)
-                    ? "PRIVATE_STORYTELLER"
-                    : "PRIVATE";
+            if (session.playerId().equals(participantId) && !isStorytellerAttached(session)) return "PRIVATE_HOLD";
+            return session.storytellerId().equals(participantId) ? "PRIVATE_STORYTELLER" : "PRIVATE";
         }
-
-        if (active && publicNightParticipants().contains(participantId)) {
-            if (!MANAGED_CONNECTIONS.contains(participantId)) return "WAITING";
-            return StorytellerState.isStoryteller(participantId)
-                    ? "SHARED_NIGHT_STORYTELLER"
-                    : "SHARED_NIGHT";
-        }
-
-        // During the daytime automatic router, expose only this player's own
-        // route. DAY_ZONE:<name> lets the client show a small private-area label;
-        // DAY_SHARED clears that label again as soon as they leave the area.
+        if (HOUSE_ROOMS.containsKey(participantId)) return "HOUSE:" + HOUSE_ROOMS.get(participantId);
         String dayRoute = DayChatZoneManager.routeCode(participantId);
-        if (dayRoute != null) return dayRoute;
-
-        return "PROXIMITY";
+        return dayRoute == null ? "PROXIMITY" : dayRoute;
     }
 
     /** Send the current local route immediately, e.g. during initial login sync. */
@@ -178,7 +133,7 @@ public final class NightChatManager {
         LAST_SENT_ROUTES.put(player.getUUID(), route);
     }
 
-    /** Reconcile shared-night membership when Storyteller control changes. */
+    /** Reconcile physical routing when Storyteller control changes. */
     public static synchronized void onStorytellerStatusChanged(UUID playerId) {
         if (playerId == null) return;
 
@@ -196,20 +151,14 @@ public final class NightChatManager {
             }
         }
 
-        if (api == null) return;
-        if (active && (StorytellerState.isStoryteller(playerId)
-                || ServerState.PLAYER_SEAT_NUMBERS.containsKey(playerId))) {
-            assignSharedNight(api, playerId);
-        } else if (!SESSIONS_BY_PARTICIPANT.containsKey(playerId)) {
-            VoicechatConnection connection = api.getConnectionOf(playerId);
-            if (connection != null) connection.setGroup(null);
-            MANAGED_CONNECTIONS.remove(playerId);
-        }
+        if (routingServer != null) routingServer.execute(() -> reconcile(routingServer));
     }
 
     /** Clear bookkeeping if the voice server itself shuts down. */
     public static synchronized void onVoiceServerStopped() {
         active = false;
+        routingServer = null;
+        HOUSE_ROOMS.clear();
         INVITES.clear();
         SESSIONS_BY_PARTICIPANT.clear();
         MANAGED_CONNECTIONS.clear();
@@ -217,126 +166,39 @@ public final class NightChatManager {
         lastRoutingError = null;
     }
 
-    /** Enter shared Night Chat using the committed seat map. */
+    /** Legacy Night command: enable physical routing, never a shared group. */
     public static synchronized Result start() {
-        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
-        if (api == null) return Result.fail("Simple Voice Chat server API is not online.");
-
-        // During Night every seated player and Storyteller remains a member of the
-        // shared room, even while a private Storyteller conversation is active.
-        // Audio isolation is handled per sound packet instead of by changing group
-        // membership. This keeps Simple Voice Chat's visible group-member roster
-        // stable and prevents night-order meta from players disappearing/reappearing.
         active = true;
         lastRoutingError = null;
-
-        Set<UUID> publicNightParticipants = publicNightParticipants();
-        int assigned = 0;
-        int waiting = 0;
-        for (UUID participantId : publicNightParticipants) {
-            if (assignSharedNight(api, participantId)) assigned++; else waiting++;
-        }
-
-        String summary = "Night Chat enabled: " + assigned
-                + " player/Storyteller connection(s) joined the shared night room"
-                + (waiting > 0 ? ", " + waiting + " waiting for voice connection." : ".");
-        if (lastRoutingError != null) {
-            return Result.fail(summary + " Last routing error: " + lastRoutingError);
-        }
-        return Result.ok(summary);
+        removeLegacyNightGroup();
+        return VoicechatIntegrationState.serverApi() == null
+                ? Result.fail("Simple Voice Chat server API is not online.")
+                : Result.ok("House voice rooms enabled; outside houses uses proximity at Night.");
     }
 
-    /**
-     * Disable the shared Night Chat layer. Temporary private Storyteller
-     * conversations are phase-independent and therefore remain active.
-     */
+    /** Phase change leaves house privacy intact. */
     public static synchronized Result stop() {
-        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         active = false;
         lastRoutingError = null;
-
-        int released = 0;
-        if (api != null) {
-            // At dawn the shared group is removed, so any private conversations
-            // that are still active are materialized into their own SVC groups.
-            // This preserves the existing phase-independent private-chat behavior
-            // while allowing every shared-night head/icon to disappear together.
-            materializePrivateSessions(api);
-
-            for (UUID playerId : new HashSet<>(MANAGED_CONNECTIONS)) {
-                // Private rooms survive day/setup transitions.
-                if (SESSIONS_BY_PARTICIPANT.containsKey(playerId)) continue;
-
-                VoicechatConnection connection = api.getConnectionOf(playerId);
-                if (connection != null) {
-                    connection.setGroup(null);
-                    released++;
-                }
-                MANAGED_CONNECTIONS.remove(playerId);
-            }
-            try {
-                api.removeGroup(SHARED_NIGHT_GROUP_ID);
-            } catch (Throwable ignored) {
-                // Group may already be gone; nothing to recover here.
-            }
-        } else {
-            // Preserve private-session bookkeeping even if the API is briefly
-            // unavailable; the voice lifecycle callbacks will clean it up.
-            MANAGED_CONNECTIONS.removeIf(id -> !SESSIONS_BY_PARTICIPANT.containsKey(id));
-        }
-
-        return Result.ok("Shared Night Chat disabled; " + released
-                + " voice connection(s) returned to proximity chat. Private chats remain available.");
+        removeLegacyNightGroup();
+        return Result.ok("House rooms stay private until players leave; outside uses the normal daytime route.");
     }
 
-    /**
-     * Dawn is a hard handoff from Night routing into shared Day Chat.
-     *
-     * Private Storyteller conversations and pending invitations that originated
-     * during Night must not survive this transition, otherwise they continue to
-     * claim the same Simple Voice Chat connections that DayChatZoneManager is
-     * trying to place into BOTS Day Chat.
-     *
-     * New manual private conversations started after Dawn remain phase-independent.
-     */
+    /** End manual night sessions at Dawn and restore physical routing. */
     public static synchronized Result stopForDawn() {
-        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         active = false;
         lastRoutingError = null;
         INVITES.clear();
-
-        int privateSessions = uniquePrivateSessionCount();
-        int released = 0;
-
-        if (api != null) {
-            endAllPrivateSessions(api);
-
-            for (UUID playerId : new HashSet<>(MANAGED_CONNECTIONS)) {
-                VoicechatConnection connection = api.getConnectionOf(playerId);
-                if (connection != null) {
-                    connection.setGroup(null);
-                    released++;
-                }
-                MANAGED_CONNECTIONS.remove(playerId);
-            }
-
-            try {
-                api.removeGroup(SHARED_NIGHT_GROUP_ID);
-            } catch (Throwable ignored) {
-                // Group may already be gone; nothing to recover here.
-            }
-        } else {
+        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
+        if (api != null) endAllPrivateSessions(api);
+        else {
+            MANAGED_CONNECTIONS.removeAll(SESSIONS_BY_PARTICIPANT.keySet());
             SESSIONS_BY_PARTICIPANT.clear();
-            MANAGED_CONNECTIONS.clear();
         }
-
-        // Force the next state broadcast/tick to publish the new Day route instead
-        // of retaining a cached PRIVATE/PRIVATE_HOLD HUD value.
+        removeLegacyNightGroup();
+        if (routingServer != null) reconcile(routingServer);
         LAST_SENT_ROUTES.clear();
-
-        return Result.ok("Dawn voice handoff complete: shared Night Chat stopped, "
-                + privateSessions + " private session(s) ended, "
-                + released + " remaining voice connection(s) released for Day Chat.");
+        return Result.ok("Dawn voice routing ready. House rooms remain private until players leave.");
     }
 
     /**
@@ -346,6 +208,7 @@ public final class NightChatManager {
     public static synchronized Result resetAll() {
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         active = false;
+        HOUSE_ROOMS.clear();
         lastRoutingError = null;
         INVITES.clear();
 
@@ -360,7 +223,7 @@ public final class NightChatManager {
                 }
             }
             try {
-                api.removeGroup(SHARED_NIGHT_GROUP_ID);
+                removeLegacyNightGroup();
             } catch (Throwable ignored) {
             }
         } else {
@@ -373,65 +236,29 @@ public final class NightChatManager {
                 + " connection(s) returned to proximity chat.");
     }
 
-    /** Re-apply shared-night routing without disturbing active private sessions. */
+    /** Re-apply physical routing without disturbing active private sessions. */
     public static synchronized Result resync() {
-        if (!active) return Result.fail("Night Chat is not active.");
-        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
-        if (api == null) return Result.fail("Simple Voice Chat server API is not online.");
-
-        cleanupExpiredInvites();
-
-        Set<UUID> publicNightParticipants = publicNightParticipants();
-        for (UUID participantId : new HashSet<>(MANAGED_CONNECTIONS)) {
-            if (!publicNightParticipants.contains(participantId)) {
-                VoicechatConnection connection = api.getConnectionOf(participantId);
-                if (connection != null) connection.setGroup(null);
-                MANAGED_CONNECTIONS.remove(participantId);
-            }
-        }
-
-        int assigned = 0;
-        int waiting = 0;
-        for (UUID participantId : publicNightParticipants) {
-            if (assignSharedNight(api, participantId)) assigned++; else waiting++;
-        }
-
-        return Result.ok("Night Chat resynced: " + assigned
-                + " player/Storyteller connection(s) in shared night chat"
-                + (waiting > 0 ? ", " + waiting + " waiting for voice connection." : "."));
+        if (VoicechatIntegrationState.serverApi() == null) return Result.fail("Simple Voice Chat server API is not online.");
+        if (routingServer != null) reconcile(routingServer);
+        return Result.ok("House voice rooms resynchronized. Shared Night Chat is removed.");
     }
 
     /** Restore the authoritative route whenever Simple Voice Chat reconnects. */
     public static synchronized void onVoicePlayerConnected(UUID playerId) {
         if (playerId == null) return;
-
-        if (!active && isAuthoritativeNight()) start();
-
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         if (api == null) return;
-
-        PrivateSession session = SESSIONS_BY_PARTICIPANT.get(playerId);
-        if (session != null) {
-            VoicechatConnection connection = api.getConnectionOf(playerId);
-            if (connection == null || !connection.isConnected()) return;
-
-            if (active) {
-                // Private Night Chat participants remain members of the visible
-                // shared roster; packet filtering preserves their isolation.
-                assignSharedNight(api, playerId);
-            } else {
-                connection.setGroup(ensurePrivateGroup(api, session.groupId()));
-                MANAGED_CONNECTIONS.add(playerId);
-            }
-            return;
+        if (SESSIONS_BY_PARTICIPANT.containsKey(playerId)) {
+            assignCurrentPrivateRoute(api,playerId);
+        } else if (houseParticipants().contains(playerId)) {
+            // Position may have changed while voice was offline. Isolate the
+            // reconnect until the server thread checks its current location;
+            // never briefly restore an old house or public group.
+            VoicechatConnection connection=api.getConnectionOf(playerId);
+            if (connection != null && connection.isConnected())
+                connection.setGroup(ensurePrivateGroup(api,reconnectGroupId(playerId)));
         }
-
-        if (!active) return;
-        if (!publicNightParticipants().contains(playerId)) return;
-
-        if (assignSharedNight(api, playerId)) {
-            BloodOnTheSharktower.LOGGER.info("Restored shared Night Chat after voice reconnect for {}.", playerId);
-        }
+        if (routingServer != null) routingServer.execute(() -> reconcile(routingServer));
     }
 
     /** Recover safely if one side of a private room loses voice connectivity. */
@@ -450,7 +277,7 @@ public final class NightChatManager {
 
         // A Simple Voice Chat dropout is not the same as leaving Minecraft.
         // Preserve the player's private room/hold so a transient reconnect never
-        // exposes them to public Night Chat. If the Storyteller was attached,
+        // exposes them to public audio. If the Storyteller was attached,
         // free only the Storyteller so they can continue running the night.
         if (isStorytellerAttached(session)) {
             if (api != null) {
@@ -597,19 +424,13 @@ public final class NightChatManager {
         UUID groupId = UUID.nameUUIDFromBytes(("blood-on-the-sharktower:private:" + token)
                 .getBytes(StandardCharsets.UTF_8));
 
-        if (active) {
-            // Keep both participants in the shared Night Chat group so the group
-            // roster stays visually unchanged. The voice plugin cancels packets
-            // between this private pair and everyone else until the chat ends.
-            assignSharedNight(api, storytellerId);
-            assignSharedNight(api, playerId);
-        } else {
-            Group privateGroup = ensurePrivateGroup(api, groupId);
-            storyteller.setGroup(privateGroup);
-            player.setGroup(privateGroup);
-            MANAGED_CONNECTIONS.add(storytellerId);
-            MANAGED_CONNECTIONS.add(playerId);
-        }
+        Group privateGroup = ensurePrivateGroup(api, groupId);
+        storyteller.setGroup(privateGroup);
+        player.setGroup(privateGroup);
+        HOUSE_ROOMS.remove(storytellerId);
+        HOUSE_ROOMS.remove(playerId);
+        MANAGED_CONNECTIONS.add(storytellerId);
+        MANAGED_CONNECTIONS.add(playerId);
 
         PrivateSession session = new PrivateSession(groupId, storytellerId, playerId, invite.houseSeat());
         SESSIONS_BY_PARTICIPANT.put(storytellerId, session);
@@ -638,15 +459,13 @@ public final class NightChatManager {
 
         if (session.storytellerId().equals(participantId) && isStorytellerAttached(session)) {
             detachStorytellerInternal(api, session);
-            return Result.ok(active
-                    ? "Left private chat and returned to shared Night Chat. The player remains private until they leave."
-                    : "Left private chat and returned to proximity voice. The player remains private until they leave.");
+            if (routingServer != null) reconcile(routingServer);
+            return Result.ok("Left the manual private chat. The player remains private until they leave it.");
         }
 
         endPlayerPrivateInternal(api, session);
-        return Result.ok(active
-                ? "Private chat ended. Returned to shared Night Chat."
-                : "Private chat ended. Returned to proximity voice.");
+        if (routingServer != null) reconcile(routingServer);
+        return Result.ok("Manual private chat ended; physical house/daytime routing restored.");
     }
 
     /** Defensive cleanup when the Minecraft connection itself closes. */
@@ -654,6 +473,7 @@ public final class NightChatManager {
         if (playerId == null) return;
         INVITES.entrySet().removeIf(entry -> entry.getValue().involves(playerId));
         LAST_SENT_ROUTES.remove(playerId);
+        HOUSE_ROOMS.remove(playerId);
 
         PrivateSession session = SESSIONS_BY_PARTICIPANT.get(playerId);
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
@@ -693,10 +513,9 @@ public final class NightChatManager {
     public static synchronized void serverTick(MinecraftServer server) {
         if (server == null) return;
 
-        // Daytime doorway routing must be responsive enough to catch a sprint
-        // through a 1.5-block trigger. Run it every server tick; only the Night
-        // Storyteller-house automation remains throttled below.
-        DayChatZoneManager.serverTick(server);
+        // Physical houses and daytime doorways are reconciled every tick.
+        // House-bound manual invitation cleanup is throttled below.
+        reconcile(server);
 
         houseCheckTicks++;
         if (houseCheckTicks < HOUSE_CHECK_INTERVAL_TICKS) return;
@@ -753,14 +572,85 @@ public final class NightChatManager {
                         .withStyle(ChatFormatting.GRAY));
             }
             if (storyteller != null) {
-                storyteller.sendSystemMessage(Component.literal(active
-                        ? "Left the private room and rejoined shared Night Chat."
-                        : "Left the private room and returned to proximity voice.")
+                storyteller.sendSystemMessage(Component.literal("Left the private room; physical house/daytime routing restored.")
                         .withStyle(ChatFormatting.GRAY));
             }
         }
 
         syncRouteHud(server);
+    }
+
+    public static synchronized void routeHouses(MinecraftServer server) {
+        if (server == null) return;
+        routingServer = server;
+        VoicechatServerApi api = VoicechatIntegrationState.serverApi();
+        if (api == null) return;
+        Set<UUID> participants = houseParticipants();
+        Set<UUID> online = new HashSet<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID id = player.getUUID(); online.add(id);
+            if (SESSIONS_BY_PARTICIPANT.containsKey(id)) continue;
+            Integer house = null;
+            if (!ServerState.gameEnded && participants.contains(id)) {
+                var distances = new java.util.TreeMap<Integer,Double>();
+                for (int seat : new java.util.TreeSet<>(ServerState.PLAYER_SEAT_NUMBERS.values())) {
+                    var home = SeatPositionManager.seatHome(seat);
+                    if (home != null) distances.put(seat, player.distanceToSqr(home.x(),home.y(),home.z()));
+                }
+                house = HouseVoicePolicy.houseFor(ServerState.PLAYER_SEAT_NUMBERS.get(id),
+                        StorytellerState.isStoryteller(id), distances, HOUSE_EXIT_RADIUS);
+            }
+            Integer previous = HOUSE_ROOMS.get(id);
+            if (house == null) HOUSE_ROOMS.remove(id); else HOUSE_ROOMS.put(id,house);
+            if (house != null) {
+                DayChatZoneManager.yieldToHouse(id);
+                assignCurrentPrivateRoute(api,id);
+            } else {
+                VoicechatConnection connection = api.getConnectionOf(id);
+                Group current=connection==null ? null : connection.getGroup();
+                if (previous != null || (current != null && reconnectGroupId(id).equals(current.getId()))) {
+                    if (connection != null) connection.setGroup(null);
+                    MANAGED_CONNECTIONS.remove(id);
+                }
+            }
+        }
+        HOUSE_ROOMS.keySet().retainAll(online);
+
+    }
+
+    public static synchronized boolean isHouseRouted(UUID id) {
+        return HOUSE_ROOMS.containsKey(id) && !SESSIONS_BY_PARTICIPANT.containsKey(id);
+    }
+    public static synchronized void reconcile(MinecraftServer server) {
+        if (server == null) return;
+        routingServer = server;
+        active = isAuthoritativeNight();
+        routeHouses(server);
+        DayChatZoneManager.serverTick(server);
+    }
+    private static void removeLegacyNightGroup() {
+        VoicechatServerApi api=VoicechatIntegrationState.serverApi();
+        if (api != null) try {
+            api.removeGroup(UUID.nameUUIDFromBytes("blood-on-the-sharktower:night:shared".getBytes(StandardCharsets.UTF_8)));
+        } catch (Throwable ignored) {}
+    }
+
+    private static UUID reconnectGroupId(UUID id) {
+        return UUID.nameUUIDFromBytes(("blood-on-the-sharktower:voice:reconnect:" + id).getBytes(StandardCharsets.UTF_8));
+    }
+    private static UUID houseGroupId(int seat) {
+        return UUID.nameUUIDFromBytes(("blood-on-the-sharktower:house:" + seat).getBytes(StandardCharsets.UTF_8));
+    }
+    private static Group ensureHouseGroup(VoicechatServerApi api, int seat) {
+        Group existing = findRegisteredGroup(api, houseGroupId(seat));
+        if (existing != null) return existing;
+        return api.groupBuilder().setId(houseGroupId(seat)).setName("BOTS House " + seat)
+                .setPersistent(false).setHidden(true).setType(Group.Type.ISOLATED).build();
+    }
+    public static synchronized boolean sameNightRoom(UUID a, UUID b) {
+        PrivateSession sa = SESSIONS_BY_PARTICIPANT.get(a), sb = SESSIONS_BY_PARTICIPANT.get(b);
+        if (sa != null || sb != null) return sa != null && sa == sb && isStorytellerAttached(sa);
+        return HouseVoicePolicy.sameRoom(HOUSE_ROOMS.get(a), HOUSE_ROOMS.get(b));
     }
 
     private static void syncRouteHud(MinecraftServer server) {
@@ -777,62 +667,27 @@ public final class NightChatManager {
         LAST_SENT_ROUTES.keySet().removeIf(id -> !online.contains(id));
     }
 
-    /**
-     * Decide whether a Simple Voice Chat group packet should be hidden from one
-     * receiver while Night Chat is active. Keeping everyone in the same SVC group
-     * preserves the visible member roster; this method supplies the privacy layer.
-     */
+    /** Compatibility packet filter: privacy applies in every phase. */
     public static synchronized boolean shouldCancelSharedNightAudio(UUID senderId, UUID receiverId) {
-        if (!active || senderId == null || receiverId == null || senderId.equals(receiverId)) return false;
-
-        PrivateSession senderSession = SESSIONS_BY_PARTICIPANT.get(senderId);
-        PrivateSession receiverSession = SESSIONS_BY_PARTICIPANT.get(receiverId);
-        if (senderSession == null && receiverSession == null) return false;
-
-        // Only the two participants in the same still-attached private session
-        // may hear one another. A player in PRIVATE_HOLD hears nobody until they
-        // deliberately leave the hold, exactly as before.
-        return senderSession == null
-                || receiverSession == null
-                || senderSession != receiverSession
-                || !isStorytellerAttached(senderSession);
+        return senderId != null && receiverId != null && !senderId.equals(receiverId) && !sameNightRoom(senderId,receiverId);
     }
 
-    /** Move active private sessions out of the shared Night group at dawn. */
-    private static void materializePrivateSessions(VoicechatServerApi api) {
-        Set<UUID> handledGroups = new HashSet<>();
-        for (PrivateSession session : new HashSet<>(SESSIONS_BY_PARTICIPANT.values())) {
-            if (!handledGroups.add(session.groupId())) continue;
-
-            Group privateGroup = ensurePrivateGroup(api, session.groupId());
-            VoicechatConnection player = api.getConnectionOf(session.playerId());
-            if (player != null && player.isConnected()) {
-                player.setGroup(privateGroup);
-                MANAGED_CONNECTIONS.add(session.playerId());
-            }
-
-            if (isStorytellerAttached(session)) {
-                VoicechatConnection storyteller = api.getConnectionOf(session.storytellerId());
-                if (storyteller != null && storyteller.isConnected()) {
-                    storyteller.setGroup(privateGroup);
-                    MANAGED_CONNECTIONS.add(session.storytellerId());
-                }
-            }
-        }
-    }
-
-    private static boolean assignSharedNight(VoicechatServerApi api, UUID playerId) {
+    private static boolean assignCurrentPrivateRoute(VoicechatServerApi api, UUID playerId) {
         try {
             VoicechatConnection connection = api.getConnectionOf(playerId);
             if (connection == null || !connection.isConnected()) return false;
-            connection.setGroup(ensureSharedNightGroup(api));
+            PrivateSession session = SESSIONS_BY_PARTICIPANT.get(playerId);
+            Integer house = HOUSE_ROOMS.get(playerId);
+            Group desired = session != null ? ensurePrivateGroup(api,session.groupId())
+                    : house != null ? ensureHouseGroup(api,house) : null;
+            if (desired == null) return false;
+            Group current = connection.getGroup();
+            if (current == null || !desired.getId().equals(current.getId())) connection.setGroup(desired);
             MANAGED_CONNECTIONS.add(playerId);
             return true;
         } catch (Throwable t) {
-            lastRoutingError = shortError(t);
-            BloodOnTheSharktower.LOGGER.error(
-                    "Failed to route {} into shared Night Chat.", playerId, t);
-            MANAGED_CONNECTIONS.remove(playerId);
+            lastRoutingError=shortError(t);
+            BloodOnTheSharktower.LOGGER.error("Failed to route {} into a private voice room.",playerId,t);
             return false;
         }
     }
@@ -842,18 +697,6 @@ public final class NightChatManager {
         String message = t.getMessage();
         return t.getClass().getSimpleName()
                 + (message == null || message.isBlank() ? "" : ": " + message);
-    }
-
-    private static Group ensureSharedNightGroup(VoicechatServerApi api) {
-        Group existing = findRegisteredGroup(api, SHARED_NIGHT_GROUP_ID);
-        if (existing != null) return existing;
-        return api.groupBuilder()
-                .setId(SHARED_NIGHT_GROUP_ID)
-                .setName("BOTS Night Chat")
-                .setPersistent(true)
-                .setHidden(true)
-                .setType(Group.Type.ISOLATED)
-                .build();
     }
 
     private static Group ensurePrivateGroup(VoicechatServerApi api, UUID groupId) {
@@ -890,7 +733,7 @@ public final class NightChatManager {
         return null;
     }
 
-    private static Set<UUID> publicNightParticipants() {
+    private static Set<UUID> houseParticipants() {
         Set<UUID> participants = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.keySet());
         participants.removeIf(StorytellerState::isStoryteller);
         participants.addAll(StorytellerState.STORYTELLERS);
@@ -903,10 +746,7 @@ public final class NightChatManager {
 
     private static void routePublicOrProximity(VoicechatServerApi api, UUID participantId) {
         MANAGED_CONNECTIONS.remove(participantId);
-        if (active && publicNightParticipants().contains(participantId)) {
-            assignSharedNight(api, participantId);
-            return;
-        }
+        if (assignCurrentPrivateRoute(api,participantId)) return;
         VoicechatConnection connection = api.getConnectionOf(participantId);
         if (connection != null) connection.setGroup(null);
     }

@@ -52,7 +52,7 @@ public final class ClientGrimoireEdits {
     }
 
     /**
-     * Secondary "believed role" token for Drunk/Marionette.
+     * Secondary "believed role" token for Drunk, Marionette and Lunatic.
      * Storytellers read the authoritative server map; ordinary players keep a
      * completely local notebook value that is never sent to the server.
      */
@@ -125,6 +125,14 @@ public final class ClientGrimoireEdits {
         if (isLocalStoryteller() || ClientState.rolesRevealed) {
             return ClientState.demonBluffs;
         }
+
+        // The real Lunatic client receives its fake bluffs through a dedicated
+        // private payload, while its visible role is the Demon it believes it is.
+        // Prefer that private set whenever present instead of checking myRole,
+        // because myRole intentionally contains the believed Demon identity.
+        List<String> lunaticBluffs = ClientLunaticBluffs.current();
+        if (!lunaticBluffs.isEmpty()) return lunaticBluffs;
+
         return SHARED_ABILITY_DEMON_BLUFFS.isEmpty()
                 ? ClientState.demonBluffs
                 : SHARED_ABILITY_DEMON_BLUFFS;
@@ -153,6 +161,7 @@ public final class ClientGrimoireEdits {
         if (actualRole == Role.MARIONETTE
                 && role.getTeam() != com.sharktower.bloodonthesharktower.core.RoleType.TOWNSFOLK
                 && role.getTeam() != com.sharktower.bloodonthesharktower.core.RoleType.OUTSIDER) return;
+        if (actualRole == Role.LUNATIC && role.getTeam() != com.sharktower.bloodonthesharktower.core.RoleType.DEMON) return;
 
         PendingRoleAssignment perceived = role.isCustom()
                 ? new PendingRoleAssignment(role.asCustomRole(), AlignmentOverride.DEFAULT)
@@ -166,7 +175,9 @@ public final class ClientGrimoireEdits {
 
     private static boolean isDeceivedCharacter(PendingRoleAssignment assignment) {
         return assignment != null && !assignment.isCustomRole()
-                && (assignment.role() == Role.DRUNK || assignment.role() == Role.MARIONETTE);
+                && (assignment.role() == Role.DRUNK
+                || assignment.role() == Role.MARIONETTE
+                || assignment.role() == Role.LUNATIC);
     }
 
     public static void clearRole(UUID playerId) {
@@ -179,21 +190,55 @@ public final class ClientGrimoireEdits {
     }
 
     public static void setAlignment(UUID playerId, AlignmentOverride override) {
-        if (playerId == null) return;
-        PendingRoleAssignment current = roleFor(playerId);
-        if (current == null) {
-            current = new PendingRoleAssignment(Role.NO_ROLE, AlignmentOverride.DEFAULT);
+        if (playerId == null || override == null) return;
+        if (override == AlignmentOverride.DEFAULT) {
+            List<Reminder> personal = new ArrayList<>(REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
+            personal.removeIf(reminder -> isAlignmentReminder(reminder.text()));
+            if (personal.isEmpty()) REMINDER_OVERRIDES.remove(playerId);
+            else REMINDER_OVERRIDES.put(playerId, personal);
+        } else {
+            addReminder(playerId, override == AlignmentOverride.FORCE_GOOD ? "Good" : "Evil");
         }
+    }
 
-        PendingRoleAssignment updated = current.isCustomRole() && current.customRole().isPresent()
-                ? new PendingRoleAssignment(current.customRole().get(), override)
-                : new PendingRoleAssignment(current.role(), override);
-        ROLE_OVERRIDES.put(playerId, updated);
+    /** Personal reads only: never infer alignment from a role or an ability snapshot. */
+    public static AlignmentOverride personalAlignmentFor(UUID playerId) {
+        for (Reminder reminder : REMINDER_OVERRIDES.getOrDefault(playerId, List.of())) {
+            if ("Good".equalsIgnoreCase(reminder.text())) return AlignmentOverride.FORCE_GOOD;
+            if ("Evil".equalsIgnoreCase(reminder.text())) return AlignmentOverride.FORCE_BAD;
+        }
+        return AlignmentOverride.DEFAULT;
+    }
+
+    /** Storytellers see current authoritative alignment; players see their own notes. */
+    public static AlignmentOverride visibleAlignmentFor(UUID playerId) {
+        if (!isLocalStoryteller()) return personalAlignmentFor(playerId);
+        PendingRoleAssignment actual = ClientState.grimoireRoles.get(playerId);
+        if (actual == null || "norole".equalsIgnoreCase(actual.getRoleId())) return AlignmentOverride.DEFAULT;
+        return actual.isFinalGood() ? AlignmentOverride.FORCE_GOOD : AlignmentOverride.FORCE_BAD;
+    }
+
+    private static boolean isAlignmentReminder(String text) {
+        return "Good".equalsIgnoreCase(text) || "Evil".equalsIgnoreCase(text);
+    }
+
+    /** Clear the notebook when leaving a server so notes never carry between sessions. */
+    public static void clearSession() {
+        ROLE_OVERRIDES.clear();
+        PERCEIVED_ROLE_OVERRIDES.clear();
+        REMINDER_OVERRIDES.clear();
+        SHARED_ABILITY_REMINDERS.clear();
+        SHARED_ABILITY_DEMON_BLUFFS = List.of();
+        ClientLunaticBluffs.clear();
     }
 
     public static void addReminder(UUID playerId, String text) {
         if (playerId == null || text == null || text.isBlank()) return;
         List<Reminder> reminders = new ArrayList<>(REMINDER_OVERRIDES.getOrDefault(playerId, List.of()));
+        if (isAlignmentReminder(text)) {
+            reminders.removeIf(reminder -> isAlignmentReminder(reminder.text()));
+            text = "Good".equalsIgnoreCase(text) ? "Good" : "Evil";
+        }
         reminders.add(new Reminder(text, java.util.Optional.empty()));
         REMINDER_OVERRIDES.put(playerId, reminders);
     }

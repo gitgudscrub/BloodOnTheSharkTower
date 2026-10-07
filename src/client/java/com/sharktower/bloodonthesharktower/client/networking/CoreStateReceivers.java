@@ -38,7 +38,51 @@ import net.minecraft.network.chat.Component;
 public final class CoreStateReceivers {
     private CoreStateReceivers() {}
 
+    private static long resetGeneration = Long.MIN_VALUE;
+
+    public static void resetSession() {
+        resetGeneration = Long.MIN_VALUE;
+        ClientState.notebookText = "";
+        ClientState.attentionHands = java.util.Map.of();
+        ClientState.talkingPlayers = java.util.Map.of();
+        ClientState.pendingDeaths = java.util.Set.of();
+        com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
+        com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen.clear();
+        com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen.clearPending();
+    }
+
     public static void register() {
+        // These packets are only sent by the server after it has already authenticated
+        // the Storyteller action. Do not gate them again on a potentially stale client
+        // directory cache; doing so silently discarded valid UI responses in live tests.
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.CustomScriptsPayload.TYPE,
+                (payload, context) -> context.client().execute(() ->
+                        com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen.receive(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.TeamInfoPreviewPayload.TYPE,
+                (payload, context) -> context.client().execute(() ->
+                        com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen.queue(payload.token(), payload.text())));
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.NotebookPayload.TYPE, (payload, context) -> {
+            ClientState.notebookGeneration = payload.generation();
+            ClientState.notebookText = payload.text();
+        });
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.SocialStateS2CPayload.TYPE, (payload, context) -> {
+            ClientState.attentionHands = payload.attention();
+            ClientState.talkingPlayers = payload.talking();
+        });
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.GameVisibilityS2CPayload.TYPE, (payload, context) -> {
+            if (resetGeneration != payload.generation()) {
+                resetGeneration = payload.generation();
+                ClientGrimoireEdits.clearSession();
+                ClientState.grimoireRoles = new java.util.HashMap<>();
+                ClientState.grimoirePerceivedRoles = new java.util.HashMap<>();
+                ClientState.grimoireReminders = new java.util.HashMap<>();
+                ClientState.demonBluffs = java.util.List.of();
+                ClientTriggeredNightOrder.update("");
+                GameEndAnimationHUD.reset();
+                com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
+            }
+            ClientState.pendingDeaths = java.util.Set.copyOf(payload.pendingDeaths().keySet());
+        });
         ClientPlayNetworking.registerGlobalReceiver(SyncDayNightS2CPayload.TYPE, (payload, context) ->
                 ClientState.updateDayNight(payload.night(), payload.day(), payload.executionToday())
         );
@@ -119,14 +163,14 @@ public final class CoreStateReceivers {
 
         ClientPlayNetworking.registerGlobalReceiver(AbilityGrimoireS2CPayload.TYPE, (payload, context) -> {
             Minecraft client = Minecraft.getInstance();
+            long receivedGeneration = resetGeneration;
             client.execute(() -> {
+                if (receivedGeneration != resetGeneration) return;
                 ClientGrimoireEdits.applyAbilityGrimoireSnapshot(
                         payload.roles(),
                         payload.reminders(),
                         payload.demonBluffs()
                 );
-                // Open the normal personal Grimoire so the Spy/Widow sees the
-                // shared information in the same place they keep their own notes.
                 client.gui.setScreen(new AssignRolesScreen());
             });
             BloodOnTheSharktower.LOGGER.info(
@@ -155,9 +199,6 @@ public final class CoreStateReceivers {
                     payload.isTargetedSend()
             );
 
-            // Role Bag workflow: after the server has actually shuffled and
-            // synchronised the pending assignments, return the Storyteller to
-            // the Grimoire so the result is visible immediately.
             boolean roleBagReturn = RoleBagScreen.consumeOpenGrimoireAfterDistributionSync();
             boolean editorReturn = GrimoireReturnState.consumeAfterGrimoireSync();
 
@@ -165,9 +206,6 @@ public final class CoreStateReceivers {
                 Minecraft client = Minecraft.getInstance();
                 client.execute(() -> client.gui.setScreen(new AssignRolesScreen()));
             }
-            // editorReturn intentionally performs no immediate setScreen here.
-            // GrimoireReturnState will reopen the Grim from END_CLIENT_TICK after
-            // the current network/input lifecycle has completely finished.
         });
 
         ClientPlayNetworking.registerGlobalReceiver(SyncDaytimeStateS2CPayload.TYPE, (payload, context) -> {
@@ -265,6 +303,7 @@ public final class CoreStateReceivers {
                 else GameEndAnimationHUD.updateWinner(payload.winningTeam());
             } else {
                 GameEndAnimationHUD.reset();
+                com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
             }
 
             BloodOnTheSharktower.LOGGER.info(

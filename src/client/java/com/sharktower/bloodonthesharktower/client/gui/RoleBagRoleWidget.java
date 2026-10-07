@@ -1,9 +1,12 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
+import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -20,6 +23,28 @@ final class RoleBagRoleWidget extends AbstractWidget {
         this.role = role;
         this.selected = selected;
         this.toggle = toggle;
+        this.setTooltip(Tooltip.create(roleTooltip(role)));
+    }
+
+    private static Component roleTooltip(ScriptRole role) {
+        Component tooltip = Component.empty()
+                .append(Component.literal(role.getDisplayName()).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal("\n" + teamName(role.getTeam())).withStyle(ChatFormatting.GRAY));
+        String ability = role.getAbility();
+        if (ability != null && !ability.isBlank()) {
+            tooltip = tooltip.copy().append(Component.literal("\n" + ability).withStyle(ChatFormatting.WHITE));
+        }
+        return tooltip;
+    }
+
+    private static String teamName(RoleType type) {
+        return switch (type) {
+            case TOWNSFOLK -> "Townsfolk";
+            case OUTSIDER -> "Outsider";
+            case MINION -> "Minion";
+            case DEMON -> "Demon";
+            default -> type.name();
+        };
     }
 
     @Override

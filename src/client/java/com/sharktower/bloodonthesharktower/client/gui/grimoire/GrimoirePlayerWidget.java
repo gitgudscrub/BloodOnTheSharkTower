@@ -5,6 +5,7 @@ import com.sharktower.bloodonthesharktower.client.gui.GrimoireInteractionState;
 import com.sharktower.bloodonthesharktower.client.gui.GrimoirePlayerClicks;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
+import com.sharktower.bloodonthesharktower.core.AlignmentOverride;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.Minecraft;
@@ -47,8 +48,20 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             graphics.outline(getX() - 2, getY() - 2, this.width + 4, this.height + 4, 0xFFAAAAAA);
             graphics.text(Minecraft.getInstance().font, "E", getX() + this.width / 2 - 3,
                     getY() + this.height / 2 - 4, 0xFFFFFFFF, true);
-        } else if (currentDead) {
-            UiDrawing.deathShroud(graphics, getX(), getY(), this.width);
+        }
+
+        // Keep this ring outside the token/shroud but inside nomination highlights.
+        AlignmentOverride alignment = ClientGrimoireEdits.visibleAlignmentFor(playerId);
+        int border = switch (alignment) {
+            case FORCE_GOOD -> UiDrawing.GOOD;
+            case FORCE_BAD -> UiDrawing.EVIL;
+            case DEFAULT -> UiDrawing.BORDER;
+        };
+        graphics.outline(getX() - 2, getY() - 2, this.width + 4, this.height + 4, border);
+        graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, border);
+
+        if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
+            drawPendingDeathQuestionMark(graphics, getX() + 1, getY() + 1);
         }
 
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
@@ -67,12 +80,31 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
                 GrimoireHoverHints.set(name
                         + " role — LMB edit | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
             } else {
-                GrimoireHoverHints.set(name + " role — LMB edit | RMB actions");
+                GrimoireHoverHints.set(name + " role — LMB edit"
+                        + (ClientGrimoireEdits.isLocalStoryteller() ? " | RMB actions" : ""));
             }
         }
         } finally {
             GrimoireRevealAnimation.endElement(graphics);
         }
+    }
+
+    /**
+     * Larger pixel-art pending-death marker. This is intentionally about 50%
+     * larger than Minecraft's normal '?' glyph so the ST can spot an unrevealed
+     * death at a glance without changing the surrounding role-token size.
+     */
+    private static void drawPendingDeathQuestionMark(GuiGraphicsExtractor graphics, int x, int y) {
+        drawQuestionMarkPixels(graphics, x + 1, y + 1, 0xCC3A2D0A);
+        drawQuestionMarkPixels(graphics, x, y, UiDrawing.GOLD);
+    }
+
+    private static void drawQuestionMarkPixels(GuiGraphicsExtractor graphics, int x, int y, int colour) {
+        graphics.fill(x + 2, y, x + 8, y + 2, colour);
+        graphics.fill(x + 8, y + 2, x + 10, y + 6, colour);
+        graphics.fill(x + 5, y + 6, x + 10, y + 8, colour);
+        graphics.fill(x + 4, y + 8, x + 6, y + 11, colour);
+        graphics.fill(x + 4, y + 12, x + 6, y + 14, colour);
     }
 
     @Override

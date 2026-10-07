@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Sodium",
+    "version_id": "bAZQdGpg",
+    "client": "required",
+    "server": "unsupported",
+    "validate_compatibility": true
+  },
+  {
+    "name": "Lithium",
+    "version_id": "xS0Q8LSi",
+    "client": "required",
+    "server": "optional",
+    "validate_compatibility": true
+  },
+  {
+    "name": "FerriteCore",
+    "version_id": "d5ddUdiB",
+    "client": "required",
+    "server": "optional",
+    "validate_compatibility": true
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "com.sharktower.bloodonthesharktower.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": ["CommandNodeAccess"],
+  "injectors": {"defaultRequire": 1}
+}

@@ -2,7 +2,10 @@
   "required": true,
   "package": "com.sharktower.bloodonthesharktower.client.mixin",
   "client": [
-    "LivingEntityRendererMixin"
+    "LivingEntityRendererMixin",
+    "AvatarRendererMixin",
+    "EntityRendererMixin",
+    "VoiceGroupIconMixin"
   ],
   "injectors": {
     "defaultRequire": 1

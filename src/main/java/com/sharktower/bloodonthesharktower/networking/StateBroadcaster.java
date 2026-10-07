@@ -25,7 +25,18 @@ import net.minecraft.server.level.ServerPlayer;
 public final class StateBroadcaster {
     private StateBroadcaster() {}
 
+    public static void sendVisibilityTo(ServerPlayer player) {
+        boolean privileged = StorytellerState.isStoryteller(player.getUUID());
+        java.util.Map<java.util.UUID, Boolean> pending = new java.util.HashMap<>();
+        if (privileged) for (java.util.UUID id : com.sharktower.bloodonthesharktower.states.DeathVisibility.pending()) pending.put(id, true);
+        ServerPlayNetworking.send(player, new GameVisibilityS2CPayload(ServerState.resetGeneration, pending));
+    }
+
     public static int sendCurrentStateTo(ServerPlayer player) {
+        com.sharktower.bloodonthesharktower.setup.FreshGameBooks.refreshIfPending(player);
+        SocialStateManager.send(player);
+        PlayerNotebooks.send(player);
+        sendVisibilityTo(player);
         ServerPlayNetworking.send(player, new SyncDayNightS2CPayload(
                 ServerState.currentNight,
                 ServerState.currentDay,
@@ -74,7 +85,8 @@ public final class StateBroadcaster {
     }
 
     public static void sendDeathStatusTo(ServerPlayer player) {
-        ServerPlayNetworking.send(player, new SendDeathStatusS2CPayload(ServerState.PLAYER_DEATH_STATUS));
+        ServerPlayNetworking.send(player, new SendDeathStatusS2CPayload(com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(
+                ServerState.PLAYER_DEATH_STATUS, StorytellerState.isStoryteller(player.getUUID()) || ServerState.rolesRevealed)));
     }
 
     public static void sendGrimoireTo(ServerPlayer player, boolean targeted) {
@@ -122,9 +134,17 @@ public final class StateBroadcaster {
             perceivedRoles = java.util.Map.of();
             seats = ServerState.PLAYER_SEAT_NUMBERS;
             reminders = java.util.Map.of();
-            bluffs = isAssigned(actualOwn) && actualOwn.getRoleType() == RoleType.DEMON
-                    ? StorytellerState.DEMON_BLUFFS
-                    : java.util.List.of();
+
+            // A Lunatic must receive only the fake bluff set selected for their
+            // false Demon world. Never expose the real Demon's bluffs through the
+            // normal entitlement check, even though their visible token is Demon.
+            if (actualOwn != null && actualOwn.isOfficialRole() && actualOwn.role() == Role.LUNATIC) {
+                bluffs = StorytellerState.LUNATIC_BLUFFS;
+            } else {
+                bluffs = com.sharktower.bloodonthesharktower.core.InformationVisibility.canSeeBluffs(actualOwn, visibleOwn)
+                        ? StorytellerState.DEMON_BLUFFS
+                        : java.util.List.of();
+            }
         }
 
         ServerPlayNetworking.send(player, SendGrimoireS2CPayload.fromStoryteller(
@@ -140,9 +160,11 @@ public final class StateBroadcaster {
     private static PendingRoleAssignment playerFacingAssignment(
             java.util.UUID playerId, PendingRoleAssignment actual) {
         if (!isAssigned(actual) || ServerState.rolesRevealed) return actual;
-        if (!actual.isCustomRole() && (actual.role() == Role.DRUNK || actual.role() == Role.MARIONETTE)) {
+        if (!actual.isCustomRole() && (actual.role() == Role.DRUNK
+                || actual.role() == Role.MARIONETTE
+                || actual.role() == Role.LUNATIC)) {
             PendingRoleAssignment perceived = ServerState.PLAYER_PERCEIVED_ROLES.get(playerId);
-            // Never leak the true Drunk/Marionette token if setup data is incomplete.
+            // Never leak a hidden true identity if setup data is incomplete.
             return isAssigned(perceived)
                     ? perceived
                     : new PendingRoleAssignment(Role.NO_ROLE, AlignmentOverride.DEFAULT);
@@ -231,6 +253,21 @@ public final class StateBroadcaster {
         int threshold = exileActive ? ExileSupportManager.currentThreshold() : VotingManager.currentHandsRequired();
         int effectiveCount = exileSupport ? ExileSupportManager.effectiveSupportCount() : VotingManager.effectiveVoteCount();
         VotingManager.Result last = VotingManager.getLastResult();
+        boolean hidePending = !StorytellerState.isStoryteller(player.getUUID()) && !ServerState.rolesRevealed
+                && !com.sharktower.bloodonthesharktower.states.DeathVisibility.pending().isEmpty();
+        int visibleLastThreshold = last.threshold();
+        if (hidePending && !exileActive) {
+            java.util.Map<java.util.UUID, Boolean> visibleDeaths = com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(ServerState.PLAYER_DEATH_STATUS, false);
+            int publicAlive = 0;
+            for (java.util.UUID id : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
+                if (!DaytimeState.isTraveler(id) && !Boolean.TRUE.equals(visibleDeaths.get(id))) publicAlive++;
+            }
+            int base = VotingManager.calculateThreshold(publicAlive);
+            int markedVotes = DaytimeState.getStorytellerMFE() != null ? DaytimeState.getStorytellerMFEVotes() : DaytimeState.getVotesForMarkedPlayer();
+            boolean marked = DaytimeState.getStorytellerMFE() != null || DaytimeState.getMarkedForExecution() != null;
+            threshold = marked ? Math.max(base, markedVotes + 1) : base;
+            visibleLastThreshold = base;
+        }
         MinecraftServer server = player.level().getServer();
 
         SeatPositionManager.Position center = SeatPositionManager.clockCenter();
@@ -262,7 +299,7 @@ public final class StateBroadcaster {
                 last.result().name(),
                 last.nominee(),
                 last.votes(),
-                last.threshold(),
+                visibleLastThreshold,
                 center != null,
                 center == null ? 0.0D : center.x(),
                 center == null ? 0.0D : center.y(),
@@ -345,7 +382,8 @@ public final class StateBroadcaster {
     }
 
     public static int deadPlayerCount() {
-        return ServerState.deadPlayers().size();
+        return (int) com.sharktower.bloodonthesharktower.states.DeathVisibility.visible(
+                ServerState.PLAYER_DEATH_STATUS, ServerState.rolesRevealed).values().stream().filter(Boolean.TRUE::equals).count();
     }
 
     private static boolean isAssigned(PendingRoleAssignment assignment) {
@@ -412,9 +450,9 @@ public final class StateBroadcaster {
     }
 
     public static void broadcastDeathStatus(MinecraftServer server) {
-        SendDeathStatusS2CPayload payload = new SendDeathStatusS2CPayload(ServerState.PLAYER_DEATH_STATUS);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            ServerPlayNetworking.send(player, payload);
+            sendVisibilityTo(player);
+            sendDeathStatusTo(player);
         }
         broadcastTriggeredNightOrder(server);
     }

@@ -3,10 +3,9 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.Role;
-import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
+import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.states.ClientState;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -20,7 +19,7 @@ import java.util.List;
 public final class RoleSelectionScreen extends Screen {
     private enum Mode { PLAYER, PERCEIVED, BLUFF }
 
-    private static final int PAGE_SIZE = 24;
+    private int perPage() { return Math.max(1, (this.width - 24 + 6) / 128) * Math.max(1, (this.height - 44 - 82) / 25); }
     private final Mode mode;
     private final int seat;
     private final int bluffIndex;
@@ -67,12 +66,12 @@ public final class RoleSelectionScreen extends Screen {
     @Override
     protected void init() {
         List<ScriptRole> roles = roles();
-        int maxPage = Math.max(0, (roles.size() - 1) / PAGE_SIZE);
+        int maxPage = Math.max(0, (roles.size() - 1) / perPage());
         if (page > maxPage) page = maxPage;
 
-        int start = page * PAGE_SIZE;
-        int end = Math.min(roles.size(), start + PAGE_SIZE);
-        int columns = 4;
+        int start = page * perPage();
+        int end = Math.min(roles.size(), start + perPage());
+        int columns = Math.max(1, (this.width - 24 + 6) / 128);
         int width = 122;
         int height = 20;
         int gapX = 6;
@@ -86,7 +85,7 @@ public final class RoleSelectionScreen extends Screen {
             int local = index - start;
             int col = local % columns;
             int row = local / columns;
-            Component label = Component.literal(role.getDisplayName()).withStyle(colour(role.getTeam()));
+            Component label = Component.literal(role.getDisplayName()).withStyle(style -> style.withColor(UiDrawing.teamColor(role.getTeam())));
             this.addRenderableWidget(Button.builder(label, b -> choose(role))
                     .bounds(left + col * (width + gapX), top + row * (height + gapY), width, height)
                     .build());
@@ -131,6 +130,7 @@ public final class RoleSelectionScreen extends Screen {
                 if (actualRole == Role.MARIONETTE) {
                     return role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER;
                 }
+                if (actualRole == Role.LUNATIC) return role.getTeam() != RoleType.DEMON;
                 return true;
             });
         } else {
@@ -143,9 +143,9 @@ public final class RoleSelectionScreen extends Screen {
                         .map(id -> id.toLowerCase(java.util.Locale.ROOT))
                         .forEach(unavailableBluffs::add);
 
-                // Drunk/Marionette believed-role tokens are also withheld from
-                // bluff choices, matching the existing random-bluff logic and
-                // avoiding a "bluff" that a good player has already been shown.
+                // Believed-role tokens are also withheld from bluff choices,
+                // matching the existing random-bluff logic and avoiding a
+                // "bluff" that another player has already been shown.
                 ClientState.grimoirePerceivedRoles.values().stream()
                         .filter(java.util.Objects::nonNull)
                         .map(com.sharktower.bloodonthesharktower.core.PendingRoleAssignment::getRoleId)
@@ -221,7 +221,7 @@ public final class RoleSelectionScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         List<ScriptRole> roles = roles();
-        int maxPage = Math.max(0, (roles.size() - 1) / PAGE_SIZE);
+        int maxPage = Math.max(0, (roles.size() - 1) / perPage());
         String heading = switch (mode) {
             case PLAYER -> "Assign role to seat " + seat;
             case PERCEIVED -> "Choose what seat " + seat + " believes they are";
@@ -232,12 +232,4 @@ public final class RoleSelectionScreen extends Screen {
         graphics.text(this.font, pageText, (this.width - this.font.width(pageText)) / 2, 30, UiDrawing.MUTED, false);
     }
 
-    private static ChatFormatting colour(RoleType type) {
-        return switch (type) {
-            case TOWNSFOLK, OUTSIDER -> ChatFormatting.AQUA;
-            case MINION, DEMON -> ChatFormatting.RED;
-            case TRAVELER -> ChatFormatting.LIGHT_PURPLE;
-            default -> ChatFormatting.WHITE;
-        };
-    }
 }

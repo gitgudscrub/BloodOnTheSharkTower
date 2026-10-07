@@ -7,6 +7,13 @@ public final class ModPayloads {
     private ModPayloads() {}
 
     public static void registerPayloads() {
+        PayloadTypeRegistry.clientboundPlay().register(CustomScriptsPayload.TYPE, CustomScriptsPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(TeamInfoPreviewPayload.TYPE, TeamInfoPreviewPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(LunaticBluffsS2CPayload.TYPE, LunaticBluffsS2CPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(NotebookPayload.TYPE, NotebookPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(NotebookPayload.TYPE, NotebookPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SocialStateS2CPayload.TYPE, SocialStateS2CPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(GameVisibilityS2CPayload.TYPE, GameVisibilityS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SyncDayNightS2CPayload.TYPE, SyncDayNightS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SendScriptS2CPayload.TYPE, SendScriptS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SendRoleS2CPayload.TYPE, SendRoleS2CPayload.CODEC);
@@ -27,6 +34,7 @@ public final class ModPayloads {
         PayloadTypeRegistry.serverboundPlay().register(NetworkSyncAckC2SPayload.TYPE, NetworkSyncAckC2SPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(RoleSyncAckC2SPayload.TYPE, RoleSyncAckC2SPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(StorytellerActionC2SPayload.TYPE, StorytellerActionC2SPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(LunaticBluffActionC2SPayload.TYPE, LunaticBluffActionC2SPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(PlayerActionC2SPayload.TYPE, PlayerActionC2SPayload.CODEC);
     }
 }

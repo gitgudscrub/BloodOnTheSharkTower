@@ -30,7 +30,7 @@ public final class GrimoireControlsScreen extends Screen {
         drawCentered(graphics, "Left-click portrait/token — Edit role, alignment and reminders",
                 cx, y, UiDrawing.TEXT, false);
         y += 18;
-        drawCentered(graphics, "Right-click portrait/token — Open Player Actions",
+        drawCentered(graphics, "Storyteller right-click portrait/token — Open Player Actions",
                 cx, y, UiDrawing.TEXT, false);
         y += 18;
         drawCentered(graphics, "Shift + Left-click — Select / clear nominator",
@@ -43,6 +43,12 @@ public final class GrimoireControlsScreen extends Screen {
                 cx, y, UiDrawing.MUTED, false);
         y += 15;
         drawCentered(graphics, "The same actions are available as normal buttons via Right-click > Player Actions.",
+                cx, y, UiDrawing.MUTED, false);
+        y += 22;
+        drawCentered(graphics, "Blue = Good, red = Evil, grey = no alignment read.",
+                cx, y, UiDrawing.MUTED, false);
+        y += 15;
+        drawCentered(graphics, "Player borders follow personal Good/Evil reminders; Storyteller borders show actual alignment.",
                 cx, y, UiDrawing.MUTED, false);
     }
 

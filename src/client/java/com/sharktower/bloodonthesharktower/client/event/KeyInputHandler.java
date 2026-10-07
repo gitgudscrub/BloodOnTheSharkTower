@@ -47,6 +47,7 @@ public final class KeyInputHandler {
     // Arrow-key phase controls use rising-edge polling instead of consumeClick().
     // On 26.3 the registered arrow mappings can remain held/down without
     // reliably incrementing the click counter used by consumeClick().
+    private static KeyMapping openNotebookKey;
     private static boolean nightHudNextWasDown;
     private static boolean nightHudPrevWasDown;
     private static boolean nightHudActivateWasDown;
@@ -59,16 +60,17 @@ public final class KeyInputHandler {
         openCatalogKey = bind("key.blood_on_the_sharktower.open_catalog", InputConstants.KEY_K);
         openScriptKey = bind("key.blood_on_the_sharktower.open_script", InputConstants.KEY_C);
         openMyRoleDetailsKey = bind("key.blood_on_the_sharktower.open_my_role_details", InputConstants.KEY_X);
-        disableHudKey = bind("key.blood_on_the_sharktower.disable_hud", InputConstants.KEY_B);
+        disableHudKey = bind("key.blood_on_the_sharktower.disable_hud", InputConstants.UNKNOWN.getValue());
         openTimerKey = bind("key.blood_on_the_sharktower.open_timer", InputConstants.KEY_Y);
         openStorytellerToolsKey = bind("key.blood_on_the_sharktower.open_storyteller_tools", InputConstants.KEY_I);
+        openNotebookKey = bind("key.blood_on_the_sharktower.notebook", InputConstants.KEY_B);
         toggleVoteHandKey = bind("key.blood_on_the_sharktower.toggle_vote_hand", InputConstants.KEY_U);
         leavePrivateChatKey = bind("key.blood_on_the_sharktower.leave_private_chat", InputConstants.KEY_J);
         openSettingsKey = bind("key.blood_on_the_sharktower.open_settings", InputConstants.KEY_O);
         toggleNightHudKey = bind("key.blood_on_the_sharktower.toggle_night_hud", InputConstants.KEY_N);
-        nightHudNextKey = bind("key.blood_on_the_sharktower.night_hud_next", 262); // Right Arrow
-        nightHudPrevKey = bind("key.blood_on_the_sharktower.night_hud_prev", 263); // Left Arrow
-        nightHudActivateKey = bind("key.blood_on_the_sharktower.night_hud_teleport", 265); // Up Arrow
+        nightHudNextKey = bind("key.blood_on_the_sharktower.night_hud_next", InputConstants.KEY_RIGHT); // Right Arrow
+        nightHudPrevKey = bind("key.blood_on_the_sharktower.night_hud_prev", InputConstants.KEY_LEFT); // Left Arrow
+        nightHudActivateKey = bind("key.blood_on_the_sharktower.night_hud_teleport", InputConstants.KEY_UP); // Up Arrow
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
@@ -100,7 +102,11 @@ public final class KeyInputHandler {
             while (openTimerKey.consumeClick()) client.gui.setScreen(new TimerScreen());
             while (openStorytellerToolsKey.consumeClick()) client.gui.setScreen(new StorytellerToolsScreen());
             while (openSettingsKey.consumeClick()) client.gui.setScreen(new SharktowerSettingsScreen(null));
-            while (toggleVoteHandKey.consumeClick()) ClientPlayerActions.send("toggle_hand");
+            while (openNotebookKey.consumeClick()) client.gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.PersonalNotebookScreen(null));
+            while (toggleVoteHandKey.consumeClick()) {
+                if (ClientState.handRaiseMode() != com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF)
+                    ClientPlayerActions.send("toggle_hand");
+            }
             while (leavePrivateChatKey.consumeClick()) {
                 if (ClientState.voiceRoute != null && ClientState.voiceRoute.startsWith("PRIVATE")) {
                     ClientPlayerActions.send("leave_private");

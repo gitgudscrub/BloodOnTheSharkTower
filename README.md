@@ -75,7 +75,7 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Good/Evil winner selection.
 - Original-style end-game presentation.
 - Persistent Final Grimoire reveal.
-- Reset for Next Game restores the captured start-of-game state.
+- Reset for Next Game restores the captured map/setup while clearing player roles (1.0.2 development).
 
 ## Versioning
 
@@ -94,11 +94,11 @@ When the Modrinth project is approved, whichever version is current at that poin
 
 Development is deliberately staged so that the core Clocktower rules are reliable before the project expands into the much larger Experimental and homebrew rulesets.
 
-### 1.0.2 — Session feedback and polish *(planned)*
+### 1.0.2 — Session feedback and polish *(in development)*
 
 Version **1.0.2** is the next feedback-driven patch following real multiplayer play on 1.0.1. Its scope is deliberately focused on issues and quality-of-life improvements found during live sessions, with room for additional feedback before release.
 
-Current planned work:
+Implemented on the 1.0.2 development branch, awaiting multiplayer validation:
 
 - fix the newest connected player sometimes missing the latest player/sidebar state until another refresh occurs;
 - fix **RMB Actions** in the Grimoire so right-click player actions work as advertised;
@@ -114,7 +114,7 @@ Current planned work:
 
 ### Additional live-session feedback (4 October 2026)
 
-The following work is **pending implementation and validation** for 1.0.2:
+The following work is **implemented on the draft 1.0.2 branch; live validation remains**:
 
 - **Role/bluff colours:** Make bluff selection and displayed bluffs use the same role-category colours as the rest of the UI, including custom roles. Keep category colours separate from alignment borders.
 - **Client performance mods:** Include compatible Minecraft 26.3 Fabric releases of Sodium, Lithium and FerriteCore after checking exact versions, dependencies and compatibility with Sharktower and Simple Voice Chat. Sodium is client-only; evaluate Lithium/FerriteCore separately for server use. Players reported roughly 30 FPS, dropping to 20–25 FPS with VSync disabled; after adding performance mods to their clients, players reported reaching 60 FPS. This is live-player feedback, not a controlled benchmark.
@@ -127,6 +127,8 @@ The following work is **pending implementation and validation** for 1.0.2:
 Implementation notes and regression checks are tracked in `docs/1.0.2-session-feedback.md` on the draft 1.0.2 branch.
 
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
+
+Development builds use **1.0.2-alpha.10**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
 
 ### 1.0.x — Base 3 full support *(current focus)*
 
@@ -248,3 +250,5 @@ Version **1.0.0** marks the first baseline where the Base 3 scripts were working
 Blood on the Sharktower uses and adapts code and assets from the original **Blood on the Blocktower** project with permission from its creators. Blood on the Clocktower is created by The Pandemonium Institute.
 
 This project is an independent community implementation and is not an official Blood on the Clocktower product.
+
+Game 1 playtest changes and retest steps: [Game 1 feedback](docs/game-1-feedback.md). Personal notebooks open with **B** by default.

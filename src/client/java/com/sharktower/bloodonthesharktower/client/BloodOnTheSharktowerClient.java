@@ -4,20 +4,31 @@ import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.client.config.ClientSettings;
 import com.sharktower.bloodonthesharktower.client.event.KeyInputHandler;
 import com.sharktower.bloodonthesharktower.client.hud.SharktowerHudRenderer;
+import com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen;
 import com.sharktower.bloodonthesharktower.client.gui.GrimoireReturnState;
+import com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen;
 import com.sharktower.bloodonthesharktower.client.networking.CoreStateReceivers;
 import com.sharktower.bloodonthesharktower.client.render.ClockHandsRenderer;
 import com.sharktower.bloodonthesharktower.client.render.GhostPlayerEffects;
 import com.sharktower.bloodonthesharktower.client.render.RoleIconRenderer;
 import com.sharktower.bloodonthesharktower.client.render.VoteIndicatorRenderer;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 public final class BloodOnTheSharktowerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientSettings.load();
         CoreStateReceivers.register();
+        ClientLunaticBluffs.register();
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientGrimoireEdits.clearSession();
+            ClientLunaticBluffs.clear();
+            CoreStateReceivers.resetSession();
+        });
         GrimoireReturnState.register();
+        CustomScriptsScreen.register();
+        TeamInfoPreviewScreen.register();
         KeyInputHandler.register();
         SharktowerHudRenderer.register();
         ClockHandsRenderer.register();

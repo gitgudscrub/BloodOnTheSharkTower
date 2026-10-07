@@ -114,6 +114,10 @@ public final class ClientState {
     public static Map<UUID, Integer> grimoireSeatNumbers = new HashMap<>();
     public static Map<UUID, List<Reminder>> grimoireReminders = new HashMap<>();
     public static List<String> demonBluffs = List.of();
+    public static long notebookGeneration;
+    public static String notebookText = "";
+    public static Map<UUID,Integer> attentionHands = Map.of();
+    public static Map<UUID,Boolean> talkingPlayers = Map.of();
     public static boolean lastGrimoireSendTargeted = false;
 
     /** Connected-player directory used by the Grimoire for names/heads/unseated UI. */
@@ -128,6 +132,8 @@ public final class ClientState {
     public static String lastExecutedRoleName = "";
     public static boolean demonVotedToday = false;
     public static boolean minionNominatedToday = false;
+
+    public static java.util.Set<UUID> pendingDeaths = java.util.Set.of();
 
     private ClientState() {}
 
@@ -454,4 +460,9 @@ public final class ClientState {
     public static int grimoirePlayerCount() {
         return grimoireRoles.size();
     }
+    public static com.sharktower.bloodonthesharktower.core.HandRaiseMode handRaiseMode() {
+        return com.sharktower.bloodonthesharktower.core.HandRaiseMode.determine(currentNight,currentDay,nominationsOpen,
+                currentNominee,voteInProgress,currentExileTarget,exileSupportVote || exileSupportInProgress,gameEnding);
+    }
+
 }

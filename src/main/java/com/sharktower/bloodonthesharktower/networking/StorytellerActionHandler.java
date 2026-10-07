@@ -74,7 +74,8 @@ public final class StorytellerActionHandler {
                 && !op.equals("end_game_cancel")
                 && !op.equals("reset_for_next_game")
                 && !op.equals("game_complete")
-                && !op.equals("reset_hard")) {
+                && !op.equals("reset_hard")
+                && !op.equals("st_spectator")) {
             return SetupOperations.Result.fail("End-game reveal is active. Reset for the next game or cancel the reveal first.");
         }
 
@@ -99,8 +100,13 @@ public final class StorytellerActionHandler {
                 case "reset_for_next_game" -> resetForNextGame(server);
                 case "phase_night" -> asSetupResult(PhaseOperations.enterNight(server));
                 case "phase_day" -> asSetupResult(PhaseOperations.enterDay(server));
+                case "team_info_preview" -> TeamInfoSharing.preview(server, actor, arg);
+                case "team_info_share" -> TeamInfoSharing.share(server, actor, arg);
                 case "night_visit" -> nightVisit(server, actor, UUID.fromString(arg));
                 case "mark_dead" -> markDead(server, Integer.parseInt(arg), false);
+                case "reveal_deaths" -> revealDeaths(server);
+                case "reveal_death" -> revealDeath(server, Integer.parseInt(arg));
+                case "st_spectator" -> StorytellerMovement.toggleSpectator(actor);
                 case "demon_kill" -> markDead(server, Integer.parseInt(arg), true);
                 case "revive_player" -> revivePlayer(server, Integer.parseInt(arg));
                 case "nominations_open" -> openNominations(server);
@@ -187,6 +193,12 @@ public final class StorytellerActionHandler {
                     yield SetupOperations.removeReminder(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
                 }
                 case "seat_player" -> SetupOperations.seatNext(java.util.UUID.fromString(arg));
+                case "custom_scripts_list" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.list(actor);
+                case "custom_script_load" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.load(actor,arg);
+                case "custom_script_import" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.start(server,actor,arg);
+                case "custom_script_confirm" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.confirm(actor,arg);
+                case "load_script_selection" -> SetupOperations.loadScriptJson(com.sharktower.bloodonthesharktower.core.ScriptSelection.build(
+                        ServerState.currentScript,new java.util.LinkedHashSet<>(java.util.Arrays.asList(arg.split("\\|")))));
                 case "load_script_json" -> SetupOperations.loadScriptJson(arg);
                 case "load_base3" -> BaseThreeScripts.load(arg);
                 case "add_bluff" -> SetupOperations.addBluff(arg);
@@ -199,7 +211,7 @@ public final class StorytellerActionHandler {
                 }
                 default -> SetupOperations.Result.fail("Unknown Storyteller UI action: " + action);
             };
-        } catch (RuntimeException ex) {
+        } catch (Exception ex) {
             return SetupOperations.Result.fail("Could not perform Storyteller action: " + ex.getMessage());
         }
     }
@@ -218,6 +230,7 @@ public final class StorytellerActionHandler {
         }
 
         ServerState.PLAYER_DEATH_STATUS.put(target, true);
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.stage(target);
         TriggeredNightOrderManager.DeathCause cause = demonKill
                 ? TriggeredNightOrderManager.DeathCause.DEMON
                 : (PhaseOperations.isNight()
@@ -227,8 +240,31 @@ public final class StorytellerActionHandler {
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastGrimoire(server);
 
-        return SetupOperations.Result.ok("Marked seat " + seat + " dead"
+        return SetupOperations.Result.ok("Privately marked seat " + seat + " dead; use Reveal Deaths during Day"
                 + (demonKill ? " (Demon kill)." : "."));
+    }
+
+    private static SetupOperations.Result revealDeath(MinecraftServer server, int seat) {
+        if (!PhaseOperations.isDay()) return SetupOperations.Result.fail("Reveal This Death is only available during Day.");
+        UUID target = playerAtSeat(seat);
+        if (target == null) return SetupOperations.Result.fail("No player is assigned to seat " + seat + ".");
+        if (!Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(target))
+                || !com.sharktower.bloodonthesharktower.states.DeathVisibility.pending().contains(target)) {
+            return SetupOperations.Result.fail("Seat " + seat + " has no pending death to reveal.");
+        }
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.remove(target);
+        StateBroadcaster.broadcastDeathStatus(server);
+        StateBroadcaster.broadcastVoteState(server);
+        return SetupOperations.Result.ok("Revealed the death of seat " + seat + ".");
+    }
+
+    private static SetupOperations.Result revealDeaths(MinecraftServer server) {
+        if (!PhaseOperations.isDay()) return SetupOperations.Result.fail("Reveal Deaths is only available during Day.");
+        int count = com.sharktower.bloodonthesharktower.states.DeathVisibility.pending().size();
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
+        StateBroadcaster.broadcastDeathStatus(server);
+        StateBroadcaster.broadcastVoteState(server);
+        return SetupOperations.Result.ok("Revealed " + count + " pending deaths.");
     }
 
     private static SetupOperations.Result revivePlayer(MinecraftServer server, int seat) {
@@ -239,6 +275,7 @@ public final class StorytellerActionHandler {
         }
 
         ServerState.PLAYER_DEATH_STATUS.put(target, false);
+        com.sharktower.bloodonthesharktower.states.DeathVisibility.remove(target);
         TriggeredNightOrderManager.onRevived(target);
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastGrimoire(server);
@@ -298,35 +335,9 @@ public final class StorytellerActionHandler {
         // silently pushing a separate read-only screen to the player.
         String grimoireShare = promptTrueGrimoireShare(storyteller, target);
 
-        // If this player is already the Storyteller's active private partner, the
-        // visit is complete; do not create a duplicate invitation. Re-activating
-        // the visit still re-sends the snapshot, which gives the player a way to
-        // reopen it if they closed the view accidentally.
-        if (targetId.equals(NightChatManager.privatePartner(storyteller.getUUID()))) {
-            return SetupOperations.Result.ok("Visited " + target.getName().getString()
-                    + " (Seat " + seat + "); private chat already connected." + grimoireShare);
-        }
-
-        NightChatManager.InviteResult invite = NightChatManager.createStorytellerHouseInvite(
-                storyteller.getUUID(), targetId, seat);
-        if (!invite.ok()) {
-            return SetupOperations.Result.fail("Teleported to Seat " + seat
-                    + ", but could not create the private-chat invite: " + invite.message());
-        }
-
-        String acceptCommand = "/bots private accept " + invite.token();
-        Component message = Component.literal("The Storyteller wants to speak with you privately. ")
-                .withStyle(ChatFormatting.LIGHT_PURPLE)
-                .append(Component.literal("[JOIN PRIVATE CHAT]")
-                        .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD, ChatFormatting.UNDERLINE)
-                        .withStyle(style -> style
-                                .withClickEvent(new ClickEvent.RunCommand(acceptCommand))
-                                .withHoverEvent(new HoverEvent.ShowText(Component.literal(
-                                        "Join the Storyteller's private voice room")))));
-        target.sendSystemMessage(message);
-
-        return SetupOperations.Result.ok("Visited " + target.getName().getString()
-                + " (Seat " + seat + "); private-chat invite sent." + grimoireShare);
+        NightChatManager.reconcile(server);
+        return SetupOperations.Result.ok("Visited " + target.getName().getString() + " (Seat " + seat
+                + "). House voice joins automatically while both of you are inside." + grimoireShare);
     }
 
     /**
@@ -528,7 +539,7 @@ public final class StorytellerActionHandler {
 
     private static SetupOperations.Result cancelNomination(MinecraftServer server) {
         if (!DaytimeState.hasActiveNomination()) return SetupOperations.Result.fail("There is no active nomination.");
-        NominationManager.resetNomination(server);
+        NominationManager.cancelNomination(server);
         announce(server, Component.literal("The current nomination was cancelled by the Storyteller.")
                 .withStyle(ChatFormatting.GRAY));
         return SetupOperations.Result.ok("Current nomination cancelled.");
@@ -593,14 +604,10 @@ public final class StorytellerActionHandler {
         String name = label(server, marked);
         if (dies) {
             ExecutionManager.executePlayer(server, marked, false, null);
-            announce(server, Component.literal(name + " is executed and dies.")
-                    .withStyle(ChatFormatting.RED));
             return SetupOperations.Result.ok("Executed " + name + "; they died.");
         }
 
         ExecutionManager.executePlayerFail(server, marked, false, null);
-        announce(server, Component.literal(name + " is executed but does not die.")
-                .withStyle(ChatFormatting.GOLD));
         return SetupOperations.Result.ok("Executed " + name + "; they survived.");
     }
 
