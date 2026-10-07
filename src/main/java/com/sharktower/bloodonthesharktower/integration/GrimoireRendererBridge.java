@@ -117,7 +117,7 @@ public final class GrimoireRendererBridge {
         entry.put("alignment", role.isDefaultGood() ? "good" : "evil");
 
         if (role instanceof ScriptRole.Custom custom) {
-            putImages(entry, "image", custom.customRole());
+            putDefaultRoleImage(entry, "image", custom.customRole());
         } else if (role instanceof ScriptRole.Fabled fabled) {
             String image = fabled.fabledCharacter().imageUrl();
             if (image != null && !image.isBlank()) entry.put("image", image);
@@ -164,7 +164,7 @@ public final class GrimoireRendererBridge {
         player.put("alive", !ServerState.PLAYER_DEATH_STATUS.getOrDefault(playerId, false));
 
         if (assignment.isCustomRole()) {
-            assignment.customRole().ifPresent(custom -> putImages(player, "image", custom));
+            assignment.customRole().ifPresent(custom -> putDefaultRoleImage(player, "image", custom));
         }
 
         PendingRoleAssignment perceived = ServerState.PLAYER_PERCEIVED_ROLES.get(playerId);
@@ -172,7 +172,7 @@ public final class GrimoireRendererBridge {
             perceived = perceived.resolveCustomRole(ServerState.currentScript);
             player.put("believed_role", perceived.getDisplayName());
             if (perceived.isCustomRole()) {
-                perceived.customRole().ifPresent(custom -> putImages(player, "believed_image", custom));
+                perceived.customRole().ifPresent(custom -> putDefaultRoleImage(player, "believed_image", custom));
             }
         }
 
@@ -187,13 +187,18 @@ public final class GrimoireRendererBridge {
         return player;
     }
 
-    private static void putImages(Map<String, Object> target, String key, CustomRole role) {
+    private static void putDefaultRoleImage(Map<String, Object> target, String key, CustomRole role) {
         if (role == null || role.imageUrls().isEmpty()) return;
-        if (role.imageUrls().size() == 1) {
-            target.put(key, role.imageUrls().getFirst());
-        } else {
-            target.put(key, role.imageUrls());
-        }
+
+        // The Grimoire keeps role identity and final alignment visually separate:
+        // role artwork follows the character's normal team while the outer token
+        // border shows the player's final good/evil alignment. This also avoids
+        // ambiguous two/three-image homebrew arrays at cache time.
+        String image = role.getImageUrl(role.isDefaultGood());
+        if (image == null || image.isBlank()) image = role.getNeutralImageUrl();
+        if (image == null || image.isBlank()) return;
+
+        target.put(key, image);
         target.put("homebrew_source", "script");
     }
 
