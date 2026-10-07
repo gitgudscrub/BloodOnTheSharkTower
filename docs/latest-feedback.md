@@ -46,3 +46,9 @@ Retest the screenshot's five-player Setup with long names, then 7/10/15 players,
 During Day, an ordinary click on a pending Dead? player portrait or actual role token opens a compact Reveal Death / Revive menu. Either action returns to the Grimoire after authoritative sync. Existing Shift nomination shortcuts, middle-click details, role/reminder editors, bulk Reveal Deaths and Night privacy remain. Only the Storyteller sees this route; the existing server actions validate phase, seat and death state.
 
 Retest three private deaths at Dawn: reveal individually with two clicks each, revive a mistaken death, and confirm only the selected death is published. Check ordinary players, Night, live/already revealed players and Shift clicks retain their usual behaviour.
+
+## Middle-click pending death — alpha.12
+
+Middle-click a pending Dead? player portrait or actual role token during Day as Storyteller to reveal that death immediately. Repeat clicks are consumed while the reveal request is awaiting sync. Otherwise middle-click retains character details; bluff details and non-ST privacy remain unchanged. Hover hints show the shortcut. Existing server reveal validation still applies.
+
+Retest three pending deaths with one middle-click each; confirm a second click after reveal opens role details. Check living/already revealed players, blank assignments, Night, ordinary players and bluff tokens.

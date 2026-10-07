@@ -55,7 +55,7 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
             String reminderHint=reminderCount==0 ? "" : " | " + reminderCount + " reminder(s)";
             if (com.sharktower.bloodonthesharktower.client.gui.PendingDeathScreen.available(playerId)) {
                 GrimoireHoverHints.set(com.sharktower.bloodonthesharktower.states.ClientState.playerName(playerId,seat)
-                        + " — Dead? | Click to reveal death or revive | Shift clicks: nominations" + reminderHint);
+                        + " — Dead? | Click: reveal / revive | Middle-click: reveal death" + reminderHint);
                 return;
             }
             if (ClientGrimoireEdits.isLocalStoryteller()
