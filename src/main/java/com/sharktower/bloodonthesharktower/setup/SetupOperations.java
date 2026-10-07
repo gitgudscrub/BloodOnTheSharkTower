@@ -9,6 +9,7 @@ import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.Script;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
+import com.sharktower.bloodonthesharktower.integration.GrimoireRendererBridge;
 import com.sharktower.bloodonthesharktower.networking.StateBroadcaster;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
@@ -580,6 +581,7 @@ public final class SetupOperations {
         StorytellerState.PENDING_PERCEIVED_ROLES.clear();
         StorytellerState.DEMON_BLUFFS.clear();
         StorytellerState.LUNATIC_BLUFFS.clear();
+        GrimoireRendererBridge.preloadScriptAsync(ServerState.currentScript);
         return Result.ok("Loaded script: " + ServerState.currentScript.name() + " ("
                 + ServerState.currentScript.allRoles().size() + " roles).");
     }
@@ -640,6 +642,7 @@ public final class SetupOperations {
         ServerState.gameEnded = false;
         ServerState.winningTeam = "NONE";
         ServerState.rolesRevealed = false;
+        ServerState.finalGrimoireSent = false;
         if (ServerState.currentNight == 0 && ServerState.currentDay == 0) {
             StorytellerState.resetDailyNightInfo();
         }
@@ -652,6 +655,7 @@ public final class SetupOperations {
         FreshGameBooks.beginGame(server, ServerState.PLAYER_ROLES.keySet());
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
+        GrimoireRendererBridge.checkScriptAsync(ServerState.currentScript);
         return Result.ok("Committed " + ServerState.PLAYER_ROLES.size() + " role(s) and "
                 + ServerState.PLAYER_SEAT_NUMBERS.size() + " seat(s); roles sent to connected players. "
                 + snapshot.message());
@@ -685,6 +689,7 @@ public final class SetupOperations {
         ServerState.gameEnded = false;
         ServerState.winningTeam = "NONE";
         ServerState.rolesRevealed = false;
+        ServerState.finalGrimoireSent = false;
         DaytimeState.hardReset(Set.of(), Set.of());
         StorytellerState.clearSetupState();
         if (hard) {
@@ -724,7 +729,10 @@ public final class SetupOperations {
         ServerState.winningTeam = winner;
         ServerState.rolesRevealed = true;
 
-        if (firstReveal) ModSounds.playGameEnd(server);
+        if (firstReveal) {
+            ServerState.finalGrimoireSent = false;
+            ModSounds.playGameEnd(server);
+        }
         StateBroadcaster.broadcastCurrentState(server);
         return Result.ok(winner + " wins. Final Grimoire reveal is now active.");
     }
@@ -734,8 +742,31 @@ public final class SetupOperations {
         ServerState.gameEnded = false;
         ServerState.winningTeam = "NONE";
         ServerState.rolesRevealed = false;
+        ServerState.finalGrimoireSent = false;
         StateBroadcaster.broadcastCurrentState(server);
         return Result.ok("End-game reveal cancelled. Resume the appropriate phase manually.");
+    }
+
+    public static Result completeEndGameAnimation(MinecraftServer server, String reportedWinner) {
+        if (server == null) return Result.fail("Server is not available.");
+        if (!ServerState.gameEnded || !ServerState.rolesRevealed) {
+            return Result.fail("No end-game reveal is currently active.");
+        }
+
+        String winner = reportedWinner == null ? "" : reportedWinner.trim().toUpperCase(java.util.Locale.ROOT);
+        if (!winner.equals(ServerState.winningTeam)) {
+            return Result.fail("End-game animation winner no longer matches the active reveal.");
+        }
+        if (ServerState.finalGrimoireSent) {
+            return Result.ok("Final Grimoire was already sent.");
+        }
+
+        // The client reports this only after the cinematic has fully faded out.
+        // Mark first so multiple Storytellers finishing at nearly the same time
+        // cannot create duplicate Discord posts.
+        ServerState.finalGrimoireSent = true;
+        GrimoireRendererBridge.renderFinalGrimoireAsync(server, winner);
+        return Result.ok("End-game animation complete; final Grimoire sent to the renderer.");
     }
 
     public static Result completeGame(MinecraftServer server) {
