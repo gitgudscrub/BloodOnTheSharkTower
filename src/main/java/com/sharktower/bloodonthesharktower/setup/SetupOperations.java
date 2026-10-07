@@ -9,6 +9,7 @@ import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.Script;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
+import com.sharktower.bloodonthesharktower.integration.GrimoireRendererBridge;
 import com.sharktower.bloodonthesharktower.networking.StateBroadcaster;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
@@ -557,6 +558,7 @@ public final class SetupOperations {
         StorytellerState.PENDING_ROLES.clear();
         StorytellerState.PENDING_PERCEIVED_ROLES.clear();
         StorytellerState.DEMON_BLUFFS.clear();
+        GrimoireRendererBridge.preloadScriptAsync(ServerState.currentScript);
         return Result.ok("Loaded script: " + ServerState.currentScript.name() + " ("
                 + ServerState.currentScript.allRoles().size() + " roles).");
     }
@@ -628,6 +630,7 @@ public final class SetupOperations {
         }
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
+        GrimoireRendererBridge.checkScriptAsync(ServerState.currentScript);
         return Result.ok("Committed " + ServerState.PLAYER_ROLES.size() + " role(s) and "
                 + ServerState.PLAYER_SEAT_NUMBERS.size() + " seat(s); roles sent to connected players. "
                 + snapshot.message());
@@ -699,7 +702,10 @@ public final class SetupOperations {
         ServerState.winningTeam = winner;
         ServerState.rolesRevealed = true;
 
-        if (firstReveal) ModSounds.playGameEnd(server);
+        if (firstReveal) {
+            ModSounds.playGameEnd(server);
+            GrimoireRendererBridge.renderFinalGrimoireAsync(server, winner);
+        }
         StateBroadcaster.broadcastCurrentState(server);
         return Result.ok(winner + " wins. Final Grimoire reveal is now active.");
     }
