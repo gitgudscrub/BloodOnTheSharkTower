@@ -43,7 +43,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 127.0.0.1. The HTTPS Cloudflare hostname also works as an outbound URL.
  */
 public final class SharktowerLiveBridge {
-    private static final int PUBLISH_INTERVAL_TICKS = 100; // Approx. 5 seconds
+    private static final int SNAPSHOT_INTERVAL_TICKS = 10; // Detect public-state changes about twice per second
+    private static final long UNCHANGED_HEARTBEAT_MS = 5_000L;
+    private static final long RETRY_DELAY_MS = 2_000L;
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3))
             .followRedirects(HttpClient.Redirect.NEVER)
@@ -52,6 +54,9 @@ public final class SharktowerLiveBridge {
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(4);
     private static volatile Settings settings;
     private static volatile long lastWarningMs;
+    private static volatile long lastSuccessfulSendMs;
+    private static volatile String lastSuccessfulPayload;
+    private static long lastAttemptMs;
     private static int ticks;
 
     private SharktowerLiveBridge() {}
@@ -61,17 +66,22 @@ public final class SharktowerLiveBridge {
         if (server == null) return;
         if (settings == null) settings = readSettings();
         Settings cfg = settings;
-        if (!cfg.enabled() || ++ticks % PUBLISH_INTERVAL_TICKS != 0) return;
-        if (!IN_FLIGHT.compareAndSet(false, true)) return;
+        if (!cfg.enabled() || ++ticks % SNAPSHOT_INTERVAL_TICKS != 0) return;
+        if (IN_FLIGHT.get()) return;
 
         String body;
         try {
             body = makePublicSnapshot(server).toString();
         } catch (Exception e) {
-            IN_FLIGHT.set(false);
             warnRateLimited("Unable to build spectator snapshot: " + e.getClass().getSimpleName());
             return;
         }
+        long now = System.currentTimeMillis();
+        if (now - lastAttemptMs < RETRY_DELAY_MS && lastAttemptMs > lastSuccessfulSendMs) return;
+        if (body.equals(lastSuccessfulPayload)
+                && now - lastSuccessfulSendMs < UNCHANGED_HEARTBEAT_MS) return;
+        if (!IN_FLIGHT.compareAndSet(false, true)) return;
+        lastAttemptMs = now;
 
         HttpRequest request = HttpRequest.newBuilder(cfg.uri())
                 .timeout(REQUEST_TIMEOUT)
@@ -82,12 +92,15 @@ public final class SharktowerLiveBridge {
         HTTP.sendAsync(request, HttpResponse.BodyHandlers.discarding())
                 .orTimeout(5, TimeUnit.SECONDS)
                 .whenComplete((response, error) -> {
-                    IN_FLIGHT.set(false);
                     if (error != null) {
                         warnRateLimited("Spectator bridge connection failed (" + error.getClass().getSimpleName() + ").");
                     } else if (response.statusCode() != 200) {
                         warnRateLimited("Spectator bridge returned HTTP " + response.statusCode() + ".");
+                    } else {
+                        lastSuccessfulPayload = body;
+                        lastSuccessfulSendMs = System.currentTimeMillis();
                     }
+                    IN_FLIGHT.set(false);
                 });
     }
 
