@@ -131,6 +131,7 @@ function streamAudio(input) {
   for (const sub of audioSubscribers) {
     if (sub.res.destroyed || sub.res.writableEnded) { audioSubscribers.delete(sub); continue; }
     const frames = valid.filter(f => f.room === sub.room);
+    if (sub.res.writableLength > 256_000) { sub.res.end(); audioSubscribers.delete(sub); continue; }
     if (frames.length) sub.res.write('event: audio\ndata: ' + JSON.stringify({frames}) + '\n\n');
   }
   return true;
@@ -264,7 +265,7 @@ function startListening(room){
   listenStream.onopen=()=>{audioStatus.textContent='Listening to '+room+' — waiting for someone to speak';};
   listenStream.addEventListener('audio',event=>{
     if(!activeRoom)return;
-    try{const payload=JSON.parse(event.data);for(const f of payload.frames||[])playOpus(f);}
+    try{const payload=JSON.parse(event.data);if((payload.frames||[]).length)audioStatus.textContent='Receiving Minecraft voice in '+activeRoom;for(const f of payload.frames||[])playOpus(f);}
     catch{audioStatus.textContent='Invalid voice data received.';}
   });
   listenStream.onerror=()=>{
