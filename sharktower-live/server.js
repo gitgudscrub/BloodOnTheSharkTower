@@ -127,10 +127,10 @@ function sanitizeGame(input) {
     conversations: input.conversations.map(c => ({ id: str(c.id), name: str(c.name), playerIds: Array.isArray(c.playerIds) ? c.playerIds.slice(0, 100).map(id => str(id)) : [] }))
   };
 }
-const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><div id="status"></div><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
+const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div id="status"></div><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
 const main=document.getElementById('main'),game=document.getElementById('game');
 let stream=null, fallback=null;
-const status=document.getElementById('status');
+const status=document.getElementById('status'),connection=document.getElementById('connection');
 function renderGame(data){
   game.hidden=false;
   status.textContent=!data.live?'No active game':data.phase==='setup'?'Game setup in progress':data.phase==='night'?'Night '+data.night:'Day '+data.day;
@@ -164,11 +164,11 @@ async function connect(){
   const logout=document.createElement('a');logout.href='/auth/logout';logout.textContent='Sign out';main.append(logout);
   await fetchGame();
   if(stream)return;
-  if(!window.EventSource){startFallback();return;}
+  if(!window.EventSource){connection.textContent='Live stream unavailable — checking every 3 seconds';startFallback();return;}
   stream=new EventSource('/api/events');
   stream.addEventListener('game',event=>{try{renderGame(JSON.parse(event.data));stopFallback();}catch{}});
-  stream.onopen=()=>stopFallback();
-  stream.onerror=()=>startFallback(); // EventSource automatically reconnects.
+  stream.onopen=()=>{connection.textContent='Live updates connected';stopFallback();};
+  stream.onerror=()=>{connection.textContent='Reconnecting — checking every 3 seconds';startFallback();}; // EventSource automatically reconnects.
 }
 connect().catch(()=>{main.textContent='Unable to load spectator status.';});
 setInterval(async()=>{
