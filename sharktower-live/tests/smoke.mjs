@@ -46,6 +46,7 @@ try {
 
   const sample = {
     live: true, phase: 'day', day: 3, gameId: 'test',
+    storytellers: [{id:'narrator',name:'The Narrator',secretRole:'DEMON'}],
     players: [{id:'one',name:'Alice',alive:true,chatGroup:'town-square',role:'DEMON',alignment:'EVIL'}],
     conversations: [{id:'town-square',name:'Town Square',playerIds:['one']}],
     grimoire: {secret:'never expose'}
