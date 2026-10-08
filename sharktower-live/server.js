@@ -211,9 +211,9 @@ http.createServer(async (req, res) => {
       catch { return json(res, 400, { error: 'Invalid game payload' }); }
     }
     if (url.pathname === '/') return html(res, page);
+    if (url.pathname === '/api/events' && req.method === 'GET') return await liveEvents(req, res);
     const user = await currentUser(req);
     if (url.pathname === '/api/me') return json(res, 200, { user });
-    if (url.pathname === '/api/events' && req.method === 'GET') return liveEvents(req, res);
     if (url.pathname === '/api/game' && req.method === 'GET') return user ? json(res, 200, currentGame()) : json(res, 401, { error: 'Login required' });
     return json(res, 404, { error: 'Not found' });
   } catch (e) { console.error('Request failed:', e?.message); return json(res, 500, { error: 'Request failed' }); }
