@@ -19,6 +19,54 @@ const emptyGame = () => ({ live: false, gameId: null, phase: null, day: null, pl
 let publicGame = emptyGame();
 let lastBridgeUpdate = 0;
 const BRIDGE_TIMEOUT_MS = 15_000;
+const STREAM_HEARTBEAT_MS = 10_000;
+const streams = new Set();
+let lastPublishedState = JSON.stringify(emptyGame());
+
+function currentGame() {
+  return Date.now() - lastBridgeUpdate < BRIDGE_TIMEOUT_MS ? publicGame : emptyGame();
+}
+function pushGameUpdate() {
+  const serialized = JSON.stringify(currentGame());
+  if (serialized === lastPublishedState) return;
+  lastPublishedState = serialized;
+  for (const res of streams) {
+    if (res.destroyed || res.writableEnded) { streams.delete(res); continue; }
+    res.write('event: game\n' + 'data: ' + serialized + '\n\n');
+  }
+}
+// No stale game data after the Minecraft bridge goes offline.
+setInterval(pushGameUpdate, 1_000).unref();
+
+async function liveEvents(req, res) {
+  if (!await currentUser(req)) return json(res, 401, { error: 'Login required' });
+  if (streams.size >= 100) return json(res, 503, { error: 'Too many spectators' });
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.flushHeaders();
+  res.write('retry: 2000\n\n');
+  res.write('event: game\ndata: ' + JSON.stringify(currentGame()) + '\n\n');
+  streams.add(res);
+  let checking = false;
+  const heartbeat = setInterval(async () => {
+    if (checking || res.writableEnded || res.destroyed) return;
+    checking = true;
+    try {
+      // Revalidate session and Discord guild membership during an open stream.
+      if (!await currentUser(req)) { res.end(); return; }
+      res.write(': keepalive\n\n');
+    } catch {
+      res.end();
+    } finally { checking = false; }
+  }, STREAM_HEARTBEAT_MS);
+  heartbeat.unref();
+  res.on('close', () => { clearInterval(heartbeat); streams.delete(res); });
+}
 
 function cookieValue(req, key) {
   const raw = req.headers.cookie || '';
@@ -80,18 +128,52 @@ function sanitizeGame(input) {
 }
 const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><div id="status"></div><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
 const main=document.getElementById('main'),game=document.getElementById('game');
-async function refresh(){
-const me=await fetch('/api/me').then(r=>r.json());
-if(!me.user){main.replaceChildren();const a=document.createElement('a');a.href='/auth/login';a.textContent='Sign in with Discord (Clocktower server members only)';main.append(a);game.hidden=true;return;}
-main.textContent='Signed in as '+me.user.username+' · ';const logout=document.createElement('a');logout.href='/auth/logout';logout.textContent='Sign out';main.append(logout);
-const data=await fetch('/api/game').then(r=>r.json());game.hidden=false;
-document.getElementById('status').textContent=data.live?'Day '+data.day+' · '+data.phase:'No active game';
-for(const [id,items,render] of [['players',data.players,p=>p.name+(p.alive?'':' (dead)')],['conversations',data.conversations,c=>c.name+' ('+c.playerIds.length+' players)']]){
-const list=document.getElementById(id);list.replaceChildren();for(const item of items){const li=document.createElement('li');li.textContent=render(item);list.append(li);}
+let stream=null, fallback=null;
+const status=document.getElementById('status');
+function renderGame(data){
+  game.hidden=false;
+  status.textContent=data.live ? (data.phase==='night'?'Night ':'Day ')+data.day+' · '+data.phase : 'No active game';
+  for(const [id,items,render] of [
+    ['players',data.players,p=>p.name+(p.alive?'':' (dead)')],
+    ['conversations',data.conversations,c=>c.name+' ('+c.playerIds.length+' players)']
+  ]){
+    const list=document.getElementById(id);list.replaceChildren();
+    for(const item of items){const li=document.createElement('li');li.textContent=render(item);list.append(li);}
+  }
 }
+async function fetchGame(){
+  const response=await fetch('/api/game');
+  if(response.status===401){location.reload();return;}
+  if(response.ok)renderGame(await response.json());
 }
-refresh().catch(()=>{main.textContent='Unable to load spectator status.'});
-setInterval(()=>refresh().catch(()=>{}),10000);
+function startFallback(){
+  if(!fallback)fallback=setInterval(()=>fetchGame().catch(()=>{}),3000);
+}
+function stopFallback(){if(fallback){clearInterval(fallback);fallback=null;}}
+async function connect(){
+  const response=await fetch('/api/me');
+  const me=await response.json();
+  if(!me.user){
+    if(stream){stream.close();stream=null;}
+    main.replaceChildren();const a=document.createElement('a');
+    a.href='/auth/login';a.textContent='Sign in with Discord (Clocktower server members only)';
+    main.append(a);game.hidden=true;return;
+  }
+  main.textContent='Signed in as '+me.user.username+' · ';
+  const logout=document.createElement('a');logout.href='/auth/logout';logout.textContent='Sign out';main.append(logout);
+  await fetchGame();
+  if(stream)return;
+  if(!window.EventSource){startFallback();return;}
+  stream=new EventSource('/api/events');
+  stream.addEventListener('game',event=>{try{renderGame(JSON.parse(event.data));stopFallback();}catch{}});
+  stream.onopen=()=>stopFallback();
+  stream.onerror=()=>startFallback(); // EventSource automatically reconnects.
+}
+connect().catch(()=>{main.textContent='Unable to load spectator status.';});
+setInterval(async()=>{
+  try{const result=await fetch('/api/me');const body=await result.json();if(!body.user)location.reload();}
+  catch{}
+},60000);
 </script></body></html>`;
 http.createServer(async (req, res) => {
   try {
@@ -125,15 +207,14 @@ http.createServer(async (req, res) => {
     if (url.pathname === '/api/bridge/state' && req.method === 'POST') {
       const expected = Buffer.from(BRIDGE_TOKEN), provided = Buffer.from((req.headers.authorization || '').replace(/^Bearer /, ''));
       if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) return json(res, 403, { error: 'Forbidden' });
-      try { publicGame = sanitizeGame(await readJson(req)); lastBridgeUpdate = Date.now(); return json(res, 200, { ok: true }); }
+      try { publicGame = sanitizeGame(await readJson(req)); lastBridgeUpdate = Date.now(); pushGameUpdate(); return json(res, 200, { ok: true }); }
       catch { return json(res, 400, { error: 'Invalid game payload' }); }
     }
     if (url.pathname === '/') return html(res, page);
     const user = await currentUser(req);
     if (url.pathname === '/api/me') return json(res, 200, { user });
-    if (url.pathname === '/api/game') return user ? json(res, 200,
-      Date.now() - lastBridgeUpdate < BRIDGE_TIMEOUT_MS ? publicGame : emptyGame())
-      : json(res, 401, { error: 'Login required' });
+    if (url.pathname === '/api/events' && req.method === 'GET') return liveEvents(req, res);
+    if (url.pathname === '/api/game' && req.method === 'GET') return user ? json(res, 200, currentGame()) : json(res, 401, { error: 'Login required' });
     return json(res, 404, { error: 'Not found' });
   } catch (e) { console.error('Request failed:', e?.message); return json(res, 500, { error: 'Request failed' }); }
 }).listen(PORT, '127.0.0.1', () => console.log('Sharktower Live listening on http://127.0.0.1:' + PORT));
