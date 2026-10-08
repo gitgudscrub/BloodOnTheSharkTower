@@ -68,6 +68,74 @@ async function liveEvents(req, res) {
   res.on('close', () => { clearInterval(heartbeat); streams.delete(res); });
 }
 
+
+const audioSubscribers = new Set();
+const AUDIO_STREAM_LIMIT = 50;
+function bridgeAuthorized(req) {
+  const expected = Buffer.from(BRIDGE_TOKEN);
+  const provided = Buffer.from((req.headers.authorization || '').replace(/^Bearer /, ''));
+  return expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
+}
+function allowedRoom(room) {
+  const game = currentGame();
+  return game.live && game.phase === 'day' && game.conversations.some(c => c.id === room);
+}
+async function liveAudio(req, res, room) {
+  if (!await currentUser(req)) return json(res, 401, { error: 'Login required' });
+  if (!/^(town-square|zone-[a-z0-9_-]{1,32})$/.test(room) || !allowedRoom(room)) {
+    return json(res, 404, { error: 'Room unavailable' });
+  }
+  if (audioSubscribers.size >= AUDIO_STREAM_LIMIT) return json(res, 503, { error: 'Listener limit reached' });
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.flushHeaders();
+  res.write('retry: 2000\n\n');
+  const sub = {res, room};
+  audioSubscribers.add(sub);
+  let checking = false;
+  const health = setInterval(async () => {
+    if (checking || res.destroyed || res.writableEnded) return;
+    checking = true;
+    try {
+      if (!allowedRoom(room) || !await currentUser(req)) { res.end(); return; }
+      res.write(': keepalive\n\n');
+    } catch { res.end(); }
+    finally { checking = false; }
+  }, 5_000);
+  health.unref();
+  res.on('close', () => { clearInterval(health); audioSubscribers.delete(sub); });
+}
+function streamAudio(input) {
+  const state = currentGame();
+  if (!state.live || state.phase !== 'day') return false;
+  if (!input || typeof input !== 'object' || !Array.isArray(input.frames) || input.frames.length > 150) return false;
+  if (!input.frames.length) return true;
+  const valid = [];
+  for (const frame of input.frames) {
+    if (!frame || typeof frame !== 'object'
+        || !/^(town-square|zone-[a-z0-9_-]{1,32})$/.test(frame.room || '')
+        || typeof frame.sender !== 'string'
+        || typeof frame.opus !== 'string' || frame.opus.length > 3500
+        || !/^[A-Za-z0-9+/]+={0,2}$/.test(frame.opus)) continue;
+    // Validate identity and room against the PUBLIC Minecraft state. Only
+    // seated players in an active daytime room can supply spectator audio.
+    const player = state.players.find(p => p.id === frame.sender && p.chatGroup === frame.room);
+    if (!player || !state.conversations.some(c => c.id === frame.room && c.playerIds.includes(frame.sender))) continue;
+    valid.push({room: frame.room, sender: frame.sender, opus: frame.opus});
+  }
+  for (const sub of audioSubscribers) {
+    if (sub.res.destroyed || sub.res.writableEnded) { audioSubscribers.delete(sub); continue; }
+    const frames = valid.filter(f => f.room === sub.room);
+    if (frames.length) sub.res.write('event: audio\ndata: ' + JSON.stringify({frames}) + '\n\n');
+  }
+  return true;
+}
+
 function cookieValue(req, key) {
   const raw = req.headers.cookie || '';
   return raw.split(';').map(s => s.trim()).find(s => s.startsWith(key + '='))?.slice(key.length + 1);
@@ -210,11 +278,18 @@ http.createServer(async (req, res) => {
       return redirect(res, '/', { 'Set-Cookie': 'shark_session=; Max-Age=0; ' + baseCookie });
     }
     if (url.pathname === '/api/bridge/state' && req.method === 'POST') {
-      const expected = Buffer.from(BRIDGE_TOKEN), provided = Buffer.from((req.headers.authorization || '').replace(/^Bearer /, ''));
-      if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) return json(res, 403, { error: 'Forbidden' });
+      if (!bridgeAuthorized(req)) return json(res, 403, { error: 'Forbidden' });
       try { publicGame = sanitizeGame(await readJson(req)); lastBridgeUpdate = Date.now(); pushGameUpdate(); return json(res, 200, { ok: true }); }
       catch { return json(res, 400, { error: 'Invalid game payload' }); }
     }
+    if (url.pathname === '/api/bridge/audio' && req.method === 'POST') {
+      if (!bridgeAuthorized(req)) return json(res, 403, { error: 'Forbidden' });
+      try {
+        if (!streamAudio(await readJson(req, 512_000))) return json(res, 400, { error: 'Invalid audio payload' });
+        return json(res, 200, { ok: true });
+      } catch { return json(res, 400, { error: 'Invalid audio payload' }); }
+    }
+    if (url.pathname === '/api/audio' && req.method === 'GET') return await liveAudio(req, res, url.searchParams.get('room') || '');
     if (url.pathname === '/') return html(res, page);
     if (url.pathname === '/api/events' && req.method === 'GET') return await liveEvents(req, res);
     const user = await currentUser(req);
