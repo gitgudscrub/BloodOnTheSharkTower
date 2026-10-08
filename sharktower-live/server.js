@@ -131,4 +131,4 @@ http.createServer(async (req, res) => {
     if (url.pathname === '/api/game') return user ? json(res, 200, publicGame) : json(res, 401, { error: 'Login required' });
     return json(res, 404, { error: 'Not found' });
   } catch (e) { console.error('Request failed:', e?.message); return json(res, 500, { error: 'Request failed' }); }
-}).listen(PORT, () => console.log('Sharktower Live listening on port ' + PORT));
+}).listen(PORT, '127.0.0.1', () => console.log('Sharktower Live listening on http://127.0.0.1:' + PORT));
