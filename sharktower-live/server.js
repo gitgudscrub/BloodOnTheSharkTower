@@ -15,7 +15,7 @@ if (![CLIENT_ID, CLIENT_SECRET, GUILD_ID, REDIRECT_URI, SESSION_SECRET, BRIDGE_T
 }
 const sessions = new Map();
 const pending = new Map();
-const emptyGame = () => ({ live: false, bridgeConnected: false, gameId: null, phase: null, day: null, night: null, players: [], conversations: [] });
+const emptyGame = () => ({ live: false, bridgeConnected: false, gameId: null, phase: null, day: null, night: null, storytellers: [], players: [], conversations: [] });
 let publicGame = emptyGame();
 let lastBridgeUpdate = 0;
 const BRIDGE_TIMEOUT_MS = 15_000;
@@ -118,16 +118,17 @@ function readJson(req, limit = 64_000) {
 function sanitizeGame(input) {
   if (!input || typeof input !== 'object') throw new Error('Invalid game state');
   const str = (x, max = 80) => typeof x === 'string' ? x.slice(0, max) : '';
-  if (!Array.isArray(input.players) || input.players.length > 100 || !Array.isArray(input.conversations) || input.conversations.length > 50) throw new Error('Invalid lists');
+  if (!Array.isArray(input.players) || input.players.length > 100 || !Array.isArray(input.conversations) || input.conversations.length > 50 || (input.storytellers !== undefined && (!Array.isArray(input.storytellers) || input.storytellers.length > 20))) throw new Error('Invalid lists');
   return {
     live: input.live === true, gameId: str(input.gameId), phase: ['day', 'night', 'setup', 'ended'].includes(input.phase) ? input.phase : 'setup',
     day: Number.isInteger(input.day) && input.day >= 0 ? input.day : 0,
     night: Number.isInteger(input.night) && input.night >= 0 ? input.night : 0,
+    storytellers: (input.storytellers || []).map(st => ({ id: str(st.id), name: str(st.name) })),
     players: input.players.map(p => ({ id: str(p.id), name: str(p.name), alive: p.alive === true, chatGroup: p.chatGroup === null ? null : str(p.chatGroup) })),
     conversations: input.conversations.map(c => ({ id: str(c.id), name: str(c.name), playerIds: Array.isArray(c.playerIds) ? c.playerIds.slice(0, 100).map(id => str(id)) : [] }))
   };
 }
-const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div><small id="minecraft">Waiting for Minecraft bridge…</small></div><div id="status"></div><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
+const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div><small id="minecraft">Waiting for Minecraft bridge…</small></div><div id="status"></div><h3>Storyteller</h3><ul id="storytellers"></ul><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
 const main=document.getElementById('main'),game=document.getElementById('game');
 let stream=null, fallback=null;
 const status=document.getElementById('status'),connection=document.getElementById('connection'),minecraft=document.getElementById('minecraft');
@@ -136,10 +137,12 @@ function renderGame(data){
   minecraft.textContent=data.bridgeConnected?'Minecraft bridge connected':'Minecraft bridge offline — waiting for game data';
   status.textContent=!data.live?'No active game':data.phase==='setup'?'Game setup in progress':data.phase==='night'?'Night '+data.night:'Day '+data.day;
   for(const [id,items,render] of [
+    ['storytellers',data.storytellers||[],st=>st.name],
     ['players',data.players,p=>p.name+(p.alive?'':' (dead)')],
     ['conversations',data.conversations,c=>c.name+' ('+c.playerIds.length+' players)']
   ]){
     const list=document.getElementById(id);list.replaceChildren();
+    if(id==='storytellers'&&!items.length){const li=document.createElement('li');li.textContent='No Storyteller currently online';list.append(li);}
     for(const item of items){const li=document.createElement('li');li.textContent=render(item);list.append(li);}
   }
 }
