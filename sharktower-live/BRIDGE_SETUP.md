@@ -42,3 +42,17 @@ A one-off smoke test can be run on the Ubuntu host using a temporary, non-secret
 ## Diagnosing an empty setup page
 
 The Minecraft mod keeps setup seating in `StorytellerState.PENDING_SEAT_NUMBERS` until roles are sent. The bridge uses those pending seats during setup, then switches to the committed game seats. A seated, online player should therefore appear before game start, without exposing secret roles. On its first successful HTTP POST (or a successful reconnect), the Minecraft console prints `Sharktower Live bridge connected successfully (HTTP 200).` The website independently displays `Minecraft bridge connected` when an authenticated update arrived within 15 seconds; this is different from the browser's own `Live updates connected` SSE indication. Seeing `Minecraft bridge offline` means the backend has not received a recent POST, even if browser SSE is healthy.
+
+## Experimental daytime voice for spectators
+
+This feature is **opt-in** and intended for the initial single-player/room-switching test.
+
+1. Update both the Minecraft server JAR and the Sharktower Live website from the same feature-branch build.
+2. In the Minecraft instance's private \`config/sharktower-live-bridge.properties\` add **\`audioEnabled=true\`**, then restart the Minecraft server. Do not publish the bridge token. Server log will say \`Daytime spectator voice: ON\`.
+3. Inform all players before starting a game that approved Discord members watching Sharktower Live can listen to daytime Town Square and private chat areas. This recording-free relay does not save audio.
+4. Start a game and advance to day; in Chrome or Edge, sign in on the website, select **Listen: Town Square**, then speak in Minecraft while wearing headphones to avoid feedback. To test a private area, move in Minecraft and select the newly appearing room on the website.
+5. If you want to disable the voice feed while retaining live player/room state, change to \`audioEnabled=false\` and restart Minecraft.
+
+**Scope and limitations:** Uses Simple Voice Chat microphone Opus packets and a listen-only Server-Sent Events stream, decoded via browser WebCodecs; current Chrome or Edge is recommended. Other browsers may not support this codec path. There is no browser microphone uplink. Only seated non-Storyteller players speaking in the shared daytime group or configured daytime private zones are sent; ST private chats, houses, whispers, proximity/unrouted audio, night, and game-end audio are excluded. Rooms are determined by Minecraft's own voice routing, not by a spectator's position. Website access requires Discord OAuth with verified membership. Each listener selects one voice room at a time and audio is not persisted. A slow connection can cause delay or missing frames. This is a limited prototype rather than production-grade WebRTC/voice chat.
+
+**Privacy reminder:** Server membership alone is not a substitute for telling players when their private chats may be heard by approved spectators. Keep the opt-in disabled until the group agrees to spectator listening.
