@@ -97,11 +97,13 @@ http.createServer(async (req, res) => {
       const state = crypto.randomBytes(32).toString('hex');
       pending.set(state, Date.now() + 300_000);
       const p = new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: 'code', scope: 'identify guilds.members.read', state });
-      return redirect(res, 'https://discord.com/oauth2/authorize?' + p);
+      return redirect(res, 'https://discord.com/oauth2/authorize?' + p, { 'Set-Cookie': 'shark_oauth=' + signed(state) + '; Max-Age=300; ' + baseCookie });
     }
     if (url.pathname === '/auth/callback' && req.method === 'GET') {
       const state = url.searchParams.get('state'), code = url.searchParams.get('code');
       const expiry = pending.get(state); pending.delete(state);
+      const cookieState = validCookie(cookieValue(req, 'shark_oauth'));
+      if (state !== cookieState) return json(res, 403, { error: 'OAuth state does not match this browser' }, { 'Set-Cookie': 'shark_oauth=; Max-Age=0; ' + baseCookie });
       if (!code || !expiry || expiry < Date.now()) return json(res, 403, { error: 'Invalid or expired login state' });
       const oauth = await fetch('https://discord.com/api/v10/oauth2/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI }) });
       if (!oauth.ok) return json(res, 401, { error: 'Discord login failed' });
@@ -111,7 +113,7 @@ http.createServer(async (req, res) => {
       if (!r.ok) return json(res, 502, { error: 'Discord user lookup failed' });
       const who = await r.json(), sid = crypto.randomBytes(32).toString('hex');
       sessions.set(sid, { user: { id: who.id, username: who.global_name || who.username }, token: tokens.access_token, expires: Date.now() + Math.min((tokens.expires_in || 3600) * 1000, 3_600_000), lastCheck: Date.now() });
-      return redirect(res, '/', { 'Set-Cookie': 'shark_session=' + signed(sid) + '; Max-Age=3600; ' + baseCookie });
+      return redirect(res, '/', { 'Set-Cookie': ['shark_session=' + signed(sid) + '; Max-Age=3600; ' + baseCookie, 'shark_oauth=; Max-Age=0; ' + baseCookie] });
     }
     if (url.pathname === '/auth/logout') {
       const sid = validCookie(cookieValue(req, 'shark_session')); if (sid) sessions.delete(sid);
