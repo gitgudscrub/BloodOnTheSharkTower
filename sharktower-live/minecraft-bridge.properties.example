@@ -1,0 +1,14 @@
+# Place this in the Minecraft SERVER INSTANCE's config directory as:
+# config/sharktower-live-bridge.properties
+# Never put the filled-in file into GitHub or a public modpack.
+# In AMP/Docker, localhost is inside the container; use the public HTTPS
+# spectator domain as the URL unless internal networking is configured.
+enabled=true
+url=https://spectator.YOUR_DOMAIN/api/bridge/state
+# Exactly the same random secret as BRIDGE_TOKEN in /etc/sharktower-live/sharktower-live.env
+token=REPLACE_WITH_YOUR_PRIVATE_32_OR_MORE_CHARACTER_BRIDGE_TOKEN
+
+# OPTIONAL: stream compressed daytime voice to signed-in spectators.
+# OFF by default: only enable when players have been informed.
+# Audio in Storyteller private sessions, night chats, houses and whispers is excluded.
+audioEnabled=false

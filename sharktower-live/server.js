@@ -1,0 +1,392 @@
+import http from 'node:http';
+import crypto from 'node:crypto';
+
+const PORT = Number(process.env.PORT || 3000);
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const GUILD_ID = process.env.DISCORD_GUILD_ID;
+const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const BRIDGE_TOKEN = process.env.BRIDGE_TOKEN;
+const SECURE = process.env.COOKIE_SECURE === '1';
+if (![CLIENT_ID, CLIENT_SECRET, GUILD_ID, REDIRECT_URI, SESSION_SECRET, BRIDGE_TOKEN].every(Boolean) || SESSION_SECRET.length < 32 || BRIDGE_TOKEN.length < 32) {
+  console.error('Set Discord OAuth, guild, redirect, SESSION_SECRET (32+ chars) and BRIDGE_TOKEN (32+ chars) environment variables.');
+  process.exit(1);
+}
+const sessions = new Map();
+const pending = new Map();
+const emptyGame = () => ({ live: false, bridgeConnected: false, gameId: null, phase: null, day: null, night: null, storytellers: [], players: [], conversations: [] });
+let publicGame = emptyGame();
+let lastBridgeUpdate = 0;
+const BRIDGE_TIMEOUT_MS = 15_000;
+const STREAM_HEARTBEAT_MS = 10_000;
+const streams = new Set();
+let lastPublishedState = JSON.stringify(emptyGame());
+
+function currentGame() {
+  return Date.now() - lastBridgeUpdate < BRIDGE_TIMEOUT_MS ? { ...publicGame, bridgeConnected: true } : emptyGame();
+}
+function pushGameUpdate() {
+  const serialized = JSON.stringify(currentGame());
+  if (serialized === lastPublishedState) return;
+  lastPublishedState = serialized;
+  for (const res of streams) {
+    if (res.destroyed || res.writableEnded) { streams.delete(res); continue; }
+    res.write('event: game\n' + 'data: ' + serialized + '\n\n');
+  }
+}
+// No stale game data after the Minecraft bridge goes offline.
+setInterval(pushGameUpdate, 1_000).unref();
+
+async function liveEvents(req, res) {
+  if (!await currentUser(req)) return json(res, 401, { error: 'Login required' });
+  if (streams.size >= 100) return json(res, 503, { error: 'Too many spectators' });
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.flushHeaders();
+  res.write('retry: 2000\n\n');
+  res.write('event: game\ndata: ' + JSON.stringify(currentGame()) + '\n\n');
+  streams.add(res);
+  let checking = false;
+  const heartbeat = setInterval(async () => {
+    if (checking || res.writableEnded || res.destroyed) return;
+    checking = true;
+    try {
+      // Revalidate session and Discord guild membership during an open stream.
+      if (!await currentUser(req)) { res.end(); return; }
+      res.write(': keepalive\n\n');
+    } catch {
+      res.end();
+    } finally { checking = false; }
+  }, STREAM_HEARTBEAT_MS);
+  heartbeat.unref();
+  res.on('close', () => { clearInterval(heartbeat); streams.delete(res); });
+}
+
+
+const audioSubscribers = new Set();
+const AUDIO_STREAM_LIMIT = 50;
+function bridgeAuthorized(req) {
+  const expected = Buffer.from(BRIDGE_TOKEN);
+  const provided = Buffer.from((req.headers.authorization || '').replace(/^Bearer /, ''));
+  return expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
+}
+function allowedRoom(room) {
+  const game = currentGame();
+  return game.live && game.phase === 'day' && game.conversations.some(c => c.id === room);
+}
+async function liveAudio(req, res, room) {
+  if (!await currentUser(req)) return json(res, 401, { error: 'Login required' });
+  if (!/^(town-square|zone-[a-z0-9_-]{1,32})$/.test(room) || !allowedRoom(room)) {
+    return json(res, 404, { error: 'Room unavailable' });
+  }
+  if (audioSubscribers.size >= AUDIO_STREAM_LIMIT) return json(res, 503, { error: 'Listener limit reached' });
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.flushHeaders();
+  res.write('retry: 2000\n\n');
+  const sub = {res, room};
+  audioSubscribers.add(sub);
+  let checking = false;
+  const health = setInterval(async () => {
+    if (checking || res.destroyed || res.writableEnded) return;
+    checking = true;
+    try {
+      if (!allowedRoom(room) || !await currentUser(req)) { res.end(); return; }
+      res.write(': keepalive\n\n');
+    } catch { res.end(); }
+    finally { checking = false; }
+  }, 5_000);
+  health.unref();
+  res.on('close', () => { clearInterval(health); audioSubscribers.delete(sub); });
+}
+function streamAudio(input) {
+  const state = currentGame();
+  if (!state.live || state.phase !== 'day') return false;
+  if (!input || typeof input !== 'object' || !Array.isArray(input.frames) || input.frames.length > 150) return false;
+  if (!input.frames.length) return true;
+  const valid = [];
+  for (const frame of input.frames) {
+    if (!frame || typeof frame !== 'object'
+        || !/^(town-square|zone-[a-z0-9_-]{1,32})$/.test(frame.room || '')
+        || typeof frame.sender !== 'string'
+        || typeof frame.opus !== 'string' || frame.opus.length > 3500
+        || !/^[A-Za-z0-9+/]+={0,2}$/.test(frame.opus)) continue;
+    // Validate identity and room against the PUBLIC Minecraft state. Only
+    // seated players in an active daytime room can supply spectator audio.
+    const player = state.players.find(p => p.id === frame.sender && p.chatGroup === frame.room);
+    if (!player || !state.conversations.some(c => c.id === frame.room && c.playerIds.includes(frame.sender))) continue;
+    valid.push({room: frame.room, sender: frame.sender, opus: frame.opus});
+  }
+  for (const sub of audioSubscribers) {
+    if (sub.res.destroyed || sub.res.writableEnded) { audioSubscribers.delete(sub); continue; }
+    const frames = valid.filter(f => f.room === sub.room);
+    if (sub.res.writableLength > 256_000) { sub.res.end(); audioSubscribers.delete(sub); continue; }
+    if (frames.length) sub.res.write('event: audio\ndata: ' + JSON.stringify({frames}) + '\n\n');
+  }
+  return true;
+}
+
+function cookieValue(req, key) {
+  const raw = req.headers.cookie || '';
+  return raw.split(';').map(s => s.trim()).find(s => s.startsWith(key + '='))?.slice(key.length + 1);
+}
+function signed(token) { return token + '.' + crypto.createHmac('sha256', SESSION_SECRET).update(token).digest('hex'); }
+function validCookie(value) {
+  if (!value) return null;
+  const index = value.lastIndexOf('.');
+  if (index < 0) return null;
+  const token = value.slice(0, index), signature = value.slice(index + 1);
+  const expected = signed(token).slice(token.length + 1);
+  if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  return token;
+}
+const baseCookie = 'Path=/; HttpOnly; SameSite=Lax' + (SECURE ? '; Secure' : '');
+function json(res, status, data, headers = {}) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers });
+  res.end(JSON.stringify(data));
+}
+function redirect(res, path, headers = {}) { res.writeHead(302, { Location: path, 'Cache-Control': 'no-store', ...headers }); res.end(); }
+function html(res, data) {
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; connect-src 'self'; script-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
+  res.end(data);
+}
+async function membership(token) {
+  const r = await fetch('https://discord.com/api/v10/users/@me/guilds/' + encodeURIComponent(GUILD_ID) + '/member', { headers: { Authorization: 'Bearer ' + token } });
+  return r.status === 200;
+}
+async function currentUser(req) {
+  const sid = validCookie(cookieValue(req, 'shark_session'));
+  const session = sid && sessions.get(sid);
+  if (!session || session.expires < Date.now()) { if (sid) sessions.delete(sid); return null; }
+  // Revalidate periodically; active users are not permanently authorised by stale login data.
+  if (session.lastCheck + 60_000 < Date.now()) {
+    if (!await membership(session.token)) { sessions.delete(sid); return null; }
+    session.lastCheck = Date.now();
+  }
+  return session.user;
+}
+function readJson(req, limit = 64_000) {
+  return new Promise((resolve, reject) => {
+    let body = '', count = 0;
+    req.on('data', chunk => { count += chunk.length; if (count > limit) { reject(new Error('Payload too large')); req.destroy(); } else body += chunk; });
+    req.on('end', () => { try { resolve(JSON.parse(body)); } catch { reject(new Error('Invalid JSON')); } });
+    req.on('error', reject);
+  });
+}
+function sanitizeGame(input) {
+  if (!input || typeof input !== 'object') throw new Error('Invalid game state');
+  const str = (x, max = 80) => typeof x === 'string' ? x.slice(0, max) : '';
+  if (!Array.isArray(input.players) || input.players.length > 100 || !Array.isArray(input.conversations) || input.conversations.length > 50 || (input.storytellers !== undefined && (!Array.isArray(input.storytellers) || input.storytellers.length > 20))) throw new Error('Invalid lists');
+  return {
+    live: input.live === true, gameId: str(input.gameId), phase: ['day', 'night', 'setup', 'ended'].includes(input.phase) ? input.phase : 'setup',
+    day: Number.isInteger(input.day) && input.day >= 0 ? input.day : 0,
+    night: Number.isInteger(input.night) && input.night >= 0 ? input.night : 0,
+    storytellers: (input.storytellers || []).map(st => ({ id: str(st.id), name: str(st.name) })),
+    players: input.players.map(p => ({ id: str(p.id), name: str(p.name), alive: p.alive === true, chatGroup: p.chatGroup === null ? null : str(p.chatGroup) })),
+    conversations: input.conversations.map(c => ({ id: str(c.id), name: str(c.name), playerIds: Array.isArray(c.playerIds) ? c.playerIds.slice(0, 100).map(id => str(id)) : [] }))
+  };
+}
+const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div><small id="minecraft">Waiting for Minecraft bridge…</small></div><div id="status"></div><h3>Storyteller</h3><ul id="storytellers"></ul><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><h3>Listen to a room</h3><p><small>Daytime listening only. Storyteller private chats, whispers and night audio are not broadcast. Players should be told that approved spectators may listen.</small></p><div id="audio-rooms"></div><small id="audio-status">Choose a room to start listening.</small><p><small>Grimoire viewing is not enabled.</small></p></div></main><script>
+const main=document.getElementById('main'),game=document.getElementById('game');
+let stream=null, fallback=null;
+let listenStream=null, listenContext=null, activeRoom=null;
+const decoders=new Map(),sources=new Set();
+const audioStatus=document.getElementById('audio-status');
+const roomButtons=document.getElementById('audio-rooms');
+const status=document.getElementById('status'),connection=document.getElementById('connection'),minecraft=document.getElementById('minecraft');
+function stopListening(message='Listening stopped.'){
+  if(listenStream){listenStream.close();listenStream=null;}
+  activeRoom=null;
+  for(const source of sources){try{source.stop();}catch{}}
+  sources.clear();
+  for(const speaker of decoders.values()){try{speaker.decoder.close();}catch{}}
+  decoders.clear();
+  audioStatus.textContent=message;
+}
+function playOpus(frame){
+  if(!listenContext || !activeRoom) return;
+  let speaker=decoders.get(frame.sender);
+  if(!speaker){
+    const state={ts:0,next:0,decoder:null};
+    state.decoder=new AudioDecoder({
+      output(data){
+        try{
+          if(!activeRoom)return;
+          const buffer=listenContext.createBuffer(data.numberOfChannels,data.numberOfFrames,data.sampleRate);
+          for(let channel=0;channel<data.numberOfChannels;channel++){
+            data.copyTo(buffer.getChannelData(channel),{planeIndex:channel,format:'f32-planar'});
+          }
+          if(state.next>listenContext.currentTime+1.0)state.next=listenContext.currentTime+0.12;
+          const source=listenContext.createBufferSource();
+          source.buffer=buffer;source.connect(listenContext.destination);
+          const when=Math.max(listenContext.currentTime+0.12,state.next);
+          state.next=when+buffer.duration;
+          sources.add(source);
+          source.onended=()=>sources.delete(source);
+          source.start(when);
+        }catch{
+          audioStatus.textContent='Audio decoding problem — try rejoining the room.';
+        }finally{data.close();}
+      },
+      error(){audioStatus.textContent='Audio decoder error — try rejoining the room.';}
+    });
+    try{state.decoder.configure({codec:'opus',sampleRate:48000,numberOfChannels:1});}
+    catch{audioStatus.textContent='Opus decoding is not available in this browser.';state.decoder.close();return;}
+    speaker=state;decoders.set(frame.sender,speaker);
+  }
+  try{
+    const bytes=Uint8Array.from(atob(frame.opus),c=>c.charCodeAt(0));
+    speaker.decoder.decode(new EncodedAudioChunk({type:'key',timestamp:speaker.ts,duration:20000,data:bytes}));
+    speaker.ts+=20000;
+  }catch{audioStatus.textContent='Unable to decode incoming audio.';}
+}
+function startListening(room){
+  if(!window.AudioDecoder || !window.EncodedAudioChunk || !window.AudioContext){
+    audioStatus.textContent='This browser cannot decode the Minecraft Opus voice stream. Use current Chrome or Edge.';
+    return;
+  }
+  if(!listenContext)listenContext=new AudioContext();
+  // The resume is intentionally called directly from the click interaction.
+  listenContext.resume();
+  stopListening('Connecting to voice room…');
+  activeRoom=room;
+  listenStream=new EventSource('/api/audio?room='+encodeURIComponent(room));
+  listenStream.onopen=()=>{audioStatus.textContent='Listening to '+room+' — waiting for someone to speak';};
+  listenStream.addEventListener('audio',event=>{
+    if(!activeRoom)return;
+    try{const payload=JSON.parse(event.data);if((payload.frames||[]).length)audioStatus.textContent='Receiving Minecraft voice in '+activeRoom;for(const f of payload.frames||[])playOpus(f);}
+    catch{audioStatus.textContent='Invalid voice data received.';}
+  });
+  listenStream.onerror=()=>{
+    audioStatus.textContent='Voice connection interrupted. Reconnecting…';
+  };
+  if(window.lastGame)renderRoomButtons(window.lastGame);
+}
+function renderRoomButtons(data){
+  roomButtons.replaceChildren();
+  const rooms=data.live && data.phase==='day'?data.conversations:[];
+  if(activeRoom && !rooms.some(c=>c.id===activeRoom))stopListening('Room closed or daytime ended.');
+  if(!rooms.length){roomButtons.textContent='Daytime voice rooms will appear when the game starts.';return;}
+  for(const room of rooms){
+    const button=document.createElement('button');button.type='button';
+    button.style.margin='0 8px 8px 0';
+    button.textContent=(room.id===activeRoom?'Stop: ':'Listen: ')+room.name;
+    button.onclick=()=>{
+      if(activeRoom===room.id)stopListening();
+      else startListening(room.id);
+      renderRoomButtons(data);
+    };
+    roomButtons.append(button);
+  }
+}
+function renderGame(data){
+  game.hidden=false;
+  window.lastGame=data;
+  renderRoomButtons(data);
+  minecraft.textContent=data.bridgeConnected?'Minecraft bridge connected':'Minecraft bridge offline — waiting for game data';
+  status.textContent=!data.live?'No active game':data.phase==='setup'?'Game setup in progress':data.phase==='night'?'Night '+data.night:'Day '+data.day;
+  for(const [id,items,render] of [
+    ['storytellers',data.storytellers||[],st=>st.name],
+    ['players',data.players,p=>p.name+(p.alive?'':' (dead)')],
+    ['conversations',data.conversations,c=>c.name+' ('+c.playerIds.length+' players)']
+  ]){
+    const list=document.getElementById(id);list.replaceChildren();
+    if(id==='storytellers'&&!items.length){const li=document.createElement('li');li.textContent='No Storyteller currently online';list.append(li);}
+    for(const item of items){const li=document.createElement('li');li.textContent=render(item);list.append(li);}
+  }
+}
+async function fetchGame(){
+  const response=await fetch('/api/game');
+  if(response.status===401){location.reload();return;}
+  if(response.ok)renderGame(await response.json());
+}
+function startFallback(){
+  if(!fallback)fallback=setInterval(()=>fetchGame().catch(()=>{}),3000);
+}
+function stopFallback(){if(fallback){clearInterval(fallback);fallback=null;}}
+async function connect(){
+  const response=await fetch('/api/me');
+  const me=await response.json();
+  if(!me.user){
+    if(stream){stream.close();stream=null;}
+    main.replaceChildren();const a=document.createElement('a');
+    a.href='/auth/login';a.textContent='Sign in with Discord (Clocktower server members only)';
+    main.append(a);game.hidden=true;return;
+  }
+  main.textContent='Signed in as '+me.user.username+' · ';
+  const logout=document.createElement('a');logout.href='/auth/logout';logout.textContent='Sign out';main.append(logout);
+  await fetchGame();
+  if(stream)return;
+  if(!window.EventSource){connection.textContent='Live stream unavailable — checking every 3 seconds';startFallback();return;}
+  stream=new EventSource('/api/events');
+  stream.addEventListener('game',event=>{try{renderGame(JSON.parse(event.data));stopFallback();}catch{}});
+  stream.onopen=()=>{connection.textContent='Live updates connected';stopFallback();};
+  stream.onerror=()=>{connection.textContent='Reconnecting — checking every 3 seconds';startFallback();}; // EventSource automatically reconnects.
+}
+connect().catch(()=>{main.textContent='Unable to load spectator status.';});
+setInterval(async()=>{
+  try{const result=await fetch('/api/me');const body=await result.json();if(!body.user)location.reload();}
+  catch{}
+},60000);
+</script></body></html>`;
+http.createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url, 'http://localhost');
+    if (url.pathname === '/auth/login' && req.method === 'GET') {
+      const state = crypto.randomBytes(32).toString('hex');
+      pending.set(state, Date.now() + 300_000);
+      const p = new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: 'code', scope: 'identify guilds.members.read', state });
+      return redirect(res, 'https://discord.com/oauth2/authorize?' + p, { 'Set-Cookie': 'shark_oauth=' + signed(state) + '; Max-Age=300; ' + baseCookie });
+    }
+    if (url.pathname === '/auth/callback' && req.method === 'GET') {
+      const state = url.searchParams.get('state'), code = url.searchParams.get('code');
+      const expiry = pending.get(state); pending.delete(state);
+      const cookieState = validCookie(cookieValue(req, 'shark_oauth'));
+      if (state !== cookieState) return json(res, 403, { error: 'OAuth state does not match this browser' }, { 'Set-Cookie': 'shark_oauth=; Max-Age=0; ' + baseCookie });
+      if (!code || !expiry || expiry < Date.now()) return json(res, 403, { error: 'Invalid or expired login state' });
+      const oauth = await fetch('https://discord.com/api/v10/oauth2/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI }) });
+      if (!oauth.ok) return json(res, 401, { error: 'Discord login failed' });
+      const tokens = await oauth.json();
+      if (!await membership(tokens.access_token)) return json(res, 403, { error: 'Clocktower server membership required' });
+      const r = await fetch('https://discord.com/api/v10/users/@me', { headers: { Authorization: 'Bearer ' + tokens.access_token } });
+      if (!r.ok) return json(res, 502, { error: 'Discord user lookup failed' });
+      const who = await r.json(), sid = crypto.randomBytes(32).toString('hex');
+      sessions.set(sid, { user: { id: who.id, username: who.global_name || who.username }, token: tokens.access_token, expires: Date.now() + Math.min((tokens.expires_in || 3600) * 1000, 3_600_000), lastCheck: Date.now() });
+      return redirect(res, '/', { 'Set-Cookie': ['shark_session=' + signed(sid) + '; Max-Age=3600; ' + baseCookie, 'shark_oauth=; Max-Age=0; ' + baseCookie] });
+    }
+    if (url.pathname === '/auth/logout') {
+      const sid = validCookie(cookieValue(req, 'shark_session')); if (sid) sessions.delete(sid);
+      return redirect(res, '/', { 'Set-Cookie': 'shark_session=; Max-Age=0; ' + baseCookie });
+    }
+    if (url.pathname === '/api/bridge/state' && req.method === 'POST') {
+      if (!bridgeAuthorized(req)) return json(res, 403, { error: 'Forbidden' });
+      try { publicGame = sanitizeGame(await readJson(req)); lastBridgeUpdate = Date.now(); pushGameUpdate(); return json(res, 200, { ok: true }); }
+      catch { return json(res, 400, { error: 'Invalid game payload' }); }
+    }
+    if (url.pathname === '/api/bridge/audio' && req.method === 'POST') {
+      if (!bridgeAuthorized(req)) return json(res, 403, { error: 'Forbidden' });
+      try {
+        if (!streamAudio(await readJson(req, 512_000))) return json(res, 400, { error: 'Invalid audio payload' });
+        return json(res, 200, { ok: true });
+      } catch { return json(res, 400, { error: 'Invalid audio payload' }); }
+    }
+    if (url.pathname === '/api/audio' && req.method === 'GET') return await liveAudio(req, res, url.searchParams.get('room') || '');
+    if (url.pathname === '/') return html(res, page);
+    if (url.pathname === '/api/events' && req.method === 'GET') return await liveEvents(req, res);
+    const user = await currentUser(req);
+    if (url.pathname === '/api/me') return json(res, 200, { user });
+    if (url.pathname === '/api/game' && req.method === 'GET') return user ? json(res, 200, currentGame()) : json(res, 401, { error: 'Login required' });
+    return json(res, 404, { error: 'Not found' });
+  } catch (e) { console.error('Request failed:', e?.message); return json(res, 500, { error: 'Request failed' }); }
+}).listen(PORT, '127.0.0.1', () => console.log('Sharktower Live listening on http://127.0.0.1:' + PORT));

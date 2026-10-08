@@ -1,0 +1,15 @@
+{
+  "name": "sharktower-live",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node --watch start.js",
+    "check": "node --check start.js && node --check server.js",
+    "test": "node tests/smoke.mjs"
+  }
+}

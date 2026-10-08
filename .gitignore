@@ -5,3 +5,6 @@ run/
 *.iml
 out/
 .gradle-bootstrap/
+
+# Minecraft server-only Sharktower Live bridge secrets
+**/sharktower-live-bridge.properties
