@@ -29,6 +29,8 @@ public final class ServerState {
     /** A.10 end-game reveal state. Values: NONE, GOOD, EVIL. */
     public static String winningTeam = "NONE";
     public static boolean rolesRevealed = false;
+    /** One-shot guard for the post-cinematic Discord Grimoire render. */
+    public static boolean finalGrimoireSent = false;
 
     private ServerState() {}
 
