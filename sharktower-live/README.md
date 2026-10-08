@@ -26,7 +26,7 @@ Public spectator responses intentionally expose only names, living status, phase
 
 ## Future work
 
-- WebSocket/SSE updates, persistence and deployment.
+- Persisted user sessions and production deployment hardening (authenticated SSE already implemented).
 - Fabric server event adapter for public game state.
 - Controlled browser audio bridge (permissioned, no ST private information).
 - ST-approved Grimoire access, exposure audit and Medium eligibility safeguards.
@@ -42,3 +42,7 @@ Run Node.js 24+ on the Linux host. Keep secrets outside the Git checkout at `/et
 ## Local-only HTTP listener
 
 Sharktower Live binds only to `127.0.0.1:3000` by default. It is **not** accessible on the host's LAN/public interfaces. Run `cloudflared` on the same Linux host and route your Cloudflare hostname to `http://127.0.0.1:3000` (HTTPS is served by Cloudflare). After updating the source, restart the Sharktower Live process and check `ss -ltnp | grep ':3000'`. This restriction limits direct network access; Discord login and server-side authorization are still required.
+
+## Near-real-time spectator updates
+
+The Fabric publisher checks public game state about every 0.5 seconds while enabled and publishes changes promptly, with a five-second heartbeat when unchanged. The website then broadcasts each change to signed-in browsers over an authenticated Server-Sent Events stream at `/api/events`. Browsers reconnect automatically, with polling fallback when the stream is unavailable. The stream rechecks membership and session validity; hidden game information never enters the public-state payload. When Minecraft updates stop for 15 seconds the site shows the game as offline. Both the Minecraft server JAR and website code must be updated to enable the faster path. SSE connections must not be buffered by an intermediate proxy; the response sets `X-Accel-Buffering: no`.
