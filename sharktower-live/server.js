@@ -15,7 +15,7 @@ if (![CLIENT_ID, CLIENT_SECRET, GUILD_ID, REDIRECT_URI, SESSION_SECRET, BRIDGE_T
 }
 const sessions = new Map();
 const pending = new Map();
-const emptyGame = () => ({ live: false, gameId: null, phase: null, day: null, night: null, players: [], conversations: [] });
+const emptyGame = () => ({ live: false, bridgeConnected: false, gameId: null, phase: null, day: null, night: null, players: [], conversations: [] });
 let publicGame = emptyGame();
 let lastBridgeUpdate = 0;
 const BRIDGE_TIMEOUT_MS = 15_000;
@@ -24,7 +24,7 @@ const streams = new Set();
 let lastPublishedState = JSON.stringify(emptyGame());
 
 function currentGame() {
-  return Date.now() - lastBridgeUpdate < BRIDGE_TIMEOUT_MS ? publicGame : emptyGame();
+  return Date.now() - lastBridgeUpdate < BRIDGE_TIMEOUT_MS ? { ...publicGame, bridgeConnected: true } : emptyGame();
 }
 function pushGameUpdate() {
   const serialized = JSON.stringify(currentGame());
@@ -127,12 +127,13 @@ function sanitizeGame(input) {
     conversations: input.conversations.map(c => ({ id: str(c.id), name: str(c.name), playerIds: Array.isArray(c.playerIds) ? c.playerIds.slice(0, 100).map(id => str(id)) : [] }))
   };
 }
-const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div id="status"></div><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
+const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div><small id="minecraft">Waiting for Minecraft bridge…</small></div><div id="status"></div><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
 const main=document.getElementById('main'),game=document.getElementById('game');
 let stream=null, fallback=null;
-const status=document.getElementById('status'),connection=document.getElementById('connection');
+const status=document.getElementById('status'),connection=document.getElementById('connection'),minecraft=document.getElementById('minecraft');
 function renderGame(data){
   game.hidden=false;
+  minecraft.textContent=data.bridgeConnected?'Minecraft bridge connected':'Minecraft bridge offline — waiting for game data';
   status.textContent=!data.live?'No active game':data.phase==='setup'?'Game setup in progress':data.phase==='night'?'Night '+data.night:'Day '+data.day;
   for(const [id,items,render] of [
     ['players',data.players,p=>p.name+(p.alive?'':' (dead)')],
