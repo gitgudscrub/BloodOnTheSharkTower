@@ -15,7 +15,10 @@ if (![CLIENT_ID, CLIENT_SECRET, GUILD_ID, REDIRECT_URI, SESSION_SECRET, BRIDGE_T
 }
 const sessions = new Map();
 const pending = new Map();
-let publicGame = { live: false, gameId: null, phase: null, day: null, players: [], conversations: [] };
+const emptyGame = () => ({ live: false, gameId: null, phase: null, day: null, players: [], conversations: [] });
+let publicGame = emptyGame();
+let lastBridgeUpdate = 0;
+const BRIDGE_TIMEOUT_MS = 15_000;
 
 function cookieValue(req, key) {
   const raw = req.headers.cookie || '';
@@ -69,7 +72,7 @@ function sanitizeGame(input) {
   const str = (x, max = 80) => typeof x === 'string' ? x.slice(0, max) : '';
   if (!Array.isArray(input.players) || input.players.length > 100 || !Array.isArray(input.conversations) || input.conversations.length > 50) throw new Error('Invalid lists');
   return {
-    live: true, gameId: str(input.gameId), phase: ['day', 'night', 'setup', 'ended'].includes(input.phase) ? input.phase : 'setup',
+    live: input.live === true, gameId: str(input.gameId), phase: ['day', 'night', 'setup', 'ended'].includes(input.phase) ? input.phase : 'setup',
     day: Number.isInteger(input.day) && input.day >= 0 ? input.day : 0,
     players: input.players.map(p => ({ id: str(p.id), name: str(p.name), alive: p.alive === true, chatGroup: p.chatGroup === null ? null : str(p.chatGroup) })),
     conversations: input.conversations.map(c => ({ id: str(c.id), name: str(c.name), playerIds: Array.isArray(c.playerIds) ? c.playerIds.slice(0, 100).map(id => str(id)) : [] }))
@@ -122,13 +125,15 @@ http.createServer(async (req, res) => {
     if (url.pathname === '/api/bridge/state' && req.method === 'POST') {
       const expected = Buffer.from(BRIDGE_TOKEN), provided = Buffer.from((req.headers.authorization || '').replace(/^Bearer /, ''));
       if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) return json(res, 403, { error: 'Forbidden' });
-      try { publicGame = sanitizeGame(await readJson(req)); return json(res, 200, { ok: true }); }
+      try { publicGame = sanitizeGame(await readJson(req)); lastBridgeUpdate = Date.now(); return json(res, 200, { ok: true }); }
       catch { return json(res, 400, { error: 'Invalid game payload' }); }
     }
     if (url.pathname === '/') return html(res, page);
     const user = await currentUser(req);
     if (url.pathname === '/api/me') return json(res, 200, { user });
-    if (url.pathname === '/api/game') return user ? json(res, 200, publicGame) : json(res, 401, { error: 'Login required' });
+    if (url.pathname === '/api/game') return user ? json(res, 200,
+      Date.now() - lastBridgeUpdate < BRIDGE_TIMEOUT_MS ? publicGame : emptyGame())
+      : json(res, 401, { error: 'Login required' });
     return json(res, 404, { error: 'Not found' });
   } catch (e) { console.error('Request failed:', e?.message); return json(res, 500, { error: 'Request failed' }); }
 }).listen(PORT, '127.0.0.1', () => console.log('Sharktower Live listening on http://127.0.0.1:' + PORT));
