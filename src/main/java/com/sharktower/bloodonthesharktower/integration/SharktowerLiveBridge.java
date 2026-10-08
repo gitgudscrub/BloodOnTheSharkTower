@@ -258,6 +258,16 @@ public final class SharktowerLiveBridge {
         seated.sort(Comparator.comparingInt(p ->
                 seats.getOrDefault(p.getUUID(), Integer.MAX_VALUE)));
 
+        // A Storyteller entering a private day zone turns it into a
+        // protected ST conversation for spectators: do not relay ANY participant.
+        // Town Square remains public, but ST microphone audio itself is excluded.
+        java.util.Set<String> storytellerPrivateRooms = new java.util.HashSet<>();
+        for (UUID id : StorytellerState.STORYTELLERS) {
+            String stRoute = NightChatManager.routeCode(id);
+            if (stRoute != null && stRoute.startsWith("DAY_ZONE:")) {
+                storytellerPrivateRooms.add("zone-" + stRoute.substring("DAY_ZONE:".length()));
+            }
+        }
         Map<UUID, String> audioRoutes = new HashMap<>();
         Map<String, List<String>> roomMembers = new HashMap<>();
         if ("day".equals(phase)) roomMembers.put("town-square", new ArrayList<>());
@@ -282,7 +292,7 @@ public final class SharktowerLiveBridge {
             players.add(entry);
             if (group != null) {
                 roomMembers.computeIfAbsent(group, key -> new ArrayList<>()).add(id.toString());
-                audioRoutes.put(id, group);
+                if (!storytellerPrivateRooms.contains(group)) audioRoutes.put(id, group);
             }
         }
         roomMembers.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(room -> {
