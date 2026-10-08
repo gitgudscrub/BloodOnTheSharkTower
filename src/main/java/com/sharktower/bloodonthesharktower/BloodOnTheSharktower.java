@@ -5,6 +5,7 @@ import com.sharktower.bloodonthesharktower.core.LegacyPortInfo;
 import com.sharktower.bloodonthesharktower.core.PhasePresentation;
 import com.sharktower.bloodonthesharktower.core.RoleModelDiagnostics;
 import com.sharktower.bloodonthesharktower.daytime.ElectionManager;
+import com.sharktower.bloodonthesharktower.integration.SharktowerLiveBridge;
 import com.sharktower.bloodonthesharktower.daytime.DayPublicInfoBookManager;
 import com.sharktower.bloodonthesharktower.networking.ModPackets;
 import com.sharktower.bloodonthesharktower.networking.ModPayloads;
@@ -52,6 +53,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(PhasePresentation::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(DuskHomeCompassManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(DayPublicInfoBookManager::serverTick);
+        ServerTickEvents.END_SERVER_TICK.register(SharktowerLiveBridge::tick);
         ServerTickEvents.END_SERVER_TICK.register(TeamInfoBookManager::serverTick);
         LOGGER.info("Night-chat automation, world clock-hand voting, enforced vote seating, dusk Home Compass routing and temporary info books registered.");
     }
