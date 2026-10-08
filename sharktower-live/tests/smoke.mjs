@@ -61,6 +61,17 @@ try {
   assert.equal(outsiders.status, 401, 'game data must be behind Discord login');
   const events = await fetch(api + '/api/events');
   assert.equal(events.status, 401, 'live game events must require Discord login');
+  const audioStream = await fetch(api + '/api/audio?room=town-square');
+  assert.equal(audioStream.status, 401, 'spectator audio must require Discord login');
+  const audioPost = await fetch(api + '/api/bridge/audio', { method: 'POST', body: '{}' });
+  assert.equal(audioPost.status, 403, 'microphone data must require the bridge token');
+  const noGameAudio = await fetch(api + '/api/bridge/audio', {
+    method: 'POST',
+    headers: {'Authorization': 'Bearer ' + 'b'.repeat(64), 'Content-Type': 'application/json'},
+    body: JSON.stringify({frames:[{room:'town-square',sender:'one',opus:'AQIDBA=='}]})
+  });
+  assert.equal(noGameAudio.status, 200, 'inactive game audio batches are safely discarded');
+
   const identity = await fetch(api + '/api/me').then(r => r.json());
   assert.equal(identity.user, null);
   console.log('PASS: server starts, bridge rejects anonymous posts, accepts authenticated posts, and protects game state.');
