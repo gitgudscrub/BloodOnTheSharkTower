@@ -35,6 +35,8 @@ jobs:
         run: |
           node --check sharktower-live/start.js
           node --check sharktower-live/server.js
+          cd sharktower-live
+          npm test
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
