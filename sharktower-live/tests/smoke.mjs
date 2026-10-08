@@ -58,6 +58,8 @@ try {
   assert.equal(accepted.status, 200);
   const outsiders = await fetch(api + '/api/game');
   assert.equal(outsiders.status, 401, 'game data must be behind Discord login');
+  const events = await fetch(api + '/api/events');
+  assert.equal(events.status, 401, 'live game events must require Discord login');
   const identity = await fetch(api + '/api/me').then(r => r.json());
   assert.equal(identity.user, null);
   console.log('PASS: server starts, bridge rejects anonymous posts, accepts authenticated posts, and protects game state.');
