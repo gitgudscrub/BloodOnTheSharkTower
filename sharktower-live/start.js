@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const configPath = resolve(process.env.SHARKTOWER_ENV_FILE || 'C:/Sharktower/config/sharktower-live.env');
+const configPath = resolve(process.env.SHARKTOWER_ENV_FILE || '/etc/sharktower-live/sharktower-live.env');
 if (!existsSync(configPath)) {
   console.error('Sharktower Live configuration file not found at: ' + configPath);
   console.error('Copy .env.example to that path, fill in the required secrets, or set SHARKTOWER_ENV_FILE to another absolute path.');
