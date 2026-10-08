@@ -38,3 +38,7 @@ If AMP allows environment variables, these can be used instead of the properties
 ## Testing the connection without changing Minecraft
 
 A one-off smoke test can be run on the Ubuntu host using a temporary, non-secret sample payload and the token read locally from the private configuration. The bridge's POST endpoint requires a bearer token; requests without it return HTTP 403. It does not expose the Grimoire or require an OAuth session for server-to-server updates. Avoid printing the token in the terminal output or shell history.
+
+## Diagnosing an empty setup page
+
+The Minecraft mod keeps setup seating in `StorytellerState.PENDING_SEAT_NUMBERS` until roles are sent. The bridge uses those pending seats during setup, then switches to the committed game seats. A seated, online player should therefore appear before game start, without exposing secret roles. On its first successful HTTP POST (or a successful reconnect), the Minecraft console prints `Sharktower Live bridge connected successfully (HTTP 200).` The website independently displays `Minecraft bridge connected` when an authenticated update arrived within 15 seconds; this is different from the browser's own `Live updates connected` SSE indication. Seeing `Minecraft bridge offline` means the backend has not received a recent POST, even if browser SSE is healthy.
