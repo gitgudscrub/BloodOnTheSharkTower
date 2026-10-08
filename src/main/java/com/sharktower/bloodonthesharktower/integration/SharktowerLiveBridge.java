@@ -132,6 +132,22 @@ public final class SharktowerLiveBridge {
 
         JsonArray players = new JsonArray();
         JsonArray conversations = new JsonArray();
+        JsonArray storytellers = new JsonArray();
+        // Storyteller identity is already public in the in-game player directory.
+        // Publish only online assigned Storytellers, never their private activity.
+        List<ServerPlayer> activeStorytellers = new ArrayList<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (StorytellerState.isStoryteller(player.getUUID())) activeStorytellers.add(player);
+        }
+        activeStorytellers.sort(Comparator.comparing(
+                player -> player.getName().getString(), String.CASE_INSENSITIVE_ORDER));
+        for (ServerPlayer storyteller : activeStorytellers) {
+            JsonObject identity = new JsonObject();
+            identity.addProperty("id", storyteller.getUUID().toString());
+            identity.addProperty("name", storyteller.getName().getString());
+            storytellers.add(identity);
+        }
+        snapshot.add("storytellers", storytellers);
         if (!active) {
             snapshot.add("players", players);
             snapshot.add("conversations", conversations);
