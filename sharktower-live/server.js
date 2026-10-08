@@ -15,7 +15,7 @@ if (![CLIENT_ID, CLIENT_SECRET, GUILD_ID, REDIRECT_URI, SESSION_SECRET, BRIDGE_T
 }
 const sessions = new Map();
 const pending = new Map();
-const emptyGame = () => ({ live: false, gameId: null, phase: null, day: null, players: [], conversations: [] });
+const emptyGame = () => ({ live: false, gameId: null, phase: null, day: null, night: null, players: [], conversations: [] });
 let publicGame = emptyGame();
 let lastBridgeUpdate = 0;
 const BRIDGE_TIMEOUT_MS = 15_000;
@@ -122,6 +122,7 @@ function sanitizeGame(input) {
   return {
     live: input.live === true, gameId: str(input.gameId), phase: ['day', 'night', 'setup', 'ended'].includes(input.phase) ? input.phase : 'setup',
     day: Number.isInteger(input.day) && input.day >= 0 ? input.day : 0,
+    night: Number.isInteger(input.night) && input.night >= 0 ? input.night : 0,
     players: input.players.map(p => ({ id: str(p.id), name: str(p.name), alive: p.alive === true, chatGroup: p.chatGroup === null ? null : str(p.chatGroup) })),
     conversations: input.conversations.map(c => ({ id: str(c.id), name: str(c.name), playerIds: Array.isArray(c.playerIds) ? c.playerIds.slice(0, 100).map(id => str(id)) : [] }))
   };
@@ -132,7 +133,7 @@ let stream=null, fallback=null;
 const status=document.getElementById('status');
 function renderGame(data){
   game.hidden=false;
-  status.textContent=data.live ? (data.phase==='night'?'Night ':'Day ')+data.day+' · '+data.phase : 'No active game';
+  status.textContent=!data.live?'No active game':data.phase==='setup'?'Game setup in progress':data.phase==='night'?'Night '+data.night:'Day '+data.day;
   for(const [id,items,render] of [
     ['players',data.players,p=>p.name+(p.alive?'':' (dead)')],
     ['conversations',data.conversations,c=>c.name+' ('+c.playerIds.length+' players)']
