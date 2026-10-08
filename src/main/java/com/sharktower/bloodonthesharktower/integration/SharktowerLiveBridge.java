@@ -18,6 +18,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.Base64;
+import java.util.Deque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,6 +60,19 @@ public final class SharktowerLiveBridge {
     private static final AtomicBoolean CONNECTED = new AtomicBoolean();
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(4);
     private static volatile Settings settings;
+    // Voice callbacks run on SVC's processing thread, not the Minecraft tick thread.
+    // Allowlist is built on the tick thread from public seat/voice routing only.
+    private static volatile Map<UUID, String> ALLOWED_AUDIO_ROUTES = Map.of();
+    private static final Deque<VoiceFrame> AUDIO_FRAMES = new ArrayDeque<>();
+    private static final AtomicBoolean AUDIO_IN_FLIGHT = new AtomicBoolean();
+    private static final AtomicBoolean AUDIO_TIMER_STARTED = new AtomicBoolean();
+    private static final int MAX_QUEUED_FRAMES = 250;
+    private static final ScheduledExecutorService AUDIO_TIMER =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread thread = new Thread(r, "SharktowerLiveVoicePublisher");
+                thread.setDaemon(true);
+                return thread;
+            });
     private static volatile long lastWarningMs;
     private static volatile long lastSuccessfulSendMs;
     private static volatile String lastSuccessfulPayload;
@@ -110,6 +129,76 @@ public final class SharktowerLiveBridge {
                 });
     }
 
+    /**
+     * Pass through Opus frames from microphone events without decoding on Minecraft.
+     * Only allow non-whispered daytime audio from PUBLICLY assigned players whose
+     * actual SVC group matches their published Town Square / private zone.
+     * Storyteller-only, house, proximity, night and manual private sessions fail closed.
+     */
+    public static void acceptVoiceFrame(UUID sender, UUID groupId, byte[] opus, boolean whispering) {
+        Settings cfg = settings;
+        if (cfg == null || !cfg.enabled() || !cfg.audioEnabled() || whispering
+                || sender == null || groupId == null || opus == null
+                || opus.length == 0 || opus.length > 2400) return;
+        String room = ALLOWED_AUDIO_ROUTES.get(sender);
+        if (room == null) return;
+        String groupKey = "town-square".equals(room)
+                ? "blood-on-the-sharktower:day:shared"
+                : room.startsWith("zone-")
+                    ? "blood-on-the-sharktower:day:zone:" + room.substring("zone-".length())
+                    : null;
+        if (groupKey == null || !groupId.equals(UUID.nameUUIDFromBytes(groupKey.getBytes(StandardCharsets.UTF_8)))) return;
+        synchronized (AUDIO_FRAMES) {
+            if (AUDIO_FRAMES.size() >= MAX_QUEUED_FRAMES) AUDIO_FRAMES.pollFirst();
+            AUDIO_FRAMES.addLast(new VoiceFrame(sender.toString(), room,
+                    Base64.getEncoder().encodeToString(opus)));
+        }
+    }
+
+    private static void publishVoiceBatch() {
+        Settings cfg = settings;
+        if (cfg == null || !cfg.enabled() || !cfg.audioEnabled()
+                || !AUDIO_IN_FLIGHT.compareAndSet(false, true)) return;
+
+        JsonArray frames = new JsonArray();
+        synchronized (AUDIO_FRAMES) {
+            while (!AUDIO_FRAMES.isEmpty() && frames.size() < 60) {
+                VoiceFrame voice = AUDIO_FRAMES.pollFirst();
+                JsonObject frame = new JsonObject();
+                frame.addProperty("sender", voice.sender());
+                frame.addProperty("room", voice.room());
+                frame.addProperty("opus", voice.opus());
+                frames.add(frame);
+            }
+        }
+        if (frames.isEmpty()) { AUDIO_IN_FLIGHT.set(false); return; }
+        JsonObject data = new JsonObject();
+        data.add("frames", frames);
+        HttpRequest request = HttpRequest.newBuilder(cfg.uri().resolve("audio"))
+                .timeout(REQUEST_TIMEOUT)
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + cfg.token())
+                .POST(HttpRequest.BodyPublishers.ofString(data.toString()))
+                .build();
+        try {
+            HTTP.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+                    .orTimeout(5, TimeUnit.SECONDS)
+                    .whenComplete((result, error) -> {
+                        AUDIO_IN_FLIGHT.set(false);
+                        if (error != null) {
+                            warnRateLimited("Spectator voice delivery failed (" + error.getClass().getSimpleName() + ").");
+                        } else if (result.statusCode() != 200) {
+                            warnRateLimited("Spectator voice endpoint returned HTTP " + result.statusCode() + ".");
+                        }
+                    });
+        } catch (RuntimeException e) {
+            AUDIO_IN_FLIGHT.set(false);
+            warnRateLimited("Spectator voice publisher failed (" + e.getClass().getSimpleName() + ").");
+        }
+    }
+
+    private record VoiceFrame(String sender, String room, String opus) {}
+
     private static JsonObject makePublicSnapshot(MinecraftServer server) {
         JsonObject snapshot = new JsonObject();
         // During SETUP, seating changes are held in the Storyteller's pending
@@ -149,6 +238,7 @@ public final class SharktowerLiveBridge {
         }
         snapshot.add("storytellers", storytellers);
         if (!active) {
+            ALLOWED_AUDIO_ROUTES = Map.of();
             snapshot.add("players", players);
             snapshot.add("conversations", conversations);
             return snapshot;
@@ -168,6 +258,7 @@ public final class SharktowerLiveBridge {
         seated.sort(Comparator.comparingInt(p ->
                 seats.getOrDefault(p.getUUID(), Integer.MAX_VALUE)));
 
+        Map<UUID, String> audioRoutes = new HashMap<>();
         Map<String, List<String>> roomMembers = new HashMap<>();
         if ("day".equals(phase)) roomMembers.put("town-square", new ArrayList<>());
         for (ServerPlayer player : seated) {
@@ -189,8 +280,10 @@ public final class SharktowerLiveBridge {
             if (group == null) entry.add("chatGroup", com.google.gson.JsonNull.INSTANCE);
             else entry.addProperty("chatGroup", group);
             players.add(entry);
-            if (group != null) roomMembers.computeIfAbsent(group, key -> new ArrayList<>())
-                    .add(id.toString());
+            if (group != null) {
+                roomMembers.computeIfAbsent(group, key -> new ArrayList<>()).add(id.toString());
+                audioRoutes.put(id, group);
+            }
         }
         roomMembers.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(room -> {
             JsonObject conversation = new JsonObject();
@@ -203,6 +296,7 @@ public final class SharktowerLiveBridge {
             conversations.add(conversation);
         });
 
+        ALLOWED_AUDIO_ROUTES = Map.copyOf(audioRoutes);
         snapshot.add("players", players);
         snapshot.add("conversations", conversations);
         return snapshot;
@@ -240,8 +334,15 @@ public final class SharktowerLiveBridge {
                     || uri.getRawQuery() != null || !"/api/bridge/state".equals(uri.getPath())) {
                 throw new IllegalArgumentException("Invalid bridge endpoint");
             }
-            BloodOnTheSharktower.LOGGER.info("Sharktower Live public-state bridge enabled (no audio or Grimoire data).");
-            return new Settings(true, uri, token);
+            boolean audioEnabled = Boolean.parseBoolean(
+                    setting("SHARKTOWER_LIVE_BRIDGE_AUDIO_ENABLED", properties, "audioEnabled"));
+            if (audioEnabled && AUDIO_TIMER_STARTED.compareAndSet(false, true)) {
+                AUDIO_TIMER.scheduleWithFixedDelay(
+                        SharktowerLiveBridge::publishVoiceBatch, 150, 150, TimeUnit.MILLISECONDS);
+            }
+            BloodOnTheSharktower.LOGGER.info("Sharktower Live public-state bridge enabled. Daytime spectator voice: {} (no Grimoire data).",
+                    audioEnabled ? "ON" : "OFF");
+            return new Settings(true, uri, token, audioEnabled);
         } catch (IllegalArgumentException e) {
             BloodOnTheSharktower.LOGGER.warn("Sharktower Live bridge URL invalid; use HTTPS or local loopback HTTP and /api/bridge/state. Disabled.");
             return Settings.disabled();
@@ -261,7 +362,7 @@ public final class SharktowerLiveBridge {
         BloodOnTheSharktower.LOGGER.warn(message);
     }
 
-    private record Settings(boolean enabled, URI uri, String token) {
-        static Settings disabled() { return new Settings(false, null, null); }
+    private record Settings(boolean enabled, URI uri, String token, boolean audioEnabled) {
+        static Settings disabled() { return new Settings(false, null, null, false); }
     }
 }
