@@ -196,12 +196,103 @@ function sanitizeGame(input) {
     conversations: input.conversations.map(c => ({ id: str(c.id), name: str(c.name), playerIds: Array.isArray(c.playerIds) ? c.playerIds.slice(0, 100).map(id => str(id)) : [] }))
   };
 }
-const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div><small id="minecraft">Waiting for Minecraft bridge…</small></div><div id="status"></div><h3>Storyteller</h3><ul id="storytellers"></ul><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><small>Live voice and Grimoire viewing are not yet enabled.</small></div></main><script>
+const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharktower Live</title><style>body{background:#111827;color:#f9fafb;font:16px system-ui;margin:0;padding:40px 18px}main{max-width:760px;margin:auto}.card{border:1px solid #374151;border-radius:16px;padding:22px;margin:16px 0;background:#1f2937}a{color:#ddd6fe}button{padding:12px 18px;background:#5865f2;color:white;border:0;border-radius:9px;cursor:pointer}small{color:#9ca3af}li{padding:5px}</style></head><body><main><h1>Sharktower Live</h1><p>Private spectator hub for Blood on the Sharktower.</p><div id="main" class="card">Checking membership…</div><div id="game" class="card" hidden><h2>Current game</h2><small id="connection">Connecting to live updates…</small><div><small id="minecraft">Waiting for Minecraft bridge…</small></div><div id="status"></div><h3>Storyteller</h3><ul id="storytellers"></ul><h3>Players</h3><ul id="players"></ul><h3>Conversations</h3><ul id="conversations"></ul><h3>Listen to a room</h3><p><small>Daytime listening only. Storyteller private chats, whispers and night audio are not broadcast. Players should be told that approved spectators may listen.</small></p><div id="audio-rooms"></div><small id="audio-status">Choose a room to start listening.</small><p><small>Grimoire viewing is not enabled.</small></p></div></main><script>
 const main=document.getElementById('main'),game=document.getElementById('game');
 let stream=null, fallback=null;
+let listenStream=null, listenContext=null, activeRoom=null;
+const decoders=new Map(),sources=new Set();
+const audioStatus=document.getElementById('audio-status');
+const roomButtons=document.getElementById('audio-rooms');
 const status=document.getElementById('status'),connection=document.getElementById('connection'),minecraft=document.getElementById('minecraft');
+function stopListening(message='Listening stopped.'){
+  if(listenStream){listenStream.close();listenStream=null;}
+  activeRoom=null;
+  for(const source of sources){try{source.stop();}catch{}}
+  sources.clear();
+  for(const speaker of decoders.values()){try{speaker.decoder.close();}catch{}}
+  decoders.clear();
+  audioStatus.textContent=message;
+}
+function playOpus(frame){
+  if(!listenContext || !activeRoom) return;
+  let speaker=decoders.get(frame.sender);
+  if(!speaker){
+    const state={ts:0,next:0,decoder:null};
+    state.decoder=new AudioDecoder({
+      output(data){
+        try{
+          if(!activeRoom)return;
+          const buffer=listenContext.createBuffer(data.numberOfChannels,data.numberOfFrames,data.sampleRate);
+          for(let channel=0;channel<data.numberOfChannels;channel++){
+            data.copyTo(buffer.getChannelData(channel),{planeIndex:channel,format:'f32-planar'});
+          }
+          if(state.next>listenContext.currentTime+1.0)state.next=listenContext.currentTime+0.12;
+          const source=listenContext.createBufferSource();
+          source.buffer=buffer;source.connect(listenContext.destination);
+          const when=Math.max(listenContext.currentTime+0.12,state.next);
+          state.next=when+buffer.duration;
+          sources.add(source);
+          source.onended=()=>sources.delete(source);
+          source.start(when);
+        }catch{
+          audioStatus.textContent='Audio decoding problem — try rejoining the room.';
+        }finally{data.close();}
+      },
+      error(){audioStatus.textContent='Audio decoder error — try rejoining the room.';}
+    });
+    try{state.decoder.configure({codec:'opus',sampleRate:48000,numberOfChannels:1});}
+    catch{audioStatus.textContent='Opus decoding is not available in this browser.';state.decoder.close();return;}
+    speaker=state;decoders.set(frame.sender,speaker);
+  }
+  try{
+    const bytes=Uint8Array.from(atob(frame.opus),c=>c.charCodeAt(0));
+    speaker.decoder.decode(new EncodedAudioChunk({type:'key',timestamp:speaker.ts,duration:20000,data:bytes}));
+    speaker.ts+=20000;
+  }catch{audioStatus.textContent='Unable to decode incoming audio.';}
+}
+function startListening(room){
+  if(!window.AudioDecoder || !window.EncodedAudioChunk || !window.AudioContext){
+    audioStatus.textContent='This browser cannot decode the Minecraft Opus voice stream. Use current Chrome or Edge.';
+    return;
+  }
+  if(!listenContext)listenContext=new AudioContext();
+  // The resume is intentionally called directly from the click interaction.
+  listenContext.resume();
+  stopListening('Connecting to voice room…');
+  activeRoom=room;
+  listenStream=new EventSource('/api/audio?room='+encodeURIComponent(room));
+  listenStream.onopen=()=>{audioStatus.textContent='Listening to '+room+' — waiting for someone to speak';};
+  listenStream.addEventListener('audio',event=>{
+    if(!activeRoom)return;
+    try{const payload=JSON.parse(event.data);for(const f of payload.frames||[])playOpus(f);}
+    catch{audioStatus.textContent='Invalid voice data received.';}
+  });
+  listenStream.onerror=()=>{
+    audioStatus.textContent='Voice connection interrupted. Reconnecting…';
+  };
+  if(window.lastGame)renderRoomButtons(window.lastGame);
+}
+function renderRoomButtons(data){
+  roomButtons.replaceChildren();
+  const rooms=data.live && data.phase==='day'?data.conversations:[];
+  if(activeRoom && !rooms.some(c=>c.id===activeRoom))stopListening('Room closed or daytime ended.');
+  if(!rooms.length){roomButtons.textContent='Daytime voice rooms will appear when the game starts.';return;}
+  for(const room of rooms){
+    const button=document.createElement('button');button.type='button';
+    button.style.margin='0 8px 8px 0';
+    button.textContent=(room.id===activeRoom?'Stop: ':'Listen: ')+room.name;
+    button.onclick=()=>{
+      if(activeRoom===room.id)stopListening();
+      else startListening(room.id);
+      renderRoomButtons(data);
+    };
+    roomButtons.append(button);
+  }
+}
 function renderGame(data){
   game.hidden=false;
+  window.lastGame=data;
+  renderRoomButtons(data);
   minecraft.textContent=data.bridgeConnected?'Minecraft bridge connected':'Minecraft bridge offline — waiting for game data';
   status.textContent=!data.live?'No active game':data.phase==='setup'?'Game setup in progress':data.phase==='night'?'Night '+data.night:'Day '+data.day;
   for(const [id,items,render] of [
