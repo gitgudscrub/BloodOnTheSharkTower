@@ -107,7 +107,8 @@ public final class SharktowerLiveBridge {
     private static JsonObject makePublicSnapshot(MinecraftServer server) {
         JsonObject snapshot = new JsonObject();
         boolean active = !ServerState.gameEnded
-                && (ServerState.currentNight > 0 || ServerState.currentDay > 0);
+                && (!ServerState.PLAYER_SEAT_NUMBERS.isEmpty()
+                    || ServerState.currentNight > 0 || ServerState.currentDay > 0);
         String phase = ServerState.gameEnded ? "ended"
                 : ServerState.currentDay <= 0 && ServerState.currentNight <= 0 ? "setup"
                 : ServerState.currentNight != ServerState.currentDay ? "night" : "day";
@@ -115,6 +116,7 @@ public final class SharktowerLiveBridge {
         snapshot.addProperty("gameId", "sharktower-" + ServerState.resetGeneration);
         snapshot.addProperty("phase", phase);
         snapshot.addProperty("day", Math.max(0, ServerState.currentDay));
+        snapshot.addProperty("night", Math.max(0, ServerState.currentNight));
 
         JsonArray players = new JsonArray();
         JsonArray conversations = new JsonArray();
