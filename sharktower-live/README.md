@@ -1,6 +1,6 @@
 # Sharktower Live (development)
 
-External, **listen-only** spectator companion to Blood on the Sharktower. This isolated Node.js proof of concept does not alter the Minecraft mod or expose the Grimoire.
+External, **listen-only** spectator companion to Blood on the Sharktower, now with optional Fabric game-state bridge and experimental browser audio. The Grimoire remains private.
 
 ## Running locally
 
@@ -22,13 +22,13 @@ Example:
 {"gameId":"demo","phase":"day","day":1,"players":[{"id":"uuid","name":"Example","alive":true,"chatGroup":null}],"conversations":[]}
 ```
 
-Public spectator responses intentionally expose only names, living status, phase and public conversations. **Do not send roles, alignment, reminders, Demon bluffs, or hidden Storyteller interactions to this endpoint.** Live audio is NOT implemented. The server-side voice bridge must be investigated separately and opt-in to spectator listening made clear to all game participants.
+Public spectator responses intentionally expose only names, living status, Storyteller identity, phase and publicly identified conversations. **Do not send roles, alignment, reminders, Demon bluffs, or hidden Storyteller interactions to this endpoint.** Experimental daytime audio is separately opt-in with `audioEnabled=true` in the server-side bridge configuration. Inform players before enabling it.
 
 ## Future work
 
 - Persisted user sessions and production deployment hardening (authenticated SSE already implemented).
 - Fabric server event adapter for public game state.
-- Controlled browser audio bridge (permissioned, no ST private information).
+- Harden/test experimental browser audio with real multiple-speaker sessions and wider browser compatibility.
 - ST-approved Grimoire access, exposure audit and Medium eligibility safeguards.
 
 ## Keeping secrets independent of GitHub
@@ -46,3 +46,7 @@ Sharktower Live binds only to `127.0.0.1:3000` by default. It is **not** accessi
 ## Near-real-time spectator updates
 
 The Fabric publisher checks public game state about every 0.5 seconds while enabled and publishes changes promptly, with a five-second heartbeat when unchanged. The website then broadcasts each change to signed-in browsers over an authenticated Server-Sent Events stream at `/api/events`. Browsers reconnect automatically, with polling fallback when the stream is unavailable. The stream rechecks membership and session validity; hidden game information never enters the public-state payload. When Minecraft updates stop for 15 seconds the site shows the game as offline. Both the Minecraft server JAR and website code must be updated to enable the faster path. SSE connections must not be buffered by an intermediate proxy; the response sets `X-Accel-Buffering: no`.
+
+## Experimental room listening
+
+Once the Minecraft server mod and spectator website are updated together, opt in by setting `audioEnabled=true` in the **Minecraft instance's private** `config/sharktower-live-bridge.properties` and restarting Minecraft. The website will offer room selection buttons during day. To start playback, the spectator must click **Listen** (browser audio autoplay requires interaction). The one-way bridge passes Simple Voice Chat's raw Opus voice packets from seated non-Storytellers to authenticated Discord server members only, using the live room data from Minecraft. Audio is transient; not stored or recorded. During this first test, Town Square and daytime private zones are eligible, but Storyteller-attended private zones, manual ST sessions, houses, whispers and night audio are **not** sent. Current Chrome or Edge is recommended because browser WebCodecs Opus decoder support varies. With poor connections, packet loss and latency are possible. See `BRIDGE_SETUP.md` for safeguards and detailed test instructions.
