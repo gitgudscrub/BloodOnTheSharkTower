@@ -51,6 +51,7 @@ public final class SharktowerLiveBridge {
             .followRedirects(HttpClient.Redirect.NEVER)
             .build();
     private static final AtomicBoolean IN_FLIGHT = new AtomicBoolean();
+    private static final AtomicBoolean CONNECTED = new AtomicBoolean();
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(4);
     private static volatile Settings settings;
     private static volatile long lastWarningMs;
@@ -93,12 +94,17 @@ public final class SharktowerLiveBridge {
                 .orTimeout(5, TimeUnit.SECONDS)
                 .whenComplete((response, error) -> {
                     if (error != null) {
+                        CONNECTED.set(false);
                         warnRateLimited("Spectator bridge connection failed (" + error.getClass().getSimpleName() + ").");
                     } else if (response.statusCode() != 200) {
+                        CONNECTED.set(false);
                         warnRateLimited("Spectator bridge returned HTTP " + response.statusCode() + ".");
                     } else {
                         lastSuccessfulPayload = body;
                         lastSuccessfulSendMs = System.currentTimeMillis();
+                        if (CONNECTED.compareAndSet(false, true)) {
+                            BloodOnTheSharktower.LOGGER.info("Sharktower Live bridge connected successfully (HTTP 200).");
+                        }
                     }
                     IN_FLIGHT.set(false);
                 });
@@ -106,9 +112,15 @@ public final class SharktowerLiveBridge {
 
     private static JsonObject makePublicSnapshot(MinecraftServer server) {
         JsonObject snapshot = new JsonObject();
+        // During SETUP, seating changes are held in the Storyteller's pending
+        // seat map until roles are committed. Match the normal client state sync.
+        boolean setup = ServerState.currentNight == 0
+                && ServerState.currentDay == 0 && !ServerState.gameEnded;
+        Map<UUID, Integer> seats = setup
+                ? StorytellerState.effectiveGrimoireSeats()
+                : ServerState.PLAYER_SEAT_NUMBERS;
         boolean active = !ServerState.gameEnded
-                && (!ServerState.PLAYER_SEAT_NUMBERS.isEmpty()
-                    || ServerState.currentNight > 0 || ServerState.currentDay > 0);
+                && (!seats.isEmpty() || ServerState.currentNight > 0 || ServerState.currentDay > 0);
         String phase = ServerState.gameEnded ? "ended"
                 : ServerState.currentDay <= 0 && ServerState.currentNight <= 0 ? "setup"
                 : ServerState.currentNight != ServerState.currentDay ? "night" : "day";
@@ -134,11 +146,11 @@ public final class SharktowerLiveBridge {
         List<ServerPlayer> seated = new ArrayList<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             UUID id = player.getUUID();
-            if (ServerState.PLAYER_SEAT_NUMBERS.containsKey(id)
+            if (seats.containsKey(id)
                     && !StorytellerState.isStoryteller(id)) seated.add(player);
         }
         seated.sort(Comparator.comparingInt(p ->
-                ServerState.PLAYER_SEAT_NUMBERS.getOrDefault(p.getUUID(), Integer.MAX_VALUE)));
+                seats.getOrDefault(p.getUUID(), Integer.MAX_VALUE)));
 
         Map<String, List<String>> roomMembers = new HashMap<>();
         if ("day".equals(phase)) roomMembers.put("town-square", new ArrayList<>());
