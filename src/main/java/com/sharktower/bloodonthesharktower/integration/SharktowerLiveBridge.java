@@ -65,6 +65,7 @@ public final class SharktowerLiveBridge {
     private static volatile Map<UUID, String> ALLOWED_AUDIO_ROUTES = Map.of();
     private static final Deque<VoiceFrame> AUDIO_FRAMES = new ArrayDeque<>();
     private static final AtomicBoolean AUDIO_IN_FLIGHT = new AtomicBoolean();
+    private static final AtomicBoolean AUDIO_DELIVERED = new AtomicBoolean();
     private static final AtomicBoolean AUDIO_TIMER_STARTED = new AtomicBoolean();
     private static final int MAX_QUEUED_FRAMES = 250;
     private static final ScheduledExecutorService AUDIO_TIMER =
@@ -186,9 +187,13 @@ public final class SharktowerLiveBridge {
                     .whenComplete((result, error) -> {
                         AUDIO_IN_FLIGHT.set(false);
                         if (error != null) {
+                            AUDIO_DELIVERED.set(false);
                             warnRateLimited("Spectator voice delivery failed (" + error.getClass().getSimpleName() + ").");
                         } else if (result.statusCode() != 200) {
+                            AUDIO_DELIVERED.set(false);
                             warnRateLimited("Spectator voice endpoint returned HTTP " + result.statusCode() + ".");
+                        } else if (AUDIO_DELIVERED.compareAndSet(false, true)) {
+                            BloodOnTheSharktower.LOGGER.info("Sharktower Live spectator voice relay active (HTTP 200).");
                         }
                     });
         } catch (RuntimeException e) {
