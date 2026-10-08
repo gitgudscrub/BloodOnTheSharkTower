@@ -5,7 +5,7 @@ External, **listen-only** spectator companion to Blood on the Sharktower. This i
 ## Running locally
 
 1. Install Node.js 20 or newer.
-2. Create `C:\\Sharktower\\config` on the server PC. Copy `.env.example` to `C:\\Sharktower\\config\\sharktower-live.env` and fill in the required variables. Keep this file outside the repository and never commit it.
+2. Create `/etc/sharktower-live` on the Linux host. Copy `.env.example` to `/etc/sharktower-live/sharktower-live.env` and fill in the required variables. Keep this file outside the repository and never commit it.
 3. In the Discord Developer Portal create an OAuth2 application, add the callback URL and use the same value for DISCORD_REDIRECT_URI.
 4. Start using `node start.js` or `npm.cmd start` inside this folder. The launcher automatically reads the external configuration. Override the path with the `SHARKTOWER_ENV_FILE` environment variable if desired.
 5. Visit http://localhost:3000. The legacy command `node --env-file=.env server.js` continues to work, but bypasses the external configuration loader.
@@ -33,4 +33,8 @@ Public spectator responses intentionally expose only names, living status, phase
 
 ## Keeping secrets independent of GitHub
 
-`start.js` looks for `C:\\Sharktower\\config\\sharktower-live.env` by default. Create the folder with `New-Item -ItemType Directory -Force C:\\Sharktower\\config` in PowerShell, then copy your existing `.env` to the new name there. Limit file access to the server account. GitHub updates to the source tree do not replace this file. `.env` files and `node_modules` are ignored within `sharktower-live`, but never put real secrets in the repository.
+`start.js` looks for `/etc/sharktower-live/sharktower-live.env` by default. Create the folder using `sudo install -d -m 700 /etc/sharktower-live` and securely transfer your existing `.env` to `sharktower-live.env` (permissions 600). Limit file access to the server account. GitHub updates to the source tree do not replace this file. `.env` files and `node_modules` are ignored within `sharktower-live`, but never put real secrets in the repository.
+
+### Linux server setup
+
+Run Node.js 24+ on the Linux host. Keep secrets outside the Git checkout at `/etc/sharktower-live/sharktower-live.env`; restrict directory and file permissions to the user running the service. Use `node start.js` from the `sharktower-live` directory. For custom locations export `SHARKTOWER_ENV_FILE=/absolute/path/to/file` before launch. A systemd service can run this process independently alongside Minecraft; configure it after identifying your Linux distribution, account and checkout location. Do not copy secret contents into GitHub or shell history.
