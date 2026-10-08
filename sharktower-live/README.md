@@ -38,3 +38,7 @@ Public spectator responses intentionally expose only names, living status, phase
 ### Linux server setup
 
 Run Node.js 24+ on the Linux host. Keep secrets outside the Git checkout at `/etc/sharktower-live/sharktower-live.env`; restrict directory and file permissions to the user running the service. Use `node start.js` from the `sharktower-live` directory. For custom locations export `SHARKTOWER_ENV_FILE=/absolute/path/to/file` before launch. A systemd service can run this process independently alongside Minecraft; configure it after identifying your Linux distribution, account and checkout location. Do not copy secret contents into GitHub or shell history.
+
+## Local-only HTTP listener
+
+Sharktower Live binds only to `127.0.0.1:3000` by default. It is **not** accessible on the host's LAN/public interfaces. Run `cloudflared` on the same Linux host and route your Cloudflare hostname to `http://127.0.0.1:3000` (HTTPS is served by Cloudflare). After updating the source, restart the Sharktower Live process and check `ss -ltnp | grep ':3000'`. This restriction limits direct network access; Discord login and server-side authorization are still required.
