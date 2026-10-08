@@ -40,3 +40,15 @@ Retest the screenshot's five-player Setup with long names, then 7/10/15 players,
 - Move Setup player/ST counts closer to the central Storyteller, keeping name exclusion bounds in sync.
 - Changing an assigned Townsfolk to Drunk, or Townsfolk/Outsider to Marionette, automatically carries the previous character into the believed-role slot. Existing valid beliefs remain; incompatible or missing covers still need manual selection. Covers use default alignment and include custom characters. Changes remain pending until Send Roles.
 - Retest Empath to Drunk/Marionette, Outsider to Marionette, existing believed-role edits and small-window four-player Setup.
+
+## Pending-death shortcut — alpha.11
+
+During Day, an ordinary click on a pending Dead? player portrait or actual role token opens a compact Reveal Death / Revive menu. Either action returns to the Grimoire after authoritative sync. Existing Shift nomination shortcuts, middle-click details, role/reminder editors, bulk Reveal Deaths and Night privacy remain. Only the Storyteller sees this route; the existing server actions validate phase, seat and death state.
+
+Retest three private deaths at Dawn: reveal individually with two clicks each, revive a mistaken death, and confirm only the selected death is published. Check ordinary players, Night, live/already revealed players and Shift clicks retain their usual behaviour.
+
+## Middle-click pending death — alpha.12
+
+Middle-click a pending Dead? player portrait or actual role token during Day as Storyteller to reveal that death immediately. Repeat clicks are consumed while the reveal request is awaiting sync. Otherwise middle-click retains character details; bluff details and non-ST privacy remain unchanged. Hover hints show the shortcut. Existing server reveal validation still applies.
+
+Retest three pending deaths with one middle-click each; confirm a second click after reveal opens role details. Check living/already revealed players, blank assignments, Night, ordinary players and bluff tokens.

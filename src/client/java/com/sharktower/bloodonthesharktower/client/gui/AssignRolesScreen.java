@@ -907,6 +907,8 @@ public class AssignRolesScreen extends Screen {
         return Math.max(1, Math.round(this.height / grimoireUiScale()));
     }
 
+    private final java.util.Set<UUID> submittedDeathReveals = new java.util.HashSet<>();
+
     private MouseButtonEvent remapMouse(MouseButtonEvent event) {
         float scale = grimoireUiScale();
         if (scale == 1.0F) return event;
@@ -925,6 +927,14 @@ public class AssignRolesScreen extends Screen {
                 }
             }
             GrimHit hit = grimHitAt(mapped.x(), mapped.y());
+            if (hit != null && PendingDeathScreen.available(hit.playerId())) {
+                // Consume repeat clicks while the authoritative reveal is in flight.
+                if (submittedDeathReveals.add(hit.playerId())) {
+                    GrimoireReturnState.requestAfterNextGrimoireSync();
+                    ClientStorytellerActions.send("reveal_death", Integer.toString(hit.seat()));
+                }
+                return true;
+            }
             if (hit != null && hit.assignment() != null) {
                 this.minecraft.gui.setScreen(new CharacterDetailsScreen(hit.assignment().getScriptRole(), this));
                 return true;

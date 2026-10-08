@@ -53,6 +53,11 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
         if (isHovered()) {
             int reminderCount=ClientGrimoireEdits.remindersFor(playerId).size();
             String reminderHint=reminderCount==0 ? "" : " | " + reminderCount + " reminder(s)";
+            if (com.sharktower.bloodonthesharktower.client.gui.PendingDeathScreen.available(playerId)) {
+                GrimoireHoverHints.set(com.sharktower.bloodonthesharktower.states.ClientState.playerName(playerId,seat)
+                        + " — Dead? | Click: reveal / revive | Middle-click: reveal death" + reminderHint);
+                return;
+            }
             if (ClientGrimoireEdits.isLocalStoryteller()
                     && com.sharktower.bloodonthesharktower.states.ClientState.nominationsOpen) {
                 GrimoireHoverHints.set(com.sharktower.bloodonthesharktower.states.ClientState.playerName(playerId,seat) + " — Seat " + seat
@@ -71,6 +76,7 @@ public final class GrimoirePlayerHeadWidget extends AbstractWidget {
             return;
         }
 
+        if (GrimoirePlayerClicks.openPendingDeath(playerId, seat)) return;
         net.minecraft.client.Minecraft.getInstance().gui.setScreen(
                 new ReminderChooseScreen(playerId, seat));
     }
