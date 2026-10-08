@@ -3,6 +3,7 @@ package com.sharktower.bloodonthesharktower.client.hud;
 import com.sharktower.bloodonthesharktower.client.gui.GameEndHoldingScreen;
 import com.sharktower.bloodonthesharktower.client.gui.PlayerFaceCompat;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -34,6 +35,7 @@ public final class GameEndAnimationHUD {
     private static boolean animating;
     private static long startedAt;
     private static String winner = "NONE";
+    private static boolean completionReported;
 
     private GameEndAnimationHUD() {}
 
@@ -41,6 +43,7 @@ public final class GameEndAnimationHUD {
         winner = normalizeWinner(winningTeam);
         startedAt = System.currentTimeMillis();
         animating = true;
+        completionReported = false;
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft != null && minecraft.gui != null) {
@@ -56,6 +59,7 @@ public final class GameEndAnimationHUD {
         animating = false;
         winner = "NONE";
         startedAt = 0L;
+        completionReported = false;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft != null && minecraft.gui != null) minecraft.gui.setScreen(null);
     }
@@ -79,6 +83,11 @@ public final class GameEndAnimationHUD {
 
         if (elapsed >= animationEnd) {
             animating = false;
+            if (!completionReported
+                    && ClientState.storytellerPlayers.contains(minecraft.player.getUUID())) {
+                completionReported = true;
+                ClientStorytellerActions.send("end_game_animation_complete", winner);
+            }
             if (minecraft.gui != null) minecraft.gui.setScreen(null);
             return false;
         }

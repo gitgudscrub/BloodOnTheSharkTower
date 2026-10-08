@@ -72,6 +72,7 @@ public final class StorytellerActionHandler {
                 && !op.equals("end_game_good")
                 && !op.equals("end_game_evil")
                 && !op.equals("end_game_cancel")
+                && !op.equals("end_game_animation_complete")
                 && !op.equals("reset_for_next_game")
                 && !op.equals("game_complete")
                 && !op.equals("reset_hard")
@@ -97,6 +98,7 @@ public final class StorytellerActionHandler {
                 case "end_game_good" -> endGame(server, "GOOD");
                 case "end_game_evil" -> endGame(server, "EVIL");
                 case "end_game_cancel" -> cancelEndGame(server);
+                case "end_game_animation_complete" -> SetupOperations.completeEndGameAnimation(server, arg);
                 case "reset_for_next_game" -> resetForNextGame(server);
                 case "phase_night" -> asSetupResult(PhaseOperations.enterNight(server));
                 case "phase_day" -> asSetupResult(PhaseOperations.enterDay(server));
