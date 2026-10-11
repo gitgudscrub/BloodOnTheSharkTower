@@ -37,7 +37,7 @@ public final class WraithTrackingHUD {
             mode = parts[0];
             targetX = Double.parseDouble(parts[1]);
             targetZ = Double.parseDouble(parts[2]);
-            storytellerId = parts.length >= 4 && parts[0].equals("W")
+            storytellerId = parts.length >= 4
                     ? UUID.fromString(parts[3]) : null;
         } catch (RuntimeException ignored) {
             mode = "OFF";
@@ -56,12 +56,13 @@ public final class WraithTrackingHUD {
             reset();
             return;
         }
-        boolean active = mode.equals("W") && ClientState.phase() == com.sharktower.bloodonthesharktower.core.GamePhase.NIGHT
-                && minecraft.player.isSpectator();
+        boolean active = (mode.equals("W") && minecraft.player.isSpectator()
+                || mode.equals("T") && ClientState.storytellerPlayers.contains(minecraft.player.getUUID()))
+                && ClientState.phase() == com.sharktower.bloodonthesharktower.core.GamePhase.NIGHT;
         UUID next = null;
         if (active && storytellerId != null) {
             Player player = minecraft.level.getPlayerByUUID(storytellerId);
-            if (player != null && player.distanceToSqr(minecraft.player) <= 400.0D) {
+            if (player != null && (mode.equals("T") || player.distanceToSqr(minecraft.player) <= 400.0D)) {
                 next = storytellerId;
             }
         }
