@@ -105,6 +105,12 @@ public final class StorytellerActionHandler {
                 case "team_info_preview" -> TeamInfoSharing.preview(server, actor, arg);
                 case "team_info_share" -> TeamInfoSharing.share(server, actor, arg);
                 case "night_visit" -> nightVisit(server, actor, UUID.fromString(arg));
+                case "night_select_target" -> SetupOperations.Result.ok(
+                        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.selectVisit(server, actor, UUID.fromString(arg)));
+                case "wraith_release" -> SetupOperations.Result.ok(
+                        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.release(server, actor, UUID.fromString(arg)));
+                case "wraith_finish" -> SetupOperations.Result.ok(
+                        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.finish(server));
                 case "mark_dead" -> markDead(server, Integer.parseInt(arg), false);
                 case "reveal_deaths" -> revealDeaths(server);
                 case "reveal_death" -> revealDeath(server, Integer.parseInt(arg));
@@ -298,6 +304,10 @@ public final class StorytellerActionHandler {
      * the same house-bound private-chat invitation flow as /bots teleportToSeat.
      */
     private static SetupOperations.Result nightVisit(MinecraftServer server, ServerPlayer storyteller, UUID targetId) {
+        if (com.sharktower.bloodonthesharktower.wraith.WraithNightManager.onScript()) {
+            return SetupOperations.Result.ok(
+                    com.sharktower.bloodonthesharktower.wraith.WraithNightManager.selectVisit(server, storyteller, targetId));
+        }
         if (storyteller == null || !StorytellerState.isStoryteller(storyteller.getUUID())) {
             return SetupOperations.Result.fail("Only the Storyteller can use night visits.");
         }
