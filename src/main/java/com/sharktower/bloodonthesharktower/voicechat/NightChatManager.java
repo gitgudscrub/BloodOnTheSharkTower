@@ -597,7 +597,9 @@ public final class NightChatManager {
                     var home = SeatPositionManager.seatHome(seat);
                     if (home != null) distances.put(seat, player.distanceToSqr(home.x(),home.y(),home.z()));
                 }
-                house = HouseVoicePolicy.houseFor(ServerState.PLAYER_SEAT_NUMBERS.get(id),
+                Integer wraithVoice = com.sharktower.bloodonthesharktower.wraith.WraithNightManager.voiceSeat(id);
+                house = wraithVoice != null ? wraithVoice : HouseVoicePolicy.houseFor(
+                        ServerState.PLAYER_SEAT_NUMBERS.get(id),
                         StorytellerState.isStoryteller(id), distances, HOUSE_EXIT_RADIUS);
             }
             Integer previous = HOUSE_ROOMS.get(id);
