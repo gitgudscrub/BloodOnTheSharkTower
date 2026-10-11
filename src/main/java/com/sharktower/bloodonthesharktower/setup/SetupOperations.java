@@ -652,6 +652,7 @@ public final class SetupOperations {
         if (NightChatManager.isActive()) {
             NightChatManager.resync();
         }
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.newGame(server);
         FreshGameBooks.beginGame(server, ServerState.PLAYER_ROLES.keySet());
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
@@ -677,6 +678,7 @@ public final class SetupOperations {
             return restoreStartSnapshot(server, false);
         }
 
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         NightChatManager.resetAll();
         TimerManager.stopTimer(server);
         clearRolesForFreshSetup();
