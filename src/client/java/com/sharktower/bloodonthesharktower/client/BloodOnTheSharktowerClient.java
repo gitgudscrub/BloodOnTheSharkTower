@@ -20,11 +20,13 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientSettings.load();
         CoreStateReceivers.register();
+        com.sharktower.bloodonthesharktower.client.hud.WraithTrackingHUD.register();
         ClientLunaticBluffs.register();
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientGrimoireEdits.clearSession();
             ClientLunaticBluffs.clear();
             CoreStateReceivers.resetSession();
+            com.sharktower.bloodonthesharktower.client.hud.WraithTrackingHUD.reset();
         });
         GrimoireReturnState.register();
         CustomScriptsScreen.register();
