@@ -652,7 +652,8 @@ public final class SetupOperations {
         if (NightChatManager.isActive()) {
             NightChatManager.resync();
         }
-        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.newGame(server);
+        if (ServerState.currentNight == 0 && ServerState.currentDay == 0)
+            com.sharktower.bloodonthesharktower.wraith.WraithNightManager.newGame(server);
         FreshGameBooks.beginGame(server, ServerState.PLAYER_ROLES.keySet());
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
