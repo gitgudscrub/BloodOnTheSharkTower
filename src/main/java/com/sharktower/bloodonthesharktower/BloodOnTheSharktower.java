@@ -47,6 +47,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         BotsCommands.register();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();
         ServerTickEvents.END_SERVER_TICK.register(NightChatManager::serverTick);
+        ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.wraith.WraithNightManager::tick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.networking.SocialStateManager::tick);
         ServerTickEvents.END_SERVER_TICK.register(ElectionManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(PhasePresentation::serverTick);
