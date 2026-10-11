@@ -20,7 +20,7 @@ import java.util.UUID;
 public abstract class WraithSpectatorTeleportMixin {
     @Shadow public ServerPlayer player;
 
-    @Inject(method = "handleTeleportToEntity", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "handleTeleportToEntityPacket", at = @At("HEAD"), cancellable = true)
     private void sharktower$denyWraithTeleport(ServerboundTeleportToEntityPacket packet, CallbackInfo ci) {
         UUID playerId = player.getUUID();
         if (WraithNightManager.isActiveWraith(playerId)) ci.cancel();
