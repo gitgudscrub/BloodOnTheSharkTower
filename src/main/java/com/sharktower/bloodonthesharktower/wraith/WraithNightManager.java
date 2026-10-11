@@ -71,8 +71,8 @@ public final class WraithNightManager {
     }
 
     private static boolean containsLantern(ServerPlayer player) {
-        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
-            if (stack.is(Items.SOUL_LANTERN)) return true;
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            if (player.getInventory().getItem(slot).is(Items.SOUL_LANTERN)) return true;
         }
         return false;
     }
