@@ -124,7 +124,8 @@ public final class WraithNightManager {
         SELECTED_ST_SEATS.put(storyteller.getUUID(), seat);
         ARRIVED_ST_SEATS.remove(storyteller.getUUID());
         SeatPositionManager.Position home = SeatPositionManager.seatHome(seat);
-        ServerPlayNetworking.send(storyteller, new WraithTrackingS2CPayload("T|" + home.x() + "|" + home.z()));
+        ServerPlayNetworking.send(storyteller, new WraithTrackingS2CPayload(
+                "T|" + home.x() + "|" + home.z() + "|" + targetId));
         return "House " + seat + " highlighted. Fly there for the night visit; Up Arrow no longer teleports.";
     }
 
