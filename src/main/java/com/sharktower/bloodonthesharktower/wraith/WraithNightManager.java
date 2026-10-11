@@ -39,6 +39,8 @@ public final class WraithNightManager {
     private static final Map<UUID, Integer> LAST_WRAITH_HOUSE = new HashMap<>();
     private static final Map<UUID, Boolean> LAST_NEAR_DOOR = new HashMap<>();
     private static final Set<UUID> LANTERN_SPENT = new HashSet<>();
+    /** Recall requests that could not finish while a Wraith was disconnected. */
+    private static final Set<UUID> PENDING_RESTORE = new HashSet<>();
     private static final Set<UUID> LANTERN_LIT = new HashSet<>();
     private static final Set<UUID> IDENTITY_REVEALED = new HashSet<>();
     private static boolean presenceSent;
@@ -134,6 +136,7 @@ public final class WraithNightManager {
         if (!PhaseOperations.isNight() || !onScript()) return "Not a Wraith night.";
         PendingRoleAssignment role = StorytellerState.effectiveGrimoireRoles().get(wraithId);
         if (role == null || role.isCustomRole() || role.role() != Role.WRAITH) return "Selected player is not Wraith.";
+        if (ACTIVE.containsKey(wraithId)) return "Wraith has already been released tonight.";
         Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(wraithId);
         if (seat == null || !SeatPositionManager.teleportPlayerToHome(storyteller, seat)) {
             return "Configure the Wraith's house first.";
@@ -146,7 +149,6 @@ public final class WraithNightManager {
         if (!SeatPositionManager.isPlayerNearHome(player, seat, HOUSE_RADIUS)) {
             return "Storyteller has visited Wraith. Wraith must return home to begin Spectator Mode.";
         }
-        if (ACTIVE.containsKey(wraithId)) return "Wraith has already been released tonight.";
         ACTIVE.putIfAbsent(wraithId, player.gameMode.getGameModeForPlayer());
         player.setGameMode(GameType.SPECTATOR);
         player.sendSystemMessage(Component.literal("Wraith released. Follow the Storyteller; fly through walls to observe silently.")
@@ -182,18 +184,25 @@ public final class WraithNightManager {
 
     private static void recallOne(MinecraftServer server, UUID id) {
         ServerPlayer player = server == null ? null : server.getPlayerList().getPlayer(id);
-        if (player == null) return;
+        if (player == null) {
+            PENDING_RESTORE.add(id);
+            return;
+        }
         Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(id);
         // Always move to a known safe house/seat BEFORE restoring collision.
         boolean moved = seat != null && SeatPositionManager.teleportPlayerToHome(player, seat);
         if (!moved && seat != null) moved = SeatPositionManager.teleportPlayerToTownSquare(player, seat);
         if (!moved) {
             // No safe teleport: leave in spectator rather than materializing in blocks.
-            player.sendSystemMessage(Component.literal("Wraith recall needs a configured house/seat; ask the Storyteller to move you safely.")
-                    .withStyle(ChatFormatting.RED));
+            if (PENDING_RESTORE.add(id)) {
+                player.sendSystemMessage(Component.literal(
+                        "Wraith recall needs a configured house/seat; ask the Storyteller to move you safely.")
+                        .withStyle(ChatFormatting.RED));
+            }
             return;
         }
         player.setGameMode(GameType.ADVENTURE);
+        PENDING_RESTORE.remove(id);
         player.sendSystemMessage(Component.literal("Wraith recalled. Adventure Mode restored.")
                 .withStyle(ChatFormatting.GRAY));
         ServerPlayNetworking.send(player, new WraithTrackingS2CPayload("OFF"));
@@ -205,6 +214,10 @@ public final class WraithNightManager {
 
     public static synchronized void tick(MinecraftServer server) {
         if (server == null) return;
+        // A disconnected Wraith can log back in after Dawn; finish their recall then.
+        for (UUID id : new HashSet<>(PENDING_RESTORE)) {
+            if (!ACTIVE.containsKey(id)) recallOne(server, id);
+        }
         if (!PhaseOperations.isNight() || ServerState.gameEnded) {
             if (!ACTIVE.isEmpty()) recallAll(server);
             return;
