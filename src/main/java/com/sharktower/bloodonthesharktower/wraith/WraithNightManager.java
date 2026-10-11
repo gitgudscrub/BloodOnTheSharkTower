@@ -145,6 +145,7 @@ public final class WraithNightManager {
         if (!SeatPositionManager.isPlayerNearHome(player, seat, HOUSE_RADIUS)) {
             return "Storyteller has visited Wraith. Wraith must return home to begin Spectator Mode.";
         }
+        if (ACTIVE.containsKey(wraithId)) return "Wraith has already been released tonight.";
         ACTIVE.putIfAbsent(wraithId, player.gameMode.getGameModeForPlayer());
         player.setGameMode(GameType.SPECTATOR);
         player.sendSystemMessage(Component.literal("Wraith released. Follow the Storyteller; fly through walls to observe silently.")
@@ -213,6 +214,7 @@ public final class WraithNightManager {
         }
         ticks++;
         if (ticks % 5 != 0) return;
+        LANTERN_LIT.removeIf(id -> Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(id)));
 
         for (UUID id : new HashSet<>(ACTIVE.keySet())) {
             ServerPlayer player = server.getPlayerList().getPlayer(id);
@@ -270,6 +272,9 @@ public final class WraithNightManager {
                 ServerPlayer wraith = server.getPlayerList().getPlayer(id);
                 if (wraith == null || !SeatPositionManager.teleportPlayerToHome(wraith, selected)) continue;
                 VOICE_SEATS.put(id, selected);
+                // Preserve the evil-visit voice override across the next house-change tick.
+                LAST_WRAITH_HOUSE.put(id, selected);
+                LAST_NEAR_DOOR.put(id, nearDoor(wraith));
                 wraith.sendSystemMessage(Component.literal("An evil player wakes. You join their house voice chat.")
                         .withStyle(ChatFormatting.DARK_AQUA));
             }
