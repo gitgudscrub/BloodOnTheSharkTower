@@ -672,6 +672,8 @@ public final class SetupOperations {
     }
 
     public static Result resetGame(MinecraftServer server, boolean hard) {
+        // Recall before snapshot early-return; spectators must never survive reset.
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         // Full Reset is now the safe match rollback button. If a clean start
         // snapshot exists, restore it instead of permanently applying anything
         // that happened during the game.
@@ -722,6 +724,7 @@ public final class SetupOperations {
 
         // End active runtime systems without touching deaths/exiles/roles so the
         // final Grimoire still reflects how the game actually ended.
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         NightChatManager.resetAll();
         TimerManager.stopTimer(server);
         DaytimeState.closeNominations();
