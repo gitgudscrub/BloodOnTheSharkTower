@@ -254,7 +254,7 @@ public final class WraithNightManager {
                     tellHouseOccupant(server, house, "Your lantern flickers. An unnatural presence is nearby.");
                 }
             }
-            if (house > 0 && nearDoor && !wasNearDoor) VOICE_SEATS.put(id, house);
+            if (house > 0 && nearDoor && (house != previous || !wasNearDoor)) VOICE_SEATS.put(id, house);
             LAST_WRAITH_HOUSE.put(id, house);
             LAST_NEAR_DOOR.put(id, nearDoor);
             Integer speakingIn = VOICE_SEATS.get(id);
