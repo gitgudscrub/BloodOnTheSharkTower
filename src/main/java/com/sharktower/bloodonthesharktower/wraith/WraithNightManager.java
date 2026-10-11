@@ -208,6 +208,10 @@ public final class WraithNightManager {
         ServerPlayNetworking.send(player, new WraithTrackingS2CPayload("OFF"));
     }
 
+    public static synchronized boolean isActiveWraith(UUID id) {
+        return id != null && ACTIVE.containsKey(id);
+    }
+
     public static synchronized Integer voiceSeat(UUID id) {
         return ACTIVE.containsKey(id) ? VOICE_SEATS.get(id) : null;
     }
