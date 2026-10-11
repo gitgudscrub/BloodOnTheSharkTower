@@ -15,6 +15,7 @@ import com.sharktower.bloodonthesharktower.sound.ModSounds;
 import com.sharktower.bloodonthesharktower.voicechat.NightChatManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();
         ServerTickEvents.END_SERVER_TICK.register(NightChatManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.wraith.WraithNightManager::tick);
+        ServerLifecycleEvents.SERVER_STOPPING.register(com.sharktower.bloodonthesharktower.wraith.WraithNightManager::recallAll);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.networking.SocialStateManager::tick);
         ServerTickEvents.END_SERVER_TICK.register(ElectionManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(PhasePresentation::serverTick);
