@@ -24,6 +24,9 @@ public class ScriptReferenceScreen extends Screen {
     private Script displayedScript;
     private Button previous;
     private Button next;
+    private Script cachedJinxScript;
+    private int cachedJinxWidth = -1;
+    private List<ReferenceLine> cachedJinxLines = List.of();
 
     public ScriptReferenceScreen() {
         super(Component.literal("Script Reference"));
@@ -224,6 +227,9 @@ public class ScriptReferenceScreen extends Screen {
     private record ReferenceLine(FormattedCharSequence sequence, int color) {}
 
     private List<ReferenceLine> jinxLines(Script script) {
+        if (script == cachedJinxScript && this.width == cachedJinxWidth) {
+            return cachedJinxLines;
+        }
         List<ReferenceLine> lines = new ArrayList<>();
         List<ScriptReferenceData.Jinx> jinxes = ScriptReferenceData.jinxes(script);
         if (jinxes.isEmpty()) {
@@ -242,7 +248,10 @@ public class ScriptReferenceScreen extends Screen {
                 appendReferenceText(lines, "", UiDrawing.TEXT);
             }
         }
-        return lines;
+        cachedJinxScript = script;
+        cachedJinxWidth = this.width;
+        cachedJinxLines = List.copyOf(lines);
+        return cachedJinxLines;
     }
 
     private void appendReferenceText(List<ReferenceLine> lines, String text, int color) {
