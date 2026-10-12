@@ -16,6 +16,7 @@ import de.maxhenkel.voicechat.api.events.EntitySoundPacketEvent;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
 import com.sharktower.bloodonthesharktower.networking.SocialStateManager;
+import com.sharktower.bloodonthesharktower.integration.SharktowerLiveBridge;
 import de.maxhenkel.voicechat.api.events.VoicechatServerStoppedEvent;
 
 import java.util.UUID;
@@ -81,6 +82,12 @@ public final class SharktowerVoicechatPlugin implements VoicechatPlugin {
             UUID sender = event.getSenderConnection().getPlayer().getUuid();
             WHISPERING.put(sender, event.getPacket().isWhispering());
             SocialStateManager.speaking(sender, event.getPacket().getOpusEncodedData().length > 0);
+            // Opt-in, listen-only public spectator forwarding. Mic packets
+            // are never sent to spectators from night, houses or ST private rooms.
+            var spectatorGroup = event.getSenderConnection().getGroup();
+            SharktowerLiveBridge.acceptVoiceFrame(sender,
+                    spectatorGroup == null ? null : spectatorGroup.getId(),
+                    event.getPacket().getOpusEncodedData(), event.getPacket().isWhispering());
             // Ordinary proximity packets reach the ST independently of distance,
             // while respecting private rooms. Group routing already has no attenuation.
             if (event.getSenderConnection().getGroup() == null) {
