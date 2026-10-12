@@ -47,6 +47,8 @@ def main():
                 if started and process.poll() is not None:
                     break
         if not started:
+            print('--- Last 120 lines of dev-server startup log ---', flush=True)
+            print('\n'.join(LOG.read_text().splitlines()[-120:]), flush=True)
             raise RuntimeError('Dev server failed to start. See build/server-smoke.log')
         process.wait(timeout=30)
         if process.returncode:

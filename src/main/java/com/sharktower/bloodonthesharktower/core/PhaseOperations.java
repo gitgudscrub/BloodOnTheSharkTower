@@ -36,6 +36,7 @@ public final class PhaseOperations {
             PhasePresentation.dusk(server, ServerState.currentNight);
         }
 
+        if (!alreadyNight) com.sharktower.bloodonthesharktower.wraith.WraithNightManager.beginNight(server);
         NightChatManager.Result voice = NightChatManager.start();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.makeVisibleAtNight(server);
         NightChatManager.reconcile(server);
@@ -56,6 +57,7 @@ public final class PhaseOperations {
         if (ServerState.gameEnded) return Result.fail("The game has ended. Reset for the next game before starting Day.");
 
         boolean alreadyDay = isDay();
+        if (!alreadyDay) com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         int day = Math.max(1, Math.max(ServerState.currentNight, ServerState.currentDay));
         ServerState.currentNight = day;
         ServerState.currentDay = day;
@@ -84,6 +86,7 @@ public final class PhaseOperations {
     /** Test-only lightweight setup phase switch; this is not a full game reset. */
     public static synchronized Result enterSetupForTest(MinecraftServer server) {
         if (server == null) return Result.fail("Server is not available.");
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         ServerState.currentNight = 0;
         ServerState.currentDay = 0;
         ServerState.executionToday = false;

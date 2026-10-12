@@ -652,6 +652,8 @@ public final class SetupOperations {
         if (NightChatManager.isActive()) {
             NightChatManager.resync();
         }
+        if (ServerState.currentNight == 0 && ServerState.currentDay == 0)
+            com.sharktower.bloodonthesharktower.wraith.WraithNightManager.newGame(server);
         FreshGameBooks.beginGame(server, ServerState.PLAYER_ROLES.keySet());
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
@@ -670,6 +672,8 @@ public final class SetupOperations {
     }
 
     public static Result resetGame(MinecraftServer server, boolean hard) {
+        // Recall before snapshot early-return; spectators must never survive reset.
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         // Full Reset is now the safe match rollback button. If a clean start
         // snapshot exists, restore it instead of permanently applying anything
         // that happened during the game.
@@ -677,6 +681,7 @@ public final class SetupOperations {
             return restoreStartSnapshot(server, false);
         }
 
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         NightChatManager.resetAll();
         TimerManager.stopTimer(server);
         clearRolesForFreshSetup();
@@ -719,6 +724,7 @@ public final class SetupOperations {
 
         // End active runtime systems without touching deaths/exiles/roles so the
         // final Grimoire still reflects how the game actually ended.
+        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.recallAll(server);
         NightChatManager.resetAll();
         TimerManager.stopTimer(server);
         DaytimeState.closeNominations();

@@ -2400,5 +2400,7 @@
   "roletype.blood_on_the_sharktower.fabled.short": "F",
   "roletype.blood_on_the_sharktower.loric.short": "L",
   "roletype.blood_on_the_sharktower.none.short": "N",
-  "key.blood_on_the_sharktower.notebook": "Open My Notebook"
+  "key.blood_on_the_sharktower.notebook": "Open My Notebook",
+  "key.blood_on_the_sharktower.light_lantern": "Light Spirit Lantern",
+  "guide.blood_on_the_sharktower.wraith_journey": "When Wraith is on the script, Up Arrow highlights ordinary night-visit houses rather than teleporting. Wraith starts and ends with special Release and Recall entries. Players may light their Soul Lantern once per match by holding it and pressing L at the start of a night."
 }

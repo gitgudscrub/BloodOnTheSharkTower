@@ -26,6 +26,7 @@ public final class ModPayloads {
         PayloadTypeRegistry.clientboundPlay().register(TimerStateS2CPayload.TYPE, TimerStateS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(PlayerDirectoryS2CPayload.TYPE, PlayerDirectoryS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(VoiceRouteS2CPayload.TYPE, VoiceRouteS2CPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(WraithTrackingS2CPayload.TYPE, WraithTrackingS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(EndGameStateS2CPayload.TYPE, EndGameStateS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(TriggeredNightOrderS2CPayload.TYPE, TriggeredNightOrderS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(StorytellerNightInfoS2CPayload.TYPE, StorytellerNightInfoS2CPayload.CODEC);

@@ -46,6 +46,8 @@ public final class PlayerActionHandler {
                 case "raise_hand" -> toggleHand(player, server, true);
                 case "lower_hand" -> toggleHand(player, server, false);
                 case "leave_private" -> leavePrivate(player);
+                case "lantern_light" -> player.sendSystemMessage(Component.literal(
+                        com.sharktower.bloodonthesharktower.wraith.WraithNightManager.light(player)));
                 default -> player.sendSystemMessage(Component.literal("Unknown BOTS player action: " + payload.action()));
             }
         });

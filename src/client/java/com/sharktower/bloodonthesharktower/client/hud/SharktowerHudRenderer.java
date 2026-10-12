@@ -27,6 +27,7 @@ public final class SharktowerHudRenderer {
         EndGameHUD.render(graphics, minecraft);
         if (ClientSettings.voiceHud) VoiceRouteHUD.render(graphics, minecraft);
         NightVisitInfoHUD.render(graphics, minecraft);
+        WraithTrackingHUD.render(graphics, minecraft);
         if (ClientSettings.roleHud) RoleHUD.render(graphics, minecraft);
         if (ClientSettings.setupHud) SetupHUD.render(graphics, minecraft);
         if (ClientSettings.roleCountsHud) RoleDistributionHUD.render(graphics, minecraft);

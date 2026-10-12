@@ -345,6 +345,10 @@ public final class NightOrderHUD {
                     ClientStorytellerActions.send("nominations_open");
                 }
             }
+            case WRAITH_RELEASE -> {
+                if (visit.playerId != null) ClientStorytellerActions.send("wraith_release", visit.playerId.toString());
+            }
+            case WRAITH_RECALL -> ClientStorytellerActions.send("wraith_finish");
             case MINION_INFO, DEMON_INFO -> {
                 if (ClientState.phase() == GamePhase.NIGHT) minecraft.gui.setScreen(
                         new com.sharktower.bloodonthesharktower.client.gui.NightTeamInfoScreen(visit.kind == Kind.DEMON_INFO));
@@ -362,7 +366,10 @@ public final class NightOrderHUD {
                     );
                     if (visit.triggered) showTriggeredInstruction(minecraft, visit);
                     if (visit.seatTeleport) {
-                        ClientStorytellerActions.send("night_visit", visit.playerId.toString());
+                        boolean wraithScript = ClientState.currentScript != null
+                                && ClientState.currentScript.hasRole("wraith");
+                        ClientStorytellerActions.send(wraithScript ? "night_select_target" : "night_visit",
+                                visit.playerId.toString());
                     }
                 }
             }
@@ -444,6 +451,9 @@ public final class NightOrderHUD {
             } else {
                 Role role = assignment.role();
                 if (role == null || role == Role.NO_ROLE) continue;
+                // Wraith has dedicated RELEASE and RECALL entries, not an ordinary visit.
+                if (role == Role.WRAITH && ClientState.currentScript != null
+                        && ClientState.currentScript.hasRole("wraith")) continue;
                 Double builtIn = order.get(role);
 
                 // Trigger-only characters do not appear merely because they are
@@ -494,6 +504,22 @@ public final class NightOrderHUD {
                 ));
             }
         }
+        }
+
+        if (showRoleVisits && ClientState.currentScript != null
+                && ClientState.currentScript.hasRole("wraith")) {
+            for (Map.Entry<UUID, PendingRoleAssignment> entry : ClientState.grimoireRoles.entrySet()) {
+                if (entry.getValue() == null || entry.getValue().isCustomRole()
+                        || entry.getValue().role() != Role.WRAITH) continue;
+                if (Boolean.TRUE.equals(ClientState.playerDeathStatus.get(entry.getKey()))) continue;
+                int seat = ClientState.grimoireSeatNumbers.getOrDefault(entry.getKey(),
+                        ClientState.playerSeatNumbers.getOrDefault(entry.getKey(), 0));
+                if (seat <= 0) continue;
+                Identifier icon = new ScriptRole.Official(Role.WRAITH).getIcon();
+                roleVisits.add(Visit.wraithVisit(Kind.WRAITH_RELEASE, entry.getKey(), seat, -100.0D, icon));
+                roleVisits.add(Visit.wraithVisit(Kind.WRAITH_RECALL, entry.getKey(), seat, 9_990.0D, icon));
+                break;
+            }
         }
 
         if (showRoleVisits && firstNight) {
@@ -576,6 +602,8 @@ public final class NightOrderHUD {
         DUSK,
         MINION_INFO,
         DEMON_INFO,
+        WRAITH_RELEASE,
+        WRAITH_RECALL,
         ROLE,
         DAWN,
         NOMINATIONS
@@ -594,6 +622,10 @@ public final class NightOrderHUD {
     ) {
         static Visit staticVisit(Kind kind, Identifier icon, double sortOrder) {
             return new Visit(kind, null, null, 0, sortOrder, icon, false, null, false);
+        }
+
+        static Visit wraithVisit(Kind kind, UUID playerId, int seat, double sortOrder, Identifier icon) {
+            return new Visit(kind, playerId, null, seat, sortOrder, icon, false, null, false);
         }
 
         static Visit role(UUID playerId, PendingRoleAssignment assignment, int seat, double sortOrder) {

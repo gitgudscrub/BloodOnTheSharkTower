@@ -38,6 +38,7 @@ public final class KeyInputHandler {
     public static KeyMapping openStorytellerToolsKey;
     public static KeyMapping toggleVoteHandKey;
     public static KeyMapping leavePrivateChatKey;
+    public static KeyMapping lightLanternKey;
     public static KeyMapping openSettingsKey;
     public static KeyMapping toggleNightHudKey;
     public static KeyMapping nightHudNextKey;
@@ -66,6 +67,7 @@ public final class KeyInputHandler {
         openNotebookKey = bind("key.blood_on_the_sharktower.notebook", InputConstants.KEY_B);
         toggleVoteHandKey = bind("key.blood_on_the_sharktower.toggle_vote_hand", InputConstants.KEY_U);
         leavePrivateChatKey = bind("key.blood_on_the_sharktower.leave_private_chat", InputConstants.KEY_J);
+        lightLanternKey = bind("key.blood_on_the_sharktower.light_lantern", InputConstants.KEY_L);
         openSettingsKey = bind("key.blood_on_the_sharktower.open_settings", InputConstants.KEY_O);
         toggleNightHudKey = bind("key.blood_on_the_sharktower.toggle_night_hud", InputConstants.KEY_N);
         nightHudNextKey = bind("key.blood_on_the_sharktower.night_hud_next", InputConstants.KEY_RIGHT); // Right Arrow
@@ -106,6 +108,9 @@ public final class KeyInputHandler {
             while (toggleVoteHandKey.consumeClick()) {
                 if (ClientState.handRaiseMode() != com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF)
                     ClientPlayerActions.send("toggle_hand");
+            }
+            while (lightLanternKey.consumeClick()) {
+                if (client.gui.screen() == null) ClientPlayerActions.send("lantern_light");
             }
             while (leavePrivateChatKey.consumeClick()) {
                 if (ClientState.voiceRoute != null && ClientState.voiceRoute.startsWith("PRIVATE")) {
