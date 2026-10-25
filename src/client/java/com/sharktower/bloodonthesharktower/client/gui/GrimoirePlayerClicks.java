@@ -69,7 +69,15 @@ public final class GrimoirePlayerClicks {
             return;
         }
 
+        if (openPendingDeath(playerId, seat)) return;
         minecraft.gui.setScreen(new GrimoirePlayerActionScreen(playerId, seat));
+    }
+
+    /** Pending deaths take priority over ordinary role/reminder editors during Day. */
+    public static boolean openPendingDeath(UUID playerId, int seat) {
+        if (!PendingDeathScreen.available(playerId)) return false;
+        Minecraft.getInstance().gui.setScreen(new PendingDeathScreen(playerId, seat));
+        return true;
     }
 
     /** Normal LMB on a role token. */
@@ -86,6 +94,7 @@ public final class GrimoirePlayerClicks {
             return;
         }
 
+        if (openPendingDeath(playerId, seat)) return;
         minecraft.gui.setScreen(new PlayerSetupScreen(playerId, seat, assignment));
     }
 }

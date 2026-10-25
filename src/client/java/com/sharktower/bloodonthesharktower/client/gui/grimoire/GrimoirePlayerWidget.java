@@ -76,7 +76,9 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
 
         if (isHovered()) {
             String name = ClientState.playerName(playerId, seat);
-            if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.nominationsOpen) {
+            if (com.sharktower.bloodonthesharktower.client.gui.PendingDeathScreen.available(playerId)) {
+                GrimoireHoverHints.set(name + " — Dead? | Click: reveal / revive | Middle-click: reveal death");
+            } else if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.nominationsOpen) {
                 GrimoireHoverHints.set(name
                         + " role — LMB edit | RMB actions | Shift+LMB nominator | Shift+RMB nominee");
             } else {
