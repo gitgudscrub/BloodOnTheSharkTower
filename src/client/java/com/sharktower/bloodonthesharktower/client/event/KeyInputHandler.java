@@ -10,9 +10,11 @@ import com.sharktower.bloodonthesharktower.client.gui.ScriptReferenceScreen;
 import com.sharktower.bloodonthesharktower.client.gui.StorytellerToolsScreen;
 import com.sharktower.bloodonthesharktower.client.gui.SharktowerSettingsScreen;
 import com.sharktower.bloodonthesharktower.client.gui.TimerScreen;
+import com.sharktower.bloodonthesharktower.client.config.ClientSettings;
 import com.sharktower.bloodonthesharktower.client.hud.NightOrderHUD;
 import com.sharktower.bloodonthesharktower.client.networking.ClientPlayerActions;
 import com.sharktower.bloodonthesharktower.states.ClientState;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
@@ -53,6 +55,28 @@ public final class KeyInputHandler {
     private static boolean nightHudActivateWasDown;
 
     private KeyInputHandler() {}
+
+    /**
+     * Minecraft 26.3 bound the vanilla Friends List screen to O, the key
+     * Sharktower Settings has used since 1.0. Vanilla wins the conflict, so the
+     * settings screen became unreachable from the keyboard. Unbind the Friends
+     * List once, only if it is still on its default, and remember that in the
+     * client settings so a player who deliberately rebinds it is left alone.
+     */
+    public static void releaseFriendsListKey() {
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            if (ClientSettings.friendsKeyReleased) return;
+            KeyMapping friends = client.options.keyFriends;
+            if (friends != null && friends.isDefault()) {
+                friends.setKey(InputConstants.UNKNOWN);
+                KeyMapping.resetMapping();
+                client.options.save();
+                BloodOnTheSharktower.LOGGER.info("Unbound the vanilla Friends List key so O opens Sharktower Settings. Rebind it in Controls if you want it back.");
+            }
+            ClientSettings.friendsKeyReleased = true;
+            ClientSettings.save();
+        });
+    }
 
     public static void register() {
         toggleShowRole = bind("key.blood_on_the_sharktower.toggle_show_role", InputConstants.KEY_Z);
