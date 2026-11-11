@@ -283,6 +283,8 @@ public final class NightOrderHUD {
             }
         }
 
+        drawSelectedLabel(graphics, minecraft, visits, screenWidth);
+
         // Small edge chevrons make it obvious when the visit row is wider than
         // the available screen width and the selected window has scrolled.
         if (first > 0) {
@@ -292,6 +294,47 @@ public final class NightOrderHUD {
             graphics.text(minecraft.font, ">", Math.min(screenWidth - 8, startX + totalWidth + 4), Y + 8,
                     0xFFAAAAAA, true);
         }
+    }
+
+    /**
+     * Names the selected entry under the bar ("3/14  Fortune Teller - Alice, seat 4"),
+     * so the Storyteller never has to guess which icon the white ring is on.
+     */
+    private static void drawSelectedLabel(GuiGraphicsExtractor graphics, Minecraft minecraft,
+                                          List<Visit> visits, int screenWidth) {
+        Visit visit = visits.get(selectedIndex);
+        String position = (selectedIndex + 1) + "/" + visits.size();
+        String name = switch (visit.kind) {
+            case DUSK -> "Dusk · start the night";
+            case DAWN -> "Dawn · start the day";
+            case NOMINATIONS -> "Open nominations";
+            case MINION_INFO -> "Minion info";
+            case DEMON_INFO -> "Demon info · bluffs";
+            case ROLE -> {
+                String role = visit.assignment == null ? "Role" : visit.assignment.getDisplayName();
+                String known = ClientState.playerNames.get(visit.playerId);
+                String who = known == null || known.isBlank()
+                        ? ClientState.playerName(visit.playerId, visit.seat)
+                        : known + (visit.seat > 0 ? ", seat " + visit.seat : "");
+                yield (visit.triggered ? "! " : "") + role + " · " + who;
+            }
+        };
+        int colour = switch (visit.kind) {
+            case ROLE -> visit.triggered ? 0xFFFFAA00 : 0xFFFFFFFF;
+            default -> 0xFFFFD166;
+        };
+        int maxWidth = Math.max(80, screenWidth - 16);
+        if (minecraft.font.width(name) > maxWidth) {
+            name = minecraft.font.plainSubstrByWidth(name, maxWidth - 8) + "…";
+        }
+        int positionWidth = minecraft.font.width(position);
+        int gap = 6;
+        int total = positionWidth + gap + minecraft.font.width(name);
+        int x = (screenWidth - total) / 2;
+        int y = Y + ICON_SIZE + 4;
+        graphics.fill(x - 4, y - 2, x + total + 4, y + 11, 0xA0101014);
+        graphics.text(minecraft.font, position, x, y, 0xFFAAAAAA, true);
+        graphics.text(minecraft.font, name, x + positionWidth + gap, y, colour, true);
     }
 
     public static void advance(int delta) {
