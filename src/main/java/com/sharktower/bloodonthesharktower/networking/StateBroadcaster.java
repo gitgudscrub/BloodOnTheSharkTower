@@ -65,6 +65,40 @@ public final class StateBroadcaster {
         return NetworkDiagnostics.sendProbe(player);
     }
 
+    /**
+     * Everything a Storyteller or player action can change. Compared with
+     * {@link #sendCurrentStateTo} this skips the payloads that only a join or a
+     * reset needs: the (compressed JSON) script, the private notebook, the social
+     * state, timer registration and the diagnostics probe. Use it after ordinary
+     * actions so one Grimoire click does not re-send the whole script to every
+     * player.
+     */
+    public static void sendGameStateTo(ServerPlayer player) {
+        sendVisibilityTo(player);
+        ServerPlayNetworking.send(player, new SyncDayNightS2CPayload(
+                ServerState.currentNight,
+                ServerState.currentDay,
+                ServerState.executionToday
+        ));
+        sendRoleTo(player, true);
+        sendSeatsTo(player);
+        sendDeathStatusTo(player);
+        sendGrimoireTo(player, true);
+        sendPlayerDirectoryTo(player);
+        sendDaytimeStateTo(player);
+        sendVoteStateTo(player);
+        NightChatManager.sendRouteTo(player);
+        sendEndGameStateTo(player);
+        sendTriggeredNightOrderTo(player);
+        sendStorytellerNightInfoTo(player);
+    }
+
+    public static void broadcastGameState(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            sendGameStateTo(player);
+        }
+    }
+
     public static void sendRoleTo(ServerPlayer player, boolean silent) {
         PendingRoleAssignment actual = ServerState.PLAYER_ROLES.getOrDefault(
                 player.getUUID(),

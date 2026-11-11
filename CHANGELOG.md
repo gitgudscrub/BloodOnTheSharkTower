@@ -14,6 +14,15 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
   resets, nominations open/close, vote clock, executions, exile support, timer,
   night-chat routing, mass teleports) are Storyteller-only.
 - New `storytellerClaimRegression` runs with `gradlew check`.
+- Client pack adds Entity Culling, ImmediatelyFast, Dynamic FPS, and Mod Menu
+  (with Text Placeholder API) alongside the existing Sodium, Lithium and
+  FerriteCore. All are client-only; the server install is unchanged. The pack
+  builder now rejects a mod whose required dependencies are not in the pack.
+- Storyteller Grimoire clicks and player actions now send the game-state
+  payloads only. The compressed script JSON, private notebooks, social state
+  and the diagnostics probe are sent on join, reset and script load, where they
+  can actually change. Previously every click re-sent all of them to every
+  player.
 - One pack builder: `scripts/build_modrinth_pack.py` driven by
   `modrinth/pack-config.json`. The second builder, its separate performance-mod
   list and the one-off port rewrite script were removed. Both GitHub workflows

@@ -733,7 +733,7 @@ public final class SetupOperations {
             ServerState.finalGrimoireSent = false;
             ModSounds.playGameEnd(server);
         }
-        StateBroadcaster.broadcastCurrentState(server);
+        StateBroadcaster.broadcastGameState(server);
         return Result.ok(winner + " wins. Final Grimoire reveal is now active.");
     }
 
@@ -743,7 +743,7 @@ public final class SetupOperations {
         ServerState.winningTeam = "NONE";
         ServerState.rolesRevealed = false;
         ServerState.finalGrimoireSent = false;
-        StateBroadcaster.broadcastCurrentState(server);
+        StateBroadcaster.broadcastGameState(server);
         return Result.ok("End-game reveal cancelled. Resume the appropriate phase manually.");
     }
 

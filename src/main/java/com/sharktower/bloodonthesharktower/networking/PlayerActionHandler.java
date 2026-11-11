@@ -134,7 +134,7 @@ public final class PlayerActionHandler {
                         + ". " + ExileSupportManager.currentThreshold() + " support vote(s) required.")
                 .withStyle(ChatFormatting.LIGHT_PURPLE);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) player.sendSystemMessage(announcement);
-        StateBroadcaster.broadcastCurrentState(server);
+        StateBroadcaster.broadcastGameState(server);
     }
 
     private static void requestPrivate(ServerPlayer player, MinecraftServer server, String argument) {

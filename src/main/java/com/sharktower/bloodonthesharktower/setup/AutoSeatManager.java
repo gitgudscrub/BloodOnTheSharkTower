@@ -49,7 +49,7 @@ public final class AutoSeatManager {
                         "Blood on the Sharktower: automatically assigned Seat " + seat + "."
                 ).withStyle(ChatFormatting.GRAY));
             }
-            StateBroadcaster.broadcastCurrentState(server);
+            StateBroadcaster.broadcastGameState(server);
         }
         return result;
     }
@@ -78,7 +78,7 @@ public final class AutoSeatManager {
         compactSeats(StorytellerState.PENDING_SEAT_NUMBERS);
         compactSeats(ServerState.PLAYER_SEAT_NUMBERS);
         StorytellerState.nextSeatNumber = nextSeatNumber();
-        if (server != null) StateBroadcaster.broadcastCurrentState(server);
+        if (server != null) StateBroadcaster.broadcastGameState(server);
         return true;
     }
 
@@ -121,7 +121,7 @@ public final class AutoSeatManager {
         // Next Game could resurrect the player who left.
         MatchSnapshotManager.refreshCurrentSetupState();
 
-        StateBroadcaster.broadcastCurrentState(server);
+        StateBroadcaster.broadcastGameState(server);
         return true;
     }
 

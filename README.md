@@ -11,7 +11,8 @@ The project is built for the Sharktower community. A Modrinth client package is 
 - Minecraft **26.3**
 - Java **25**
 - Fabric Loader **0.19.5**
-- Fabric API, Simple Voice Chat, Cloth Config, No Chat Restrictions, Sodium, Lithium, FerriteCore: the exact
+- Fabric API, Simple Voice Chat, Cloth Config, No Chat Restrictions, Mod Menu, and the client performance mods
+  (Sodium, Lithium, FerriteCore, Entity Culling, ImmediatelyFast, Dynamic FPS): the exact
   Modrinth versions are pinned in `modrinth/pack-config.json`, which is the single source for both the client
   pack and the server install.
 
@@ -25,7 +26,7 @@ While the Modrinth project is awaiting approval, client builds can be shared dir
 
 https://modrinth.com/modpack/blood-on-the-sharktower
 
-The client pack includes the required Fabric setup and dependencies, the current Blood on the Sharktower mod, Simple Voice Chat, No Chat Restrictions, and the Sharktower Minecraft server preconfigured in the Multiplayer menu.
+The client pack includes the required Fabric setup and dependencies, the current Blood on the Sharktower mod, Simple Voice Chat, No Chat Restrictions, Mod Menu, a set of client performance mods, and the Sharktower Minecraft server preconfigured in the Multiplayer menu.
 
 ### Server
 

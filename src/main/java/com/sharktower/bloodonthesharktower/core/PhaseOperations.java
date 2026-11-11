@@ -39,7 +39,7 @@ public final class PhaseOperations {
         NightChatManager.Result voice = NightChatManager.start();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.makeVisibleAtNight(server);
         NightChatManager.reconcile(server);
-        StateBroadcaster.broadcastCurrentState(server);
+        StateBroadcaster.broadcastGameState(server);
 
         if (!voice.ok()) {
             return Result.ok((alreadyNight ? "Night " + ServerState.currentNight + " remains active. "
@@ -71,7 +71,7 @@ public final class PhaseOperations {
                 ? NightChatManager.stop()
                 : NightChatManager.stopForDawn();
         NightChatManager.reconcile(server);
-        StateBroadcaster.broadcastCurrentState(server);
+        StateBroadcaster.broadcastGameState(server);
 
         if (!voice.ok()) {
             return Result.fail("Day " + day + " started, but Voice routing could not complete: "
@@ -91,7 +91,7 @@ public final class PhaseOperations {
         StorytellerState.resetDailyNightInfo();
         NightChatManager.Result voice = NightChatManager.stop();
         NightChatManager.reconcile(server);
-        StateBroadcaster.broadcastCurrentState(server);
+        StateBroadcaster.broadcastGameState(server);
         return voice.ok()
                 ? Result.ok("Returned to SETUP test phase. " + voice.message())
                 : Result.fail("Returned to SETUP test phase, but voice cleanup failed: " + voice.message());
