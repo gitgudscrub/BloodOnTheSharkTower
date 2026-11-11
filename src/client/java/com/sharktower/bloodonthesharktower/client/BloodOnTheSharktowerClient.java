@@ -30,6 +30,7 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
         CustomScriptsScreen.register();
         TeamInfoPreviewScreen.register();
         KeyInputHandler.register();
+        KeyInputHandler.releaseFriendsListKey();
         SharktowerHudRenderer.register();
         ClockHandsRenderer.register();
         RoleIconRenderer.register();

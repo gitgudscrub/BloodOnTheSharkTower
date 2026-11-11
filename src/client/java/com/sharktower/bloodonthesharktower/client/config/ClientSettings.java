@@ -21,6 +21,8 @@ public final class ClientSettings {
     public static boolean roleCountsHud = true;
     public static boolean worldRoleIcons = true;
     public static boolean pronounTags = true;
+    /** One-time migration: the vanilla Friends List key (O) was unbound in favour of Sharktower Settings. */
+    public static boolean friendsKeyReleased = false;
     public static boolean electionHud = true;
     public static boolean handHud = true;
     public static boolean timerHud = true;
@@ -41,6 +43,7 @@ public final class ClientSettings {
         roleCountsHud = read(p, "roleCountsHud", true);
         worldRoleIcons = read(p, "worldRoleIcons", true);
         pronounTags = read(p, "pronounTags", true);
+        friendsKeyReleased = read(p, "friendsKeyReleased", false);
         electionHud = read(p, "electionHud", true);
         handHud = read(p, "handHud", true);
         timerHud = read(p, "timerHud", true);
@@ -55,6 +58,7 @@ public final class ClientSettings {
         p.setProperty("roleCountsHud", Boolean.toString(roleCountsHud));
         p.setProperty("worldRoleIcons", Boolean.toString(worldRoleIcons));
         p.setProperty("pronounTags", Boolean.toString(pronounTags));
+        p.setProperty("friendsKeyReleased", Boolean.toString(friendsKeyReleased));
         p.setProperty("electionHud", Boolean.toString(electionHud));
         p.setProperty("handHud", Boolean.toString(handHud));
         p.setProperty("timerHud", Boolean.toString(timerHud));
