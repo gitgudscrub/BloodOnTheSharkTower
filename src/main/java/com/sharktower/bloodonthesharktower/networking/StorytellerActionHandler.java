@@ -54,13 +54,21 @@ public final class StorytellerActionHandler {
                 return;
             }
 
+            com.sharktower.bloodonthesharktower.core.Script scriptBefore = ServerState.currentScript;
+            long generationBefore = ServerState.resetGeneration;
             SetupOperations.Result result = dispatch(server, player, payload.action(), payload.argument());
             player.sendSystemMessage(Component.literal(result.message()));
 
-            // Setup changes are intentionally re-broadcast through the same
-            // state family used by reconnect/join sync. Storytellers receive
-            // pending Grimoire state; players continue to receive committed roles.
-            StateBroadcaster.broadcastCurrentState(server);
+            // Changes are re-broadcast through the same state family used by
+            // reconnect/join sync. Storytellers receive pending Grimoire state;
+            // players continue to receive committed roles. The script and the
+            // notebooks are only re-sent when a reset or a script load touched
+            // them; every other click sends the lighter game-state set.
+            if (ServerState.currentScript != scriptBefore || ServerState.resetGeneration != generationBefore) {
+                StateBroadcaster.broadcastCurrentState(server);
+            } else {
+                StateBroadcaster.broadcastGameState(server);
+            }
         });
     }
 

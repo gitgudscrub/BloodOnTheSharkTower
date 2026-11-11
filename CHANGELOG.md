@@ -1,5 +1,51 @@
 # Changelog
 
+Versions follow `gradle.properties`. The live community release is **1.0.1**;
+`1.0.2-alpha.*` builds are development builds that have not been distributed.
+
+## 1.0.2-alpha.11 — Storyteller lock and repository cleanup (unreleased)
+
+- Storyteller control can be claimed by anyone during Setup and is locked from
+  Send Roles until the Final Grimoire reveal. Server operators can override the
+  lock (logged) to rescue a game whose Storyteller cannot return.
+- No `/bots` command claims Storyteller control as a side effect any more. The
+  41 commands that used to promote whoever ran them now require control, and 36
+  state-changing commands that had no check (test seats/roles/deaths/phase,
+  resets, nominations open/close, vote clock, executions, exile support, timer,
+  night-chat routing, mass teleports) are Storyteller-only.
+- New `storytellerClaimRegression` runs with `gradlew check`.
+- Dev harness: clients now connect with `--quickPlayMultiplayer` (Minecraft
+  26.x ignored the old `--server`/`--port` flags and sat on the title screen),
+  and the prepare task seeds each client's `options.txt` to skip the first-run
+  welcome screen, mute sound and keep running without focus. Verified live:
+  Setup claim by a non-operator, lock after Send Roles, non-Storyteller
+  `/bots dusk` refused, operator override logged, claim allowed after the
+  Final Grimoire reveal.
+- Client pack adds Entity Culling, ImmediatelyFast, Dynamic FPS, and Mod Menu
+  (with Text Placeholder API) alongside the existing Sodium, Lithium and
+  FerriteCore. All are client-only; the server install is unchanged. The pack
+  builder now rejects a mod whose required dependencies are not in the pack.
+- Storyteller Grimoire clicks and player actions now send the game-state
+  payloads only. The compressed script JSON, private notebooks, social state
+  and the diagnostics probe are sent on join, reset and script load, where they
+  can actually change. Previously every click re-sent all of them to every
+  player.
+- One pack builder: `scripts/build_modrinth_pack.py` driven by
+  `modrinth/pack-config.json`. The second builder, its separate performance-mod
+  list and the one-off port rewrite script were removed. Both GitHub workflows
+  now build the same `.mrpack`.
+- Release-candidate era documents (`INSTALL_RC1.md`, the A.12 checklist, the
+  A.13 design note) moved to `docs/history/release-candidate/`.
+  `docs/PORT_STATUS.md` became `docs/STATUS.md` and was rewritten for the
+  current baseline.
+
+## 1.0.2-alpha.3 … alpha.10 — Live feedback (unreleased)
+
+Per-alpha notes with their live-test checklists live under `docs/`:
+`game-1-feedback.md` (alpha.3), `team-information.md` (alpha.4),
+`house-voice.md` (alpha.5), `fresh-game-books.md` and `nomination-hands.md`
+(alpha.6), `latest-feedback.md` (alpha.7 to alpha.10).
+
 ## 1.0.2-alpha.2 — Expanded live feedback (unreleased)
 
 - Match bluff category colours, including custom roles.
@@ -25,9 +71,11 @@ The current community testing release. Further feedback is collected for 1.0.2 b
 
 The staged-port systems below became the first numbered playable baseline.
 
-## 1.1.0-rc1 — A.12 Release Candidate
+## Before 1.0.0 — the `1.1.0-rc1` / A.12 release candidate
 
-A.11 is feature-complete and becomes the baseline for release-candidate testing.
+Before the project adopted release numbering, the final staged-port milestone was called `1.1.0-rc1` (A.12). It was renumbered **1.0.0** when it became the first playable Base 3 baseline; nothing was released under the `1.1.0` name. The notes below describe that milestone.
+
+A.11 was feature-complete and became the baseline for release-candidate testing.
 
 ### Major completed systems
 

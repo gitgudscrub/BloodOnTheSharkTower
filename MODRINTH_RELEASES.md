@@ -6,7 +6,7 @@ The important safety rule is that **publishing is manual-only**. Pull requests o
 
 ## Pack contents
 
-The generated pack currently targets:
+Every dependency version below is pinned in `modrinth/pack-config.json`; edit that file to upgrade. The generated pack currently targets:
 
 - Minecraft 26.3
 - Fabric Loader 0.19.5
@@ -14,10 +14,19 @@ The generated pack currently targets:
 - Cloth Config API 26.3.158+fabric (`eZ3xIIuk`)
 - Simple Voice Chat fabric-2.6.24+26.3 (`OLnMVWXy`)
 - No Chat Restrictions Fabric-MC26.3-v1.3.0 (`l4Pr3hk8`, client-only)
+- Sodium mc26.3-0.9.2-fabric (`bAZQdGpg`, client-only)
+- Lithium mc26.3-0.26.2-fabric (`xS0Q8LSi`, optional on the server)
+- FerriteCore 9.0.0-fabric (`d5ddUdiB`, optional on the server)
+- Entity Culling 1.11.3 (`X1g3VhTx`, client-only)
+- ImmediatelyFast 1.17.1+26.3-fabric (`3MP9UR23`, client-only)
+- Dynamic FPS 3.11.10 (`Jwq069rR`, client-only)
+- Mod Menu 21.0.0 (`kyy7dbrZ`, client-only) with Text Placeholder API 3.2.0+26.3 (`lXytLqWj`), so players can reach the Simple Voice Chat and Sodium settings screens
 - the Sharktower JAR built from the selected Git commit
 - a preconfigured Multiplayer entry named `Blood on the Sharktower` pointing at `88.97.251.50` on Minecraft's default port
 
-Third-party mods are referenced from pinned Modrinth versions. The Sharktower JAR is embedded in `overrides/mods` inside the `.mrpack`.
+The builder refuses a pinned mod that does not list Fabric 26.3, or that requires a Modrinth project which is not itself in the pack; add the dependency to `pack-config.json` or drop the mod. Third-party mods are referenced from pinned Modrinth versions. The Sharktower JAR is embedded in `overrides/mods` inside the `.mrpack`.
+
+Both workflows use the same builder, `scripts/build_modrinth_pack.py`. The build workflow that runs on every push produces a pack versioned from `gradle.properties`; the manual publish workflow takes the version as an input.
 
 The pack builder also generates `overrides/servers.dat`, so a fresh installation can launch Minecraft, press **Multiplayer**, and see **Blood on the Sharktower** already listed without manually entering the address.
 

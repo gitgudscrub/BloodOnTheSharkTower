@@ -12,25 +12,29 @@
       "name": "Fabric API",
       "version_id": "bNnaTiuM",
       "client": "required",
-      "server": "required"
+      "server": "required",
+      "validate_compatibility": true
     },
     {
       "name": "Cloth Config API",
       "version_id": "eZ3xIIuk",
       "client": "required",
-      "server": "required"
+      "server": "required",
+      "validate_compatibility": true
     },
     {
       "name": "Simple Voice Chat",
       "version_id": "OLnMVWXy",
       "client": "required",
-      "server": "required"
+      "server": "required",
+      "validate_compatibility": true
     },
     {
       "name": "No Chat Restrictions",
       "version_id": "l4Pr3hk8",
       "client": "required",
-      "server": "unsupported"
+      "server": "unsupported",
+      "validate_compatibility": true
     },
     {
       "name": "Sodium",
@@ -51,6 +55,41 @@
       "version_id": "d5ddUdiB",
       "client": "required",
       "server": "optional",
+      "validate_compatibility": true
+    },
+    {
+      "name": "Entity Culling",
+      "version_id": "X1g3VhTx",
+      "client": "required",
+      "server": "unsupported",
+      "validate_compatibility": true
+    },
+    {
+      "name": "ImmediatelyFast",
+      "version_id": "3MP9UR23",
+      "client": "required",
+      "server": "unsupported",
+      "validate_compatibility": true
+    },
+    {
+      "name": "Dynamic FPS",
+      "version_id": "Jwq069rR",
+      "client": "required",
+      "server": "unsupported",
+      "validate_compatibility": true
+    },
+    {
+      "name": "Text Placeholder API",
+      "version_id": "lXytLqWj",
+      "client": "required",
+      "server": "optional",
+      "validate_compatibility": true
+    },
+    {
+      "name": "Mod Menu",
+      "version_id": "kyy7dbrZ",
+      "client": "required",
+      "server": "unsupported",
       "validate_compatibility": true
     }
   ]

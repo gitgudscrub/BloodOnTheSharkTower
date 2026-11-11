@@ -55,25 +55,44 @@ def primary_file(version: dict) -> dict:
     return next((item for item in files if item.get("primary")), files[0])
 
 
-def dependency_entry(spec: dict, game_version: str, loader: str) -> dict:
+def resolve_version(spec: dict, game_version: str, loader: str) -> dict:
     if spec.get("version_id"):
         version = fetch_version(spec["version_id"])
     elif spec.get("project_id"):
         version = fetch_latest_project_version(spec["project_id"], game_version, loader)
     else:
         raise RuntimeError(f"Dependency {spec.get('name', '<unnamed>')} has no version_id or project_id")
-
     print(
         f"Resolved {spec['name']}: {version.get('version_number')} "
         f"(version id {version.get('id')})"
     )
+    return version
 
-    if spec.get("validate_compatibility"):
-        if game_version not in version.get("game_versions", []) or loader not in version.get("loaders", []):
-            raise RuntimeError(f"Incompatible performance mod: {spec['name']}")
-        if any(dep.get("dependency_type") == "required" for dep in version.get("dependencies", [])):
-            raise RuntimeError(f"Review required dependencies before packaging {spec['name']}")
 
+def validate_compatibility(spec: dict, version: dict, game_version: str, loader: str, packed_projects: set) -> None:
+    """Fail the build if a pinned mod does not fit the pack.
+
+    A mod may require other mods only if those mods are themselves in the pack
+    (for example Entity Culling requires Fabric API, Mod Menu requires Text
+    Placeholder API). Anything else must be reviewed by a human first.
+    """
+    if not spec.get("validate_compatibility"):
+        return
+    if game_version not in version.get("game_versions", []) or loader not in version.get("loaders", []):
+        raise RuntimeError(f"{spec['name']} {version.get('version_number')} does not support {loader} {game_version}")
+    missing = [
+        dep.get("project_id")
+        for dep in version.get("dependencies", [])
+        if dep.get("dependency_type") == "required" and dep.get("project_id") not in packed_projects
+    ]
+    if missing:
+        raise RuntimeError(
+            f"{spec['name']} requires Modrinth project(s) {missing} that are not in the pack; "
+            "add them to modrinth/pack-config.json or drop the mod"
+        )
+
+
+def dependency_entry(spec: dict, version: dict) -> dict:
     file = primary_file(version)
     hashes = file.get("hashes") or {}
     if not hashes.get("sha1") or not hashes.get("sha512"):
@@ -161,10 +180,12 @@ def main() -> None:
         raise SystemExit(f"Built Sharktower JAR not found: {args.jar}")
 
     config = json.loads(args.config.read_text(encoding="utf-8"))
-    files = [
-        dependency_entry(spec, config["minecraft"], "fabric")
-        for spec in config["dependencies"]
-    ]
+    specs = config["dependencies"]
+    versions = [resolve_version(spec, config["minecraft"], "fabric") for spec in specs]
+    packed_projects = {version.get("project_id") for version in versions}
+    for spec, version in zip(specs, versions):
+        validate_compatibility(spec, version, config["minecraft"], "fabric", packed_projects)
+    files = [dependency_entry(spec, version) for spec, version in zip(specs, versions)]
 
     work = Path("build/modrinth-pack")
     if work.exists():

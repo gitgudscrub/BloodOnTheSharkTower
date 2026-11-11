@@ -11,9 +11,10 @@ These files are **historical records**, not current installation instructions.
 - `patch-instructions/` — old APPLY/INSTALL/hotfix patch instructions used before the repository became the source of truth.
 - `feature-notes/` — older standalone feature notes such as Role Bag, hand voting and private-chat documentation.
 - `migration/` — baseline and Minecraft 26.3 migration notes.
+- `release-candidate/` — the A.12 release-candidate checklist, RC1 install guide and A.13 Grimoire design note from before the 1.0.0 renumbering.
 
 For current project state, return to:
 
 - `../../README.md`
-- `../PORT_STATUS.md`
-- `../../A12_RELEASE_CANDIDATE_CHECKLIST.md`
+- `../STATUS.md`
+- `../../CHANGELOG.md`

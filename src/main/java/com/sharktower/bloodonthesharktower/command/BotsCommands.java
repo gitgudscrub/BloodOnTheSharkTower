@@ -453,6 +453,7 @@ public final class BotsCommands {
     }
 
     private static int executeTestScript(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         Script script = ScriptNetworkTestData.create();
         ServerState.currentScript = script;
         int sequence = StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
@@ -462,6 +463,7 @@ public final class BotsCommands {
     }
 
     private static int executeTestRole(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "testrole");
         if (player == null) return 0;
 
@@ -489,6 +491,7 @@ public final class BotsCommands {
     }
 
     private static int executeTestSeat(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "testseat");
         if (player == null) return 0;
 
@@ -503,6 +506,7 @@ public final class BotsCommands {
     }
 
     private static int executeTestSeats(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "testseats");
         if (player == null) return 0;
 
@@ -537,6 +541,7 @@ public final class BotsCommands {
     }
 
     private static int executeAddEmptyTestSeat(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "testseats addEmpty");
         if (player == null) return 0;
 
@@ -581,6 +586,7 @@ public final class BotsCommands {
     }
 
     private static int executeEmptyTestSeats(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "testseats empty");
         if (player == null) return 0;
 
@@ -649,6 +655,7 @@ public final class BotsCommands {
     }
 
     private static int executeClearTestSeats(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         int removed = clearSyntheticTestSeats();
         int sequence = StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         send(context, "Removed " + removed + " synthetic Grimoire test seat" + (removed == 1 ? "" : "s")
@@ -677,6 +684,7 @@ public final class BotsCommands {
     }
 
     private static int executeTestDead(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "testdead");
         if (player == null) return 0;
 
@@ -688,20 +696,21 @@ public final class BotsCommands {
     }
 
     private static int executeDusk(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         PhaseOperations.Result result = PhaseOperations.enterNight(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeDawn(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         PhaseOperations.Result result = PhaseOperations.enterDay(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeTestPhase(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         String requested = StringArgumentType.getString(context, "phase").toLowerCase();
         PhaseOperations.Result result = switch (requested) {
             case "setup" -> PhaseOperations.enterSetupForTest(context.getSource().getServer());
@@ -740,7 +749,7 @@ public final class BotsCommands {
     private static int executeDayChatZoneTrigger(CommandContext<CommandSourceStack> context, boolean entrance) {
         ServerPlayer player = requirePlayer(context, "daychat zone");
         if (player == null) return 0;
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         String name = StringArgumentType.getString(context, "name");
         send(context, entrance
                 ? DayChatZoneManager.addEntrance(name, player)
@@ -749,28 +758,28 @@ public final class BotsCommands {
     }
 
     private static int executeDayChatZoneClearEntrances(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         String name = StringArgumentType.getString(context, "name");
         send(context, DayChatZoneManager.clearEntrances(name));
         return Command.SINGLE_SUCCESS;
     }
 
     private static int executeDayChatZoneClearExits(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         String name = StringArgumentType.getString(context, "name");
         send(context, DayChatZoneManager.clearExits(name));
         return Command.SINGLE_SUCCESS;
     }
 
     private static int executeDayChatZoneRemove(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         String name = StringArgumentType.getString(context, "name");
         send(context, DayChatZoneManager.removeZone(name));
         return Command.SINGLE_SUCCESS;
     }
 
     private static int executeDayChatClearZones(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         send(context, DayChatZoneManager.clearZones());
         return Command.SINGLE_SUCCESS;
     }
@@ -790,18 +799,21 @@ public final class BotsCommands {
     }
 
     private static int executeNightChatStart(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         NightChatManager.Result result = NightChatManager.start();
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeNightChatStop(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         NightChatManager.Result result = NightChatManager.stop();
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeNightChatResync(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         NightChatManager.Result result = NightChatManager.resync();
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
@@ -946,6 +958,16 @@ public final class BotsCommands {
     private static int executeStorytellerClaim(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = requirePlayer(context, "storyteller claim");
         if (player == null) return 0;
+        boolean operator = Commands.LEVEL_GAMEMASTERS.check(context.getSource().permissions());
+        String refusal = StorytellerState.claimRefusal(player.getUUID(), operator);
+        if (refusal != null) {
+            send(context, refusal);
+            return 0;
+        }
+        if (operator && StorytellerState.gameInProgress() && !StorytellerState.isStoryteller(player.getUUID())) {
+            BloodOnTheSharktower.LOGGER.warn("Operator {} claimed Storyteller control during a game.", player.getName().getString());
+            send(context, "Operator override: claiming Storyteller control during a game.");
+        }
         StorytellerState.claimStoryteller(player.getUUID());
         AutoSeatManager.removeStorytellerSeat(context.getSource().getServer(), player.getUUID());
         NightChatManager.onStorytellerStatusChanged(player.getUUID());
@@ -963,7 +985,12 @@ public final class BotsCommands {
         NightChatManager.onStorytellerStatusChanged(player.getUUID());
         StateBroadcaster.sendCurrentStateTo(player);
         StateBroadcaster.broadcastPlayerDirectory(context.getSource().getServer());
-        send(context, "Storyteller control released.");
+        if (StorytellerState.gameInProgress() && StorytellerState.STORYTELLERS.isEmpty()) {
+            send(context, "Storyteller control released. No Storyteller remains and a game is in progress: "
+                    + "only a server operator can claim control until the game is reset.");
+        } else {
+            send(context, "Storyteller control released.");
+        }
         return Command.SINGLE_SUCCESS;
     }
 
@@ -998,7 +1025,7 @@ public final class BotsCommands {
     }
 
     private static int executeSeatPlayer(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         String name = StringArgumentType.getString(context, "player");
         ServerPlayer target = connectedPlayerByName(context, name);
         if (target == null) {
@@ -1011,7 +1038,7 @@ public final class BotsCommands {
     }
 
     private static int executeUnseatPlayer(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         String name = StringArgumentType.getString(context, "player");
         ServerPlayer target = connectedPlayerByName(context, name);
         if (target == null) {
@@ -1022,7 +1049,7 @@ public final class BotsCommands {
     }
 
     private static int executeSeatAll(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         List<UUID> players = context.getSource().getServer().getPlayerList().getPlayers().stream()
                 .filter(player -> !StorytellerState.isStoryteller(player.getUUID()))
                 .map(ServerPlayer::getUUID)
@@ -1031,20 +1058,20 @@ public final class BotsCommands {
     }
 
     private static int executeAssignRole(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         int seat = IntegerArgumentType.getInteger(context, "seat");
         String role = StringArgumentType.getString(context, "role");
         return finishSetupOperation(context, SetupOperations.assignRole(seat, role), true);
     }
 
     private static int executeClearRole(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         int seat = IntegerArgumentType.getInteger(context, "seat");
         return finishSetupOperation(context, SetupOperations.clearRole(seat), true);
     }
 
     private static int executeAlignment(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         int seat = IntegerArgumentType.getInteger(context, "seat");
         String value = StringArgumentType.getString(context, "alignment").toLowerCase();
         AlignmentOverride override = switch (value) {
@@ -1061,7 +1088,7 @@ public final class BotsCommands {
     }
 
     private static int executeSwapRoles(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.swapRoles(
                 IntegerArgumentType.getInteger(context, "seatA"),
                 IntegerArgumentType.getInteger(context, "seatB")
@@ -1069,7 +1096,7 @@ public final class BotsCommands {
     }
 
     private static int executeSwapSeats(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.swapSeats(
                 IntegerArgumentType.getInteger(context, "seatA"),
                 IntegerArgumentType.getInteger(context, "seatB")
@@ -1077,39 +1104,39 @@ public final class BotsCommands {
     }
 
     private static int executeShuffleRoles(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.shuffleRoles(), true);
     }
 
     private static int executeShuffleSeats(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.shuffleSeats(), true);
     }
 
     private static int executeRandomizeRoles(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.randomizeRoles(), true);
     }
 
     private static int executeRandomizeBluffs(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.randomizeBluffs(), true);
     }
 
     private static int executeClearBluffs(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.clearBluffs(), true);
     }
 
     private static int executeAddBluff(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.addBluff(
                 StringArgumentType.getString(context, "role")
         ), true);
     }
 
     private static int executeAddReminder(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.addReminder(
                 IntegerArgumentType.getInteger(context, "seat"),
                 StringArgumentType.getString(context, "text")
@@ -1117,45 +1144,47 @@ public final class BotsCommands {
     }
 
     private static int executeClearReminders(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.clearReminders(
                 IntegerArgumentType.getInteger(context, "seat")
         ), true);
     }
 
     private static int executeClearAllReminders(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.clearAllReminders(), true);
     }
 
     private static int executeSendRoles(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.commitSetup(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeDiscardSetup(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.discardPending(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeResetGame(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.resetGame(context.getSource().getServer(), false);
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeResetGameHard(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.resetGame(context.getSource().getServer(), true);
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeGameComplete(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.completeGame(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
@@ -1170,7 +1199,7 @@ public final class BotsCommands {
     }
 
     private static int executeEndGame(CommandContext<CommandSourceStack> context, String winner) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.beginEndGame(context.getSource().getServer(), winner);
         send(context, result.message());
         if (result.ok()) {
@@ -1188,14 +1217,14 @@ public final class BotsCommands {
     }
 
     private static int executeEndGameCancel(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.cancelEndGame(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeResetForNextGame(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.completeGame(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
@@ -1209,7 +1238,7 @@ public final class BotsCommands {
     private static int executeSnapshotCorner1(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = requirePlayer(context, "snapshot corner1");
         if (player == null) return 0;
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         MatchSnapshotManager.Result result = MatchSnapshotManager.setCorner1(context.getSource().getServer(), player);
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
@@ -1218,35 +1247,35 @@ public final class BotsCommands {
     private static int executeSnapshotCorner2(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = requirePlayer(context, "snapshot corner2");
         if (player == null) return 0;
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         MatchSnapshotManager.Result result = MatchSnapshotManager.setCorner2(context.getSource().getServer(), player);
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeSnapshotClearRegion(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         MatchSnapshotManager.Result result = MatchSnapshotManager.clearRegion();
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeSnapshotCapture(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         MatchSnapshotManager.Result result = MatchSnapshotManager.captureAtGameStart(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeSnapshotRestore(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.completeGame(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeSnapshotRestorePrevious(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SetupOperations.Result result = SetupOperations.restorePreviousGameSnapshot(context.getSource().getServer());
         send(context, result.message());
         return result.ok() ? Command.SINGLE_SUCCESS : 0;
@@ -1255,7 +1284,7 @@ public final class BotsCommands {
     private static int executeSetSeatHome(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = requirePlayer(context, "setSeatHome");
         if (player == null) return 0;
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         int seat = IntegerArgumentType.getInteger(context, "seat");
         SeatPositionManager.setSeatHome(seat, player);
         send(context, "Stored current position as seat " + seat + " home.");
@@ -1265,7 +1294,7 @@ public final class BotsCommands {
     private static int executeSetTownSquareSeat(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = requirePlayer(context, "setTownSquareSeat");
         if (player == null) return 0;
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         int seat = IntegerArgumentType.getInteger(context, "seat");
         SeatPositionManager.setTownSquareSeat(seat, player);
         send(context, "Stored current position as town-square seat " + seat + ".");
@@ -1275,7 +1304,7 @@ public final class BotsCommands {
     private static int executeSetClockCenter(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = requirePlayer(context, "setClockCenter");
         if (player == null) return 0;
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         SeatPositionManager.setClockCenter(player);
         StateBroadcaster.broadcastVoteState(context.getSource().getServer());
         send(context, "Stored current position as the world clock-hand center.");
@@ -1283,7 +1312,7 @@ public final class BotsCommands {
     }
 
     private static int executeSetClockHandScale(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         double scale = DoubleArgumentType.getDouble(context, "scale");
         SeatPositionManager.setClockHandScale(scale);
         StateBroadcaster.broadcastVoteState(context.getSource().getServer());
@@ -1292,7 +1321,7 @@ public final class BotsCommands {
     }
 
     private static int executeSetVoteSpeed(CommandContext<CommandSourceStack> context) {
-        claimStoryteller(context);
+        if (!requireStoryteller(context)) return 0;
         if (DaytimeState.isVoteInProgress()) {
             send(context, "Vote speed cannot be changed while a vote is running.");
             return 0;
@@ -1308,6 +1337,7 @@ public final class BotsCommands {
     }
 
     private static int executeSendToSeats(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         int moved = SeatPositionManager.sendAllToTownSquare(
                 context.getSource().getServer(), ServerState.PLAYER_SEAT_NUMBERS);
         send(context, "Sent " + moved + " connected seated player(s) to configured town-square seats.");
@@ -1315,6 +1345,7 @@ public final class BotsCommands {
     }
 
     private static int executeSendHome(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         int moved = SeatPositionManager.sendAllHome(
                 context.getSource().getServer(), ServerState.PLAYER_SEAT_NUMBERS);
         send(context, "Sent " + moved + " connected seated player(s) home.");
@@ -1322,6 +1353,7 @@ public final class BotsCommands {
     }
 
     private static int executeTeleportToSeat(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "teleportToSeat");
         if (player == null) return 0;
         int seat = IntegerArgumentType.getInteger(context, "seat");
@@ -1346,16 +1378,20 @@ public final class BotsCommands {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void claimStoryteller(CommandContext<CommandSourceStack> context) {
+    /**
+     * Console may run every command. A player needs Storyteller control, which is
+     * only ever granted explicitly by /bots storyteller claim; no command claims it
+     * as a side effect any more.
+     */
+    private static boolean requireStoryteller(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = context.getSource().getPlayer();
-        if (player != null) {
-            StorytellerState.claimStoryteller(player.getUUID());
-            AutoSeatManager.removeStorytellerSeat(context.getSource().getServer(), player.getUUID());
-            NightChatManager.onStorytellerStatusChanged(player.getUUID());
-        }
+        if (player == null || StorytellerState.isStoryteller(player.getUUID())) return true;
+        send(context, "Storyteller control is required. Claim it during Setup with /bots storyteller claim.");
+        return false;
     }
 
     private static int executeOpenNominations(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         Set<UUID> players = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.keySet());
         if (players.isEmpty()) {
             for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
@@ -1369,6 +1405,7 @@ public final class BotsCommands {
     }
 
     private static int executeCloseNominations(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         DaytimeState.closeNominations();
         StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         send(context, "Nominations closed.");
@@ -1465,6 +1502,7 @@ public final class BotsCommands {
     }
 
     private static int executeRunVote(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         if (!DaytimeState.hasActiveNomination()) {
             send(context, "No active nomination to vote on.");
             return 0;
@@ -1493,6 +1531,7 @@ public final class BotsCommands {
     }
 
     private static int executeResolveVote(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         if (!DaytimeState.isVoteInProgress()) {
             send(context, "No vote is currently running.");
             return 0;
@@ -1512,6 +1551,7 @@ public final class BotsCommands {
     }
 
     private static int executeCancelVote(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         if (!DaytimeState.isVoteInProgress()) {
             send(context, "No vote is currently running.");
             return 0;
@@ -1523,6 +1563,7 @@ public final class BotsCommands {
     }
 
     private static int executeResetVote(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         VotingManager.resetVote(context.getSource().getServer());
         StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         send(context, "Vote state reset.");
@@ -1530,6 +1571,7 @@ public final class BotsCommands {
     }
 
     private static int executeMarkedPlayer(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         UUID marked = DaytimeState.getMarkedForExecution();
         if (marked == null) {
             send(context, "Nobody is currently marked for execution.");
@@ -1542,6 +1584,7 @@ public final class BotsCommands {
     }
 
     private static int executeMarkedPlayerFail(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         UUID marked = DaytimeState.getMarkedForExecution();
         if (marked == null) {
             send(context, "Nobody is currently marked for execution.");
@@ -1572,6 +1615,7 @@ public final class BotsCommands {
     }
 
     private static int executeRunExileSupport(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         if (!DaytimeState.hasActiveExile()) {
             send(context, "No active exile call.");
             return 0;
@@ -1602,6 +1646,7 @@ public final class BotsCommands {
     }
 
     private static int executeResolveExile(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         if (!DaytimeState.isExileSupportInProgress()) {
             send(context, "No exile support vote is running.");
             return 0;
@@ -1618,6 +1663,7 @@ public final class BotsCommands {
     }
 
     private static int executeCancelExileVote(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         if (!ExileSupportManager.cancelSupportVote(context.getSource().getServer())) {
             send(context, "No exile support vote is currently running.");
             return 0;
@@ -1628,6 +1674,7 @@ public final class BotsCommands {
     }
 
     private static int executeSetExileCount(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         int count = IntegerArgumentType.getInteger(context, "count");
         if (!ExileSupportManager.setSupportOverride(context.getSource().getServer(), count)) {
             send(context, "Exile count overrides are available after the exile clock completes.");
@@ -1638,6 +1685,7 @@ public final class BotsCommands {
     }
 
     private static int executeClearExileCount(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         if (!DaytimeState.isExileSupportInProgress()) {
             send(context, "No exile support vote is currently running.");
             return 0;
@@ -1657,6 +1705,7 @@ public final class BotsCommands {
     }
 
     private static int executeResetExile(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ExileManager.resetExile(context.getSource().getServer());
         StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         send(context, "Exile state reset.");
@@ -1665,6 +1714,7 @@ public final class BotsCommands {
 
     /** One-player smoke test that walks the actual nomination/vote/execution backend. */
     private static int executeGameFlowDemo(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         ServerPlayer player = requirePlayer(context, "gameflowdemo");
         if (player == null) return 0;
         UUID id = player.getUUID();
@@ -1708,6 +1758,7 @@ public final class BotsCommands {
     }
 
     private static int executeTimerStart(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         int seconds = IntegerArgumentType.getInteger(context, "seconds");
         TimerManager.startTimer(context.getSource().getServer(), seconds, false);
         send(context, "Timer started for " + seconds + " seconds.");
@@ -1715,18 +1766,21 @@ public final class BotsCommands {
     }
 
     private static int executeTimerPause(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         TimerManager.pauseTimer(context.getSource().getServer());
         send(context, "Timer paused.");
         return Command.SINGLE_SUCCESS;
     }
 
     private static int executeTimerResume(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         TimerManager.resumeTimer(context.getSource().getServer());
         send(context, "Timer resumed.");
         return Command.SINGLE_SUCCESS;
     }
 
     private static int executeTimerStop(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
         TimerManager.stopTimer(context.getSource().getServer());
         send(context, "Timer stopped.");
         return Command.SINGLE_SUCCESS;

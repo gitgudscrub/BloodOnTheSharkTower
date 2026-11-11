@@ -1,6 +1,6 @@
 # Blood on the Sharktower
 
-**Current version: 1.0.1**
+**Live community release: 1.0.1** · development builds: see `version` in `gradle.properties`
 
 Blood on the Sharktower is a Minecraft 26.3 Fabric mod and modpack for playing **Blood on the Clocktower** in Minecraft. It began as a port/fork of Blood on the Blocktower and has grown into a Sharktower-focused implementation with its own Grimoire, role bag, voting, voice-chat routing, night flow, script support and quality-of-life systems.
 
@@ -11,9 +11,12 @@ The project is built for the Sharktower community. A Modrinth client package is 
 - Minecraft **26.3**
 - Java **25**
 - Fabric Loader **0.19.5**
-- Fabric API **0.160.6+26.3**
-- Simple Voice Chat **2.6.23+26.3**
-- Blood on the Sharktower **1.0.1**
+- Fabric API, Simple Voice Chat, Cloth Config, No Chat Restrictions, Mod Menu, and the client performance mods
+  (Sodium, Lithium, FerriteCore, Entity Culling, ImmediatelyFast, Dynamic FPS): the exact
+  Modrinth versions are pinned in `modrinth/pack-config.json`, which is the single source for both the client
+  pack and the server install.
+
+The mod is compiled against the API versions in `gradle.properties`; the pack may pin newer runtime builds.
 
 ## Installation
 
@@ -23,11 +26,15 @@ While the Modrinth project is awaiting approval, client builds can be shared dir
 
 https://modrinth.com/modpack/blood-on-the-sharktower
 
-The client pack includes the required Fabric setup and dependencies, the current Blood on the Sharktower mod, Simple Voice Chat, No Chat Restrictions, and the Sharktower Minecraft server preconfigured in the Multiplayer menu.
+The client pack includes the required Fabric setup and dependencies, the current Blood on the Sharktower mod, Simple Voice Chat, No Chat Restrictions, Mod Menu, a set of client performance mods, and the Sharktower Minecraft server preconfigured in the Multiplayer menu.
 
 ### Server
 
-The server runs the same Blood on the Sharktower JAR as clients. The server also needs the matching Fabric API and Simple Voice Chat versions listed above.
+The server runs the same Blood on the Sharktower JAR as clients. The server also needs Fabric API and Simple Voice Chat at the versions pinned in `modrinth/pack-config.json` (Lithium and FerriteCore are optional on the server; Sodium and No Chat Restrictions are client-only).
+
+### Storyteller control
+
+Anyone can claim Storyteller control during Setup with `/bots storyteller claim`. Once roles are sent the position is locked for the rest of the game, including the end-game reveal, so no player can gain sight of the Grimoire mid-game. A server operator can override the lock to rescue a game whose Storyteller cannot return. See `docs/STATUS.md`.
 
 Client and server builds are produced together by GitHub Actions so that both packages come from the same source revision.
 
@@ -128,7 +135,7 @@ Implementation notes and regression checks are tracked in `docs/1.0.2-session-fe
 
 Additional fixes or polish found during the same testing cycle may be added before 1.0.2 is released.
 
-Development builds use **1.0.2-alpha.10**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
+Development builds use **1.0.2-alpha.11**; the current live release remains **1.0.1**. See `docs/1.0.2-session-feedback.md` for the regression checks.
 
 ### 1.0.x — Base 3 full support *(current focus)*
 
@@ -235,8 +242,9 @@ Keeping both artifacts in the same workflow helps prevent client/server version 
 - `src/` — mod source code and assets.
 - `dev-harness/` — local multiplayer test harness.
 - `docs/` — current and historical technical notes.
-- `tools/` — packaging and development utilities.
-- `.github/workflows/` — automated build and packaging workflow.
+- `scripts/build_modrinth_pack.py` + `modrinth/pack-config.json` — the client pack builder and its pinned dependencies.
+- `tools/` — the CI dev-server smoke test.
+- `.github/workflows/` — build workflow (every push) and manual Modrinth publish workflow.
 - `CHANGELOG.md` — release and milestone history.
 
 ## Project history

@@ -2,6 +2,7 @@ package com.sharktower.bloodonthesharktower.states;
 
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
+import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 
@@ -65,8 +66,44 @@ public final class StorytellerState {
         return STORYTELLERS.contains(playerId);
     }
 
+    /**
+     * Adds a Storyteller without any eligibility check. Callers that act on a
+     * player's request must consult {@link #claimRefusal} first; this raw form
+     * exists for snapshot restore and tests.
+     */
     public static void claimStoryteller(UUID playerId) {
         STORYTELLERS.add(playerId);
+    }
+
+    /**
+     * Storyteller control is open to everyone during Setup and locked once a game
+     * is in progress, because a Storyteller sees every hidden role.
+     *
+     * @param operator whether the requester has operator (gamemaster) permission;
+     *                 operators may override the lock to rescue a stuck game.
+     * @return null when the claim is allowed, otherwise the message to show.
+     */
+    public static String claimRefusal(UUID playerId, boolean operator) {
+        if (STORYTELLERS.contains(playerId) || operator) return null;
+        if (gameInProgress()) {
+            return "A game is in progress, so Storyteller control is locked until Reset for Next Game. "
+                    + "If the Storyteller cannot return, ask a server operator to take over.";
+        }
+        return null;
+    }
+
+    /**
+     * True from the moment roles are sent until the final Grimoire reveal makes
+     * them public. Setup (no committed roles) and the post-reveal discussion are
+     * not "in progress": nothing hidden would be exposed by a new Storyteller.
+     */
+    public static boolean gameInProgress() {
+        if (ServerState.rolesRevealed) return false;
+        if (ServerState.currentNight > 0 || ServerState.currentDay > 0) return true;
+        for (PendingRoleAssignment assignment : ServerState.PLAYER_ROLES.values()) {
+            if (assignment != null && (assignment.isCustomRole() || assignment.role() != Role.NO_ROLE)) return true;
+        }
+        return false;
     }
 
     public static void releaseStoryteller(UUID playerId) {
