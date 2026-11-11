@@ -804,6 +804,7 @@ public final class SetupOperations {
         StorytellerState.LUNATIC_BLUFFS.clear();
         com.sharktower.bloodonthesharktower.states.DeathVisibility.clear();
         com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager.clear();
+        com.sharktower.bloodonthesharktower.automation.RoleAutomation.reset();
         ServerState.resetGeneration++;
         FreshGameBooks.clear();
         com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.clear();

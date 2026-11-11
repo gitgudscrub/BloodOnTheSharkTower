@@ -226,7 +226,7 @@ public final class StorytellerActionHandler {
         }
     }
 
-    private static SetupOperations.Result markDead(MinecraftServer server, int seat, boolean demonKill) {
+    public static SetupOperations.Result markDead(MinecraftServer server, int seat, boolean demonKill) {
         if (ServerState.currentNight == 0 && ServerState.currentDay == 0) {
             return SetupOperations.Result.fail("Death state is only available after the game has started.");
         }
@@ -237,6 +237,10 @@ public final class StorytellerActionHandler {
         }
         if (demonKill && !PhaseOperations.isNight()) {
             return SetupOperations.Result.fail("Demon Kill is only available during Night.");
+        }
+        if (demonKill) {
+            String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation.demonKillRefusal(server, target);
+            if (refusal != null) return SetupOperations.Result.fail(refusal + " Use Mark Dead to override.");
         }
 
         ServerState.PLAYER_DEATH_STATUS.put(target, true);
@@ -249,6 +253,7 @@ public final class StorytellerActionHandler {
         TriggeredNightOrderManager.onDeath(target, cause);
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastGrimoire(server);
+        com.sharktower.bloodonthesharktower.automation.RoleAutomation.onDeath(server, target, false);
 
         return SetupOperations.Result.ok("Privately marked seat " + seat + " dead; use Reveal Deaths during Day"
                 + (demonKill ? " (Demon kill)." : "."));
@@ -528,7 +533,7 @@ public final class StorytellerActionHandler {
         return SetupOperations.Result.ok("Nominations closed.");
     }
 
-    private static SetupOperations.Result nominatePair(MinecraftServer server, String arg) {
+    public static SetupOperations.Result nominatePair(MinecraftServer server, String arg) {
         String[] parts = split(arg, 2);
         UUID nominator = UUID.fromString(parts[0]);
         UUID nominee = UUID.fromString(parts[1]);
@@ -540,6 +545,9 @@ public final class StorytellerActionHandler {
         }
         if (!NominationManager.executeNomination(server, nominator, nominee, VotingManager.alivePlayerCount())) {
             return SetupOperations.Result.fail("That nomination is not currently legal.");
+        }
+        if (!DaytimeState.hasActiveNomination()) {
+            return SetupOperations.Result.ok("Nomination resolved by the Virgin's ability; there is no vote.");
         }
         announce(server, Component.literal(label(server, nominator) + " nominates " + label(server, nominee) + ".")
                 .withStyle(ChatFormatting.GOLD));

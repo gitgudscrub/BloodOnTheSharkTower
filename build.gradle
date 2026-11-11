@@ -308,6 +308,14 @@ tasks.register('handRaiseModeRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('handRaiseModeRegression') }
 
+// Storyteller automation rule checks: alive counts, drunk/poisoned, protections.
+tasks.register('roleAutomationRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.automation.RoleAutomationRegression'
+}
+tasks.named('check') { dependsOn tasks.named('roleAutomationRegression') }
+
 // URL allowlist, distinct page/version IDs, filenames and strict script validation.
 tasks.register('scriptImportRegression', JavaExec) {
     dependsOn testClasses

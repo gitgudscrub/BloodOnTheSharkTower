@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.daytime;
 
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
+import com.sharktower.bloodonthesharktower.automation.RoleAutomation;
 import com.sharktower.bloodonthesharktower.networking.StateBroadcaster;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.RoleType;
@@ -30,6 +31,18 @@ public final class NominationManager {
         DaytimeState.resetVote();
         DaytimeState.clearRaisedHands();
 
+        if (RoleAutomation.onNomination(server, nominator, nominee)) {
+            // The Virgin's ability resolved this nomination: the nominator is
+            // already executed, so there is no vote. Both still count as used.
+            DaytimeState.useNomination(nominator);
+            if (!DaytimeState.hasNominationsRemaining(nominator)) DaytimeState.setCanNominate(nominator, false);
+            if (ServerState.PLAYER_SEAT_NUMBERS.containsKey(nominee)) DaytimeState.setCanBeNominated(nominee, false);
+            DayPublicInfoBookManager.recordNomination(server, nominator);
+            recordMinionNomination(server, nominator);
+            StateBroadcaster.broadcastDaytimeState(server);
+            StateBroadcaster.broadcastVoteState(server);
+            return true;
+        }
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(nominee);
         ElectionState.beginElection(

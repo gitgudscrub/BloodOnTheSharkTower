@@ -3,6 +3,36 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.14 — Role automation (unreleased)
+
+- The server now applies the rules that used to be bookkeeping for the
+  Storyteller. The Storyteller keeps the final say: every automatic step is
+  announced in the Storyteller chat and can be overridden.
+  - **Virgin:** when a sober Virgin is nominated for the first time, a
+    Townsfolk nominator is executed on the spot and the nomination ends with
+    no vote. A non-Townsfolk nominator spends the ability with nothing
+    happening; if the nominator is the Spy the Storyteller gets an
+    "Execute the Spy now" button.
+  - **Slayer:** new `/slay <player or seat>` command for any living player
+    during the day. The claim is public; the target dies only if the shooter
+    really is the unspent, sober Slayer and the target is the Demon.
+    Otherwise "Nothing happens." and the Storyteller is told why.
+  - **Scarlet Woman:** when the Demon dies with five or more players alive,
+    a sober Scarlet Woman becomes that Demon: the Grimoire and their role
+    card update and an "Is Demon" reminder is added.
+  - **Protection:** Demon Kill refuses a target protected by a Safe/Protected
+    reminder, a sober Soldier, a sober Sailor, a Tea Lady's "Cannot Die", or
+    the Fool's first death (which spends the ability). Mark Dead still
+    overrides.
+  - **Win prompts:** when no Demon is alive, when two or fewer non-Travellers
+    remain, when a sober Saint is executed, or when the day ends without an
+    execution with three alive and a sober Mayor, the Storyteller gets a
+    "Game over?" message with [Good wins] / [Evil wins] buttons. Nothing ends
+    on its own.
+- New Storyteller console twins for testing: `/bots markDead <seat>`,
+  `/bots demonKill <seat>`, `/bots nominatePair <nominator> <nominee>` and
+  `/bots automation virgin <seat>`.
+
 ## 1.0.2-alpha.13 — UI pass (unreleased)
 - Every Sharktower screen now uses one themed button (dark panel, soft border,
   gold hover ring, muted when inactive, long labels trimmed with an ellipsis)
