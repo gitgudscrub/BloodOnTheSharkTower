@@ -586,19 +586,25 @@ public final class NightChatManager {
         VoicechatServerApi api = VoicechatIntegrationState.serverApi();
         if (api == null) return;
         Set<UUID> participants = houseParticipants();
+        Set<Integer> seatsWithHomes = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.values());
         Set<UUID> online = new HashSet<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             UUID id = player.getUUID(); online.add(id);
             if (SESSIONS_BY_PARTICIPANT.containsKey(id)) continue;
             Integer house = null;
             if (!ServerState.gameEnded && participants.contains(id)) {
-                var distances = new java.util.TreeMap<Integer,Double>();
-                for (int seat : new java.util.TreeSet<>(ServerState.PLAYER_SEAT_NUMBERS.values())) {
-                    var home = SeatPositionManager.seatHome(seat);
-                    if (home != null) distances.put(seat, player.distanceToSqr(home.x(),home.y(),home.z()));
+                // A player only ever routes into their own house; the
+                // Storyteller into the nearest one. Measure just what
+                // HouseVoicePolicy reads instead of every seat for everyone.
+                boolean storyteller = StorytellerState.isStoryteller(id);
+                Integer ownSeat = ServerState.PLAYER_SEAT_NUMBERS.get(id);
+                Map<Integer,Double> distances = new HashMap<>();
+                if (storyteller) {
+                    for (int seat : seatsWithHomes) addDistance(distances, player, seat);
+                } else if (ownSeat != null) {
+                    addDistance(distances, player, ownSeat);
                 }
-                house = HouseVoicePolicy.houseFor(ServerState.PLAYER_SEAT_NUMBERS.get(id),
-                        StorytellerState.isStoryteller(id), distances, HOUSE_EXIT_RADIUS);
+                house = HouseVoicePolicy.houseFor(ownSeat, storyteller, distances, HOUSE_EXIT_RADIUS);
             }
             Integer previous = HOUSE_ROOMS.get(id);
             if (house == null) HOUSE_ROOMS.remove(id); else HOUSE_ROOMS.put(id,house);
@@ -618,6 +624,11 @@ public final class NightChatManager {
 
     }
 
+    private static void addDistance(Map<Integer,Double> distances, ServerPlayer player, int seat) {
+        var home = SeatPositionManager.seatHome(seat);
+        if (home != null) distances.put(seat, player.distanceToSqr(home.x(), home.y(), home.z()));
+    }
+
     public static synchronized boolean isHouseRouted(UUID id) {
         return HOUSE_ROOMS.containsKey(id) && !SESSIONS_BY_PARTICIPANT.containsKey(id);
     }
@@ -635,11 +646,16 @@ public final class NightChatManager {
         } catch (Throwable ignored) {}
     }
 
+    private static final Map<UUID,UUID> RECONNECT_GROUP_IDS = new HashMap<>();
+    private static final Map<Integer,UUID> HOUSE_GROUP_IDS = new HashMap<>();
+
     private static UUID reconnectGroupId(UUID id) {
-        return UUID.nameUUIDFromBytes(("blood-on-the-sharktower:voice:reconnect:" + id).getBytes(StandardCharsets.UTF_8));
+        return RECONNECT_GROUP_IDS.computeIfAbsent(id, key -> UUID.nameUUIDFromBytes(
+                ("blood-on-the-sharktower:voice:reconnect:" + key).getBytes(StandardCharsets.UTF_8)));
     }
     private static UUID houseGroupId(int seat) {
-        return UUID.nameUUIDFromBytes(("blood-on-the-sharktower:house:" + seat).getBytes(StandardCharsets.UTF_8));
+        return HOUSE_GROUP_IDS.computeIfAbsent(seat, key -> UUID.nameUUIDFromBytes(
+                ("blood-on-the-sharktower:house:" + key).getBytes(StandardCharsets.UTF_8)));
     }
     private static Group ensureHouseGroup(VoicechatServerApi api, int seat) {
         Group existing = findRegisteredGroup(api, houseGroupId(seat));
@@ -678,11 +694,18 @@ public final class NightChatManager {
             if (connection == null || !connection.isConnected()) return false;
             PrivateSession session = SESSIONS_BY_PARTICIPANT.get(playerId);
             Integer house = HOUSE_ROOMS.get(playerId);
-            Group desired = session != null ? ensurePrivateGroup(api,session.groupId())
-                    : house != null ? ensureHouseGroup(api,house) : null;
-            if (desired == null) return false;
+            UUID desiredId = session != null ? session.groupId() : house != null ? houseGroupId(house) : null;
+            if (desiredId == null) return false;
             Group current = connection.getGroup();
-            if (current == null || !desired.getId().equals(current.getId())) connection.setGroup(desired);
+            if (current != null && desiredId.equals(current.getId())) {
+                // Runs every tick for everyone inside a house: when nothing
+                // moved, skip enumerating Simple Voice Chat's group list.
+                MANAGED_CONNECTIONS.add(playerId);
+                return true;
+            }
+            Group desired = session != null ? ensurePrivateGroup(api,session.groupId()) : ensureHouseGroup(api,house);
+            if (desired == null) return false;
+            connection.setGroup(desired);
             MANAGED_CONNECTIONS.add(playerId);
             return true;
         } catch (Throwable t) {
