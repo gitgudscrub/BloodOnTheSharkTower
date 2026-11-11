@@ -3,7 +3,6 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -27,52 +26,52 @@ public class StorytellerToolsScreen extends Screen {
         int top = 46;
         int row = rowSpacing();
 
-        this.addRenderableWidget(Button.builder(Component.literal("Grimoire"), b -> this.minecraft.gui.setScreen(new AssignRolesScreen()))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Grimoire"), b -> this.minecraft.gui.setScreen(new AssignRolesScreen()))
                 .bounds(left, top, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Script"), b -> this.minecraft.gui.setScreen(new ScriptReferenceScreen()))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Script"), b -> this.minecraft.gui.setScreen(new ScriptReferenceScreen()))
                 .bounds(mid, top, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Role Catalog"), b -> this.minecraft.gui.setScreen(new RoleCatalogScreen()))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Role Catalog"), b -> this.minecraft.gui.setScreen(new RoleCatalogScreen()))
                 .bounds(right, top, 100, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Start Night"), b -> ClientStorytellerActions.send("phase_night"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Night"), b -> ClientStorytellerActions.send("phase_night"))
                 .bounds(left, top + row, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Start Day"), b -> ClientStorytellerActions.send("phase_day"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Day"), b -> ClientStorytellerActions.send("phase_day"))
                 .bounds(mid, top + row, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Night Status"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Night Status"), b ->
                         ClientStorytellerActions.send("night_status"))
                 .bounds(right, top + row, 100, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Timer"), b -> this.minecraft.gui.setScreen(new TimerScreen()))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Timer"), b -> this.minecraft.gui.setScreen(new TimerScreen()))
                 .bounds(left, top + row * 2, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Sync State"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Sync State"), b ->
                         ClientStorytellerActions.send("sync_state"))
                 .bounds(mid, top + row * 2, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Status"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Status"), b ->
                         ClientStorytellerActions.send("storyteller_status"))
                 .bounds(right, top + row * 2, 100, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Nomination Flow"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Nomination Flow"), b ->
                         this.minecraft.gui.setScreen(new NominationControlScreen()))
                 .bounds(left, top + row * 3, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Traveller Exile"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Traveller Exile"), b ->
                         this.minecraft.gui.setScreen(new ExileControlScreen()))
                 .bounds(mid, top + row * 3, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Execute Marked"), b -> ClientStorytellerActions.send("execute_marked"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Execute Marked"), b -> ClientStorytellerActions.send("execute_marked"))
                 .bounds(right, top + row * 3, 100, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Full Reset"), b -> ClientStorytellerActions.send("reset_hard"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Full Reset"), b -> ClientStorytellerActions.send("reset_hard"))
                 .bounds(left, top + row * 4, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("End Game"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("End Game"), b ->
                         this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
                 .bounds(mid, top + row * 4, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Restore Previous"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Restore Previous"), b ->
                         ClientStorytellerActions.send("snapshot_restore_previous"))
                 .bounds(right, top + row * 4, 100, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Settings"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Settings"), b ->
                         this.minecraft.gui.setScreen(new SharktowerSettingsScreen(this)))
                 .bounds(cx - 105, this.height - 28, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.onClose())
                 .bounds(cx + 5, this.height - 28, 100, 20).build());
     }
 

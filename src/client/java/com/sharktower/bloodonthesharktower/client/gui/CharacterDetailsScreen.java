@@ -2,7 +2,6 @@ package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -33,7 +32,7 @@ public class CharacterDetailsScreen extends Screen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.onClose())
                 .bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
     }
 

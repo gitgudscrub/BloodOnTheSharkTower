@@ -1,7 +1,6 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 public final class ScriptImportConflictScreen extends Screen {
@@ -12,7 +11,7 @@ public final class ScriptImportConflictScreen extends Screen {
         add("Replace", "replace",y);add("Save Distinct Version","distinct",y+24);add("Cancel","cancel",y+48);
     }
     private void add(String label,String decision,int y) {
-        this.addRenderableWidget(Button.builder(Component.literal(label),b->{ClientStorytellerActions.send("custom_script_confirm",token+"|"+decision);this.minecraft.gui.setScreen(new CustomScriptsScreen());}).bounds(this.width/2-100,y,200,20).build());
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(label),b->{ClientStorytellerActions.send("custom_script_confirm",token+"|"+decision);this.minecraft.gui.setScreen(new CustomScriptsScreen());}).bounds(this.width/2-100,y,200,20).build());
     }
     public void onClose() { ClientStorytellerActions.send("custom_script_confirm",token+"|cancel");this.minecraft.gui.setScreen(new CustomScriptsScreen()); }
     public void extractRenderState(GuiGraphicsExtractor g,int x,int y,float delta) {

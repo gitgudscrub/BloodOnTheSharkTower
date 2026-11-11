@@ -8,7 +8,6 @@ import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -35,56 +34,56 @@ public final class PlayerSetupScreen extends Screen {
         int w = 150;
         int gap = 5;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Choose Role"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Choose Role"), b ->
                         this.minecraft.gui.setScreen(RoleSelectionScreen.forSeat(seat, new AssignRolesScreen())))
                 .bounds(cx - w - gap, y, w, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Clear Role"), b -> action("clear_role", Integer.toString(seat)))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear Role"), b -> action("clear_role", Integer.toString(seat)))
                 .bounds(cx + gap, y, w, 20).build());
 
         y += 32;
         boolean storyteller = ClientGrimoireEdits.isLocalStoryteller();
-        this.addRenderableWidget(Button.builder(Component.literal(storyteller ? "Default Alignment" : "Clear Read"), b -> action("alignment_default", Integer.toString(seat)))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(storyteller ? "Default Alignment" : "Clear Read"), b -> action("alignment_default", Integer.toString(seat)))
                 .bounds(cx - 155, y, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(storyteller ? "Force Good" : "Read Good"), b -> action("alignment_good", Integer.toString(seat)))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(storyteller ? "Force Good" : "Read Good"), b -> action("alignment_good", Integer.toString(seat)))
                 .bounds(cx - 50, y, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(storyteller ? "Force Evil" : "Read Evil"), b -> action("alignment_evil", Integer.toString(seat)))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(storyteller ? "Force Evil" : "Read Evil"), b -> action("alignment_evil", Integer.toString(seat)))
                 .bounds(cx + 55, y, 100, 20).build());
 
         y += 42;
-        this.addRenderableWidget(Button.builder(Component.literal("Edit Reminders"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Edit Reminders"), b ->
                         this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat)))
                 .bounds(cx - 155, y, 205, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Clear Reminders"), b -> action("clear_reminders", Integer.toString(seat)))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear Reminders"), b -> action("clear_reminders", Integer.toString(seat)))
                 .bounds(cx + 55, y, 100, 20).build());
 
         if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.phase() != GamePhase.SETUP) {
             y += 34;
             boolean dead = ClientState.playerDeathStatus.getOrDefault(playerId, false);
             if (dead) {
-                this.addRenderableWidget(Button.builder(Component.literal("Revive Player"),
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Revive Player"),
                                 b -> action("revive_player", Integer.toString(seat)))
                         .bounds(cx - 100, y, 200, 20).build());
             } else if (ClientState.phase() == GamePhase.NIGHT) {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately"),
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Mark Dead Privately"),
                                 b -> action("mark_dead", Integer.toString(seat)))
                         .bounds(cx - w - gap, y, w, 20).build());
-                this.addRenderableWidget(Button.builder(Component.literal("Demon Kill"),
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Demon Kill"),
                                 b -> action("demon_kill", Integer.toString(seat)))
                         .bounds(cx + gap, y, w, 20).build());
             } else {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately"),
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Mark Dead Privately"),
                                 b -> action("mark_dead", Integer.toString(seat)))
                         .bounds(cx - 100, y, 200, 20).build());
             }
         }
 
         if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.phase() != GamePhase.SETUP) {
-            this.addRenderableWidget(Button.builder(Component.literal("Game Actions"), b ->
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Game Actions"), b ->
                             this.minecraft.gui.setScreen(new GrimoirePlayerActionScreen(playerId, seat)))
                     .bounds(cx - 100, this.height - 55, 200, 20).build());
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b -> returnToGrimoire())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b -> returnToGrimoire())
                 .bounds(cx - 100, this.height - 30, 200, 20).build());
     }
 

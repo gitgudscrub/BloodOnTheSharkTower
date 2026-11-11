@@ -3,7 +3,6 @@ import com.sharktower.bloodonthesharktower.states.ClientState;
 import com.sharktower.bloodonthesharktower.networking.NotebookPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.components.MultiLineEditBox;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -21,7 +20,7 @@ public final class PersonalNotebookScreen extends Screen {
             .setPlaceholder(Component.literal("Your private game notes…")).build(this.font,w,Math.max(30,this.height-76),Component.literal("Private notes"));
         editor.setCharacterLimit(NotebookPayload.LIMIT); editor.setValue(text);
         this.addRenderableWidget(editor); this.setInitialFocus(editor);
-        this.addRenderableWidget(Button.builder(Component.literal("Done"),b->onClose()).bounds(this.width/2-45,this.height-30,90,20).build());
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Done"),b->onClose()).bounds(this.width/2-45,this.height-30,90,20).build());
     }
     public void tick() {
         super.tick();

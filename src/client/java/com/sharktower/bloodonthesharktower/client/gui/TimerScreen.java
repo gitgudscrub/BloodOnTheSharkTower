@@ -3,7 +3,6 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.timer.ClientTimerState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -16,10 +15,10 @@ import net.minecraft.network.chat.Component;
  * receives the same timer state and HUD.
  */
 public class TimerScreen extends Screen {
-    private Button pauseResumeButton;
-    private Button stopButton;
+    private SharktowerButton pauseResumeButton;
+    private SharktowerButton stopButton;
     private EditBox customTime;
-    private Button startCustomButton;
+    private SharktowerButton startCustomButton;
     private String customValue = "";
 
     public TimerScreen() {
@@ -48,14 +47,14 @@ public class TimerScreen extends Screen {
             if (startCustomButton != null) startCustomButton.active = customSeconds(value) > 0;
         });
         this.addRenderableWidget(customTime);
-        startCustomButton = Button.builder(Component.literal("Start Custom"), b -> {
+        startCustomButton = SharktowerButton.builder(Component.literal("Start Custom"), b -> {
                     int seconds = customSeconds(customTime.getValue());
                     if (seconds > 0) ClientStorytellerActions.send("timer_start", Integer.toString(seconds));
                 }).bounds(cx + 35, top + 60, 90, 20).build();
         startCustomButton.active = customSeconds(customValue) > 0;
         this.addRenderableWidget(startCustomButton);
 
-        pauseResumeButton = Button.builder(
+        pauseResumeButton = SharktowerButton.builder(
                         Component.literal(ClientTimerState.isPaused ? "Resume" : "Pause"),
                         b -> ClientStorytellerActions.send(
                                 ClientTimerState.isPaused ? "timer_resume" : "timer_pause"))
@@ -63,18 +62,18 @@ public class TimerScreen extends Screen {
         pauseResumeButton.active = ClientTimerState.isActive;
         this.addRenderableWidget(pauseResumeButton);
 
-        stopButton = Button.builder(Component.literal("Stop"),
+        stopButton = SharktowerButton.builder(Component.literal("Stop"),
                         b -> ClientStorytellerActions.send("timer_stop"))
                 .bounds(cx + 5, top + 135, 95, 20).build();
         stopButton.active = ClientTimerState.isActive;
         this.addRenderableWidget(stopButton);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.onClose())
                 .bounds(cx - 100, top + 165, 200, 20).build());
     }
 
     private void addPreset(int x, int y, String label, int seconds) {
-        this.addRenderableWidget(Button.builder(Component.literal(label),
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(label),
                         b -> ClientStorytellerActions.send("timer_start", Integer.toString(seconds)))
                 .bounds(x, y, 70, 20).build());
     }

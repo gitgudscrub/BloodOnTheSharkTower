@@ -7,7 +7,6 @@ import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -70,37 +69,37 @@ public final class ScriptBuilderScreen extends Screen {
             int row = local / columns;
             boolean chosen = SELECTED.contains(role.getId());
             String label = (chosen ? "[x] " : "[ ] ") + role.getDisplayName();
-            this.addRenderableWidget(Button.builder(Component.literal(label), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(label), b -> {
                         if (!SELECTED.add(role.getId())) SELECTED.remove(role.getId());
                         this.minecraft.gui.setScreen(new ScriptBuilderScreen(page));
                     })
                     .bounds(left + col * (w + gapX), top + row * (h + gapY), w, h).build());
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Base 3"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Base 3"), b ->
                         this.minecraft.gui.setScreen(new BaseThreeScreen()))
                 .bounds(this.width - 108, 10, 96, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Custom Scripts"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Custom Scripts"), b ->
                         CustomScriptsScreen.openAndRefresh())
                 .bounds(this.width - 108, 34, 96, 20).build());
 
         int navY = this.height - 70;
-        this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("<"), b -> {
             if (page > 0) this.minecraft.gui.setScreen(new ScriptBuilderScreen(page - 1));
         }).bounds(this.width / 2 - 120, navY, 40, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(">"), b -> {
             if (page < maxPage) this.minecraft.gui.setScreen(new ScriptBuilderScreen(page + 1));
         }).bounds(this.width / 2 - 70, navY, 40, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Clear"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear"), b -> {
             SELECTED.clear();
             this.minecraft.gui.setScreen(new ScriptBuilderScreen(0));
         }).bounds(this.width / 2 - 20, navY, 70, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Load Script"), b -> load())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Load Script"), b -> load())
                 .bounds(this.width / 2 + 60, navY, 110, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b ->
                         this.minecraft.gui.setScreen(new AssignRolesScreen()))
                 .bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
     }

@@ -5,7 +5,6 @@ import com.sharktower.bloodonthesharktower.core.Script;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -22,8 +21,8 @@ public class ScriptReferenceScreen extends Screen {
     private Page page = Page.ROLES;
     private int referenceIndex;
     private Script displayedScript;
-    private Button previous;
-    private Button next;
+    private SharktowerButton previous;
+    private SharktowerButton next;
     private Script cachedJinxScript;
     private int cachedJinxWidth = -1;
     private List<ReferenceLine> cachedJinxLines = List.of();
@@ -46,17 +45,17 @@ public class ScriptReferenceScreen extends Screen {
         int leftX = middleX - gap - buttonWidth;
         int rightX = middleX + buttonWidth + gap;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Roles"), b -> { page = Page.ROLES; referenceIndex = 0; })
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Roles"), b -> { page = Page.ROLES; referenceIndex = 0; })
                 .bounds(leftX, y, buttonWidth, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Night Order"), b -> { page = Page.NIGHT_ORDER; referenceIndex = 0; })
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Night Order"), b -> { page = Page.NIGHT_ORDER; referenceIndex = 0; })
                 .bounds(middleX, y, buttonWidth, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Jinxes"), b -> { page = Page.JINXES; referenceIndex = 0; })
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Jinxes"), b -> { page = Page.JINXES; referenceIndex = 0; })
                 .bounds(rightX, y, buttonWidth, 20).build());
 
-        previous = this.addRenderableWidget(Button.builder(Component.literal("< Previous"), b -> {
+        previous = this.addRenderableWidget(SharktowerButton.builder(Component.literal("< Previous"), b -> {
             referenceIndex = Math.max(0, referenceIndex - 1);
         }).bounds(12, this.height - 27, 86, 20).build());
-        next = this.addRenderableWidget(Button.builder(Component.literal("Next >"), b -> {
+        next = this.addRenderableWidget(SharktowerButton.builder(Component.literal("Next >"), b -> {
             referenceIndex++;
         }).bounds(this.width - 98, this.height - 27, 86, 20).build());
     }

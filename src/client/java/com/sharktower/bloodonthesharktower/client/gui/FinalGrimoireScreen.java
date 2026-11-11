@@ -6,7 +6,6 @@ import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -44,17 +43,17 @@ public final class FinalGrimoireScreen extends Screen {
                 && ClientState.storytellerPlayers.contains(this.minecraft.player.getUUID());
 
         if (storyteller && ClientState.gameEnding) {
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Reset for Next Game").withStyle(ChatFormatting.GOLD),
                             b -> {
                                 ClientStorytellerActions.send("reset_for_next_game");
                                 this.minecraft.gui.setScreen(null);
                             })
                     .bounds(cx - 105, this.height - 30, 130, 20).build());
-            this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> closeScreen())
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Close"), b -> closeScreen())
                     .bounds(cx + 35, this.height - 30, 70, 20).build());
         } else {
-            this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> closeScreen())
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Close"), b -> closeScreen())
                     .bounds(cx - 40, this.height - 30, 80, 20).build());
         }
     }
