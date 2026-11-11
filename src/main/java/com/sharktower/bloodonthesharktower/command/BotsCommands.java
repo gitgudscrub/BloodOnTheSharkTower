@@ -286,6 +286,8 @@ public final class BotsCommands {
                                                 .executes(BotsCommands::executeNominatePair))))
                         .then(Commands.literal("automation")
                                 .then(Commands.literal("virgin")
+                                        .then(Commands.literal("dismiss")
+                                                .executes(BotsCommands::executeAutomationVirginDismiss))
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationVirgin))))
                         .then(Commands.literal("executionFail").executes(BotsCommands::executeMarkedPlayerFail))
@@ -1437,6 +1439,13 @@ public final class BotsCommands {
         return refusal == null ? 1 : 0;
     }
 
+    private static int executeAutomationVirginDismiss(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation.virginDismiss();
+        send(context, refusal == null ? "Virgin: no effect. The nomination continues as normal." : refusal);
+        return refusal == null ? 1 : 0;
+    }
+
     private static boolean requireStoryteller(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = context.getSource().getPlayer();
         if (player == null || StorytellerState.isStoryteller(player.getUUID())) return true;
@@ -1483,10 +1492,6 @@ public final class BotsCommands {
             return 0;
         }
         StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        if (!DaytimeState.hasActiveNomination()) {
-            send(context, "Nomination resolved by the Virgin's ability; there is no vote.");
-            return Command.SINGLE_SUCCESS;
-        }
         send(context, "Nomination accepted: " + seatLabel(nominator.getUUID()) + " -> seat " + seat
                 + ". Votes required: " + currentVotesRequired());
         return Command.SINGLE_SUCCESS;

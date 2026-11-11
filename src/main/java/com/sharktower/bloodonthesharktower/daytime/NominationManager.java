@@ -31,18 +31,6 @@ public final class NominationManager {
         DaytimeState.resetVote();
         DaytimeState.clearRaisedHands();
 
-        if (RoleAutomation.onNomination(server, nominator, nominee)) {
-            // The Virgin's ability resolved this nomination: the nominator is
-            // already executed, so there is no vote. Both still count as used.
-            DaytimeState.useNomination(nominator);
-            if (!DaytimeState.hasNominationsRemaining(nominator)) DaytimeState.setCanNominate(nominator, false);
-            if (ServerState.PLAYER_SEAT_NUMBERS.containsKey(nominee)) DaytimeState.setCanBeNominated(nominee, false);
-            DayPublicInfoBookManager.recordNomination(server, nominator);
-            recordMinionNomination(server, nominator);
-            StateBroadcaster.broadcastDaytimeState(server);
-            StateBroadcaster.broadcastVoteState(server);
-            return true;
-        }
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(nominee);
         ElectionState.beginElection(
@@ -64,6 +52,7 @@ public final class NominationManager {
         recordMinionNomination(server, nominator);
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastVoteState(server);
+        RoleAutomation.onNomination(server, nominator, nominee);
         return true;
     }
 

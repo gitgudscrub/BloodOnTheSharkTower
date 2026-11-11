@@ -2,6 +2,7 @@ package com.sharktower.bloodonthesharktower.automation;
 
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
+import com.sharktower.bloodonthesharktower.core.PhaseOperations;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.RoleType;
@@ -46,74 +47,103 @@ import java.util.UUID;
 public final class RoleAutomation {
     private static final String NO_ABILITY = "No Ability";
     private static String lastPromptKey = "";
+    /** The Virgin trigger waiting for the Storyteller's decision, if any. */
+    private static UUID pendingVirginNominator;
+    private static UUID pendingVirginNominee;
+    private static int pendingVirginDay = -1;
 
     private RoleAutomation() {}
 
     /** Forget the dedupe key so the next game can prompt again from scratch. */
     public static void reset() {
         lastPromptKey = "";
+        clearPendingVirgin();
     }
 
     // ------------------------------------------------------------------ Virgin
 
     /**
-     * Called after a nomination has been accepted. If the nominee is a sober,
-     * unspent Virgin and the nominator is really a Townsfolk, the nominator is
-     * executed on the spot and the nomination ends. The Virgin's ability is
-     * spent by the first nomination whatever happens.
+     * First nomination of the Virgin. The ability is spent at once, but the
+     * execution is always the Storyteller's call: the Spy may register as a
+     * Townsfolk, a custom role may or may not count, and the Storyteller may
+     * know something the Grimoire does not. The Storyteller gets a
+     * recommendation with [Execute] and [No effect] buttons and decides before
+     * starting the vote.
      */
-    public static boolean onNomination(MinecraftServer server, UUID nominator, UUID nominee) {
-        if (server == null || nominator == null || nominee == null) return false;
-        if (!is(nominee, Role.VIRGIN) || !isAlive(nominee) || abilitySpent(nominee)) return false;
-
+    public static void onNomination(MinecraftServer server, UUID nominator, UUID nominee) {
+        if (server == null || nominator == null || nominee == null) return;
+        if (!is(nominee, Role.VIRGIN) || !isAlive(nominee) || abilitySpent(nominee)) return;
         spendAbility(nominee, Role.VIRGIN);
+        StateBroadcaster.broadcastGrimoire(server);
+
         PendingRoleAssignment nominatorRole = actualRole(nominator);
         String virgin = label(server, nominee);
         String who = label(server, nominator);
-
+        String role = nominatorRole == null ? "no role" : nominatorRole.getDisplayName();
+        String advice;
         if (droisoned(nominee)) {
-            tellStorytellers(server, "Virgin: " + virgin + " is drunk or poisoned, so " + who
-                    + " is not executed. The Virgin's ability is now spent.", ChatFormatting.GOLD);
-            StateBroadcaster.broadcastGrimoire(server);
-            return false;
+            advice = "The Virgin is drunk or poisoned, so nothing should happen.";
+        } else if (is(nominator, Role.SPY)) {
+            advice = "The Spy may register as a Townsfolk: executing them is your choice.";
+        } else if (nominatorRole != null && nominatorRole.isCustomRole()) {
+            advice = role + " is a custom role: check whether it counts as a Townsfolk.";
+        } else if (nominatorRole != null && nominatorRole.getRoleType() == RoleType.TOWNSFOLK) {
+            advice = who + " is a Townsfolk, so they should be executed.";
+        } else {
+            advice = who + " is not a Townsfolk, so nothing should happen.";
         }
-        if (nominatorRole != null && nominatorRole.getRoleType() == RoleType.TOWNSFOLK && !nominatorRole.isCustomRole()) {
-            announce(server, who + " nominated " + virgin + " and is executed immediately.", ChatFormatting.RED);
-            ExecutionManager.executePlayer(server, nominator, false, null);
-            tellStorytellers(server, "Virgin: " + who + " (" + nominatorRole.getDisplayName()
-                    + ") was a Townsfolk, so the execution happened automatically. No further execution today.",
-                    ChatFormatting.GOLD);
-            return true;
-        }
-        String reason = nominatorRole == null ? "has no role"
-                : "is the " + nominatorRole.getDisplayName() + ", not a Townsfolk";
-        String extra = is(nominator, Role.SPY)
-                ? " The Spy may register as a Townsfolk: " : "";
-        Component message = Component.literal("Virgin: " + who + " " + reason + ", so nothing happens. The Virgin's ability is now spent." + extra)
+
+        pendingVirginNominator = nominator;
+        pendingVirginNominee = nominee;
+        pendingVirginDay = ServerState.currentDay;
+        Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(nominator);
+        Component message = Component.literal("Virgin: " + who + " (" + role + ") nominated " + virgin
+                        + ". The Virgin's ability is now spent. " + advice + " Decide before starting the vote: ")
                 .withStyle(ChatFormatting.GOLD);
-        if (is(nominator, Role.SPY)) {
-            Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(nominator);
-            if (seat != null) {
-                message = message.copy().append(button("[Execute the Spy now]",
-                        "/bots automation virgin " + seat, "Treat the Spy as a Townsfolk and execute them"));
-            }
+        if (seat != null) {
+            message = message.copy()
+                    .append(button("[Execute " + who + "]", "/bots automation virgin " + seat,
+                            "Execute " + who + " now; the nomination ends with no vote"))
+                    .append(Component.literal(" "))
+                    .append(button("[No effect]", "/bots automation virgin dismiss",
+                            "Nothing happens; the nomination continues as normal"));
         }
         tellStorytellers(server, message);
-        StateBroadcaster.broadcastGrimoire(server);
-        return false;
     }
 
-    /** Storyteller override for the Spy case: execute the nominator as if the Virgin had fired. */
+    /** The Storyteller approved the Virgin trigger: execute the nominator now. */
     public static String virginExecute(MinecraftServer server, UUID nominator) {
-        if (nominator == null || !isAlive(nominator)) return "That player is not alive.";
-        if (!ServerState.PLAYER_SEAT_NUMBERS.containsKey(nominator)) return "That player is not seated.";
+        if (nominator == null || !nominator.equals(pendingVirginNominator)
+                || pendingVirginDay != ServerState.currentDay || !PhaseOperations.isDay()) {
+            return "There is no Virgin decision waiting for that player today.";
+        }
+        if (!isAlive(nominator)) {
+            clearPendingVirgin();
+            return "That player is not alive.";
+        }
+        UUID nominee = pendingVirginNominee;
+        clearPendingVirgin();
         NominationManager.resetNomination(server);
-        announce(server, label(server, nominator) + " is executed immediately.", ChatFormatting.RED);
+        announce(server, label(server, nominator) + " nominated " + label(server, nominee)
+                + " and is executed immediately.", ChatFormatting.RED);
         ExecutionManager.executePlayer(server, nominator, false, null);
         return null;
     }
 
-    // ------------------------------------------------------------------ Slayer
+    /** The Storyteller ruled that the Virgin trigger has no effect. */
+    public static String virginDismiss() {
+        if (pendingVirginNominator == null) return "There is no Virgin decision waiting.";
+        clearPendingVirgin();
+        return null;
+    }
+
+    private static void clearPendingVirgin() {
+        pendingVirginNominator = null;
+        pendingVirginNominee = null;
+        pendingVirginDay = -1;
+    }
+
+        // ------------------------------------------------------------------ Slayer
 
     /**
      * A public Slayer shot. Anyone may claim it (bluffing is part of the game),
