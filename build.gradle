@@ -264,6 +264,14 @@ tasks.register('houseVoiceRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('houseVoiceRegression') }
 
+// Storyteller control: open during Setup, locked while hidden roles exist, operator override.
+tasks.register('storytellerClaimRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.states.StorytellerClaimRegression'
+}
+tasks.named('check') { dependsOn tasks.named('storytellerClaimRegression') }
+
 tasks.register('handRaiseModeRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
