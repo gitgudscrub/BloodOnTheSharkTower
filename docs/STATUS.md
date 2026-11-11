@@ -110,7 +110,10 @@ after the alpha that introduced each change.
 - Execute — Lives;
 - vote-result cleanup;
 - large world-space tick/cross vote markers;
-- 3/2/1 pre-vote countdown.
+- 3/2/1 pre-vote countdown;
+- role automation (Virgin, Slayer via `/slay`, Scarlet Woman, protection
+  refusals on Demon Kill, win-condition prompts), verified on the dev
+  harness in November 2026.
 
 ### Night game and information
 

@@ -274,6 +274,20 @@ public final class BotsCommands {
                         .then(Commands.literal("cancelVote").executes(BotsCommands::executeCancelVote))
                         .then(Commands.literal("resetVote").executes(BotsCommands::executeResetVote))
                         .then(Commands.literal("execute").executes(BotsCommands::executeMarkedPlayer))
+                        .then(Commands.literal("markDead")
+                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                        .executes(context -> executeMarkDead(context, false))))
+                        .then(Commands.literal("demonKill")
+                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                        .executes(context -> executeMarkDead(context, true))))
+                        .then(Commands.literal("nominatePair")
+                                .then(Commands.argument("nominator", IntegerArgumentType.integer(1))
+                                        .then(Commands.argument("nominee", IntegerArgumentType.integer(1))
+                                                .executes(BotsCommands::executeNominatePair))))
+                        .then(Commands.literal("automation")
+                                .then(Commands.literal("virgin")
+                                        .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                .executes(BotsCommands::executeAutomationVirgin))))
                         .then(Commands.literal("executionFail").executes(BotsCommands::executeMarkedPlayerFail))
                         .then(Commands.literal("callForExile")
                                 .then(Commands.argument("seat", IntegerArgumentType.integer(1))
@@ -1383,6 +1397,46 @@ public final class BotsCommands {
      * only ever granted explicitly by /bots storyteller claim; no command claims it
      * as a side effect any more.
      */
+    /** Console twin of the Grimoire's Mark Dead / Demon Kill buttons. */
+    private static int executeMarkDead(CommandContext<CommandSourceStack> context, boolean demonKill) {
+        if (!requireStoryteller(context)) return 0;
+        int seat = IntegerArgumentType.getInteger(context, "seat");
+        SetupOperations.Result result = com.sharktower.bloodonthesharktower.networking.StorytellerActionHandler
+                .markDead(context.getSource().getServer(), seat, demonKill);
+        send(context, result.message());
+        return result.ok() ? Command.SINGLE_SUCCESS : 0;
+    }
+
+    /** Console twin of the Grimoire's nominate action: seat A nominates seat B. */
+    private static int executeNominatePair(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        UUID nominator = SetupOperations.playerBySeat(IntegerArgumentType.getInteger(context, "nominator"));
+        UUID nominee = SetupOperations.playerBySeat(IntegerArgumentType.getInteger(context, "nominee"));
+        if (nominator == null || nominee == null) {
+            send(context, "Both seats must have a player.");
+            return 0;
+        }
+        SetupOperations.Result result = com.sharktower.bloodonthesharktower.networking.StorytellerActionHandler
+                .nominatePair(context.getSource().getServer(), nominator + "|" + nominee);
+        send(context, result.message());
+        return result.ok() ? Command.SINGLE_SUCCESS : 0;
+    }
+
+    /** Storyteller override for the Spy-nominates-Virgin case: execute that seat as if the Virgin fired. */
+    private static int executeAutomationVirgin(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        int seat = IntegerArgumentType.getInteger(context, "seat");
+        UUID target = SetupOperations.playerBySeat(seat);
+        if (target == null) {
+            send(context, "No player is assigned to seat " + seat + ".");
+            return 0;
+        }
+        String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
+                .virginExecute(context.getSource().getServer(), target);
+        send(context, refusal == null ? "Seat " + seat + " was executed by the Virgin's ability." : refusal);
+        return refusal == null ? 1 : 0;
+    }
+
     private static boolean requireStoryteller(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = context.getSource().getPlayer();
         if (player == null || StorytellerState.isStoryteller(player.getUUID())) return true;
@@ -1429,6 +1483,10 @@ public final class BotsCommands {
             return 0;
         }
         StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
+        if (!DaytimeState.hasActiveNomination()) {
+            send(context, "Nomination resolved by the Virgin's ability; there is no vote.");
+            return Command.SINGLE_SUCCESS;
+        }
         send(context, "Nomination accepted: " + seatLabel(nominator.getUUID()) + " -> seat " + seat
                 + ". Votes required: " + currentVotesRequired());
         return Command.SINGLE_SUCCESS;

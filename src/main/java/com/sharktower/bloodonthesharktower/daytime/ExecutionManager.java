@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.daytime;
 
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
+import com.sharktower.bloodonthesharktower.automation.RoleAutomation;
 import com.sharktower.bloodonthesharktower.networking.StateBroadcaster;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.nightorder.TriggeredNightOrderManager;
@@ -48,6 +49,7 @@ public final class ExecutionManager {
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastGrimoire(server);
         StateBroadcaster.broadcastStorytellerNightInfo(server);
+        if (!wasDead) RoleAutomation.onDeath(server, player, true);
     }
 
     public static void executePlayerFail(MinecraftServer server, UUID player, boolean forced, UUID butcherUuid) {
@@ -86,6 +88,7 @@ public final class ExecutionManager {
         StateBroadcaster.broadcastDayNightState(server);
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastVoteState(server);
+        RoleAutomation.onNoExecution(server);
     }
 
 }

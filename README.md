@@ -71,6 +71,12 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Traveller exile support.
 - Butler/Master voting support designed to avoid mechanically revealing the Butler through the public vote count.
 - TOR-aware Butler behaviour.
+- Role automation with the Storyteller keeping the final say: the Virgin's
+  nomination execution, the public Slayer shot (`/slay <player or seat>`),
+  the Scarlet Woman becoming the Demon, Demon Kill refusing protected
+  targets (Soldier, Sailor, Monk/Innkeeper "Safe", Tea Lady, Fool), and
+  "Game over?" prompts with Good/Evil buttons for the Demon dying, two
+  players left, a Saint execution or a Mayor no-execution day.
 
 ### Night and voice chat
 
