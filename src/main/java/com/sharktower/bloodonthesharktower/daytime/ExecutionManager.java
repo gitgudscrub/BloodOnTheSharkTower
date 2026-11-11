@@ -68,7 +68,7 @@ public final class ExecutionManager {
     private static void announceExecution(MinecraftServer server, UUID player, boolean died) {
         ServerPlayer online = server.getPlayerList().getPlayer(player);
         Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(player);
-        String name = online != null ? online.getName().getString()
+        String name = online != null ? com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(online)
                 : (seat == null ? "Player" : "Seat " + seat);
         Component message = Component.literal(name + (died
                 ? " was executed and died" : " was executed and survived"))

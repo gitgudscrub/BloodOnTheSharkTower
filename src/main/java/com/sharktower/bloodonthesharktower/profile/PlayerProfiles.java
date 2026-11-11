@@ -5,18 +5,23 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Persistent, cosmetic per-player profile (currently pronouns only). Keyed by
+ * Persistent, cosmetic per-player profile (pronouns and nickname, plus the
+ * last username seen so nicknames cannot copy an offline player). Keyed by
  * UUID and stored in the server config directory rather than the world, so a
  * player's choice survives world resets and server restarts. Everything here is
  * public to all players and must never encode role, alignment or any other
@@ -37,7 +42,103 @@ public final class PlayerProfiles {
             PROFILES.clear();
             path = null;
         });
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+                server.execute(() -> onJoin(server, handler.getPlayer())));
     }
+
+    // ---------------------------------------------------------------- Nicknames
+
+    public static String nickname(UUID playerId) {
+        Entry entry = playerId == null ? null : PROFILES.get(playerId);
+        return entry == null || entry.nickname == null ? "" : entry.nickname;
+    }
+
+    public static Map<UUID, String> allNicknames() {
+        Map<UUID, String> result = new LinkedHashMap<>();
+        PROFILES.forEach((id, entry) -> {
+            if (entry != null && entry.nickname != null && !entry.nickname.isEmpty()) result.put(id, entry.nickname);
+        });
+        return result;
+    }
+
+    /** The name other players see: the nickname when set, otherwise the username. */
+    public static String displayName(ServerPlayer player) {
+        if (player == null) return "";
+        String nick = nickname(player.getUUID());
+        return nick.isEmpty() ? player.getName().getString() : nick;
+    }
+
+    /** Display name for an online or remembered player, or null when unknown. */
+    public static String displayName(MinecraftServer server, UUID playerId) {
+        String nick = nickname(playerId);
+        if (!nick.isEmpty()) return nick;
+        ServerPlayer online = server == null || playerId == null ? null : server.getPlayerList().getPlayer(playerId);
+        if (online != null) return online.getName().getString();
+        Entry entry = playerId == null ? null : PROFILES.get(playerId);
+        return entry == null ? null : entry.username;
+    }
+
+    /** Every username and nickname that belongs to someone other than {@code playerId}. */
+    public static List<String> namesTakenByOthers(MinecraftServer server, UUID playerId) {
+        List<String> names = new ArrayList<>();
+        PROFILES.forEach((id, entry) -> {
+            if (id.equals(playerId) || entry == null) return;
+            if (entry.username != null) names.add(entry.username);
+            if (entry.nickname != null) names.add(entry.nickname);
+        });
+        if (server != null) {
+            for (ServerPlayer online : server.getPlayerList().getPlayers()) {
+                if (!online.getUUID().equals(playerId)) names.add(online.getName().getString());
+            }
+        }
+        return names;
+    }
+
+    /** Stores an already-validated nickname. Returns false if nothing changed. */
+    public static boolean setNickname(UUID playerId, String nickname) {
+        String value = Nicknames.normalise(nickname);
+        if (value.isEmpty()) return clearNickname(playerId);
+        Entry entry = PROFILES.computeIfAbsent(playerId, id -> new Entry());
+        if (value.equals(entry.nickname)) return false;
+        entry.nickname = value;
+        save();
+        return true;
+    }
+
+    public static boolean clearNickname(UUID playerId) {
+        Entry entry = PROFILES.get(playerId);
+        if (entry == null || entry.nickname == null || entry.nickname.isEmpty()) return false;
+        entry.nickname = null;
+        save();
+        return true;
+    }
+
+    /**
+     * Remembers the joining player's username. If someone else's nickname now
+     * matches it (a new player picked that username), that nickname is
+     * dropped so it cannot pass for the real player.
+     */
+    private static void onJoin(MinecraftServer server, ServerPlayer player) {
+        if (player == null || path == null) return;
+        String username = player.getName().getString();
+        Entry entry = PROFILES.computeIfAbsent(player.getUUID(), id -> new Entry());
+        boolean changed = !username.equals(entry.username);
+        entry.username = username;
+        String key = Nicknames.key(username);
+        for (Map.Entry<UUID, Entry> other : PROFILES.entrySet()) {
+            Entry value = other.getValue();
+            if (other.getKey().equals(player.getUUID()) || value == null || value.nickname == null) continue;
+            if (Nicknames.key(value.nickname).equals(key)) {
+                BloodOnTheSharktower.LOGGER.info("Cleared nickname '{}' of {}: it matches the username of {}",
+                        value.nickname, other.getKey(), username);
+                value.nickname = null;
+                changed = true;
+            }
+        }
+        if (changed) save();
+    }
+
+    // ---------------------------------------------------------------- Pronouns
 
     public static String pronouns(UUID playerId) {
         Entry entry = PROFILES.get(playerId);
@@ -68,7 +169,6 @@ public final class PlayerProfiles {
         Entry entry = PROFILES.get(playerId);
         if (entry == null || entry.pronouns == null || entry.pronouns.isEmpty()) return false;
         entry.pronouns = null;
-        if (entry.isEmpty()) PROFILES.remove(playerId);
         save();
         return true;
     }
@@ -86,6 +186,7 @@ public final class PlayerProfiles {
                 try {
                     UUID playerId = UUID.fromString(id);
                     if (entry.pronouns != null && !Pronouns.isValid(entry.pronouns)) entry.pronouns = null;
+                    if (entry.nickname != null && !Nicknames.isValid(entry.nickname)) entry.nickname = null;
                     if (!entry.isEmpty()) PROFILES.put(playerId, entry);
                 } catch (IllegalArgumentException ignored) {}
             });
@@ -110,10 +211,14 @@ public final class PlayerProfiles {
 
     /** One stored profile. Fields are nullable so future cosmetic options can be added. */
     private static final class Entry {
+        String username;
+        String nickname;
         String pronouns;
 
         boolean isEmpty() {
-            return pronouns == null || pronouns.isEmpty();
+            return (pronouns == null || pronouns.isEmpty())
+                    && (nickname == null || nickname.isEmpty())
+                    && (username == null || username.isEmpty());
         }
     }
 }

@@ -886,7 +886,7 @@ public final class BotsCommands {
                 .append(privateActionButton("[JOIN PRIVATE CHAT]", acceptCommand,
                         "Join the Storyteller's private voice room"));
         target.sendSystemMessage(message);
-        send(context, "Private chat invitation sent to " + target.getName().getString()
+        send(context, "Private chat invitation sent to " + com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(target)
                 + " (Seat " + seat + "). It expires in 60 seconds.");
         return Command.SINGLE_SUCCESS;
     }
@@ -912,7 +912,7 @@ public final class BotsCommands {
 
         int seat = ServerState.PLAYER_SEAT_NUMBERS.getOrDefault(player.getUUID(), 0);
         String acceptCommand = "/bots private accept " + result.token();
-        Component request = Component.literal(player.getName().getString()
+        Component request = Component.literal(com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(player)
                         + (seat > 0 ? " (Seat " + seat + ")" : "")
                         + " is requesting a private conversation. ")
                 .withStyle(ChatFormatting.AQUA)
@@ -952,7 +952,7 @@ public final class BotsCommands {
         ServerPlayer partner = connectedPlayerByUuid(context, partnerId);
         if (partner != null) {
             partner.sendSystemMessage(Component.literal(
-                    "Private voice chat connected with " + accepter.getName().getString()
+                    "Private voice chat connected with " + com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(accepter)
                             + ". Use /bots private leave when finished.")
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
         }
@@ -973,7 +973,7 @@ public final class BotsCommands {
         if (partner != null) {
             String message = storytellerLeaving
                     ? "The Storyteller left your private voice chat. You remain private until you choose to leave."
-                    : participant.getName().getString() + " ended the private voice chat.";
+                    : com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(participant) + " ended the private voice chat.";
             partner.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.GRAY));
         }
         return Command.SINGLE_SUCCESS;
@@ -1883,6 +1883,7 @@ public final class BotsCommands {
     private static ServerPlayer connectedPlayerByName(CommandContext<CommandSourceStack> context, String name) {
         for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
             if (player.getName().getString().equalsIgnoreCase(name)) return player;
+            if (com.sharktower.bloodonthesharktower.profile.PlayerProfiles.nickname(player.getUUID()).equalsIgnoreCase(name)) return player;
         }
         return null;
     }

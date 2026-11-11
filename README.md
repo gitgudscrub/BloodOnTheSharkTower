@@ -36,6 +36,10 @@ The server runs the same Blood on the Sharktower JAR as clients. The server also
 
 Anyone can claim Storyteller control during Setup with `/bots storyteller claim`. Once roles are sent the position is locked for the rest of the game, including the end-game reveal, so no player can gain sight of the Grimoire mid-game. A server operator can override the lock to rescue a game whose Storyteller cannot return. See `docs/STATUS.md`.
 
+### Nicknames
+
+Any player can run `/nick <name>` to choose the name everyone sees in chat, on their name tag, in the tab list, the seat sidebar and the Grimoire. `/nick clear` goes back to the Minecraft username. Every change is announced, and the tab list always shows the real username in grey next to a nickname. Nicknames are 2 to 16 characters, cannot copy another player's name and cannot look like the Storyteller, the server or a seat label. Operators can remove one with `/nick reset <player>`.
+
 ### Pronouns
 
 Any player can run `/pronouns they/them` (presets are suggested, custom text is accepted) to show their pronouns in grey under their name tag, beside their name in the player sidebar and in the Grimoire hover text. `/pronouns clear` removes them. The choice is stored by UUID in `config/blood_on_the_sharktower/player-profiles.json` and survives restarts. Pronouns are cosmetic only, visible to everyone, and hidden at Night along with the name tag. Players who prefer not to see them can turn off **Pronoun Tags** in the Sharktower settings screen.
@@ -170,7 +174,7 @@ The **1.0.x** line will include a persistent player profile system so players ca
 
 Planned features include:
 
-- `/nick` commands so players can choose the name they want to be called;
+- `/nick` commands so players can choose the name they want to be called — **done in 1.0.2-alpha.17**;
 - `/pronouns` commands with common presets plus custom pronoun text — **done in 1.0.2-alpha.12**;
 - optional display of pronouns above the player's head — **done** (below the name tag, client toggle);
 - optional cosmetic display colours that do not encode role, alignment or other game information;

@@ -137,6 +137,6 @@ public final class TeamInfoSharing {
     }
     private static String name(MinecraftServer server,UUID id,Map<UUID,Integer> seats) {
         ServerPlayer player = server.getPlayerList().getPlayer(id);
-        return (player == null ? "Offline player" : player.getName().getString()) + " (seat " + seats.getOrDefault(id,0) + ")";
+        return (player == null ? "Offline player" : com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(player)) + " (seat " + seats.getOrDefault(id,0) + ")";
     }
 }

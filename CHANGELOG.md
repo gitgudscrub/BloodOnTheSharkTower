@@ -3,6 +3,28 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.17 — Nicknames (unreleased)
+
+- New `/nick <name>` lets a player choose the name everyone sees: in chat,
+  on their name tag, in the tab list, the seat sidebar, the Grimoire and
+  every Sharktower message. `/nick clear` goes back to the username, and
+  `/nick` shows the current one. Operators can remove anyone's nickname
+  with `/nick reset <player>`.
+- The real username is never hidden: the tab list shows
+  "Nickname (username)", every change is announced to everyone, and
+  permissions, commands and logs keep using the username.
+- Nicknames are 2 to 16 characters of Latin letters (accents allowed),
+  digits, spaces and `_ - ' .`. They cannot match another player's username
+  or nickname (ignoring case, accents, spaces and punctuation), and cannot
+  look like the Storyteller, the server, a game term or a "Seat 3" label.
+  A player can change their nickname once a minute.
+- Stored by UUID next to pronouns in
+  `config/blood_on_the_sharktower/player-profiles.json`, which now also
+  remembers each player's last username so offline players cannot be
+  copied. If a new player joins with a username that matches someone's
+  nickname, that nickname is removed.
+- `/slay` and other name lookups accept a nickname as well as a username.
+
 ## 1.0.2-alpha.16 — More role automation (unreleased)
 
 - **Imp star-pass:** when the Imp is Demon-Killed (killed themselves) and no

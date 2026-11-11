@@ -113,7 +113,7 @@ public final class DayPublicInfoBookManager {
     private static void record(Map<UUID, PublicAction> target, MinecraftServer server, UUID playerId) {
         String name = playerId.toString().substring(0, 8);
         ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-        if (player != null) name = player.getName().getString();
+        if (player != null) name = com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(player);
 
         PublicAction existing = target.get(playerId);
         if (existing == null) target.put(playerId, new PublicAction(name, 1));

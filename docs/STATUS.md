@@ -53,6 +53,13 @@ after the alpha that introduced each change.
   Shown under the name tag (vanilla below-name line, grey), in the sidebar and
   in Grimoire hover text; hidden at Night with the name. Client toggle: Pronoun
   Tags. Validation lives in `profile/Pronouns.java` (`pronounsRegression`).
+- `/nick <name>`, `/nick clear`, `/nick reset <player>` (operators). Stored in
+  the same profile file, which also records each player's last username.
+  `PlayerDisplayNameMixin` swaps the nickname into `Player.getDisplayName`
+  (chat, death/join messages, client name tags); `ServerPlayerTabListMixin`
+  shows "Nickname (username)" in the tab list; the player directory sends
+  display names, so Sharktower screens follow. Validation lives in
+  `profile/Nicknames.java` (`nicknamesRegression`).
 - Above-head stack from the head upwards: name tag + pronoun line (to about
   +1.0), role token centred at +1.25, vote marker centred at +2.10.
 
