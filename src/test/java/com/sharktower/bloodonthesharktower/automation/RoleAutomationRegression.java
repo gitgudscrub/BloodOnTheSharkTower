@@ -170,6 +170,64 @@ public final class RoleAutomationRegression {
         var dawn = RoleAutomation.expireReminders(null, java.util.Map.of(Role.MONK, java.util.Set.of("safe")), "Dawn");
         check(dawn.size() == 1 && !RoleAutomation.hasReminder(soldier, "Safe"), "dawn clears the Monk's Safe");
 
+        // Courtier counts down one step per dusk.
+        fresh();
+        UUID courtierTarget = seat(1, Role.EMPATH);
+        seat(2, Role.COURTIER);
+        remind(courtierTarget, "Drunk 3", Role.COURTIER);
+        check(RoleAutomation.droisoned(courtierTarget), "Courtier Drunk 3 makes the target drunk");
+        check(RoleAutomation.countDownCourtier().size() == 1, "Drunk 3 counts down");
+        check(RoleAutomation.hasReminderFrom(courtierTarget, "Drunk 2", Role.COURTIER), "Drunk 3 became Drunk 2");
+        RoleAutomation.countDownCourtier();
+        check(RoleAutomation.hasReminderFrom(courtierTarget, "Drunk 1", Role.COURTIER), "Drunk 2 became Drunk 1");
+        RoleAutomation.countDownCourtier();
+        check(!StorytellerState.REMINDERS.containsKey(courtierTarget), "Drunk 1 is removed");
+        check(!RoleAutomation.droisoned(courtierTarget), "the Courtier target is sober again");
+
+        // Minstrel: everyone else is drunk; the Minstrel and Travellers are not.
+        fresh();
+        UUID minstrel = seat(1, Role.MINSTREL);
+        UUID chef = seat(2, Role.CHEF);
+        UUID gunslinger = seat(3, Role.GUNSLINGER);
+        remind(minstrel, "Everyone Is Drunk", Role.MINSTREL);
+        check(RoleAutomation.droisoned(chef), "Minstrel makes other players drunk");
+        check(!RoleAutomation.droisoned(minstrel), "the Minstrel stays sober");
+        check(!RoleAutomation.droisoned(gunslinger), "Travellers stay sober");
+
+        // Execution warnings: warn once per target per day.
+        fresh();
+        UUID sailor3 = seat(1, Role.SAILOR);
+        UUID foolTarget = seat(2, Role.FOOL);
+        UUID protectedPlayer = seat(3, Role.CHEF);
+        seat(4, Role.DEVILS_ADVOCATE);
+        UUID plain = seat(5, Role.EMPATH);
+        UUID imp3 = seat(6, Role.IMP);
+        remind(protectedPlayer, "Survives Execution", Role.DEVILS_ADVOCATE);
+        check(RoleAutomation.executionWarning(null, sailor3) != null, "sober Sailor warns");
+        check(RoleAutomation.executionWarning(null, sailor3) == null, "second Execute goes through");
+        check(RoleAutomation.executionWarning(null, protectedPlayer) != null, "Devil's Advocate protection warns");
+        check(RoleAutomation.executionWarning(null, foolTarget) != null, "unspent Fool warns");
+        check(RoleAutomation.abilitySpent(foolTarget), "the Fool's warning spends the ability");
+        check(RoleAutomation.executionWarning(null, plain) == null, "an ordinary player gets no warning");
+        ServerState.currentDay = 1;
+        check(RoleAutomation.executionSurvivalReason(foolTarget) == null, "a spent Fool dies normally");
+        remind(sailor3, "Poisoned", Role.POISONER);
+        check(RoleAutomation.executionSurvivalReason(sailor3) == null, "a poisoned Sailor dies");
+        seat(7, Role.PACIFIST);
+        check(RoleAutomation.executionSurvivalReason(plain) != null, "Pacifist flags a good player");
+        check(RoleAutomation.executionSurvivalReason(imp3) == null, "Pacifist does not flag an evil player");
+
+        // Evil Twin: good cannot win while both twins live.
+        fresh();
+        seat(1, Role.EVIL_TWIN);
+        UUID goodTwin = seat(2, Role.CLOCKMAKER);
+        check(!RoleAutomation.twinsBothAlive(), "no Twin reminder, no block");
+        remind(goodTwin, "Twin", Role.EVIL_TWIN);
+        check(RoleAutomation.twinsBothAlive(), "both twins alive");
+        ServerState.PLAYER_DEATH_STATUS.put(goodTwin, true);
+        check(!RoleAutomation.twinsBothAlive(), "a dead twin ends the block");
+        check(!RoleAutomation.anyDemonAlive(), "no Demon in this game");
+
         System.out.println("PASS: " + checks + " role automation rule checks");
     }
 }

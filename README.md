@@ -82,7 +82,11 @@ Client and server builds are produced together by GitHub Actions so that both pa
   (Soldier, Sailor, Monk/Innkeeper "Safe", Tea Lady, Fool) with a Mayor
   bounce check, automatic expiry of Poisoner/Monk/Innkeeper-style reminders,
   and "Game over?" prompts with Good/Evil buttons for the Demon dying, two
-  players left, a Saint execution or a Mayor no-execution day.
+  players left, a Saint execution or a Mayor no-execution day. Also the
+  Witch's curse (approve/dismiss), execution warnings for players who should
+  survive (Sailor, Devil's Advocate, Fool, Tea Lady, Pacifist), the Minstrel
+  and Courtier drunkenness timers, and Vortox, Evil Twin and Mastermind
+  endings.
 
 ### Night and voice chat
 

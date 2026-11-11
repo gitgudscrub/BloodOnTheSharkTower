@@ -119,8 +119,10 @@ after the alpha that introduced each change.
 - large world-space tick/cross vote markers;
 - 3/2/1 pre-vote countdown;
 - role automation (Virgin, Slayer via `/slay`, Scarlet Woman, protection
-  refusals on Demon Kill, win-condition prompts), verified on the dev
-  harness in November 2026.
+  refusals on Demon Kill, win-condition prompts, Witch curse, Courtier and
+  Minstrel timers, execution survival warnings, Vortox/Evil Twin/Mastermind
+  endings), verified on the dev harness in November 2026 (execution
+  warnings, Minstrel, Evil Twin and Mastermind by regression checks only).
 
 ### Night game and information
 
