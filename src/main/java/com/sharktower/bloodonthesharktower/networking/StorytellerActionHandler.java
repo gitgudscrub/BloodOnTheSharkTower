@@ -618,6 +618,8 @@ public final class StorytellerActionHandler {
 
         String name = label(server, marked);
         if (dies) {
+            String warning = com.sharktower.bloodonthesharktower.automation.RoleAutomation.executionWarning(server, marked);
+            if (warning != null) return SetupOperations.Result.fail(warning);
             ExecutionManager.executePlayer(server, marked, false, null);
             return SetupOperations.Result.ok("Executed " + name + "; they died.");
         }

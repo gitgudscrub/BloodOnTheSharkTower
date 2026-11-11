@@ -67,14 +67,24 @@ public final class RoleAutomation {
             Role.POISONER, Set.of("poisoned"),
             Role.INNKEEPER, Set.of("safe", "drunk"),
             Role.SAILOR, Set.of("drunk"),
-            Role.MINSTREL, Set.of("everyoneisdrunk"),
             Role.DEVILS_ADVOCATE, Set.of("survivesexecution"),
-            Role.WITCH, Set.of("cursed"),
-            Role.GODFATHER, Set.of("diedtoday"));
+            Role.WITCH, Set.of("cursed"));
 
     /** Reminders that only last the night they were placed. */
     private static final Map<Role, Set<String>> EXPIRE_AT_DAWN = Map.of(
-            Role.MONK, Set.of("safe"));
+            Role.MONK, Set.of("safe"),
+            // The Godfather acts at night on an Outsider's death that day.
+            Role.GODFATHER, Set.of("diedtoday"));
+
+    /** Day on which the Minstrel's "Everyone Is Drunk" began; it ends at the dusk after the next day. */
+    private static int minstrelDrunkDay = -1;
+    /** Day on which an executed Demon handed the game one more day through the Mastermind. */
+    private static int mastermindDay = -1;
+    /** Execution warnings already shown: target + day, so a second Execute goes through. */
+    private static final Set<String> EXECUTION_WARNED = new java.util.HashSet<>();
+    /** The Witch's curse waiting for the Storyteller's decision, if any. */
+    private static UUID pendingWitchVictim;
+    private static int pendingWitchDay = -1;
 
     private RoleAutomation() {}
 
@@ -85,6 +95,11 @@ public final class RoleAutomation {
         pendingStarPassNight = -1;
         mayorWarned = null;
         mayorWarnedNight = -1;
+        minstrelDrunkDay = -1;
+        mastermindDay = -1;
+        EXECUTION_WARNED.clear();
+        pendingWitchVictim = null;
+        pendingWitchDay = -1;
     }
 
     // ------------------------------------------------------------------ Virgin
@@ -99,6 +114,7 @@ public final class RoleAutomation {
      */
     public static void onNomination(MinecraftServer server, UUID nominator, UUID nominee) {
         if (server == null || nominator == null || nominee == null) return;
+        offerWitchCurse(server, nominator);
         if (!is(nominee, Role.VIRGIN) || !isAlive(nominee) || abilitySpent(nominee)) return;
         spendAbility(nominee, Role.VIRGIN);
         StateBroadcaster.broadcastGrimoire(server);
@@ -168,6 +184,110 @@ public final class RoleAutomation {
         pendingVirginNominator = null;
         pendingVirginNominee = null;
         pendingVirginDay = -1;
+    }
+
+    // ------------------------------------------------------------------- Witch
+
+    /** A Cursed player nominated: they should die, if the Witch still has her ability. */
+    private static void offerWitchCurse(MinecraftServer server, UUID nominator) {
+        if (!hasReminderFrom(nominator, "Cursed", Role.WITCH) || !isAlive(nominator)) return;
+        String who = label(server, nominator);
+        String advice;
+        if (protectorDroisoned(Role.WITCH)) {
+            advice = "The Witch is drunk or poisoned, so nothing should happen.";
+        } else if (aliveNonTravellerCount() <= 3) {
+            advice = "Only 3 players are alive, so the Witch has lost her ability.";
+        } else {
+            advice = who + " should die.";
+        }
+        pendingWitchVictim = nominator;
+        pendingWitchDay = ServerState.currentDay;
+        Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(nominator);
+        Component message = Component.literal("Witch: " + who + " is Cursed and nominated. " + advice + " ")
+                .withStyle(ChatFormatting.GOLD);
+        if (seat != null) {
+            message = message.copy()
+                    .append(button("[Kill " + who + "]", "/bots automation witch " + seat,
+                            who + " dies now; the nomination still goes ahead"))
+                    .append(Component.literal(" "))
+                    .append(button("[No effect]", "/bots automation witch dismiss", "Nothing happens"));
+        }
+        tellStorytellers(server, message);
+    }
+
+    /** The Storyteller confirmed the Witch's curse. */
+    public static String witchKill(MinecraftServer server, UUID victim) {
+        if (victim == null || !victim.equals(pendingWitchVictim) || pendingWitchDay != ServerState.currentDay) {
+            return "There is no Witch decision waiting for that player today.";
+        }
+        pendingWitchVictim = null;
+        pendingWitchDay = -1;
+        if (!isAlive(victim)) return "That player is already dead.";
+        removeReminderFrom(victim, "Cursed", Role.WITCH);
+        killPublicly(server, victim);
+        return null;
+    }
+
+    public static String witchDismiss() {
+        if (pendingWitchVictim == null) return "There is no Witch decision waiting.";
+        pendingWitchVictim = null;
+        pendingWitchDay = -1;
+        return null;
+    }
+
+    /** A public, immediate death (Slayer shot, Witch curse): revealed at once, then the usual death rules. */
+    private static void killPublicly(MinecraftServer server, UUID target) {
+        ServerState.PLAYER_DEATH_STATUS.put(target, true);
+        DeathVisibility.remove(target);
+        TriggeredNightOrderManager.onDeath(target, TriggeredNightOrderManager.DeathCause.GENERIC);
+        announce(server, label(server, target) + " dies!", ChatFormatting.RED);
+        StateBroadcaster.broadcastDeathStatus(server);
+        StateBroadcaster.broadcastGrimoire(server);
+        onDeath(server, target, false);
+    }
+
+    // -------------------------------------------------------------- Execution
+
+    /**
+     * Checked when the Storyteller presses Execute (dies): a player who should
+     * survive gets one warning per day. Pressing Execute again kills them
+     * anyway; Execute (lives) lets them survive.
+     *
+     * @return the warning, or null when the execution should go ahead.
+     */
+    public static String executionWarning(MinecraftServer server, UUID target) {
+        if (target == null) return null;
+        String reason = executionSurvivalReason(target);
+        if (reason == null) return null;
+        String key = target + "@" + ServerState.currentDay;
+        if (!EXECUTION_WARNED.add(key)) return null;
+        if (is(target, Role.FOOL) && reason.startsWith("the Fool")) {
+            spendAbility(target, Role.FOOL);
+            if (server != null) StateBroadcaster.broadcastGrimoire(server);
+        }
+        String who = server == null ? "That player" : label(server, target);
+        return who + " should survive: " + reason + ". Use Execute (lives), or Execute (dies) again to kill them anyway.";
+    }
+
+    static String executionSurvivalReason(UUID target) {
+        if (hasReminderFrom(target, "Survives Execution", Role.DEVILS_ADVOCATE) && !protectorDroisoned(Role.DEVILS_ADVOCATE)) {
+            return "the Devil's Advocate protected them";
+        }
+        if (is(target, Role.SAILOR) && !droisoned(target)) return "the sober Sailor cannot die";
+        if (is(target, Role.FOOL) && !droisoned(target) && !abilitySpent(target)) {
+            return "the Fool survives their first death (their ability is now spent)";
+        }
+        for (Reminder reminder : StorytellerState.REMINDERS.getOrDefault(target, List.of())) {
+            if (normalize(reminder.text()).equals("cannotdie") && !protectorDroisoned(Role.TEA_LADY)) {
+                return "the Tea Lady says they cannot die";
+            }
+        }
+        UUID pacifist = findAlive(Role.PACIFIST);
+        PendingRoleAssignment role = actualRole(target);
+        if (pacifist != null && !droisoned(pacifist) && role != null && role.isFinalGood()) {
+            return "the Pacifist is alive, so this good player might survive (your choice)";
+        }
+        return null;
     }
 
         // ------------------------------------------------------------------ Slayer
@@ -298,6 +418,35 @@ public final class RoleAutomation {
         if (server == null || dead == null || ServerState.gameEnded) return;
         PendingRoleAssignment deadRole = actualRole(dead);
 
+        if (execution && mastermindDay >= 0 && ServerState.currentDay == mastermindDay + 1 && deadRole != null) {
+            mastermindDay = -1;
+            boolean good = deadRole.isFinalGood();
+            prompt(server, good ? "EVIL" : "GOOD", "Mastermind: " + label(server, dead) + " was executed on the extra day, so "
+                    + (good ? "good" : "evil") + " loses.", "mastermind-" + dead);
+            return;
+        }
+
+        if (execution && deadRole != null && deadRole.getRoleType() == RoleType.MINION) {
+            UUID minstrel = findAlive(Role.MINSTREL);
+            if (minstrel != null && !droisoned(minstrel) && !hasReminderFrom(minstrel, "Everyone Is Drunk", Role.MINSTREL)) {
+                StorytellerState.REMINDERS.computeIfAbsent(minstrel, ignored -> new ArrayList<>())
+                        .add(new Reminder("Everyone Is Drunk", Optional.of(Role.MINSTREL)));
+                minstrelDrunkDay = ServerState.currentDay;
+                StateBroadcaster.broadcastGrimoire(server);
+                tellStorytellers(server, "Minstrel: a Minion was executed, so every other player is drunk until dusk tomorrow."
+                        + " \"Everyone Is Drunk\" was added to " + label(server, minstrel) + ".", ChatFormatting.GOLD);
+            }
+        }
+
+        if (execution && hasReminderFrom(dead, "Twin", Role.EVIL_TWIN)) {
+            UUID evilTwin = findAlive(Role.EVIL_TWIN);
+            if (evilTwin != null && !droisoned(evilTwin)) {
+                prompt(server, "EVIL", "The good twin (" + label(server, dead) + ") was executed while the Evil Twin lives.",
+                        "eviltwin-" + dead);
+                return;
+            }
+        }
+
         if (execution && is(dead, Role.SAINT) && !droisoned(dead)) {
             prompt(server, "EVIL", "The Saint (" + label(server, dead) + ") was executed.",
                     "saint-" + dead);
@@ -334,6 +483,16 @@ public final class RoleAutomation {
                             + " is drunk or poisoned, so they do not become the Demon.", ChatFormatting.GOLD);
                 }
                 if (demonKill && is(dead, Role.IMP) && offerStarPass(server, dead)) return;
+            }
+            if (execution && !anyDemonAlive()) {
+                UUID mastermind = findAlive(Role.MASTERMIND);
+                if (mastermind != null && !droisoned(mastermind)) {
+                    mastermindDay = ServerState.currentDay;
+                    tellStorytellers(server, "Mastermind: the Demon was executed while " + label(server, mastermind)
+                            + " lives, so the game continues for one more day. If a player is executed tomorrow,"
+                            + " their team loses.", ChatFormatting.GOLD);
+                    return;
+                }
             }
         }
         checkWin(server);
@@ -397,6 +556,39 @@ public final class RoleAutomation {
     /** Dusk: clear reminders whose effect lasted "until dusk" or "tonight and tomorrow". */
     public static void onDusk(MinecraftServer server) {
         expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
+        if (minstrelDrunkDay >= 0 && ServerState.currentDay > minstrelDrunkDay) {
+            minstrelDrunkDay = -1;
+            expireReminders(server, Map.of(Role.MINSTREL, Set.of("everyoneisdrunk")), "Dusk");
+        }
+        List<String> counted = countDownCourtier();
+        if (!counted.isEmpty() && server != null) {
+            StateBroadcaster.broadcastGrimoire(server);
+            tellStorytellers(server, "Dusk: Courtier " + String.join(", ", counted) + ".", ChatFormatting.GRAY);
+        }
+    }
+
+    /** Courtier: "Drunk 3" becomes "Drunk 2", then "Drunk 1", then is removed, one step each dusk. */
+    static List<String> countDownCourtier() {
+        List<String> changes = new ArrayList<>();
+        for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
+            List<Reminder> list = entry.getValue();
+            if (list == null) continue;
+            for (int i = list.size() - 1; i >= 0; i--) {
+                Reminder reminder = list.get(i);
+                if (reminder.role().orElse(null) != Role.COURTIER) continue;
+                String text = normalize(reminder.text());
+                String seat = "seat " + ServerState.PLAYER_SEAT_NUMBERS.getOrDefault(entry.getKey(), 0);
+                switch (text) {
+                    case "drunk3" -> list.set(i, new Reminder("Drunk 2", reminder.role(), reminder.customRoleId(), reminder.playerUuid()));
+                    case "drunk2" -> list.set(i, new Reminder("Drunk 1", reminder.role(), reminder.customRoleId(), reminder.playerUuid()));
+                    case "drunk1" -> list.remove(i);
+                    default -> { continue; }
+                }
+                changes.add(seat + (text.equals("drunk1") ? " is sober again" : " now " + list.get(i).text()));
+            }
+        }
+        StorytellerState.REMINDERS.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().isEmpty());
+        return changes;
     }
 
     /** Dawn: clear reminders that only protected the night just gone. */
@@ -430,6 +622,18 @@ public final class RoleAutomation {
     /** Called when a day ends without an execution. */
     public static void onNoExecution(MinecraftServer server) {
         if (server == null || ServerState.gameEnded) return;
+        UUID vortox = findAlive(Role.VORTOX);
+        if (vortox != null && !droisoned(vortox)) {
+            prompt(server, "EVIL", "No one was executed today while the Vortox (" + label(server, vortox) + ") lives.",
+                    "vortox-day-" + ServerState.currentDay);
+            return;
+        }
+        if (mastermindDay >= 0 && ServerState.currentDay == mastermindDay + 1) {
+            mastermindDay = -1;
+            tellStorytellers(server, "Mastermind: the extra day ended with no execution. Resolve the end of the game"
+                    + " by the Mastermind rules.", ChatFormatting.GOLD);
+            return;
+        }
         UUID mayor = findAlive(Role.MAYOR);
         if (mayor != null && aliveNonTravellerCount() == 3 && !droisoned(mayor)) {
             prompt(server, "GOOD", "Only 3 players are alive, no execution happened today, and "
@@ -449,7 +653,10 @@ public final class RoleAutomation {
             if (role != null && role.getRoleType() == RoleType.DEMON && isAlive(entry.getKey())) demonAlive = true;
         }
         int alive = aliveNonTravellerCount();
-        if (!demonAlive) {
+        if (!demonAlive && twinsBothAlive()) {
+            tellStorytellers(server, "No Demon is alive, but good cannot win while both twins live (Evil Twin).",
+                    ChatFormatting.GOLD);
+        } else if (!demonAlive) {
             prompt(server, "GOOD", "No Demon is alive. (Unless a Scarlet Woman, star-pass or similar replaced them.)",
                     "nodemon-" + ServerState.currentNight + "-" + ServerState.currentDay + "-" + alive);
         } else if (alive <= 2) {
@@ -516,8 +723,62 @@ public final class RoleAutomation {
         return false;
     }
 
+    /**
+     * Drunk or poisoned: the Drunk, a Poisoned or Drunk reminder (including the
+     * Courtier's "Drunk 3/2/1"), or the Minstrel's "Everyone Is Drunk" on
+     * another living player (which spares the Minstrel and Travellers).
+     */
     static boolean droisoned(UUID player) {
-        return is(player, Role.DRUNK) || hasReminder(player, "Poisoned") || hasReminder(player, "Drunk");
+        if (is(player, Role.DRUNK) || hasReminder(player, "Poisoned")) return true;
+        for (Reminder reminder : StorytellerState.REMINDERS.getOrDefault(player, List.of())) {
+            if (normalize(reminder.text()).matches("drunk[0-9]*")) return true;
+        }
+        if (!isTraveller(player) && !is(player, Role.MINSTREL)) {
+            for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
+                if (entry.getKey().equals(player)) continue;
+                for (Reminder reminder : entry.getValue()) {
+                    if (normalize(reminder.text()).equals("everyoneisdrunk")) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    static boolean hasReminderFrom(UUID player, String text, Role source) {
+        if (player == null) return false;
+        String wanted = normalize(text);
+        for (Reminder reminder : StorytellerState.REMINDERS.getOrDefault(player, List.of())) {
+            Role from = reminder.role().orElse(null);
+            if (normalize(reminder.text()).equals(wanted) && (from == null || from == source)) return true;
+        }
+        return false;
+    }
+
+    private static void removeReminderFrom(UUID player, String text, Role source) {
+        List<Reminder> list = StorytellerState.REMINDERS.get(player);
+        if (list == null) return;
+        String wanted = normalize(text);
+        list.removeIf(reminder -> normalize(reminder.text()).equals(wanted)
+                && (reminder.role().isEmpty() || reminder.role().get() == source));
+        if (list.isEmpty()) StorytellerState.REMINDERS.remove(player);
+    }
+
+    static boolean anyDemonAlive() {
+        for (Map.Entry<UUID, PendingRoleAssignment> entry : ServerState.PLAYER_ROLES.entrySet()) {
+            PendingRoleAssignment role = entry.getValue();
+            if (role != null && role.getRoleType() == RoleType.DEMON && isAlive(entry.getKey())) return true;
+        }
+        return false;
+    }
+
+    /** Evil Twin and the player marked "Twin" are both alive (and the Evil Twin is sober). */
+    static boolean twinsBothAlive() {
+        UUID evilTwin = findAlive(Role.EVIL_TWIN);
+        if (evilTwin == null || droisoned(evilTwin)) return false;
+        for (UUID player : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
+            if (isAlive(player) && hasReminderFrom(player, "Twin", Role.EVIL_TWIN)) return true;
+        }
+        return false;
     }
 
     static boolean abilitySpent(UUID player) {

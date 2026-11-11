@@ -3,6 +3,32 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.19 — More role automation (unreleased)
+
+- Witch: when a Cursed player nominates, the Storyteller gets
+  [Kill <player>] and [No effect] buttons. The prompt says if the Witch is
+  drunk or poisoned, or if only 3 players are alive. The nomination still
+  goes ahead. Console: `/bots automation witch <seat>|dismiss`.
+- Execute (dies) now warns once when the player should survive: a sober
+  Sailor, a Devil's Advocate "Survives Execution", an unspent Fool (whose
+  ability is then spent), a Tea Lady "Cannot Die", or a good player while
+  a sober Pacifist lives. Press Execute (lives), or Execute (dies) again to
+  kill them anyway.
+- Minstrel: executing a Minion adds "Everyone Is Drunk" to a sober Minstrel.
+  Automation treats every other player (except Travellers) as drunk until
+  the following dusk, when the reminder is removed.
+- Courtier: "Drunk 3" counts down to "Drunk 2" and "Drunk 1" at each dusk,
+  then is removed. The Storyteller is told each step.
+- New "Game over?" prompts: a day with no execution while a sober Vortox
+  lives, and executing the good twin while the Evil Twin lives. With no
+  Demon alive but both twins alive, the Storyteller is told good cannot win
+  yet, with no Good prompt.
+- Mastermind: executing the Demon while a sober Mastermind lives gives one
+  more day. An execution that day prompts that the executed player's team
+  loses.
+- The Godfather's "Died Today" now clears at dawn, after the Godfather has
+  acted, instead of at dusk.
+
 ## 1.0.2-alpha.18 — Lighter house voice routing (unreleased)
 
 - House voice routing runs every server tick for every player. When a

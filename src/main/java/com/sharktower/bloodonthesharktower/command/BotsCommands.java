@@ -290,6 +290,11 @@ public final class BotsCommands {
                                         .then(Commands.argument("nominee", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeNominatePair))))
                         .then(Commands.literal("automation")
+                                .then(Commands.literal("witch")
+                                        .then(Commands.literal("dismiss")
+                                                .executes(BotsCommands::executeAutomationWitchDismiss))
+                                        .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                .executes(BotsCommands::executeAutomationWitch)))
                                 .then(Commands.literal("starpass")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationStarPass)))
@@ -1456,6 +1461,27 @@ public final class BotsCommands {
         return refusal == null ? 1 : 0;
     }
 
+    private static int executeAutomationWitch(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        int seat = IntegerArgumentType.getInteger(context, "seat");
+        UUID target = SetupOperations.playerBySeat(seat);
+        if (target == null) {
+            send(context, "No player is assigned to seat " + seat + ".");
+            return 0;
+        }
+        String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
+                .witchKill(context.getSource().getServer(), target);
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationWitchDismiss(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation.witchDismiss();
+        send(context, refusal == null ? "Witch: no effect." : refusal);
+        return refusal == null ? 1 : 0;
+    }
+
     private static int executeAutomationStarPass(CommandContext<CommandSourceStack> context) {
         if (!requireStoryteller(context)) return 0;
         int seat = IntegerArgumentType.getInteger(context, "seat");
@@ -1669,6 +1695,12 @@ public final class BotsCommands {
         UUID marked = DaytimeState.getMarkedForExecution();
         if (marked == null) {
             send(context, "Nobody is currently marked for execution.");
+            return 0;
+        }
+        String warning = com.sharktower.bloodonthesharktower.automation.RoleAutomation
+                .executionWarning(context.getSource().getServer(), marked);
+        if (warning != null) {
+            send(context, warning);
             return 0;
         }
         ExecutionManager.executePlayer(context.getSource().getServer(), marked, false, null);
