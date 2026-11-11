@@ -41,14 +41,12 @@ jobs:
         shell: bash
         run: |
           VERSION="$(grep '^version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
-          mapfile -t jars < <(find build/libs -maxdepth 1 -type f -name '*.jar'             ! -name '*-sources.jar' ! -name '*-dev.jar' | sort)
+          mapfile -t jars < <(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' | sort)
           if [ "${#jars[@]}" -ne 1 ]; then
-            echo "Expected exactly one release JAR, found ${#jars[@]}:"
-            printf '  %s
-' "${jars[@]}"
+            echo "Expected exactly one release JAR, found ${#jars[@]}: ${jars[*]}"
             exit 1
           fi
-          python3 scripts/build_modrinth_pack.py             --version "$VERSION"             --jar "${jars[0]}"             --output "dist/blood-on-the-sharktower-${VERSION}.mrpack"
+          python3 scripts/build_modrinth_pack.py --version "$VERSION" --jar "${jars[0]}" --output "dist/blood-on-the-sharktower-${VERSION}.mrpack"
 
       - name: List build outputs
         if: always()
