@@ -69,7 +69,7 @@ public final class SlayCommand {
         List<String> names = new ArrayList<>();
         for (UUID id : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
             ServerPlayer online = server.getPlayerList().getPlayer(id);
-            if (online != null) names.add(online.getName().getString());
+            if (online != null) names.add(com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(online));
         }
         return names;
     }
@@ -90,7 +90,9 @@ public final class SlayCommand {
         String wanted = text.toLowerCase(Locale.ROOT);
         for (UUID id : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
             ServerPlayer online = server.getPlayerList().getPlayer(id);
-            if (online != null && online.getName().getString().toLowerCase(Locale.ROOT).equals(wanted)) return id;
+            if (online == null) continue;
+            if (online.getName().getString().toLowerCase(Locale.ROOT).equals(wanted)) return id;
+            if (com.sharktower.bloodonthesharktower.profile.PlayerProfiles.nickname(id).toLowerCase(Locale.ROOT).equals(wanted)) return id;
         }
         return null;
     }

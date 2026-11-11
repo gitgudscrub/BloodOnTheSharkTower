@@ -224,7 +224,7 @@ public final class StateBroadcaster {
         java.util.Map<java.util.UUID, String> names = new java.util.LinkedHashMap<>();
         java.util.List<java.util.UUID> connected = new java.util.ArrayList<>();
         for (ServerPlayer online : server.getPlayerList().getPlayers()) {
-            names.put(online.getUUID(), online.getName().getString());
+            names.put(online.getUUID(), com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(online));
             connected.add(online.getUUID());
         }
         ServerPlayNetworking.send(player, new PlayerDirectoryS2CPayload(
@@ -236,15 +236,24 @@ public final class StateBroadcaster {
     public static void sendPlayerProfilesTo(ServerPlayer player) {
         MinecraftServer server = player.level().getServer();
         if (server == null) return;
-        ServerPlayNetworking.send(player, new PlayerProfilesS2CPayload(onlinePronouns(server)));
+        ServerPlayNetworking.send(player, new PlayerProfilesS2CPayload(onlinePronouns(server), onlineNicknames(server)));
     }
 
     public static void broadcastPlayerProfiles(MinecraftServer server) {
         if (server == null) return;
-        PlayerProfilesS2CPayload payload = new PlayerProfilesS2CPayload(onlinePronouns(server));
+        PlayerProfilesS2CPayload payload = new PlayerProfilesS2CPayload(onlinePronouns(server), onlineNicknames(server));
         for (ServerPlayer online : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(online, payload);
         }
+    }
+
+    private static java.util.Map<java.util.UUID, String> onlineNicknames(MinecraftServer server) {
+        java.util.Map<java.util.UUID, String> online = new java.util.LinkedHashMap<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            String nick = com.sharktower.bloodonthesharktower.profile.PlayerProfiles.nickname(player.getUUID());
+            if (!nick.isEmpty()) online.put(player.getUUID(), nick);
+        }
+        return online;
     }
 
     private static java.util.Map<java.util.UUID, String> onlinePronouns(MinecraftServer server) {

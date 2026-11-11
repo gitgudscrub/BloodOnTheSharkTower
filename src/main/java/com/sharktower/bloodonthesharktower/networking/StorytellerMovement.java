@@ -59,7 +59,7 @@ public final class StorytellerMovement {
                         ServerPlayer target = EntityArgument.getPlayer(context, "destination");
                         actor.teleportTo(target.level(), target.getX(), target.getY(), target.getZ(),
                                 Set.of(), target.getYRot(), target.getXRot(), true);
-                        actor.sendSystemMessage(Component.literal("Teleported to " + target.getName().getString() + "."));
+                        actor.sendSystemMessage(Component.literal("Teleported to " + com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(target) + "."));
                         return 1;
                     })).build();
             if (vanilla != null) for (CommandNode<CommandSourceStack> child : vanilla.getChildren()) {

@@ -206,7 +206,7 @@ public final class GrimoireRendererBridge {
         List<String> names = StorytellerState.STORYTELLERS.stream()
                 .map(server.getPlayerList()::getPlayer)
                 .filter(java.util.Objects::nonNull)
-                .map(player -> player.getName().getString())
+                .map(player -> com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(player))
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList();
         return names.isEmpty() ? "Storyteller" : String.join(" + ", names);
@@ -214,7 +214,7 @@ public final class GrimoireRendererBridge {
 
     private static String playerName(MinecraftServer server, UUID playerId) {
         ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-        return player == null ? playerId.toString().substring(0, 8) : player.getName().getString();
+        return player == null ? playerId.toString().substring(0, 8) : com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(player);
     }
 
     private static String rendererTeam(RoleType type) {

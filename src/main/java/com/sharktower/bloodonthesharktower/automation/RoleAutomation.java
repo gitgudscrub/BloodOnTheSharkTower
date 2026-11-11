@@ -541,7 +541,7 @@ public final class RoleAutomation {
     static String label(MinecraftServer server, UUID id) {
         if (id == null) return "Unknown";
         ServerPlayer online = server.getPlayerList().getPlayer(id);
-        if (online != null) return online.getName().getString();
+        if (online != null) return com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(online);
         Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(id);
         return seat == null ? "Player" : "Seat " + seat;
     }

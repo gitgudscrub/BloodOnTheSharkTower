@@ -351,7 +351,7 @@ public final class StorytellerActionHandler {
         String grimoireShare = promptTrueGrimoireShare(storyteller, target);
 
         NightChatManager.reconcile(server);
-        return SetupOperations.Result.ok("Visited " + target.getName().getString() + " (Seat " + seat
+        return SetupOperations.Result.ok("Visited " + com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(target) + " (Seat " + seat
                 + "). House voice joins automatically while both of you are inside." + grimoireShare);
     }
 
@@ -461,7 +461,7 @@ public final class StorytellerActionHandler {
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
 
         return SetupOperations.Result.ok("Shared the current Storyteller Grimoire with "
-                + target.getName().getString() + " (" + role.getDisplayName() + ")."
+                + com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(target) + " (" + role.getDisplayName() + ")."
                 + (magicianJinxApplied
                     ? " Magician jinx applied: Magician and Demon character tokens hidden."
                     : ""));
@@ -778,7 +778,7 @@ public final class StorytellerActionHandler {
     private static String label(MinecraftServer server, UUID id) {
         if (id == null) return "Unknown";
         ServerPlayer online = server.getPlayerList().getPlayer(id);
-        if (online != null) return online.getName().getString();
+        if (online != null) return com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(online);
         Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(id);
         return seat == null ? "Player" : "Seat " + seat;
     }

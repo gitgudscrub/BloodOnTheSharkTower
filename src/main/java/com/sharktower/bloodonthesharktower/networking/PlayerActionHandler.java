@@ -130,7 +130,7 @@ public final class PlayerActionHandler {
             return;
         }
         String targetName = ServerStateNameHelper.nameOf(server, target);
-        Component announcement = Component.literal(caller.getName().getString() + " calls to exile " + targetName
+        Component announcement = Component.literal(com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(caller) + " calls to exile " + targetName
                         + ". " + ExileSupportManager.currentThreshold() + " support vote(s) required.")
                 .withStyle(ChatFormatting.LIGHT_PURPLE);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) player.sendSystemMessage(announcement);
@@ -157,7 +157,7 @@ public final class PlayerActionHandler {
 
         int seat = ServerState.PLAYER_SEAT_NUMBERS.getOrDefault(player.getUUID(), 0);
         String acceptCommand = "/bots private accept " + result.token();
-        Component request = Component.literal(player.getName().getString()
+        Component request = Component.literal(com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(player)
                         + (seat > 0 ? " (Seat " + seat + ")" : "")
                         + " is requesting a private conversation. ")
                 .withStyle(ChatFormatting.AQUA)
@@ -165,7 +165,7 @@ public final class PlayerActionHandler {
                         "Move you and this player into a private voice room"));
         storyteller.sendSystemMessage(request);
         player.sendSystemMessage(Component.literal("Private chat request sent to "
-                + storyteller.getName().getString() + ". It expires in 60 seconds."));
+                + com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(storyteller) + ". It expires in 60 seconds."));
     }
 
     private static void nominateStoryteller(ServerPlayer nominator, MinecraftServer server, String argument) {
@@ -189,7 +189,7 @@ public final class PlayerActionHandler {
         }
 
         String storytellerName = ServerStateNameHelper.nameOf(server, storytellerId);
-        Component announcement = Component.literal(nominator.getName().getString()
+        Component announcement = Component.literal(com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(nominator)
                 + " nominated Storyteller " + storytellerName + ".")
                 .withStyle(ChatFormatting.GOLD);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) player.sendSystemMessage(announcement);
@@ -215,7 +215,7 @@ public final class PlayerActionHandler {
     private static final class ServerStateNameHelper {
         private static String nameOf(MinecraftServer server, UUID id) {
             ServerPlayer player = server.getPlayerList().getPlayer(id);
-            return player == null ? "Storyteller" : player.getName().getString();
+            return player == null ? "Storyteller" : com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(player);
         }
     }
 }

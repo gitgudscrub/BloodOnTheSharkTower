@@ -126,6 +126,7 @@ public final class ClientState {
     public static List<UUID> storytellerPlayers = List.of();
     /** Public cosmetic pronouns chosen with /pronouns; empty when unset. */
     public static Map<UUID, String> playerPronouns = Map.of();
+    public static Map<UUID, String> playerNicknames = Map.of();
 
     /** Local-only server-synchronized Simple Voice Chat route. */
     public static String voiceRoute = "PROXIMITY";
@@ -340,6 +341,17 @@ public final class ClientState {
 
     public static void updatePlayerPronouns(Map<UUID, String> pronouns) {
         playerPronouns = Map.copyOf(pronouns);
+    }
+
+    public static void updatePlayerNicknames(Map<UUID, String> nicknames) {
+        playerNicknames = Map.copyOf(nicknames);
+    }
+
+    /** A player's chosen nickname, or an empty string when none is set. */
+    public static String nickname(UUID id) {
+        if (id == null) return "";
+        String text = playerNicknames.get(id);
+        return text == null ? "" : text;
     }
 
     /** Pronouns to show beside a player, or an empty string when none are set. */

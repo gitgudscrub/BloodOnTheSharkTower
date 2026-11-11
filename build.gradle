@@ -301,6 +301,13 @@ tasks.register('pronounsRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('pronounsRegression') }
 
+tasks.register('nicknamesRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.profile.NicknamesRegression'
+}
+tasks.named('check') { dependsOn tasks.named('nicknamesRegression') }
+
 tasks.register('handRaiseModeRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath

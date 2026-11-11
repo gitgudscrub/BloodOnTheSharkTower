@@ -13,11 +13,12 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Public cosmetic profile data for connected players: pronouns keyed by UUID.
- * Sent to everyone on join and whenever a player changes their pronouns. It
+ * Public cosmetic profile data for connected players: pronouns and nicknames
+ * keyed by UUID. Sent to everyone on join and whenever a player changes them. It
  * never carries anything a player could not already see.
  */
-public record PlayerProfilesS2CPayload(Map<UUID, String> pronouns) implements CustomPacketPayload {
+public record PlayerProfilesS2CPayload(Map<UUID, String> pronouns, Map<UUID, String> nicknames)
+        implements CustomPacketPayload {
     public static final Identifier ID_VALUE = Identifier.fromNamespaceAndPath(
             BloodOnTheSharktower.MOD_ID,
             "player_profiles"
@@ -31,27 +32,37 @@ public record PlayerProfilesS2CPayload(Map<UUID, String> pronouns) implements Cu
         @Override
         public PlayerProfilesS2CPayload decode(RegistryFriendlyByteBuf buf) {
             Wire wire = GSON.fromJson(buf.readUtf(), WIRE_TYPE);
-            Map<UUID, String> pronouns = new LinkedHashMap<>();
-            if (wire != null && wire.pronouns != null) {
-                wire.pronouns.forEach((id, text) -> {
-                    if (text == null || text.isBlank()) return;
-                    try { pronouns.put(UUID.fromString(id), text); }
-                    catch (IllegalArgumentException ignored) {}
-                });
-            }
-            return new PlayerProfilesS2CPayload(pronouns);
+            return new PlayerProfilesS2CPayload(
+                    readMap(wire == null ? null : wire.pronouns),
+                    readMap(wire == null ? null : wire.nicknames));
         }
 
         @Override
         public void encode(RegistryFriendlyByteBuf buf, PlayerProfilesS2CPayload value) {
-            Map<String, String> pronouns = new LinkedHashMap<>();
-            value.pronouns().forEach((id, text) -> pronouns.put(id.toString(), text));
-            buf.writeUtf(GSON.toJson(new Wire(pronouns)));
+            buf.writeUtf(GSON.toJson(new Wire(writeMap(value.pronouns()), writeMap(value.nicknames()))));
         }
     };
 
     public PlayerProfilesS2CPayload {
         pronouns = Map.copyOf(pronouns);
+        nicknames = nicknames == null ? Map.of() : Map.copyOf(nicknames);
+    }
+
+    private static Map<UUID, String> readMap(Map<String, String> wire) {
+        Map<UUID, String> out = new LinkedHashMap<>();
+        if (wire == null) return out;
+        wire.forEach((id, text) -> {
+            if (text == null || text.isBlank()) return;
+            try { out.put(UUID.fromString(id), text); }
+            catch (IllegalArgumentException ignored) {}
+        });
+        return out;
+    }
+
+    private static Map<String, String> writeMap(Map<UUID, String> values) {
+        Map<String, String> out = new LinkedHashMap<>();
+        values.forEach((id, text) -> out.put(id.toString(), text));
+        return out;
     }
 
     @Override
@@ -59,5 +70,5 @@ public record PlayerProfilesS2CPayload(Map<UUID, String> pronouns) implements Cu
         return TYPE;
     }
 
-    private record Wire(Map<String, String> pronouns) {}
+    private record Wire(Map<String, String> pronouns, Map<String, String> nicknames) {}
 }
