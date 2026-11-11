@@ -56,6 +56,19 @@ after the alpha that introduced each change.
 - Above-head stack from the head upwards: name tag + pronoun line (to about
   +1.0), role token centred at +1.25, vote marker centred at +2.10.
 
+## Screens and HUD
+
+- Every screen uses `SharktowerButton` (client/gui); the label colour rule is
+  documented on `UiDrawing`. Do not reintroduce vanilla `Button`.
+- Script Builder and Role Catalog draw `RoleGridPanel`: team-grouped tokens,
+  search over name and ability text, wheel scrolling, hover card. The builder
+  owns the selection; the panel only reports the role under the pointer.
+- `NightOrderHUD` labels the selected entry under the bar (position, role,
+  player, seat). The visit-info panel starts at y 56 on the left, so the label
+  stays centred under the icons at y 52 to clear it.
+- First run unbinds the vanilla Friends List key (O) if it is still default,
+  recorded by `friendsKeyReleased` in the client settings so it runs once.
+
 ## Confirmed functional areas
 
 ### Core state and setup

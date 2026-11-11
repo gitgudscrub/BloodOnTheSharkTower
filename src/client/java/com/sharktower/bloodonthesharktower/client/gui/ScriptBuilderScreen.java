@@ -1,13 +1,15 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
-import com.google.gson.Gson;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -19,89 +21,81 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Functional 26.2 Script Builder bridge.
+ * Storyteller script builder: pick the roles for the next game from every
+ * official role (plus any custom roles on the current script).
  *
- * It keeps the original BOTB idea (palette + current script), but deliberately
- * stays compact while the private port is being stabilised. It can build and
- * load official-role scripts immediately; custom-role authoring remains a
- * later Sharktower enhancement.
+ * Roles are shown on the shared team-grouped {@link RoleGridPanel}, with a
+ * search box that matches names and ability text. Clicking a token toggles it
+ * in or out of the script; "Load Script" sends the selection to the server.
  */
 public final class ScriptBuilderScreen extends Screen {
-    private static final Gson GSON = new Gson();
     private static final Set<String> SELECTED = new LinkedHashSet<>();
     private static String seededScriptIdentity = "";
+    private static String searchQuery = "";
 
-    private int page;
+    private RoleGridPanel grid;
+    private EditBox search;
 
     public ScriptBuilderScreen() {
-        this(0);
-    }
-
-    private ScriptBuilderScreen(int page) {
         super(Component.literal("Blood on the Sharktower — Script Builder"));
-        this.page = Math.max(0, page);
         seedFromCurrentScript();
     }
 
     @Override
     protected void init() {
-        List<ScriptRole> roles = palette();
-        int columns = Math.max(1, (this.width - 24 + 6) / 131);
-        int rows = Math.max(1, (this.height - 64 - 78) / 25);
-        int perPage = columns * rows;
-        int maxPage = Math.max(0, (roles.size() - 1) / perPage);
-        if (page > maxPage) page = maxPage;
+        grid = new RoleGridPanel(this.font);
+        grid.selected = role -> SELECTED.contains(role.getId());
+        grid.setRoles(palette(), searchQuery);
 
-        int w = 125;
-        int h = 20;
-        int gapX = 6;
-        int gapY = 5;
-        int gridW = columns * w + (columns - 1) * gapX;
-        int left = (this.width - gridW) / 2;
-        int top = 64;
-        int start = page * perPage;
-        int end = Math.min(roles.size(), start + perPage);
-
-        for (int i = start; i < end; i++) {
-            ScriptRole role = roles.get(i);
-            int local = i - start;
-            int col = local % columns;
-            int row = local / columns;
-            boolean chosen = SELECTED.contains(role.getId());
-            String label = (chosen ? "[x] " : "[ ] ") + role.getDisplayName();
-            this.addRenderableWidget(SharktowerButton.builder(Component.literal(label), b -> {
-                        if (!SELECTED.add(role.getId())) SELECTED.remove(role.getId());
-                        this.minecraft.gui.setScreen(new ScriptBuilderScreen(page));
-                    })
-                    .bounds(left + col * (w + gapX), top + row * (h + gapY), w, h).build());
-        }
+        int searchWidth = Math.min(200, Math.max(100, this.width - 250));
+        search = new EditBox(this.font, (this.width - searchWidth) / 2, 10, searchWidth, 20,
+                Component.literal("Search roles"));
+        search.setHint(Component.literal("Search roles...").withStyle(ChatFormatting.DARK_GRAY));
+        search.setMaxLength(80);
+        search.setValue(searchQuery);
+        search.setResponder(value -> {
+            searchQuery = value;
+            grid.setRoles(palette(), searchQuery);
+        });
+        this.addRenderableWidget(search);
 
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Base 3"), b ->
                         this.minecraft.gui.setScreen(new BaseThreeScreen()))
                 .bounds(this.width - 108, 10, 96, 20).build());
-
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Custom Scripts"), b ->
                         CustomScriptsScreen.openAndRefresh())
                 .bounds(this.width - 108, 34, 96, 20).build());
 
-        int navY = this.height - 70;
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("<"), b -> {
-            if (page > 0) this.minecraft.gui.setScreen(new ScriptBuilderScreen(page - 1));
-        }).bounds(this.width / 2 - 120, navY, 40, 20).build());
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal(">"), b -> {
-            if (page < maxPage) this.minecraft.gui.setScreen(new ScriptBuilderScreen(page + 1));
-        }).bounds(this.width / 2 - 70, navY, 40, 20).build());
+        int gridTop = 60;
+        int gridBottom = this.height - 56;
+        int gridWidth = Math.min(this.width - 24, RoleGridPanel.CELL_W * 7 + RoleGridPanel.SCROLLBAR_W + 4);
+        grid.setBounds((this.width - gridWidth) / 2, gridTop, gridWidth, gridBottom - gridTop);
 
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear"), b -> {
+        int navY = this.height - 50;
+        this.addRenderableWidget(SharktowerButton.builder(SharktowerButton.label("Clear", ChatFormatting.GRAY), b -> {
             SELECTED.clear();
-            this.minecraft.gui.setScreen(new ScriptBuilderScreen(0));
-        }).bounds(this.width / 2 - 20, navY, 70, 20).build());
-
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Load Script"), b -> load())
-                .bounds(this.width / 2 + 60, navY, 110, 20).build());
+        }).bounds(this.width / 2 - 100, navY, 70, 20).build());
+        this.addRenderableWidget(SharktowerButton.builder(SharktowerButton.label("Load Script", ChatFormatting.GOLD), b -> load())
+                .bounds(this.width / 2 - 20, navY, 120, 20).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b ->
                         this.minecraft.gui.setScreen(new AssignRolesScreen()))
-                .bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
+                .bounds(this.width / 2 - 100, this.height - 26, 200, 20).build());
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (super.mouseClicked(event, doubleClick)) return true;
+        ScriptRole role = grid.roleAt(event.x(), event.y());
+        if (role == null) return false;
+        if (!SELECTED.add(role.getId())) SELECTED.remove(role.getId());
+        search.setFocused(false);
+        return true;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (grid.mouseScrolled(mouseX, mouseY, scrollY)) return true;
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     private void load() {
@@ -113,9 +107,12 @@ public final class ScriptBuilderScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        String heading = "Script Builder";
-        graphics.text(this.font, heading, 12, 14, UiDrawing.GOLD, true);
-        graphics.text(this.font, "Selected: " + SELECTED.size(), 12, 32, UiDrawing.MUTED, false);
+        graphics.text(this.font, "Script Builder", 12, 14, UiDrawing.GOLD, true);
+        String count = "Selected: " + SELECTED.size();
+        if (!searchQuery.isBlank()) count += "  ·  showing " + grid.shownCount();
+        graphics.text(this.font, count, 12, 32, UiDrawing.MUTED, false);
+        grid.draw(graphics, mouseX, mouseY);
+        grid.drawHoverCard(graphics, this.width, this.height, mouseX, mouseY);
     }
 
     private static List<ScriptRole> palette() {
