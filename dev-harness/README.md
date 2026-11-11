@@ -32,6 +32,10 @@ The Storyteller account is automatically operator level 4.
 
 Every client has a separate directory under `run/`, so keybinds, Minecraft options, Simple Voice Chat state, screenshots and logs stay separate.
 
+Clients connect with `--quickPlayMultiplayer 127.0.0.1:25565` (Minecraft 26.x ignores the old `--server`/`--port` flags). The prepare task also writes each client's `options.txt` so the first-run welcome screen is skipped, sound is muted and the game keeps running when another window has focus; other options you change in a client are preserved.
+
+The harness needs Java 25 on `JAVA_HOME` or `PATH`; it is the same JDK the build uses.
+
 ## Security
 
 The test server deliberately uses `online-mode=false` so one Minecraft installation can create multiple development identities. It is also bound to `127.0.0.1`, so it is intended to be reachable only from this computer. Do not change `server-ip` to a public/LAN address while using this offline-mode configuration.

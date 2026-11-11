@@ -14,6 +14,13 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
   resets, nominations open/close, vote clock, executions, exile support, timer,
   night-chat routing, mass teleports) are Storyteller-only.
 - New `storytellerClaimRegression` runs with `gradlew check`.
+- Dev harness: clients now connect with `--quickPlayMultiplayer` (Minecraft
+  26.x ignored the old `--server`/`--port` flags and sat on the title screen),
+  and the prepare task seeds each client's `options.txt` to skip the first-run
+  welcome screen, mute sound and keep running without focus. Verified live:
+  Setup claim by a non-operator, lock after Send Roles, non-Storyteller
+  `/bots dusk` refused, operator override logged, claim allowed after the
+  Final Grimoire reveal.
 - Client pack adds Entity Culling, ImmediatelyFast, Dynamic FPS, and Mod Menu
   (with Text Placeholder API) alongside the existing Sodium, Lithium and
   FerriteCore. All are client-only; the server install is unchanged. The pack
