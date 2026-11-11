@@ -138,6 +138,38 @@ public final class RoleAutomationRegression {
         check(RoleAutomation.demonKillRefusal(null, scarlet) == null, "unprotected player can be killed");
         check(RoleAutomation.demonKillRefusal(null, null) == null, "null target is not refused");
 
+        // Mayor: the first Demon Kill is held back so the Storyteller can bounce it.
+        UUID mayor = seat(10, Role.MAYOR);
+        check(RoleAutomation.demonKillRefusal(null, mayor) != null, "first Demon Kill on the Mayor is held back");
+        check(RoleAutomation.demonKillRefusal(null, mayor) == null, "second Demon Kill on the Mayor goes through");
+        check(RoleAutomation.demonKillRefusal(null, mayor) != null, "the warning resets after the kill goes through");
+        ServerState.currentNight = 2;
+        check(RoleAutomation.demonKillRefusal(null, mayor) != null, "a new night warns again");
+        remind(mayor, "Poisoned", Role.POISONER);
+        check(RoleAutomation.demonKillRefusal(null, mayor) == null, "a poisoned Mayor cannot bounce");
+        StorytellerState.REMINDERS.remove(mayor);
+
+        // Reminder expiry: dusk clears Poisoner/Innkeeper/Sailor marks, dawn clears the Monk's.
+        StorytellerState.REMINDERS.clear();
+        remind(soldier, "Poisoned", Role.POISONER);
+        remind(soldier, "Safe", Role.MONK);
+        remind(imp, "Safe", Role.INNKEEPER);
+        remind(imp, "Drunk", Role.SAILOR);
+        remind(fool, "Cannot Die", Role.TEA_LADY);
+        remind(fool, "Poisoned", null);
+        var dusk = RoleAutomation.expireReminders(null, java.util.Map.of(
+                Role.POISONER, java.util.Set.of("poisoned"),
+                Role.INNKEEPER, java.util.Set.of("safe", "drunk"),
+                Role.SAILOR, java.util.Set.of("drunk")), "Dusk");
+        check(dusk.size() == 3, "dusk clears the Poisoner, Innkeeper and Sailor reminders");
+        check(RoleAutomation.hasReminder(soldier, "Safe"), "the Monk's Safe survives dusk");
+        check(!RoleAutomation.hasReminder(imp, "Safe"), "the Innkeeper's Safe is gone at dusk");
+        check(!StorytellerState.REMINDERS.containsKey(imp), "an emptied reminder list is removed");
+        check(RoleAutomation.hasReminder(fool, "Cannot Die"), "the Tea Lady's mark is not touched");
+        check(RoleAutomation.hasReminder(fool, "Poisoned"), "a reminder with no source role is never cleared");
+        var dawn = RoleAutomation.expireReminders(null, java.util.Map.of(Role.MONK, java.util.Set.of("safe")), "Dawn");
+        check(dawn.size() == 1 && !RoleAutomation.hasReminder(soldier, "Safe"), "dawn clears the Monk's Safe");
+
         System.out.println("PASS: " + checks + " role automation rule checks");
     }
 }

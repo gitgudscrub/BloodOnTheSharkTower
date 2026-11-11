@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -51,6 +52,29 @@ public final class RoleAutomation {
     private static UUID pendingVirginNominator;
     private static UUID pendingVirginNominee;
     private static int pendingVirginDay = -1;
+    /** Night on which the Imp killed themselves and a Minion must catch the star-pass. */
+    private static int pendingStarPassNight = -1;
+    /** The Mayor targeted by a Demon Kill this night, so a second Demon Kill goes through. */
+    private static UUID mayorWarned;
+    private static int mayorWarnedNight = -1;
+
+    /**
+     * Reminders that end at dusk, keyed by the role that places them. Each one
+     * lasts "tonight and tomorrow day" or "until dusk", so it is stale once the
+     * next night begins (before the role chooses again).
+     */
+    private static final Map<Role, Set<String>> EXPIRE_AT_DUSK = Map.of(
+            Role.POISONER, Set.of("poisoned"),
+            Role.INNKEEPER, Set.of("safe", "drunk"),
+            Role.SAILOR, Set.of("drunk"),
+            Role.MINSTREL, Set.of("everyoneisdrunk"),
+            Role.DEVILS_ADVOCATE, Set.of("survivesexecution"),
+            Role.WITCH, Set.of("cursed"),
+            Role.GODFATHER, Set.of("diedtoday"));
+
+    /** Reminders that only last the night they were placed. */
+    private static final Map<Role, Set<String>> EXPIRE_AT_DAWN = Map.of(
+            Role.MONK, Set.of("safe"));
 
     private RoleAutomation() {}
 
@@ -58,6 +82,9 @@ public final class RoleAutomation {
     public static void reset() {
         lastPromptKey = "";
         clearPendingVirgin();
+        pendingStarPassNight = -1;
+        mayorWarned = null;
+        mayorWarnedNight = -1;
     }
 
     // ------------------------------------------------------------------ Virgin
@@ -232,6 +259,17 @@ public final class RoleAutomation {
             if (server != null) StateBroadcaster.broadcastGrimoire(server);
             return "That player is the Fool: the first time they would die, they do not. The Fool's ability is now spent.";
         }
+        if (is(target, Role.MAYOR) && !droisoned(target)) {
+            boolean warned = target.equals(mayorWarned) && mayorWarnedNight == ServerState.currentNight;
+            if (!warned) {
+                mayorWarned = target;
+                mayorWarnedNight = ServerState.currentNight;
+                return "That player is the Mayor: you may have another player die instead (Demon Kill them)."
+                        + " Demon Kill the Mayor again to kill the Mayor anyway.";
+            }
+            mayorWarned = null;
+            mayorWarnedNight = -1;
+        }
         return null;
     }
 
@@ -249,6 +287,14 @@ public final class RoleAutomation {
      * plain win checks.
      */
     public static void onDeath(MinecraftServer server, UUID dead, boolean execution) {
+        onDeath(server, dead, execution, false);
+    }
+
+    /**
+     * @param demonKill true when the Storyteller used Demon Kill, so a Demon
+     *                  dying this way killed themselves (the Imp's star-pass).
+     */
+    public static void onDeath(MinecraftServer server, UUID dead, boolean execution, boolean demonKill) {
         if (server == null || dead == null || ServerState.gameEnded) return;
         PendingRoleAssignment deadRole = actualRole(dead);
 
@@ -282,12 +328,103 @@ public final class RoleAutomation {
                     BloodOnTheSharktower.LOGGER.info("Scarlet Woman {} became {} after {} died",
                             scarlet, deadRole.getDisplayName(), dead);
                 }
-            } else if (scarlet != null && aliveBefore >= 5) {
-                tellStorytellers(server, "Scarlet Woman: " + label(server, scarlet)
-                        + " is drunk or poisoned, so they do not become the Demon.", ChatFormatting.GOLD);
+            } else {
+                if (scarlet != null && aliveBefore >= 5) {
+                    tellStorytellers(server, "Scarlet Woman: " + label(server, scarlet)
+                            + " is drunk or poisoned, so they do not become the Demon.", ChatFormatting.GOLD);
+                }
+                if (demonKill && is(dead, Role.IMP) && offerStarPass(server, dead)) return;
             }
         }
         checkWin(server);
+    }
+
+    // --------------------------------------------------------------- Star-pass
+
+    /**
+     * The Imp killed themselves: a living Minion becomes the Imp, and which one
+     * is the Storyteller's choice. Offers one button per living Minion.
+     *
+     * @return true when a choice was offered (the win check waits for it).
+     */
+    private static boolean offerStarPass(MinecraftServer server, UUID imp) {
+        List<UUID> minions = new ArrayList<>();
+        for (Map.Entry<UUID, PendingRoleAssignment> entry : ServerState.PLAYER_ROLES.entrySet()) {
+            PendingRoleAssignment role = entry.getValue();
+            if (role != null && role.getRoleType() == RoleType.MINION && isAlive(entry.getKey())
+                    && ServerState.PLAYER_SEAT_NUMBERS.containsKey(entry.getKey())) {
+                minions.add(entry.getKey());
+            }
+        }
+        if (minions.isEmpty()) return false;
+        minions.sort(java.util.Comparator.comparingInt(id -> ServerState.PLAYER_SEAT_NUMBERS.getOrDefault(id, 0)));
+        pendingStarPassNight = ServerState.currentNight;
+        Component message = Component.literal("Imp star-pass: " + label(server, imp)
+                + " killed themselves. Choose the Minion who becomes the Imp: ").withStyle(ChatFormatting.GOLD);
+        for (UUID minion : minions) {
+            int seat = ServerState.PLAYER_SEAT_NUMBERS.get(minion);
+            String name = label(server, minion) + " (" + actualRole(minion).getDisplayName() + ")";
+            message = message.copy().append(button("[" + name + "]", "/bots automation starpass " + seat,
+                    name + " becomes the Imp")).append(Component.literal(" "));
+        }
+        tellStorytellers(server, message);
+        return true;
+    }
+
+    /** The Storyteller chose who catches the star-pass. */
+    public static String starPass(MinecraftServer server, UUID minion) {
+        if (pendingStarPassNight != ServerState.currentNight || !PhaseOperations.isNight()) {
+            return "There is no star-pass waiting tonight.";
+        }
+        PendingRoleAssignment current = actualRole(minion);
+        if (minion == null || current == null || current.getRoleType() != RoleType.MINION || !isAlive(minion)) {
+            return "That player is not a living Minion.";
+        }
+        pendingStarPassNight = -1;
+        ServerState.PLAYER_ROLES.put(minion, new PendingRoleAssignment(Role.IMP, current.override()));
+        ServerState.PLAYER_PERCEIVED_ROLES.remove(minion);
+        StateBroadcaster.broadcastGrimoire(server);
+        ServerPlayer online = server.getPlayerList().getPlayer(minion);
+        if (online != null) StateBroadcaster.sendRoleTo(online, false);
+        tellStorytellers(server, "Star-pass: " + label(server, minion) + " (" + current.getDisplayName()
+                + ") is now the Imp. Their role card has been updated; wake them to tell them.", ChatFormatting.GOLD);
+        BloodOnTheSharktower.LOGGER.info("Star-pass: {} became the Imp", minion);
+        return null;
+    }
+
+    // -------------------------------------------------------- Reminder expiry
+
+    /** Dusk: clear reminders whose effect lasted "until dusk" or "tonight and tomorrow". */
+    public static void onDusk(MinecraftServer server) {
+        expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
+    }
+
+    /** Dawn: clear reminders that only protected the night just gone. */
+    public static void onDawn(MinecraftServer server) {
+        expireReminders(server, EXPIRE_AT_DAWN, "Dawn");
+    }
+
+    static List<String> expireReminders(MinecraftServer server, Map<Role, Set<String>> rules, String when) {
+        List<String> cleared = new ArrayList<>();
+        for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
+            List<Reminder> list = entry.getValue();
+            if (list == null) continue;
+            list.removeIf(reminder -> {
+                Role source = reminder.role().orElse(null);
+                Set<String> texts = source == null ? null : rules.get(source);
+                if (texts == null || !texts.contains(normalize(reminder.text()))) return false;
+                cleared.add((server == null ? "Seat " + ServerState.PLAYER_SEAT_NUMBERS.getOrDefault(entry.getKey(), 0)
+                        : label(server, entry.getKey())) + " " + reminder.text() + " (" + source.getDisplayName() + ")");
+                return true;
+            });
+        }
+        StorytellerState.REMINDERS.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().isEmpty());
+        if (!cleared.isEmpty() && server != null) {
+            StateBroadcaster.broadcastGrimoire(server);
+            tellStorytellers(server, when + ": cleared expired reminders: " + String.join(", ", cleared) + ".",
+                    ChatFormatting.GRAY);
+        }
+        return cleared;
     }
 
     /** Called when a day ends without an execution. */

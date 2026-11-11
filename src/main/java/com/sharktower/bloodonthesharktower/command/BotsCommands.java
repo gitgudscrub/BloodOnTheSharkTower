@@ -214,6 +214,11 @@ public final class BotsCommands {
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .then(Commands.argument("text", StringArgumentType.greedyString())
                                                         .executes(BotsCommands::executeAddReminder))))
+                                .then(Commands.literal("role")
+                                        .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                .then(Commands.argument("role", StringArgumentType.word())
+                                                        .then(Commands.argument("text", StringArgumentType.greedyString())
+                                                                .executes(BotsCommands::executeAddRoleReminder)))))
                                 .then(Commands.literal("clear")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeClearReminders)))
@@ -285,6 +290,9 @@ public final class BotsCommands {
                                         .then(Commands.argument("nominee", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeNominatePair))))
                         .then(Commands.literal("automation")
+                                .then(Commands.literal("starpass")
+                                        .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                .executes(BotsCommands::executeAutomationStarPass)))
                                 .then(Commands.literal("virgin")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationVirginDismiss))
@@ -1151,6 +1159,15 @@ public final class BotsCommands {
         ), true);
     }
 
+    /** Console twin of the Grimoire's source-role reminder, e.g. "reminder role 4 poisoner Poisoned". */
+    private static int executeAddRoleReminder(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        int seat = IntegerArgumentType.getInteger(context, "seat");
+        String role = StringArgumentType.getString(context, "role");
+        String text = StringArgumentType.getString(context, "text");
+        return finishSetupOperation(context, SetupOperations.addRoleReminder(seat, role, text), true);
+    }
+
     private static int executeAddReminder(CommandContext<CommandSourceStack> context) {
         if (!requireStoryteller(context)) return 0;
         return finishSetupOperation(context, SetupOperations.addReminder(
@@ -1436,6 +1453,20 @@ public final class BotsCommands {
         String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
                 .virginExecute(context.getSource().getServer(), target);
         send(context, refusal == null ? "Seat " + seat + " was executed by the Virgin's ability." : refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationStarPass(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        int seat = IntegerArgumentType.getInteger(context, "seat");
+        UUID target = SetupOperations.playerBySeat(seat);
+        if (target == null) {
+            send(context, "No player is assigned to seat " + seat + ".");
+            return 0;
+        }
+        String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
+                .starPass(context.getSource().getServer(), target);
+        if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }
 

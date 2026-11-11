@@ -253,7 +253,7 @@ public final class StorytellerActionHandler {
         TriggeredNightOrderManager.onDeath(target, cause);
         StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastGrimoire(server);
-        com.sharktower.bloodonthesharktower.automation.RoleAutomation.onDeath(server, target, false);
+        com.sharktower.bloodonthesharktower.automation.RoleAutomation.onDeath(server, target, false, demonKill);
 
         return SetupOperations.Result.ok("Privately marked seat " + seat + " dead; use Reveal Deaths during Day"
                 + (demonKill ? " (Demon kill)." : "."));

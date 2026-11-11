@@ -3,6 +3,26 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.16 — More role automation (unreleased)
+
+- **Imp star-pass:** when the Imp is Demon-Killed (killed themselves) and no
+  sober Scarlet Woman catches it, the Storyteller gets one button per living
+  Minion to choose the new Imp. Their role card and the Grimoire update.
+  Fixed: this used to raise a "Good should win" prompt instead.
+- **Reminder expiry:** reminders whose effect has run out are cleared and
+  listed in Storyteller chat. At dusk: Poisoner "Poisoned", Innkeeper
+  "Safe"/"Drunk", Sailor "Drunk", Minstrel "Everyone Is Drunk", Devil's
+  Advocate "Survives Execution", Witch "Cursed", Godfather "Died Today".
+  At dawn: Monk "Safe". Only reminders placed with that source role are
+  touched; hand-written reminders stay.
+- **Mayor:** the first Demon Kill on a sober Mayor each night is held back
+  with a reminder that another player may die instead. Demon Kill the Mayor
+  again to kill them.
+- Night helper: the Empath and Chef answers note when a Recluse or Spy may
+  register differently.
+- New `/bots reminder role <seat> <role> <text>` (source-role reminder) and
+  `/bots automation starpass <seat>`.
+
 ## 1.0.2-alpha.15 — Virgin needs Storyteller approval (unreleased)
 
 - The Virgin no longer executes anyone by itself. Her first nomination
