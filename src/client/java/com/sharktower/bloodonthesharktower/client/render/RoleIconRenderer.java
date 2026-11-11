@@ -21,10 +21,12 @@ import java.util.UUID;
 
 /** Floating BOTC role tokens based only on what this particular client knows or has noted. */
 public final class RoleIconRenderer {
+    // Stacked above the vanilla name tag plus the pronoun line below it (the
+    // tag band ends about +1.0 above the head). The vote marker sits above this.
     private static final double TRUE_ICON_SIZE = 0.56D;
     private static final double PERCEIVED_ICON_SIZE = 0.36D;
     private static final double PAIR_GAP = 0.08D;
-    private static final double HEAD_OFFSET = 0.72D;
+    private static final double HEAD_OFFSET = 1.25D;
 
     private RoleIconRenderer() {}
 

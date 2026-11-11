@@ -43,8 +43,10 @@ public final class BloodOnTheSharktower implements ModInitializer {
         ModPayloads.registerPayloads();
         ModPackets.registerC2SReceivers();
         com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.register();
+        com.sharktower.bloodonthesharktower.profile.PlayerProfiles.register();
         LOGGER.info("Bulk 0.5.0 game-flow networking registered: core state, daytime elections, votes, executions and exile state.");
         BotsCommands.register();
+        com.sharktower.bloodonthesharktower.command.PronounsCommands.register();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();
         ServerTickEvents.END_SERVER_TICK.register(NightChatManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.networking.SocialStateManager::tick);

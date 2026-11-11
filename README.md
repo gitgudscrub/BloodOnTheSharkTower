@@ -36,6 +36,10 @@ The server runs the same Blood on the Sharktower JAR as clients. The server also
 
 Anyone can claim Storyteller control during Setup with `/bots storyteller claim`. Once roles are sent the position is locked for the rest of the game, including the end-game reveal, so no player can gain sight of the Grimoire mid-game. A server operator can override the lock to rescue a game whose Storyteller cannot return. See `docs/STATUS.md`.
 
+### Pronouns
+
+Any player can run `/pronouns they/them` (presets are suggested, custom text is accepted) to show their pronouns in grey under their name tag, beside their name in the player sidebar and in the Grimoire hover text. `/pronouns clear` removes them. The choice is stored by UUID in `config/blood_on_the_sharktower/player-profiles.json` and survives restarts. Pronouns are cosmetic only, visible to everyone, and hidden at Night along with the name tag. Players who prefer not to see them can turn off **Pronoun Tags** in the Sharktower settings screen.
+
 Client and server builds are produced together by GitHub Actions so that both packages come from the same source revision.
 
 ## What is implemented
@@ -158,8 +162,8 @@ The **1.0.x** line will include a persistent player profile system so players ca
 Planned features include:
 
 - `/nick` commands so players can choose the name they want to be called;
-- `/pronouns` commands with common presets plus custom pronoun text;
-- optional display of pronouns above the player's head;
+- `/pronouns` commands with common presets plus custom pronoun text — **done in 1.0.2-alpha.12**;
+- optional display of pronouns above the player's head — **done** (below the name tag, client toggle);
 - optional cosmetic display colours that do not encode role, alignment or other game information;
 - persistence by UUID so settings survive reconnects and server restarts;
 - use of the chosen nickname in player-facing Sharktower UI such as the Grimoire, nominations and voting where practical;

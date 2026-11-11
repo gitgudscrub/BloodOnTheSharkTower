@@ -38,6 +38,7 @@ public final class SharktowerSettingsScreen extends Screen {
         addToggle(left, top + row * 2, "Player List", () -> ClientSettings.playerListHud, v -> ClientSettings.playerListHud = v);
         addToggle(mid, top + row * 2, "Role Counts", () -> ClientSettings.roleCountsHud, v -> ClientSettings.roleCountsHud = v);
         addToggle(right, top + row * 2, "World Roles", () -> ClientSettings.worldRoleIcons, v -> ClientSettings.worldRoleIcons = v);
+        addToggle(left, top + row * 3, "Pronoun Tags", () -> ClientSettings.pronounTags, v -> ClientSettings.pronounTags = v);
 
         if (isStoryteller()) {
             this.addRenderableWidget(Button.builder(voteSpeedLabel(), b -> {
@@ -51,16 +52,16 @@ public final class SharktowerSettingsScreen extends Screen {
                 }
                 ClientStorytellerActions.send("set_vote_step_ticks", Integer.toString(next));
                 b.setMessage(Component.literal(String.format(Locale.ROOT, "Vote Speed: %.2fs / seat", next / 20.0D)));
-            }).bounds(left, top + row * 4, 150, 20).build());
+            }).bounds(left, top + row * 5, 150, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("Clock Scale -"), b -> {
                 double next = Math.max(1.5D, ClientState.clockHandScale - 0.5D);
                 ClientStorytellerActions.send("set_clock_scale", String.format(Locale.ROOT, "%.2f", next));
-            }).bounds(mid + 55, top + row * 4, 72, 20).build());
+            }).bounds(mid + 55, top + row * 5, 72, 20).build());
             this.addRenderableWidget(Button.builder(Component.literal("Clock Scale +"), b -> {
                 double next = Math.min(8.0D, ClientState.clockHandScale + 0.5D);
                 ClientStorytellerActions.send("set_clock_scale", String.format(Locale.ROOT, "%.2f", next));
-            }).bounds(right + 73, top + row * 4, 82, 20).build());
+            }).bounds(right + 73, top + row * 5, 82, 20).build());
         }
 
         this.addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
@@ -102,13 +103,13 @@ public final class SharktowerSettingsScreen extends Screen {
         drawCentered(graphics, "Sharktower Settings", 16, UiDrawing.TEXT, true);
         drawCentered(graphics, "Player HUD", 39, UiDrawing.GOLD, true);
         if (isStoryteller()) {
-            drawCentered(graphics, "Storyteller Vote Presentation", 147, UiDrawing.GOLD, true);
+            drawCentered(graphics, "Storyteller Vote Presentation", 175, UiDrawing.GOLD, true);
             drawCentered(graphics,
                     String.format(Locale.ROOT, "Clock hand scale: %.2f", ClientState.clockHandScale),
-                    194, UiDrawing.MUTED, false);
+                    222, UiDrawing.MUTED, false);
         } else {
             drawCentered(graphics, "Storyteller-only vote settings appear when you are the active Storyteller.",
-                    147, UiDrawing.MUTED, false);
+                    175, UiDrawing.MUTED, false);
         }
         drawCentered(graphics, "All controls can also be rebound in Minecraft Controls → Blood on the Sharktower.",
                 height - 47, UiDrawing.MUTED, false);

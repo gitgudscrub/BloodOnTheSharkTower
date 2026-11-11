@@ -293,6 +293,14 @@ tasks.register('storytellerClaimRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('storytellerClaimRegression') }
 
+// Pronoun text validation and normalisation for /pronouns.
+tasks.register('pronounsRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.profile.PronounsRegression'
+}
+tasks.named('check') { dependsOn tasks.named('pronounsRegression') }
+
 tasks.register('handRaiseModeRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath

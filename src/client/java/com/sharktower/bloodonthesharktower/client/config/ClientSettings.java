@@ -20,6 +20,7 @@ public final class ClientSettings {
     public static boolean playerListHud = true;
     public static boolean roleCountsHud = true;
     public static boolean worldRoleIcons = true;
+    public static boolean pronounTags = true;
     public static boolean electionHud = true;
     public static boolean handHud = true;
     public static boolean timerHud = true;
@@ -39,6 +40,7 @@ public final class ClientSettings {
         playerListHud = read(p, "playerListHud", true);
         roleCountsHud = read(p, "roleCountsHud", true);
         worldRoleIcons = read(p, "worldRoleIcons", true);
+        pronounTags = read(p, "pronounTags", true);
         electionHud = read(p, "electionHud", true);
         handHud = read(p, "handHud", true);
         timerHud = read(p, "timerHud", true);
@@ -52,6 +54,7 @@ public final class ClientSettings {
         p.setProperty("playerListHud", Boolean.toString(playerListHud));
         p.setProperty("roleCountsHud", Boolean.toString(roleCountsHud));
         p.setProperty("worldRoleIcons", Boolean.toString(worldRoleIcons));
+        p.setProperty("pronounTags", Boolean.toString(pronounTags));
         p.setProperty("electionHud", Boolean.toString(electionHud));
         p.setProperty("handHud", Boolean.toString(handHud));
         p.setProperty("timerHud", Boolean.toString(timerHud));

@@ -52,6 +52,7 @@ public final class StateBroadcaster {
         sendDeathStatusTo(player);
         sendGrimoireTo(player, true);
         sendPlayerDirectoryTo(player);
+        sendPlayerProfilesTo(player);
         sendDaytimeStateTo(player);
         sendVoteStateTo(player);
         TimerManager.addPlayer(player);
@@ -85,6 +86,7 @@ public final class StateBroadcaster {
         sendDeathStatusTo(player);
         sendGrimoireTo(player, true);
         sendPlayerDirectoryTo(player);
+        sendPlayerProfilesTo(player);
         sendDaytimeStateTo(player);
         sendVoteStateTo(player);
         NightChatManager.sendRouteTo(player);
@@ -228,6 +230,32 @@ public final class StateBroadcaster {
         ServerPlayNetworking.send(player, new PlayerDirectoryS2CPayload(
                 names, connected, new java.util.ArrayList<>(StorytellerState.STORYTELLERS)
         ));
+    }
+
+    /** Pronouns for the players currently online. Public cosmetic data only. */
+    public static void sendPlayerProfilesTo(ServerPlayer player) {
+        MinecraftServer server = player.level().getServer();
+        if (server == null) return;
+        ServerPlayNetworking.send(player, new PlayerProfilesS2CPayload(onlinePronouns(server)));
+    }
+
+    public static void broadcastPlayerProfiles(MinecraftServer server) {
+        if (server == null) return;
+        PlayerProfilesS2CPayload payload = new PlayerProfilesS2CPayload(onlinePronouns(server));
+        for (ServerPlayer online : server.getPlayerList().getPlayers()) {
+            ServerPlayNetworking.send(online, payload);
+        }
+    }
+
+    private static java.util.Map<java.util.UUID, String> onlinePronouns(MinecraftServer server) {
+        java.util.Map<java.util.UUID, String> all =
+                com.sharktower.bloodonthesharktower.profile.PlayerProfiles.allPronouns();
+        java.util.Map<java.util.UUID, String> online = new java.util.LinkedHashMap<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            String pronouns = all.get(player.getUUID());
+            if (pronouns != null && !pronouns.isEmpty()) online.put(player.getUUID(), pronouns);
+        }
+        return online;
     }
 
     public static void sendEndGameStateTo(ServerPlayer player) {

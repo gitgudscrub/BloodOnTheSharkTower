@@ -33,7 +33,7 @@ public final class VoteIndicatorRenderer {
     // sits clearly above that layer rather than covering the character icon.
     private static final double ICON_SIZE = 1.00D;
     private static final double CURRENT_VOTER_BONUS = 0.14D;
-    private static final double HEAD_OFFSET = 1.60D;
+    private static final double HEAD_OFFSET = 2.10D;
 
     private static final Identifier YES_TEXTURE = Identifier.fromNamespaceAndPath(
             BloodOnTheSharktower.MOD_ID, "textures/hud/vote_yes.png");
