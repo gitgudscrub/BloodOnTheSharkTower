@@ -5,7 +5,6 @@ import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -27,8 +26,8 @@ public final class StorytellerInteractionScreen extends Screen {
         int centerX = this.width / 2;
         int y = this.height / 2 + 28;
 
-        this.addRenderableWidget(Button.builder(
-                        Component.literal("Request Private Chat").withStyle(ChatFormatting.LIGHT_PURPLE),
+        this.addRenderableWidget(SharktowerButton.builder(
+                        Component.literal("Request Private Chat"),
                         b -> {
                             ClientPlayerActions.send("request_private_storyteller", storytellerId.toString());
                             this.minecraft.gui.setScreen(parent);
@@ -37,7 +36,7 @@ public final class StorytellerInteractionScreen extends Screen {
 
         int offset = 25;
         if (hasActiveTraveller()) {
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Call for Exile").withStyle(ChatFormatting.LIGHT_PURPLE),
                             b -> this.minecraft.gui.setScreen(new PlayerExileCallScreen(this)))
                     .bounds(centerX - 80, y + offset, 160, 20).build());
@@ -45,7 +44,7 @@ public final class StorytellerInteractionScreen extends Screen {
         }
 
         if (atheistOnScript()) {
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Nominate Storyteller").withStyle(ChatFormatting.GOLD),
                             b -> {
                                 ClientPlayerActions.send("nominate_storyteller", storytellerId.toString());
@@ -55,7 +54,7 @@ public final class StorytellerInteractionScreen extends Screen {
             offset += 25;
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.minecraft.gui.setScreen(parent))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.minecraft.gui.setScreen(parent))
                 .bounds(centerX - 40, y + offset + 5, 80, 20).build());
     }
 

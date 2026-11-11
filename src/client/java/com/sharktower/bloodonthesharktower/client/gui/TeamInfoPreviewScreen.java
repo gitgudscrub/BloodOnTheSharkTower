@@ -3,7 +3,6 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -103,18 +102,18 @@ public final class TeamInfoPreviewScreen extends Screen {
         lines = List.copyOf(wrapped);
         page = Math.min(page, Math.max(0, (lines.size() - 1) / pageSize()));
 
-        this.addRenderableWidget(Button.builder(Component.literal("Previous"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Previous"), b ->
                 page = Math.max(0, page - 1))
                 .bounds(12, this.height - 58, 80, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Next"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Next"), b ->
                 page = Math.min((lines.size() - 1) / pageSize(), page + 1))
                 .bounds(this.width - 92, this.height - 58, 80, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Share Privately"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Share Privately"), b -> {
             finishPreview();
             ClientStorytellerActions.send("team_info_share", token);
             this.minecraft.gui.setScreen(new AssignRolesScreen());
         }).bounds(this.width / 2 - 110, this.height - 30, 130, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Cancel"), b -> onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel"), b -> onClose())
                 .bounds(this.width / 2 + 30, this.height - 30, 80, 20).build());
     }
 

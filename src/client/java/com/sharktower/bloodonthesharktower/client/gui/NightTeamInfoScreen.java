@@ -6,7 +6,6 @@ import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -60,13 +59,13 @@ public final class NightTeamInfoScreen extends Screen {
         // This mirrors the Lunatic controls when a Lunatic is actually in play.
         if (demon) {
             int demonBluffCount = ClientState.demonBluffs.size();
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Demon Bluffs: " + demonBluffCount + "/3"), b ->
                                     this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(this)))
                     .bounds(this.width / 2 - 110, controlY, 220, 20).build());
             controlY += 24;
 
-            Button sendDemonBluffs = Button.builder(Component.literal("Send Demon Bluffs"), b ->
+            SharktowerButton sendDemonBluffs = SharktowerButton.builder(Component.literal("Send Demon Bluffs"), b ->
                             ClientLunaticBluffs.sendToDemon())
                     .bounds(this.width / 2 - 110, controlY, 220, 20).build();
             sendDemonBluffs.active = demonBluffCount == 3 && demonInPlay();
@@ -84,13 +83,13 @@ public final class NightTeamInfoScreen extends Screen {
             // screens do not duplicate the same controls.
             if (demon && roleInPlay(Role.LUNATIC)) {
                 int bluffCount = ClientLunaticBluffs.current().size();
-                this.addRenderableWidget(Button.builder(
+                this.addRenderableWidget(SharktowerButton.builder(
                                 Component.literal("Lunatic Bluffs: " + bluffCount + "/3"), b ->
                                         this.minecraft.gui.setScreen(new LunaticBluffSelectionScreen(this)))
                         .bounds(this.width / 2 - 110, controlY, 220, 20).build());
                 controlY += 24;
 
-                Button sendBluffs = Button.builder(Component.literal("Send Lunatic Bluffs"), b ->
+                SharktowerButton sendBluffs = SharktowerButton.builder(Component.literal("Send Lunatic Bluffs"), b ->
                                 ClientLunaticBluffs.sendToLunatic())
                         .bounds(this.width / 2 - 110, controlY, 220, 20).build();
                 sendBluffs.active = bluffCount == 3;
@@ -98,7 +97,7 @@ public final class NightTeamInfoScreen extends Screen {
                 controlY += 24;
             }
         } else {
-            this.addRenderableWidget(Button.builder(Component.literal(demon ? "Demon Info — Preview" : "Minion Info — Preview"), b ->
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(demon ? "Demon Info — Preview" : "Minion Info — Preview"), b ->
                     ClientStorytellerActions.send("team_info_preview", (demon ? "demon" : "minion") + "|" + useMagician + "|" + releasePoppyGrower + "|" + smallGameOverride))
                     .bounds(this.width / 2 - 110, controlY, 220, 20).build());
             controlY += 24;
@@ -107,7 +106,7 @@ public final class NightTeamInfoScreen extends Screen {
             boolean poppyGrowerInPlay = roleInPlay(Role.POPPY_GROWER);
 
             if (magicianInPlay) {
-                this.addRenderableWidget(Button.builder(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"), b -> {
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"), b -> {
                     useMagician = !useMagician;
                     b.setMessage(Component.literal(useMagician ? "Magician: Automatic" : "Magician: Disabled by ST"));
                 }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
@@ -115,7 +114,7 @@ public final class NightTeamInfoScreen extends Screen {
             }
 
             if (poppyGrowerInPlay) {
-                this.addRenderableWidget(Button.builder(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"), b -> {
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"), b -> {
                     releasePoppyGrower = !releasePoppyGrower;
                     b.setMessage(Component.literal(releasePoppyGrower ? "Poppy Grower: Identities Released" : "Poppy Grower: Identities Withheld"));
                 }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
@@ -123,7 +122,7 @@ public final class NightTeamInfoScreen extends Screen {
             }
 
             if (ClientState.activePlayerCount < 7) {
-                this.addRenderableWidget(Button.builder(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"), b -> {
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"), b -> {
                     smallGameOverride = !smallGameOverride;
                     b.setMessage(Component.literal(smallGameOverride ? "Small Game: ST Override" : "Small Game: No Starting Info"));
                 }).bounds(this.width / 2 - 110, controlY, 220, 20).build());
@@ -143,25 +142,25 @@ public final class NightTeamInfoScreen extends Screen {
             var id = entry.getKey();
             int seat = ClientState.grimoireSeatNumbers.getOrDefault(id, 0);
             String prefix = manualLunaticInfo ? visitPrefix(entry.getValue()) : "Visit";
-            this.addRenderableWidget(Button.builder(Component.literal(prefix + " " + ClientState.playerName(id, seat)), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(prefix + " " + ClientState.playerName(id, seat)), b -> {
                 ClientStorytellerActions.send("night_visit", id.toString());
                 this.onClose();
             }).bounds(this.width / 2 - 110, y, 220, 20).build());
             y += 24;
         }
         if (pages > 1) {
-            this.addRenderableWidget(Button.builder(Component.literal("Previous Visits"), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Previous Visits"), b -> {
                 page = Math.max(0, page - 1);
                 clearWidgets();
                 build(false);
             }).bounds(this.width / 2 - 110, this.height - 54, 106, 20).build());
-            this.addRenderableWidget(Button.builder(Component.literal("Next Visits"), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Next Visits"), b -> {
                 page = Math.min(pages - 1, page + 1);
                 clearWidgets();
                 build(false);
             }).bounds(this.width / 2 + 4, this.height - 54, 106, 20).build());
         }
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> onClose()).bounds(this.width / 2 - 45, this.height - 28, 90, 20).build());
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> onClose()).bounds(this.width / 2 - 45, this.height - 28, 90, 20).build());
     }
 
     private boolean visitRelevant(PendingRoleAssignment assignment, boolean manualLunaticInfo) {

@@ -4,7 +4,6 @@ import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerAc
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -28,34 +27,34 @@ public final class ExileControlScreen extends Screen {
     protected void init() {
         int cx = this.width / 2;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Pick Caller"), b -> selectingCaller = true)
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Pick Caller"), b -> selectingCaller = true)
                 .bounds(cx - 125, 38, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Pick Traveller"), b -> selectingCaller = false)
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Pick Traveller"), b -> selectingCaller = false)
                 .bounds(cx + 5, 38, 120, 20).build());
 
         buildPlayerGrid();
 
         int actionY = actionRowY();
-        this.addRenderableWidget(Button.builder(Component.literal("Call for Exile").withStyle(ChatFormatting.LIGHT_PURPLE), b -> submitExile())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Call for Exile").withStyle(ChatFormatting.LIGHT_PURPLE), b -> submitExile())
                 .bounds(cx - 185, actionY, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Start Exile Vote").withStyle(ChatFormatting.AQUA), b -> action("exile_start"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Exile Vote").withStyle(ChatFormatting.GOLD), b -> action("exile_start"))
                 .bounds(cx - 60, actionY, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Resolve Exile").withStyle(ChatFormatting.GREEN), b -> action("exile_finish"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Resolve Exile").withStyle(ChatFormatting.GREEN), b -> action("exile_finish"))
                 .bounds(cx + 65, actionY, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Count -1"), b -> action("exile_override_delta", "-1"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Count -1"), b -> action("exile_override_delta", "-1"))
                 .bounds(cx - 185, actionY + 25, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Clear Override"), b -> action("exile_override_clear"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear Override"), b -> action("exile_override_clear"))
                 .bounds(cx - 60, actionY + 25, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Count +1"), b -> action("exile_override_delta", "1"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Count +1"), b -> action("exile_override_delta", "1"))
                 .bounds(cx + 65, actionY + 25, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Cancel Vote"), b -> action("exile_cancel_vote"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel Vote"), b -> action("exile_cancel_vote"))
                 .bounds(cx - 125, actionY + 50, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Cancel Exile"), b -> action("exile_reset"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel Exile"), b -> action("exile_reset"))
                 .bounds(cx + 5, actionY + 50, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.onClose())
                 .bounds(cx - 60, this.height - 27, 120, 20).build());
     }
 
@@ -82,7 +81,7 @@ public final class ExileControlScreen extends Screen {
             String marker = exiled ? "E " : (traveler ? "T " : "");
             String dead = ClientState.playerDeathStatus.getOrDefault(id, false) ? "X " : "";
             Component label = Component.literal(marker + dead + seat + " " + trim(ClientState.playerName(id, seat), 11));
-            this.addRenderableWidget(Button.builder(label, b -> choosePlayer(id))
+            this.addRenderableWidget(SharktowerButton.builder(label, b -> choosePlayer(id))
                     .bounds(startX + col * (buttonW + gap), startY + row * 23, buttonW, 20).build());
         }
     }

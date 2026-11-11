@@ -4,7 +4,6 @@ import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerAc
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -28,44 +27,44 @@ public final class NominationControlScreen extends Screen {
     protected void init() {
         int cx = this.width / 2;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Open Noms").withStyle(ChatFormatting.GOLD), b -> action("nominations_open"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Open Noms").withStyle(ChatFormatting.GOLD), b -> action("nominations_open"))
                 .bounds(cx - 245, 38, 115, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Close Noms").withStyle(ChatFormatting.GRAY), b -> action("nominations_close"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Close Noms").withStyle(ChatFormatting.GRAY), b -> action("nominations_close"))
                 .bounds(cx - 125, 38, 115, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Pick Nominator"), b -> selectingNominator = true)
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Pick Nominator"), b -> selectingNominator = true)
                 .bounds(cx - 5, 38, 115, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Pick Nominee"), b -> selectingNominator = false)
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Pick Nominee"), b -> selectingNominator = false)
                 .bounds(cx + 115, 38, 115, 20).build());
 
         buildPlayerGrid();
 
         int actionY = Math.min(this.height - 126, 222);
-        this.addRenderableWidget(Button.builder(Component.literal("Submit Nomination").withStyle(ChatFormatting.GOLD), b -> submitNomination())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Submit Nomination").withStyle(ChatFormatting.GOLD), b -> submitNomination())
                 .bounds(cx - 185, actionY, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Start Vote").withStyle(ChatFormatting.AQUA), b -> action("vote_start"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Vote").withStyle(ChatFormatting.GOLD), b -> action("vote_start"))
                 .bounds(cx - 60, actionY, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Finish Vote").withStyle(ChatFormatting.GREEN), b -> action("vote_finish"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Finish Vote").withStyle(ChatFormatting.GREEN), b -> action("vote_finish"))
                 .bounds(cx + 65, actionY, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Count -1"), b -> action("vote_override_delta", "-1"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Count -1"), b -> action("vote_override_delta", "-1"))
                 .bounds(cx - 185, actionY + 25, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Clear Override"), b -> action("vote_override_clear"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear Override"), b -> action("vote_override_clear"))
                 .bounds(cx - 60, actionY + 25, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Count +1"), b -> action("vote_override_delta", "1"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Count +1"), b -> action("vote_override_delta", "1"))
                 .bounds(cx + 65, actionY + 25, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Cancel Vote"), b -> action("vote_cancel"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel Vote"), b -> action("vote_cancel"))
                 .bounds(cx - 185, actionY + 50, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Cancel Nomination"), b -> action("nomination_cancel"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel Nomination"), b -> action("nomination_cancel"))
                 .bounds(cx - 60, actionY + 50, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("No Execution"), b -> action("no_execution"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("No Execution"), b -> action("no_execution"))
                 .bounds(cx + 65, actionY + 50, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Execute — Dies").withStyle(ChatFormatting.RED), b -> action("execute_marked"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Execute — Dies").withStyle(ChatFormatting.RED), b -> action("execute_marked"))
                 .bounds(cx - 125, actionY + 75, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Execute — Lives").withStyle(ChatFormatting.GOLD), b -> action("execute_marked_survives"))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Execute — Lives").withStyle(ChatFormatting.GREEN), b -> action("execute_marked_survives"))
                 .bounds(cx + 5, actionY + 75, 120, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.onClose())
                 .bounds(cx - 60, this.height - 27, 120, 20).build());
     }
 
@@ -91,7 +90,7 @@ public final class NominationControlScreen extends Screen {
             String prefix = ClientState.isExiledTraveler(id) ? "E "
                     : (ClientState.playerDeathStatus.getOrDefault(id, false) ? "X " : "");
             Component label = Component.literal(prefix + seat + " " + trim(name, 12));
-            this.addRenderableWidget(Button.builder(label, b -> choosePlayer(id))
+            this.addRenderableWidget(SharktowerButton.builder(label, b -> choosePlayer(id))
                     .bounds(startX + col * (buttonW + gap), startY + row * 23, buttonW, 20).build());
         }
     }

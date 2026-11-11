@@ -51,6 +51,7 @@ Client and server builds are produced together by GitHub Actions so that both pa
   - Trouble Brewing
   - Bad Moon Rising
   - Sects & Violets
+- Script Builder and Role Catalog on a shared team-grouped token grid with search and ability text on hover.
 - Role Bag with current/expected team distribution.
 - Random role and seat distribution tools.
 - Circular Storyteller Grimoire with player heads, role tokens, reminders and Demon bluffs.

@@ -9,11 +9,19 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 /**
- * Shared UI drawing helpers.
+ * Shared UI drawing helpers and the colour rule every screen follows.
  *
- * 0.6.1 intentionally follows the original BOTB visual language: vanilla
- * screen backgrounds/buttons, compact token grids, team-coloured token
- * backplates, and minimal dark overlays rather than large bespoke cards.
+ * Buttons are {@link SharktowerButton}s (dark panel, soft border, gold hover ring).
+ * Label colours mean something, so use them consistently:
+ * <ul>
+ *   <li>white: navigation, toggles and movement (Back, Done, Shuffle, Send to Seats);</li>
+ *   <li>gold: the action that advances the game (Send Roles, Nominate, Start Vote);</li>
+ *   <li>green: confirm or resolve (Execute - lives, Confirm);</li>
+ *   <li>red: irreversible or evil-team actions (Game End, Execute - dies);</li>
+ *   <li>grey/muted: cancel and secondary actions;</li>
+ *   <li>light purple: Traveller and exile flows only;</li>
+ *   <li>team colours are reserved for role tokens and names, never for buttons.</li>
+ * </ul>
  */
 public final class UiDrawing {
     public static final int PANEL = 0xD0101014;

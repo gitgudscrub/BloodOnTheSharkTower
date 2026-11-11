@@ -3,7 +3,6 @@ package com.sharktower.bloodonthesharktower.client.gui;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -26,22 +25,22 @@ public final class BaseThreeScreen extends Screen {
         int top = Math.max(58, this.height / 2 - 72);
         int gap = 10;
 
-        this.addRenderableWidget(Button.builder(
+        this.addRenderableWidget(SharktowerButton.builder(
                         Component.literal("Trouble Brewing").withStyle(ChatFormatting.DARK_RED),
                         b -> load("tb"))
                 .bounds(left, top, buttonWidth, buttonHeight).build());
 
-        this.addRenderableWidget(Button.builder(
+        this.addRenderableWidget(SharktowerButton.builder(
                         Component.literal("Bad Moon Rising").withStyle(ChatFormatting.GOLD),
                         b -> load("bmr"))
                 .bounds(left, top + buttonHeight + gap, buttonWidth, buttonHeight).build());
 
-        this.addRenderableWidget(Button.builder(
+        this.addRenderableWidget(SharktowerButton.builder(
                         Component.literal("Sects & Violets").withStyle(ChatFormatting.DARK_PURPLE),
                         b -> load("snv"))
                 .bounds(left, top + (buttonHeight + gap) * 2, buttonWidth, buttonHeight).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Script Builder"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Script Builder"), b ->
                         this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
                 .bounds((this.width - 180) / 2, this.height - 34, 180, 20).build());
     }

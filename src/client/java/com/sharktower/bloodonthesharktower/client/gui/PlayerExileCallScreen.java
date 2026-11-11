@@ -4,7 +4,6 @@ import com.sharktower.bloodonthesharktower.client.networking.ClientPlayerActions
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -37,14 +36,14 @@ public final class PlayerExileCallScreen extends Screen {
             UUID id = entry.getKey();
             int seat = entry.getValue() == null ? 0 : entry.getValue();
             String label = "Seat " + seat + " — " + ClientState.playerName(id, seat);
-            this.addRenderableWidget(Button.builder(Component.literal(label).withStyle(ChatFormatting.LIGHT_PURPLE), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(label).withStyle(ChatFormatting.LIGHT_PURPLE), b -> {
                         ClientPlayerActions.send("call_for_exile", id.toString());
                         this.minecraft.gui.setScreen(parent);
                     })
                     .bounds(cx - buttonW / 2, startY + i * 24, buttonW, 20).build());
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> this.minecraft.gui.setScreen(parent))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.minecraft.gui.setScreen(parent))
                 .bounds(cx - 40, this.height - 28, 80, 20).build());
     }
 

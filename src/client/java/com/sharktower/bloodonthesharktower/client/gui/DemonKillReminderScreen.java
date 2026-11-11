@@ -7,7 +7,6 @@ import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -73,7 +72,7 @@ public final class DemonKillReminderScreen extends Screen {
             int row = i / 2;
             int x = cx - buttonW - gap / 2 + col * (buttonW + gap);
 
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("+ " + demon.getDisplayName() + ": Kill"),
                             b -> {
                                 GrimoireReturnState.requestAfterNextGrimoireSync();
@@ -85,7 +84,7 @@ public final class DemonKillReminderScreen extends Screen {
                     .bounds(x, y + row * 25, buttonW, 20).build());
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Reminders"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Reminders"), b ->
                         this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat)))
                 .bounds(cx - 75, this.height - 30, 150, 20).build());
     }

@@ -165,13 +165,13 @@ public final class CustomScriptsScreen extends Screen {
         input.setResponder(v -> link = v);
         this.addRenderableWidget(input);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Import from BotC Scripts"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Import from BotC Scripts"), b -> {
             status = "Downloading…";
             keepOpenTicks = 20;
             ClientStorytellerActions.send("custom_script_import", link);
         }).bounds(left, 62, w - 90, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Refresh"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Refresh"), b -> {
             keepOpenTicks = 20;
             ClientStorytellerActions.send("custom_scripts_list", "");
         }).bounds(left + w - 84, 62, 84, 20).build());
@@ -202,13 +202,13 @@ public final class CustomScriptsScreen extends Screen {
         for (int i = start; i < end; i++) {
             SavedScript script = visible.get(i);
             String label = displayLabel(script, w - 12);
-            this.addRenderableWidget(Button.builder(Component.literal(label), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(label), b -> {
                 keepOpenTicks = 20;
                 ClientStorytellerActions.send("custom_script_load", script.filename());
             }).bounds(left, listTop + (i - start) * 24, w, 20).build());
         }
 
-        Button previous = Button.builder(Component.literal("<"), b -> {
+        SharktowerButton previous = SharktowerButton.builder(Component.literal("<"), b -> {
             page = Math.max(0, page - 1);
             clearWidgets();
             init();
@@ -216,7 +216,7 @@ public final class CustomScriptsScreen extends Screen {
         previous.active = page > 0;
         this.addRenderableWidget(previous);
 
-        Button next = Button.builder(Component.literal(">"), b -> {
+        SharktowerButton next = SharktowerButton.builder(Component.literal(">"), b -> {
             page = Math.min(pages - 1, page + 1);
             clearWidgets();
             init();
@@ -224,7 +224,7 @@ public final class CustomScriptsScreen extends Screen {
         next.active = page < pages - 1;
         this.addRenderableWidget(next);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Script Builder"), b -> onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Script Builder"), b -> onClose())
                 .bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
     }
 

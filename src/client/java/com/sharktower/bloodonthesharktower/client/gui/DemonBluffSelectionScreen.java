@@ -7,7 +7,6 @@ import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -75,7 +74,7 @@ public final class DemonBluffSelectionScreen extends Screen {
             Component label = Component.literal((chosen ? "✓ " : "") + role.getDisplayName())
                     .withStyle(style -> style.withColor(UiDrawing.teamColor(role.getTeam())));
 
-            Button button = Button.builder(label, b -> toggle(role, actualPage))
+            SharktowerButton button = SharktowerButton.builder(label, b -> toggle(role, actualPage))
                     .bounds(left + col * (width + gapX), top + row * (height + gapY), width, height)
                     .build();
 
@@ -86,29 +85,29 @@ public final class DemonBluffSelectionScreen extends Screen {
         }
 
         int navY = this.height - 78;
-        Button previous = Button.builder(Component.literal("<"), b ->
+        SharktowerButton previous = SharktowerButton.builder(Component.literal("<"), b ->
                         this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage - 1, returnScreen)))
                 .bounds(this.width / 2 - 120, navY, 40, 20).build();
         previous.active = actualPage > 0;
         this.addRenderableWidget(previous);
 
-        Button next = Button.builder(Component.literal(">"), b ->
+        SharktowerButton next = SharktowerButton.builder(Component.literal(">"), b ->
                         this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage + 1, returnScreen)))
                 .bounds(this.width / 2 + 80, navY, 40, 20).build();
         next.active = actualPage < maxPage;
         this.addRenderableWidget(next);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Clear Selection"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear Selection"), b ->
                         this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(Set.of(), actualPage, returnScreen)))
                 .bounds(this.width / 2 - 72, navY, 144, 20).build());
 
-        Button confirm = Button.builder(Component.literal("Confirm 3 Bluffs").withStyle(ChatFormatting.GREEN), b ->
+        SharktowerButton confirm = SharktowerButton.builder(Component.literal("Confirm 3 Bluffs").withStyle(ChatFormatting.GREEN), b ->
                         confirm())
                 .bounds(this.width / 2 - 125, this.height - 30, 120, 20).build();
         confirm.active = selected.size() == 3;
         this.addRenderableWidget(confirm);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b ->
                         back())
                 .bounds(this.width / 2 + 5, this.height - 30, 120, 20).build());
     }

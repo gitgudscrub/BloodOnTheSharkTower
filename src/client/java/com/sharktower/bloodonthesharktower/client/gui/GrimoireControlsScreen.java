@@ -1,7 +1,6 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -13,7 +12,7 @@ public final class GrimoireControlsScreen extends Screen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b ->
                         this.minecraft.gui.setScreen(new AssignRolesScreen()))
                 .bounds(this.width / 2 - 90, this.height - 30, 180, 20).build());
     }

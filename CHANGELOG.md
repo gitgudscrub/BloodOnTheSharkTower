@@ -3,6 +3,27 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.13 — UI pass (unreleased)
+- Every Sharktower screen now uses one themed button (dark panel, soft border,
+  gold hover ring, muted when inactive, long labels trimmed with an ellipsis)
+  in place of the vanilla stone button. Label colours follow one rule: white
+  for navigation and toggles, gold for the action that advances the game,
+  green to confirm or resolve, red for irreversible or evil-team actions.
+- Script Builder and Role Catalog share a new team-grouped token grid: a
+  coloured header per team, the ability text on hover, a search box that
+  matches names and ability text, and mouse-wheel scrolling with a scrollbar
+  instead of pages. The builder marks chosen roles with a gold ring and tick.
+- The Storyteller night-order bar now names the selected entry under the
+  icons with its position ("4/7  Fortune Teller · Alice, seat 3"), so the
+  white ring no longer has to be decoded from the icon alone.
+- Fixed: the vanilla Friends List (bound to O since 26.x) opened on top of
+  Sharktower Settings. The first time the mod runs it unbinds that key if it
+  is still on its default; rebind it in Controls if you want it back.
+- Fixed: Storyteller Tools buttons ran into the footer on short windows.
+- Fixed: HUD panels (role card, sidebar, timer) drew through open screens.
+- Fixed: the Settings screen's hand-scale readout and rebind hint overlapped
+  on short windows; the scale buttons now fit their labels.
+
 ## 1.0.2-alpha.12 — Pronouns (unreleased)
 
 - New `/pronouns` command. `/pronouns they/them` (presets are suggested; custom
