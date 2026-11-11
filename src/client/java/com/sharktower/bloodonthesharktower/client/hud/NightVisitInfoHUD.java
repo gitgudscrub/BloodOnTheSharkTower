@@ -200,10 +200,10 @@ public final class NightVisitInfoHUD {
             case WASHERWOMAN -> firstNightPairInfo(Role.WASHERWOMAN, "Townsfolk", RoleType.TOWNSFOLK);
             case LIBRARIAN -> librarianInfo();
             case INVESTIGATOR -> firstNightPairInfo(Role.INVESTIGATOR, "Minion", RoleType.MINION);
-            case CHEF -> "Evil pairs: " + chefPairs();
+            case CHEF -> "Evil pairs: " + chefPairs() + misregisterNote(orderedSeatPlayers(false));
             case EMPATH -> {
                 Integer count = empathCount(target);
-                yield count == null ? null : "Evil neighbors: " + count;
+                yield count == null ? null : "Evil neighbors: " + count + misregisterNote(empathNeighbours(target));
             }
             case FORTUNE_TELLER -> {
                 UUID redHerring = firstPlayerWithReminder("Red Herring");
@@ -379,6 +379,37 @@ public final class NightVisitInfoHUD {
             if (isEvil(a) && isEvil(b)) pairs++;
         }
         return pairs;
+    }
+
+    /**
+     * The Recluse may register as evil and the Spy as good, so a count built
+     * from true alignments is only the default answer when either is involved.
+     */
+    private static String misregisterNote(List<UUID> players) {
+        boolean recluse = false;
+        boolean spy = false;
+        for (UUID id : players) {
+            PendingRoleAssignment assignment = ClientState.grimoireRoles.get(id);
+            if (assignment == null || assignment.isCustomRole()) continue;
+            if (assignment.role() == Role.RECLUSE) recluse = true;
+            if (assignment.role() == Role.SPY) spy = true;
+        }
+        if (recluse && spy) return " (Recluse/Spy may register differently)";
+        if (recluse) return " (the Recluse may register as evil)";
+        if (spy) return " (the Spy may register as good)";
+        return "";
+    }
+
+    private static List<UUID> empathNeighbours(UUID empath) {
+        List<UUID> seats = orderedSeatPlayers(false);
+        int index = seats.indexOf(empath);
+        if (index < 0 || seats.size() < 2) return List.of();
+        List<UUID> out = new ArrayList<>();
+        UUID clockwise = nearestAlive(seats, index, 1);
+        UUID counterClockwise = nearestAlive(seats, index, -1);
+        if (clockwise != null) out.add(clockwise);
+        if (counterClockwise != null) out.add(counterClockwise);
+        return out;
     }
 
     private static Integer empathCount(UUID empath) {

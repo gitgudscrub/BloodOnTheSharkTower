@@ -34,6 +34,7 @@ public final class PhaseOperations {
             // concepts. Ghost-vote history deliberately survives between days.
             DaytimeState.resetDaily();
             PhasePresentation.dusk(server, ServerState.currentNight);
+            com.sharktower.bloodonthesharktower.automation.RoleAutomation.onDusk(server);
             if (ServerState.currentDay > 0 && !ServerState.executionToday) {
                 com.sharktower.bloodonthesharktower.automation.RoleAutomation.onNoExecution(server);
             }
@@ -68,6 +69,7 @@ public final class PhaseOperations {
             DaytimeState.resetDaily();
             StorytellerState.resetDailyNightInfo();
             PhasePresentation.dawn(server, day);
+            com.sharktower.bloodonthesharktower.automation.RoleAutomation.onDawn(server);
         }
 
         NightChatManager.Result voice = alreadyDay
