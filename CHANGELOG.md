@@ -3,6 +3,18 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.15 — Virgin needs Storyteller approval (unreleased)
+
+- The Virgin no longer executes anyone by itself. Her first nomination
+  still spends the ability, but the Storyteller now gets a recommendation
+  ("Seat 2 is a Townsfolk, so they should be executed", "The Spy may
+  register as a Townsfolk", a custom-role or drunk/poisoned note) with
+  [Execute] and [No effect] buttons, and decides before starting the vote.
+  Execute ends the nomination with no vote; No effect lets it continue.
+  The same prompt covers a Townsfolk, the Spy and every other nominator.
+- New `/bots automation virgin dismiss` twin for the No effect button.
+  Buttons only work for the pending decision on the same day.
+
 ## 1.0.2-alpha.14 — Role automation (unreleased)
 
 - The server now applies the rules that used to be bookkeeping for the

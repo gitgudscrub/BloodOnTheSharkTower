@@ -546,9 +546,6 @@ public final class StorytellerActionHandler {
         if (!NominationManager.executeNomination(server, nominator, nominee, VotingManager.alivePlayerCount())) {
             return SetupOperations.Result.fail("That nomination is not currently legal.");
         }
-        if (!DaytimeState.hasActiveNomination()) {
-            return SetupOperations.Result.ok("Nomination resolved by the Virgin's ability; there is no vote.");
-        }
         announce(server, Component.literal(label(server, nominator) + " nominates " + label(server, nominee) + ".")
                 .withStyle(ChatFormatting.GOLD));
         PhasePresentation.nomination(server);
