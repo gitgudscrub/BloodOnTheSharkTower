@@ -6,7 +6,6 @@ import com.sharktower.bloodonthesharktower.core.GamePhase;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -37,7 +36,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
         int y = 62;
 
         if (!ClientGrimoireEdits.isLocalStoryteller()) {
-            this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b -> back())
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b -> back())
                     .bounds(cx - 90, this.height - 30, 180, 20).build());
             return;
         }
@@ -48,7 +47,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
         boolean thisMarked = playerId.equals(ClientState.markedForExecution);
 
         if (!setup) {
-            Button setNominator = Button.builder(Component.literal("Set as Nominator").withStyle(ChatFormatting.GOLD), b -> {
+            SharktowerButton setNominator = SharktowerButton.builder(Component.literal("Set as Nominator").withStyle(ChatFormatting.GOLD), b -> {
                         GrimoireInteractionState.selectNominator(playerId);
                         back();
                     })
@@ -56,7 +55,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
             setNominator.active = ClientState.nominationsOpen;
             this.addRenderableWidget(setNominator);
 
-            Button nominate = Button.builder(Component.literal("Nominate This Player").withStyle(ChatFormatting.YELLOW), b -> {
+            SharktowerButton nominate = SharktowerButton.builder(Component.literal("Nominate This Player").withStyle(ChatFormatting.GOLD), b -> {
                         UUID nominator = GrimoireInteractionState.selectedNominator();
                         if (nominator == null) {
                             message("Choose a nominator first (Shift + left-click a player portrait or role token).");
@@ -73,13 +72,13 @@ public final class GrimoirePlayerActionScreen extends Screen {
             y += 26;
 
             if (thisNominee && !ClientState.voteInProgress) {
-                this.addRenderableWidget(Button.builder(Component.literal("Start Vote").withStyle(ChatFormatting.AQUA), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Vote").withStyle(ChatFormatting.GOLD), b ->
                                 actionAndBack("vote_start"))
                         .bounds(cx - w - gap / 2, y, w, 20).build());
             }
 
             if (thisNominee && ClientState.voteInProgress) {
-                Button finishVote = Button.builder(Component.literal("Finish Vote").withStyle(ChatFormatting.GREEN), b ->
+                SharktowerButton finishVote = SharktowerButton.builder(Component.literal("Finish Vote").withStyle(ChatFormatting.GREEN), b ->
                                 actionAndBack("vote_finish"))
                         .bounds(cx - w - gap / 2, y, w, 20).build();
                 finishVote.active = ClientState.voteClockComplete;
@@ -87,17 +86,17 @@ public final class GrimoirePlayerActionScreen extends Screen {
             }
 
             if (ClientState.currentNominee != null || ClientState.voteInProgress) {
-                this.addRenderableWidget(Button.builder(Component.literal("Cancel Nomination").withStyle(ChatFormatting.GRAY), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel Nomination").withStyle(ChatFormatting.GRAY), b ->
                                 actionAndBack("nomination_cancel"))
                         .bounds(cx + gap / 2, y, w, 20).build());
                 y += 26;
             }
 
             if (thisMarked) {
-                this.addRenderableWidget(Button.builder(Component.literal("Execute — DIES").withStyle(ChatFormatting.RED), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Execute — DIES").withStyle(ChatFormatting.RED), b ->
                                 actionAndBack("execute_marked"))
                         .bounds(cx - w - gap / 2, y, w, 20).build());
-                this.addRenderableWidget(Button.builder(Component.literal("Execute — LIVES").withStyle(ChatFormatting.GOLD), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Execute — LIVES").withStyle(ChatFormatting.GREEN), b ->
                                 actionAndBack("execute_marked_survives"))
                         .bounds(cx + gap / 2, y, w, 20).build());
                 y += 26;
@@ -106,50 +105,50 @@ public final class GrimoirePlayerActionScreen extends Screen {
             if (dead) {
                 if (ClientState.pendingDeaths.contains(playerId)
                         && ClientState.phase() != GamePhase.NIGHT && ClientState.phase() != GamePhase.SETUP) {
-                    this.addRenderableWidget(Button.builder(
+                    this.addRenderableWidget(SharktowerButton.builder(
                                     Component.literal("Reveal This Death").withStyle(ChatFormatting.RED), b ->
                                             actionAndBack("reveal_death", Integer.toString(seat)))
                             .bounds(cx - 90, y, 180, 20).build());
                     y += 26;
                 }
-                this.addRenderableWidget(Button.builder(Component.literal("Revive Player").withStyle(ChatFormatting.GREEN), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Revive Player").withStyle(ChatFormatting.GREEN), b ->
                                 actionAndBack("revive_player", Integer.toString(seat)))
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             } else if (ClientState.phase() == GamePhase.NIGHT) {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately"), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Mark Dead Privately"), b ->
                                 actionAndBack("mark_dead", Integer.toString(seat)))
                         .bounds(cx - w - gap / 2, y, w, 20).build());
 
-                Button demonReminder = Button.builder(Component.literal("Demon Kill Reminder").withStyle(ChatFormatting.GOLD), b ->
+                SharktowerButton demonReminder = SharktowerButton.builder(Component.literal("Demon Kill Reminder").withStyle(ChatFormatting.GOLD), b ->
                                 DemonKillReminderScreen.openOrApply(playerId, seat))
                         .bounds(cx + gap / 2, y, w, 20).build();
                 demonReminder.active = !DemonKillReminderScreen.demonsInStorytellerGrimoire().isEmpty();
                 this.addRenderableWidget(demonReminder);
                 y += 26;
 
-                this.addRenderableWidget(Button.builder(Component.literal("Resolve Demon Kill").withStyle(ChatFormatting.RED), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Resolve Demon Kill").withStyle(ChatFormatting.RED), b ->
                                 actionAndBack("demon_kill", Integer.toString(seat)))
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             } else {
-                this.addRenderableWidget(Button.builder(Component.literal("Mark Dead Privately").withStyle(ChatFormatting.RED), b ->
+                this.addRenderableWidget(SharktowerButton.builder(Component.literal("Mark Dead Privately").withStyle(ChatFormatting.RED), b ->
                                 actionAndBack("mark_dead", Integer.toString(seat)))
                         .bounds(cx - 90, y, 180, 20).build());
                 y += 26;
             }
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Edit Role / Alignment"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Edit Role / Alignment"), b ->
                         this.minecraft.gui.setScreen(new PlayerSetupScreen(
                                 playerId, seat, ClientGrimoireEdits.roleFor(playerId))))
                 .bounds(cx - w - gap / 2, y, w, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Edit Reminders"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Edit Reminders"), b ->
                         this.minecraft.gui.setScreen(new ReminderChooseScreen(playerId, seat)))
                 .bounds(cx + gap / 2, y, w, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b -> back())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b -> back())
                 .bounds(cx - 90, this.height - 30, 180, 20).build());
     }
 

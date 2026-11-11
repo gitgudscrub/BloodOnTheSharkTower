@@ -19,7 +19,6 @@ import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -171,7 +170,7 @@ public class AssignRolesScreen extends Screen {
         int y = MARGIN;
         GamePhase phase = ClientState.phase();
 
-        this.addRenderableWidget(Button.builder(
+        this.addRenderableWidget(SharktowerButton.builder(
                         Component.literal("Game End").withStyle(ChatFormatting.RED), b ->
                                 this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
                 .bounds(MARGIN, 48, CONTROL_W, CONTROL_H).build());
@@ -182,48 +181,48 @@ public class AssignRolesScreen extends Screen {
         }
 
         if (phase == GamePhase.SETUP) {
-            this.addRenderableWidget(Button.builder(Component.literal("Script Builder"), b ->
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Script Builder"), b ->
                             this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
                     .bounds(MARGIN, MARGIN, 100, CONTROL_H).build());
 
-            y = addRightAction(rightX, y, "Shuffle Roles", ChatFormatting.AQUA, "shuffle_roles");
-            y = addRightAction(rightX, y, "Shuffle Seats", ChatFormatting.AQUA, "shuffle_seats");
-            y = addRightAction(rightX, y, "Randomize Roles", ChatFormatting.GOLD, "randomize_roles");
+            y = addRightAction(rightX, y, "Shuffle Roles", ChatFormatting.WHITE, "shuffle_roles");
+            y = addRightAction(rightX, y, "Shuffle Seats", ChatFormatting.WHITE, "shuffle_seats");
+            y = addRightAction(rightX, y, "Randomize Roles", ChatFormatting.WHITE, "randomize_roles");
 
-            this.addRenderableWidget(Button.builder(Component.literal("Role Bag").withStyle(ChatFormatting.LIGHT_PURPLE), b ->
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Role Bag"), b ->
                             this.minecraft.gui.setScreen(new RoleBagScreen()))
                     .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
             y += CONTROL_H + GAP;
 
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Unseated: " + (showUnseated ? "SHOW" : "HIDE")), b -> {
                         showUnseated = !showUnseated;
                         this.minecraft.gui.setScreen(new AssignRolesScreen());
                     }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
             y += CONTROL_H + GAP;
 
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Self: " + (showSelf ? "SHOW" : "HIDE")), b -> {
                         showSelf = !showSelf;
                         this.minecraft.gui.setScreen(new AssignRolesScreen());
                     }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
             y += CONTROL_H + GAP + 10;
 
-            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
-            addRightAction(rightX, y, "Send to Home", ChatFormatting.AQUA, "send_home");
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.WHITE, "send_to_seats");
+            addRightAction(rightX, y, "Send to Home", ChatFormatting.WHITE, "send_home");
         } else if (phase == GamePhase.NIGHT) {
             y = addRightScreen(rightX, y, "Minion Info", ChatFormatting.RED,
                     () -> this.minecraft.gui.setScreen(new NightTeamInfoScreen(false)));
             y = addRightScreen(rightX, y, "Demon Info", ChatFormatting.RED,
                     () -> this.minecraft.gui.setScreen(new NightTeamInfoScreen(true)));
-            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
-            y = addRightAction(rightX, y, "Send to Home", ChatFormatting.AQUA, "send_home");
-            this.addRenderableWidget(Button.builder(Component.literal("Start Day").withStyle(ChatFormatting.GOLD), b ->
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.WHITE, "send_to_seats");
+            y = addRightAction(rightX, y, "Send to Home", ChatFormatting.WHITE, "send_home");
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Day").withStyle(ChatFormatting.GOLD), b ->
                             action("phase_day"))
                     .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
         } else if (phase == GamePhase.DAY) {
-            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.LIGHT_PURPLE, "send_to_seats");
-            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.WHITE, "send_to_seats");
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.WHITE,
                     () -> this.minecraft.gui.setScreen(new TimerScreen()));
             y = addRightAction(rightX, y, "Open Noms", ChatFormatting.GOLD, "nominations_open");
 
@@ -232,20 +231,20 @@ public class AssignRolesScreen extends Screen {
                         () -> this.minecraft.gui.setScreen(new ExileControlScreen()));
             }
         } else if (phase == GamePhase.NOMINATIONS) {
-            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.WHITE,
                     () -> this.minecraft.gui.setScreen(new TimerScreen()));
             y = addRightScreen(rightX, y, "Nomination Flow", ChatFormatting.GOLD,
                     () -> this.minecraft.gui.setScreen(new NominationControlScreen()));
             y = addRightAction(rightX, y, "Close Noms", ChatFormatting.GRAY, "nominations_close");
             addRightAction(rightX, y, "No Execution", ChatFormatting.DARK_GRAY, "no_execution");
         } else if (phase == GamePhase.PLAYER_NOMINATED) {
-            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.WHITE,
                     () -> this.minecraft.gui.setScreen(new TimerScreen()));
 
             String voteLabel = ClientState.voteInProgress
                     ? (ClientState.voteClockComplete ? "Finish Vote" : "Vote Running")
                     : "Start Vote";
-            Button voteButton = Button.builder(Component.literal(voteLabel).withStyle(ChatFormatting.AQUA), b -> {
+            SharktowerButton voteButton = SharktowerButton.builder(Component.literal(voteLabel).withStyle(ClientState.voteInProgress && ClientState.voteClockComplete ? ChatFormatting.GREEN : ChatFormatting.GOLD), b -> {
                         if (ClientState.voteInProgress) {
                             if (ClientState.voteClockComplete) action("vote_finish");
                         } else {
@@ -261,42 +260,42 @@ public class AssignRolesScreen extends Screen {
             addRightScreen(rightX, y, "Nomination Flow", ChatFormatting.GOLD,
                     () -> this.minecraft.gui.setScreen(new NominationControlScreen()));
         } else if (phase == GamePhase.PLAYER_MARKED) {
-            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.WHITE,
                     () -> this.minecraft.gui.setScreen(new TimerScreen()));
             y = addRightAction(rightX, y, "Execute — Dies", ChatFormatting.RED, "execute_marked");
-            y = addRightAction(rightX, y, "Execute — Lives", ChatFormatting.GOLD, "execute_marked_survives");
+            y = addRightAction(rightX, y, "Execute — Lives", ChatFormatting.GREEN, "execute_marked_survives");
             addRightAction(rightX, y, "Close Noms", ChatFormatting.GRAY, "nominations_close");
         } else if (phase == GamePhase.CALL_FOR_EXILE || phase == GamePhase.EXILE_SUPPORT) {
-            y = addRightScreen(rightX, y, "Timer", ChatFormatting.YELLOW,
+            y = addRightScreen(rightX, y, "Timer", ChatFormatting.WHITE,
                     () -> this.minecraft.gui.setScreen(new TimerScreen()));
             y = addRightScreen(rightX, y, "Traveller Exile", ChatFormatting.LIGHT_PURPLE,
                     () -> this.minecraft.gui.setScreen(new ExileControlScreen()));
             addRightAction(rightX, y, "Reset Exile", ChatFormatting.GRAY, "exile_reset");
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("TOOLS"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("TOOLS"), b ->
                         this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
                 .bounds(rightX - 60, layoutHeight - 30, 55, CONTROL_H).build());
 
         if (phase == GamePhase.SETUP) {
-            this.addRenderableWidget(Button.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.RED), b ->
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.GOLD), b ->
                             action("send_roles"))
                     .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
         } else {
-            this.addRenderableWidget(Button.builder(Component.literal("CONTROLS"), b ->
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("CONTROLS"), b ->
                             this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
                     .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
         }
     }
 
     private int addRightAction(int x, int y, String label, ChatFormatting colour, String op) {
-        this.addRenderableWidget(Button.builder(Component.literal(label).withStyle(colour), b -> action(op))
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(label).withStyle(colour), b -> action(op))
                 .bounds(x, y, CONTROL_W, CONTROL_H).build());
         return y + CONTROL_H + GAP;
     }
 
     private int addRightScreen(int x, int y, String label, ChatFormatting colour, Runnable open) {
-        this.addRenderableWidget(Button.builder(Component.literal(label).withStyle(colour), b -> open.run())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(label).withStyle(colour), b -> open.run())
                 .bounds(x, y, CONTROL_W, CONTROL_H).build());
         return y + CONTROL_H + GAP;
     }
@@ -534,16 +533,16 @@ public class AssignRolesScreen extends Screen {
             UUID id = unseated.get(i);
             String name = ClientState.playerName(id, 0);
             String label = "+ " + this.font.plainSubstrByWidth(name, CONTROL_W - 16);
-            this.addRenderableWidget(Button.builder(Component.literal(label), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(label), b -> {
                         ClientStorytellerActions.send("seat_player", id.toString());
                     }).bounds(x, y + (i - start) * 24, CONTROL_W, 20)
                     .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(name))).build());
         }
         if (pages > 1) {
             int navY = y + rows * 24;
-            this.addRenderableWidget(Button.builder(Component.literal("<"), b -> { unseatedPage=Math.max(0,unseatedPage-1);rebuildWidgets(); })
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("<"), b -> { unseatedPage=Math.max(0,unseatedPage-1);rebuildWidgets(); })
                     .bounds(x,navY,42,20).build());
-            this.addRenderableWidget(Button.builder(Component.literal(">"), b -> { unseatedPage=Math.min(pages-1,unseatedPage+1);rebuildWidgets(); })
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(">"), b -> { unseatedPage=Math.min(pages-1,unseatedPage+1);rebuildWidgets(); })
                     .bounds(x+48,navY,42,20).build());
         }
     }
@@ -554,7 +553,7 @@ public class AssignRolesScreen extends Screen {
 
     private void buildBluffVisibilityControl() {
         if (!ClientGrimoireEdits.isLocalStoryteller() && ClientGrimoireEdits.visibleDemonBluffs().isEmpty()) return;
-        this.addRenderableWidget(Button.builder(
+        this.addRenderableWidget(SharktowerButton.builder(
                         Component.literal("Bluffs: " + (shouldShowBluffs() ? "SHOW" : "HIDE")), b -> {
                     if (ClientGrimoireEdits.isLocalStoryteller()) showBluffs = !showBluffs;
                     else showPlayerBluffs = !showPlayerBluffs;

@@ -4,7 +4,6 @@ import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -29,7 +28,7 @@ public class RoleCatalogScreen extends Screen {
     @Override
     protected void init() {
         int center = this.width / 2;
-        this.addRenderableWidget(Button.builder(
+        this.addRenderableWidget(SharktowerButton.builder(
                         Component.literal(showingExtraRoles ? "Main Roles" : "Extra Roles"),
                         b -> {
                             showingExtraRoles = !showingExtraRoles;
@@ -38,11 +37,11 @@ public class RoleCatalogScreen extends Screen {
                         })
                 .bounds(this.width - 102, 20, 90, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("<"), b -> {
                     if (page > 0) page--;
                 })
                 .bounds(center - 48, this.height - 28, 28, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(">"), b -> page++)
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(">"), b -> page++)
                 .bounds(center + 20, this.height - 28, 28, 20).build());
     }
 

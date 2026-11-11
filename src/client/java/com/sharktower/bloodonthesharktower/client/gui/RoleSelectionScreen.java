@@ -7,7 +7,6 @@ import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -86,20 +85,20 @@ public final class RoleSelectionScreen extends Screen {
             int col = local % columns;
             int row = local / columns;
             Component label = Component.literal(role.getDisplayName()).withStyle(style -> style.withColor(UiDrawing.teamColor(role.getTeam())));
-            this.addRenderableWidget(Button.builder(label, b -> choose(role))
+            this.addRenderableWidget(SharktowerButton.builder(label, b -> choose(role))
                     .bounds(left + col * (width + gapX), top + row * (height + gapY), width, height)
                     .build());
         }
 
         int navY = this.height - 52;
-        this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("<"), b -> {
             if (page > 0) this.minecraft.gui.setScreen(new RoleSelectionScreen(mode, seat, bluffIndex, returnScreen, page - 1));
         }).bounds(this.width / 2 - 76, navY, 40, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(">"), b -> {
             if (page < maxPage) this.minecraft.gui.setScreen(new RoleSelectionScreen(mode, seat, bluffIndex, returnScreen, page + 1));
         }).bounds(this.width / 2 + 36, navY, 40, 20).build());
         if (mode == Mode.PERCEIVED) {
-            this.addRenderableWidget(Button.builder(Component.literal("Clear Believed Role"), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear Believed Role"), b -> {
                         java.util.UUID target = ClientGrimoireEdits.playerAtSeat(seat);
                         if (ClientGrimoireEdits.isLocalStoryteller()) {
                             GrimoireReturnState.requestAfterNextGrimoireSync();
@@ -110,10 +109,10 @@ public final class RoleSelectionScreen extends Screen {
                         }
                     })
                     .bounds(this.width / 2 - 125, this.height - 27, 120, 20).build());
-            this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> returnToGrimoire())
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> returnToGrimoire())
                     .bounds(this.width / 2 + 5, this.height - 27, 100, 20).build());
         } else {
-            this.addRenderableWidget(Button.builder(Component.literal("Back"), b -> returnToGrimoire())
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> returnToGrimoire())
                     .bounds(this.width / 2 - 50, this.height - 27, 100, 20).build());
         }
     }

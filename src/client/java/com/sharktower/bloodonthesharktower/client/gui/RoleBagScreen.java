@@ -8,7 +8,6 @@ import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -118,25 +117,25 @@ public final class RoleBagScreen extends Screen {
         }
 
         int navY = this.height - (narrow ? 90 : 66);
-        this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("<"), b -> {
                     if (page > 0) this.minecraft.gui.setScreen(new RoleBagScreen(page - 1));
                 }).bounds(this.width / 2 - (narrow ? 80 : 220), navY, 36, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(">"), b -> {
                     if (page < maxPage) this.minecraft.gui.setScreen(new RoleBagScreen(page + 1));
                 }).bounds(this.width / 2 - (narrow ? 38 : 178), navY, 36, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Clear"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear"), b -> {
                     clearSelection();
                     this.minecraft.gui.setScreen(new RoleBagScreen(page));
                 }).bounds(this.width / 2 + (narrow ? 4 : -132), navY, 72, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Current Setup"), b -> {
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Current Setup"), b -> {
                     selectCurrentSetup();
                     this.minecraft.gui.setScreen(new RoleBagScreen(page));
                 }).bounds(this.width / 2 - (narrow ? 120 : 54), navY + (narrow ? 24 : 0), 105, 20).build());
 
         boolean ready = seatedCount() > 0 && SELECTED.size() == seatedCount();
-        Button distribute = Button.builder(
+        SharktowerButton distribute = SharktowerButton.builder(
                         Component.literal(ready ? "Distribute Bag" : "Need " + seatedCount() + " roles")
                                 .withStyle(ready ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY),
                         b -> distribute())
@@ -144,7 +143,7 @@ public final class RoleBagScreen extends Screen {
         distribute.active = ready;
         this.addRenderableWidget(distribute);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back to Grimoire"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b ->
                         this.minecraft.gui.setScreen(new AssignRolesScreen()))
                 .bounds(this.width / 2 - 90, this.height - 31, 180, 20).build());
     }

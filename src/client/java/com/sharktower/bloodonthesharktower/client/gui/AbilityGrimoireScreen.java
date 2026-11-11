@@ -6,7 +6,6 @@ import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -45,7 +44,7 @@ public final class AbilityGrimoireScreen extends Screen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(Button.builder(Component.literal("Done"), b -> this.onClose())
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Done"), b -> this.onClose())
                 .bounds(this.width / 2 - 45, this.height - 28, 90, 20).build());
     }
 

@@ -4,7 +4,6 @@ import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerAc
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -23,14 +22,14 @@ public final class EndGameControlScreen extends Screen {
         int y = 72;
 
         if (!ClientState.gameEnding) {
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("GOOD WINS").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
                             b -> {
                                 ClientStorytellerActions.send("end_game_good");
                                 this.minecraft.gui.setScreen(null);
                             })
                     .bounds(cx - 105, y, 100, 20).build());
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("EVIL WINS").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
                             b -> {
                                 ClientStorytellerActions.send("end_game_evil");
@@ -38,10 +37,10 @@ public final class EndGameControlScreen extends Screen {
                             })
                     .bounds(cx + 5, y, 100, 20).build());
         } else {
-            this.addRenderableWidget(Button.builder(Component.literal("Final Grimoire"), b ->
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Final Grimoire"), b ->
                             this.minecraft.gui.setScreen(new FinalGrimoireScreen(this)))
                     .bounds(cx - 105, y, 100, 20).build());
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Reset for Next Game").withStyle(ChatFormatting.GOLD),
                             b -> {
                                 ClientStorytellerActions.send("reset_for_next_game");
@@ -49,14 +48,14 @@ public final class EndGameControlScreen extends Screen {
                             })
                     .bounds(cx + 5, y, 100, 20).build());
 
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Change to GOOD").withStyle(ChatFormatting.AQUA),
                             b -> {
                                 ClientStorytellerActions.send("end_game_good");
                                 this.minecraft.gui.setScreen(null);
                             })
                     .bounds(cx - 105, y + 30, 100, 20).build());
-            this.addRenderableWidget(Button.builder(
+            this.addRenderableWidget(SharktowerButton.builder(
                             Component.literal("Change to EVIL").withStyle(ChatFormatting.RED),
                             b -> {
                                 ClientStorytellerActions.send("end_game_evil");
@@ -64,14 +63,14 @@ public final class EndGameControlScreen extends Screen {
                             })
                     .bounds(cx + 5, y + 30, 100, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("Cancel Reveal"), b -> {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel Reveal"), b -> {
                         ClientStorytellerActions.send("end_game_cancel");
                         this.minecraft.gui.setScreen(null);
                     })
                     .bounds(cx - 50, y + 60, 100, 20).build());
         }
 
-        this.addRenderableWidget(Button.builder(
+        this.addRenderableWidget(SharktowerButton.builder(
                         Component.literal("Hard Reset").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
                         b -> {
                             ClientStorytellerActions.send("reset_hard");
@@ -79,7 +78,7 @@ public final class EndGameControlScreen extends Screen {
                         })
                 .bounds(cx - 60, this.height - 56, 120, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), b ->
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b ->
                         this.minecraft.gui.setScreen(parent))
                 .bounds(cx - 50, this.height - 30, 100, 20).build());
     }
