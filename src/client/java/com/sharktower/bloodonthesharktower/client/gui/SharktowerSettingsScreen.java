@@ -38,6 +38,7 @@ public final class SharktowerSettingsScreen extends Screen {
         addToggle(left, top + row * 2, "Player List", () -> ClientSettings.playerListHud, v -> ClientSettings.playerListHud = v);
         addToggle(mid, top + row * 2, "Role Counts", () -> ClientSettings.roleCountsHud, v -> ClientSettings.roleCountsHud = v);
         addToggle(right, top + row * 2, "World Roles", () -> ClientSettings.worldRoleIcons, v -> ClientSettings.worldRoleIcons = v);
+        addToggle(left, top + row * 3, "Pronoun Tags", () -> ClientSettings.pronounTags, v -> ClientSettings.pronounTags = v);
 
         if (isStoryteller()) {
             this.addRenderableWidget(Button.builder(voteSpeedLabel(), b -> {

@@ -46,6 +46,7 @@ public final class CoreStateReceivers {
         ClientState.attentionHands = java.util.Map.of();
         ClientState.talkingPlayers = java.util.Map.of();
         ClientState.pendingDeaths = java.util.Set.of();
+        ClientState.playerPronouns = java.util.Map.of();
         com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
         com.sharktower.bloodonthesharktower.client.gui.CustomScriptsScreen.clear();
         com.sharktower.bloodonthesharktower.client.gui.TeamInfoPreviewScreen.clearPending();
@@ -282,6 +283,9 @@ public final class CoreStateReceivers {
                     payload.voteClockIndex(), payload.voteClockTotal(), payload.voteClockComplete(), payload.exileSupport()
             );
         });
+
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.PlayerProfilesS2CPayload.TYPE, (payload, context) ->
+                ClientState.updatePlayerPronouns(payload.pronouns()));
 
         ClientPlayNetworking.registerGlobalReceiver(PlayerDirectoryS2CPayload.TYPE, (payload, context) -> {
             ClientState.updatePlayerDirectory(payload.names(), payload.connectedPlayers(), payload.storytellers());

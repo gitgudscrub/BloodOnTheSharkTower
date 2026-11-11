@@ -132,15 +132,22 @@ public final class PlayerSidebarHUD {
         int reservedRight = 24;
         int nameMaxWidth = Math.max(8, headX - reservedRight - nameX);
         var role = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(id));
-        drawNameScaledToFit(
-                graphics,
-                font,
-                player.name(),
-                nameX,
-                textY,
-                nameMaxWidth,
-                role == null ? UiDrawing.TEXT : UiDrawing.teamColor(role.getTeam())
-        );
+        int nameColour = role == null ? UiDrawing.TEXT : UiDrawing.teamColor(role.getTeam());
+        drawNameScaledToFit(graphics, font, player.name(), nameX, textY, nameMaxWidth, nameColour);
+
+        // Pronouns follow the name in muted text when the row has room for both at
+        // full size. Otherwise the name keeps the row; pronouns stay on the name
+        // tag and in the Grimoire hover text.
+        String pronouns = ClientState.pronouns(id);
+        if (!pronouns.isEmpty()) {
+            String shownName = player.name() == null || player.name().isBlank() ? "Player" : player.name();
+            int nameWidth = font.width(shownName);
+            int pronounGap = 4;
+            if (nameWidth + pronounGap + font.width(pronouns) <= nameMaxWidth) {
+                graphics.text(font, pronouns, nameX + nameWidth + pronounGap, textY,
+                        dead ? UiDrawing.DEAD : UiDrawing.MUTED, true);
+            }
+        }
 
         if (electionVisible ? shouldShowHand(id) : ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.SPEAKING
                 && ClientState.attentionHands.containsKey(id)) {

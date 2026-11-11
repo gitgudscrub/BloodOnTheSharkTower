@@ -46,6 +46,16 @@ after the alpha that introduced each change.
   commands (status, hand, vote, exile vote, call for exile, nominate, private
   request/accept/leave, nightchat whoami) remain available to everyone.
 
+## Player profiles
+
+- `/pronouns <text>` and `/pronouns clear` store cosmetic pronouns by UUID in the
+  server config directory and broadcast them to every client on join and change.
+  Shown under the name tag (vanilla below-name line, grey), in the sidebar and
+  in Grimoire hover text; hidden at Night with the name. Client toggle: Pronoun
+  Tags. Validation lives in `profile/Pronouns.java` (`pronounsRegression`).
+- Above-head stack from the head upwards: name tag + pronoun line (to about
+  +1.0), role token centred at +1.25, vote marker centred at +2.10.
+
 ## Confirmed functional areas
 
 ### Core state and setup

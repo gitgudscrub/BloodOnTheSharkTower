@@ -25,6 +25,7 @@ public final class ModPayloads {
         PayloadTypeRegistry.clientboundPlay().register(VoteStateUpdateS2CPayload.TYPE, VoteStateUpdateS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(TimerStateS2CPayload.TYPE, TimerStateS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(PlayerDirectoryS2CPayload.TYPE, PlayerDirectoryS2CPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(PlayerProfilesS2CPayload.TYPE, PlayerProfilesS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(VoiceRouteS2CPayload.TYPE, VoiceRouteS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(EndGameStateS2CPayload.TYPE, EndGameStateS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(TriggeredNightOrderS2CPayload.TYPE, TriggeredNightOrderS2CPayload.CODEC);

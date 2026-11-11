@@ -3,6 +3,22 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.12 — Pronouns (unreleased)
+
+- New `/pronouns` command. `/pronouns they/them` (presets are suggested; custom
+  text such as `xe/xem` is accepted) shows the pronouns in grey under the
+  player's name tag, beside their name in the player sidebar when the row has
+  room, and in the Grimoire hover text. `/pronouns clear` removes them. Text is
+  limited to 24 letters, spaces, slashes, hyphens and apostrophes; game and
+  server terms such as "demon" or "storyteller" are refused. Stored by UUID in
+  `config/blood_on_the_sharktower/player-profiles.json`, so it survives world
+  resets and restarts. Pronouns are cosmetic only and visible to everyone.
+- Above-head layout restacked so nothing overlaps: name tag and pronoun line
+  (hidden at Night as before), role token now centred at +1.25 instead of
+  +0.72 (it used to cover the name tag), vote marker at +2.10 instead of +1.60.
+- New client toggle **Pronoun Tags** in the Sharktower settings screen.
+- New `pronounsRegression` runs with `gradlew check`.
+
 ## 1.0.2-alpha.11 — Storyteller lock and repository cleanup (unreleased)
 
 - Storyteller control can be claimed by anyone during Setup and is locked from
