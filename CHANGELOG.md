@@ -3,6 +3,15 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.18 — Lighter house voice routing (unreleased)
+
+- House voice routing runs every server tick for every player. When a
+  player is already in the right voice group (the usual case at Night) it
+  now stops there, instead of listing every Simple Voice Chat group and
+  rebuilding the house group each tick. Routing decisions are unchanged.
+- Players measure the distance to their own house only; the Storyteller
+  still checks every house. House group ids are computed once.
+
 ## 1.0.2-alpha.17 — Nicknames (unreleased)
 
 - New `/nick <name>` lets a player choose the name everyone sees: in chat,
