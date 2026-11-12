@@ -45,7 +45,11 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         ScriptRole role = UiDrawing.roleOf(current);
         boolean currentDead = ClientState.playerDeathStatus.getOrDefault(playerId, dead);
         if (playerId.equals(ClientState.currentNominee)) {
-            UiTheme.glow(graphics, getX() - this.width / 2, getY() - this.height / 2, this.width * 2, UiTheme.AMBER);
+            // A tight halo: wide enough to mark the nominee, small enough to
+            // leave the rim reminders and the role name clear.
+            int halo = Math.round(this.width * 1.4F);
+            UiTheme.glow(graphics, getX() - (halo - this.width) / 2, getY() - (halo - this.height) / 2, halo,
+                    UiTheme.nominee());
         }
         UiDrawing.roleToken(graphics, role, getX(), getY(), this.width);
         if (currentDead) {
@@ -68,10 +72,6 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
                 UiTheme.badge(graphics, getX() + this.width - 9, getY() + this.height - 9, 11, ringColour, letter, 0xFFFFFFFF);
             }
         }
-        if (com.sharktower.bloodonthesharktower.client.config.ClientSettings.grimoireLabels && role != null) {
-            drawRoleLabel(graphics, role);
-        }
-
         if (!currentDead && ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
             // Marked dead but not yet revealed: a lighter dim and the shroud, Storyteller-only.
             UiTheme.disc(graphics, getX(), getY(), this.width, UiTheme.dark() ? 0x50120D14 : 0x38EBDFC3);
@@ -82,9 +82,14 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             UiTheme.ring(graphics, getX() - 5, getY() - 5, this.width + 10, UiTheme.yes());
             UiTheme.badge(graphics, getX() + this.width - 8, getY() - 4, 11, 0xFF2E8B3A, "N", 0xFFFFFFFF);
         } else if (playerId.equals(ClientState.currentNominee)) {
-            UiTheme.ring(graphics, getX() - 5, getY() - 5, this.width + 10, UiTheme.AMBER);
+            UiTheme.ring(graphics, getX() - 5, getY() - 5, this.width + 10, UiTheme.nominee());
         } else if (isHovered()) {
             UiTheme.ring(graphics, getX() - 3, getY() - 3, this.width + 6, UiTheme.GOLD);
+        }
+
+        // The name goes on last, below the widest ring (5px out), so no ring covers it.
+        if (com.sharktower.bloodonthesharktower.client.config.ClientSettings.grimoireLabels && role != null) {
+            drawRoleLabel(graphics, role);
         }
 
         if (isHovered()) {
@@ -104,6 +109,9 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         }
     }
 
+    /** Gap between the token and its name: clears the 5px nominator/nominee ring. */
+    public static final int LABEL_GAP = 6;
+
     /** Role name under the token at 3/4 size, cut short so neighbouring labels do not collide. */
     private void drawRoleLabel(GuiGraphicsExtractor graphics, ScriptRole role) {
         net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
@@ -115,7 +123,7 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         if (font.width(name) > maxWidth) name = font.plainSubstrByWidth(name, maxWidth - font.width(".")) + ".";
         int textWidth = font.width(name);
         float cx = getX() + this.width / 2.0F;
-        float top = getY() + this.height + 3;
+        float top = getY() + this.height + LABEL_GAP;
         graphics.pose().pushMatrix();
         graphics.pose().translate(cx, top);
         graphics.pose().scale(scale, scale);

@@ -201,6 +201,11 @@ public final class UiTheme {
         graphics.blit(RenderPipelines.GUI_TEXTURED, DISC, x, y, 0, 0, size, size, size, size, colour);
     }
 
+    /** Nomination highlight: bright amber on Candlelit, a deeper amber that still stands out on Parchment. */
+    public static int nominee() {
+        return dark() ? AMBER : 0xFFA4560C;
+    }
+
     /** A 3px (at 64) ring around a token; {@code size} is the ring's outer diameter. */
     public static void ring(GuiGraphicsExtractor graphics, int x, int y, int size, int colour) {
         graphics.blit(RenderPipelines.GUI_TEXTURED, RING, x, y, 0, 0, size, size, size, size, colour);
