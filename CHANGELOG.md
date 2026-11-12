@@ -3,6 +3,19 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.35 — Ravenkeeper choice (unreleased)
+
+- When the Ravenkeeper dies at night (Demon Kill or any night death), they
+  get a private, clickable list of seats in chat. Clicking one (or typing
+  `/raven <seat>`) records their choice.
+- The Storyteller gets a Resolve prompt: "X chose Y, who is the Imp.", with
+  notes when the Ravenkeeper is drunk or poisoned, or the target is the
+  Recluse or Spy. **Show <character>** privately tells the Ravenkeeper;
+  **I'll tell them** dismisses. Chat also offers `[Show another...]` to
+  show a different character (`/bots automation ravenkeeper show <role>`).
+- If the Ravenkeeper is offline the Storyteller can choose for them with
+  `/bots automation ravenkeeper choose <seat>`.
+
 ## 1.0.2-alpha.34 — Nomination card text fits (unreleased)
 
 - Every line on the in-world nomination / vote / exile card shrinks to fit

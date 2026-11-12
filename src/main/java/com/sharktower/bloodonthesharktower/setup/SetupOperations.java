@@ -865,7 +865,7 @@ public final class SetupOperations {
         return new PendingRoleAssignment(Role.NO_ROLE, override);
     }
 
-    private static ScriptRole resolveScriptRole(String roleId) {
+    public static ScriptRole resolveScriptRole(String roleId) {
         if (roleId == null || roleId.isBlank()) return null;
         Script script = ServerState.currentScript;
         if (script != null) {

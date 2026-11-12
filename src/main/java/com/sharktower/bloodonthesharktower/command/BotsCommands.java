@@ -298,6 +298,15 @@ public final class BotsCommands {
                                 .then(Commands.literal("starpass")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationStarPass)))
+                                .then(Commands.literal("ravenkeeper")
+                                        .then(Commands.literal("dismiss")
+                                                .executes(BotsCommands::executeAutomationRavenDismiss))
+                                        .then(Commands.literal("choose")
+                                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                        .executes(BotsCommands::executeAutomationRavenChoose)))
+                                        .then(Commands.literal("show")
+                                                .then(Commands.argument("role", StringArgumentType.greedyString())
+                                                        .executes(BotsCommands::executeAutomationRavenShow))))
                                 .then(Commands.literal("slayer")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationSlayerDismiss))
@@ -1519,6 +1528,30 @@ public final class BotsCommands {
         if (!requireStoryteller(context)) return 0;
         String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
                 .slayerDismiss(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationRavenDismiss(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.RavenkeeperAutomation.dismiss();
+        send(context, refusal == null ? "Ravenkeeper: you will tell them in person." : refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationRavenChoose(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        UUID target = SetupOperations.playerBySeat(IntegerArgumentType.getInteger(context, "seat"));
+        String refusal = com.sharktower.bloodonthesharktower.automation.RavenkeeperAutomation
+                .choose(context.getSource().getServer(), null, target, true);
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationRavenShow(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.RavenkeeperAutomation
+                .show(context.getSource().getServer(), StringArgumentType.getString(context, "role"));
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }
