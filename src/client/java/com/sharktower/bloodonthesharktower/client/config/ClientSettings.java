@@ -32,6 +32,8 @@ public final class ClientSettings {
     public static boolean alignmentLetters = true;
     /** "candlelit" (dark) or "parchment" (light); see UiTheme. */
     public static String theme = "candlelit";
+    /** Smaller role, nomination and hand cards, so players can play with them open. */
+    public static boolean compactCards = true;
 
     private ClientSettings() {}
 
@@ -56,6 +58,7 @@ public final class ClientSettings {
         grimoireLabels = read(p, "grimoireLabels", true);
         alignmentLetters = read(p, "alignmentLetters", true);
         theme = p.getProperty("theme", "candlelit");
+        compactCards = read(p, "compactCards", true);
         com.sharktower.bloodonthesharktower.client.gui.UiTheme.apply();
     }
 
@@ -75,6 +78,7 @@ public final class ClientSettings {
         p.setProperty("grimoireLabels", Boolean.toString(grimoireLabels));
         p.setProperty("alignmentLetters", Boolean.toString(alignmentLetters));
         p.setProperty("theme", theme);
+        p.setProperty("compactCards", Boolean.toString(compactCards));
         try {
             Files.createDirectories(FILE.getParent());
             try (OutputStream out = Files.newOutputStream(FILE)) {

@@ -42,6 +42,8 @@ public final class SharktowerSettingsScreen extends Screen {
                 "Show each role's name under its Grimoire token.");
         addToggle(right, top + row * 3, "G/E Letters", () -> ClientSettings.alignmentLetters, v -> ClientSettings.alignmentLetters = v,
                 "Add G or E beside Good/Evil colours, for colour-blind players.");
+        addToggle(left, top + row * 4, "Compact Cards", () -> ClientSettings.compactCards, v -> ClientSettings.compactCards = v,
+                "Smaller role, nomination and hand cards, so you can play with them open.");
 
         if (isStoryteller()) {
             this.addRenderableWidget(SharktowerButton.builder(voteSpeedLabel(), b -> {

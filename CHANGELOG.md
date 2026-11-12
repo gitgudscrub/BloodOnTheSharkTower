@@ -3,6 +3,18 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.38 — Compact cards (unreleased)
+
+- New **Compact Cards** setting (Sharktower Settings, on by default) so
+  players can keep their cards open while they play:
+  - The role card shrinks from 200x74 to 124x32: a small token, the role
+    name, and team · alignment. The X/Z key hints are in Keys & Help.
+  - The nomination / vote card is 200 wide instead of 268 and shorter. It
+    leaves out "[U] Raise / lower your hand..." while the hand box (which
+    shows the same key) is on screen.
+  - The hand box above the hotbar is tighter.
+- Turn the setting off for the full-size cards.
+
 ## 1.0.2-alpha.37 — Poisoner choice (unreleased)
 
 - Each dusk the living Poisoner gets a private, clickable list of seats in
