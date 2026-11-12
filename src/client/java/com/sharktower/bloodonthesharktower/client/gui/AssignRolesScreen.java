@@ -922,7 +922,12 @@ public class AssignRolesScreen extends Screen {
             int voteBottom = voteTop + (ClientState.voteInProgress ? 70 : 48);
             if (voteBottom + 6 + height <= bottom) y = bottom - height;
             else if (top + height <= voteTop - 6) y = voteTop - 6 - height;
-            else y = Math.max(voteBottom + 6, layoutHeight() - 4 - height);
+            else {
+                // No room above or below the vote panel: sit beside it, to its
+                // left, resting on the bottom row, so no button runs off screen.
+                x = layoutWidth() - CONTROL_W - MARGIN - 6 - w;
+                y = Math.max(10, bottom - height);
+            }
         } else {
             y = Math.max(top, bottom - height);
         }
