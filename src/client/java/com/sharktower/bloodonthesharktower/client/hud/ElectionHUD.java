@@ -58,6 +58,7 @@ public final class ElectionHUD {
         boolean electionRunning = ClientState.voteInProgress || ClientState.exileSupportVote;
         int height = electionRunning ? 82 : ((ClientState.currentNominee != null || exileActive) ? 68 : 54);
         UiDrawing.panel(graphics, x, y, width, height);
+        lineWidth = width - 16;
 
         String headline;
         if (ClientState.exileSupportInProgress) headline = ClientState.voteClockComplete ? "EXILE CLOCK COMPLETE" : "EXILE VOTE";
@@ -67,24 +68,24 @@ public final class ElectionHUD {
         else if (ClientState.markedForExecution != null || ClientState.storytellerMFE != null) headline = "ON THE BLOCK";
         else if (hasLastResult) headline = "VOTE RESULT";
         else headline = "NOMINATIONS OPEN";
-        graphics.text(minecraft.font, headline, x + 8, y + 7, UiDrawing.GOLD, UiTheme.dark());
+        fit(graphics, minecraft.font, headline, x + 8, y + 7, UiDrawing.GOLD, UiTheme.dark());
 
         if (ClientState.exileSupportInProgress) {
             String exile = label(ClientState.currentExileCaller) + " → " + label(ClientState.currentExileTarget);
-            graphics.text(minecraft.font, exile, x + 8, y + 22, UiDrawing.TEXT, UiTheme.dark());
+            fit(graphics, minecraft.font, exile, x + 8, y + 22, UiDrawing.TEXT, UiTheme.dark());
             int lineY = y + 36;
             if (ClientState.voteClockComplete) {
                 String counted = "Support: " + ClientState.effectiveVoteCount + "   Required: " + ClientState.voteThreshold;
                 if (ClientState.voteCountOverrideActive) counted += "   [ST override]";
-                graphics.text(minecraft.font, counted, x + 8, lineY, UiTheme.dark() ? 0xFF55CC66 : 0xFF2F7A3C, UiTheme.dark());
-                graphics.text(minecraft.font, "Waiting for Storyteller to resolve the exile.", x + 8, lineY + 13, UiDrawing.MUTED, false);
+                fit(graphics, minecraft.font, counted, x + 8, lineY, UiTheme.dark() ? 0xFF55CC66 : 0xFF2F7A3C, UiTheme.dark());
+                fit(graphics, minecraft.font, "Waiting for Storyteller to resolve the exile.", x + 8, lineY + 13, UiDrawing.MUTED, false);
             } else {
                 int shownIndex = Math.min(ClientState.voteClockIndex + 1, Math.max(1, ClientState.voteClockTotal));
-                graphics.text(minecraft.font,
+                fit(graphics, minecraft.font,
                         "Now counting: " + label(ClientState.currentVoteClockPlayer)
                                 + "   (" + shownIndex + "/" + ClientState.voteClockTotal + ")",
                         x + 8, lineY, UiDrawing.TEXT, UiTheme.dark());
-                graphics.text(minecraft.font,
+                fit(graphics, minecraft.font,
                         "Support: " + ClientState.effectiveVoteCount + "   Required: " + ClientState.voteThreshold
                                 + "   Hands up: " + ClientState.handsRaised,
                         x + 8, lineY + 13, UiDrawing.MUTED, false);
@@ -95,20 +96,20 @@ public final class ElectionHUD {
         if (exileActive) {
             String key = KeyInputHandler.toggleVoteHandKey == null
                     ? "U" : KeyInputHandler.toggleVoteHandKey.getTranslatedKeyMessage().getString();
-            graphics.text(minecraft.font,
+            fit(graphics, minecraft.font,
                     label(ClientState.currentExileCaller) + " calls to exile " + label(ClientState.currentExileTarget),
                     x + 8, y + 22, UiDrawing.TEXT, UiTheme.dark());
-            graphics.text(minecraft.font,
+            fit(graphics, minecraft.font,
                     "Required: " + ClientState.voteThreshold + "   Hands raised: " + ClientState.handsRaised,
                     x + 8, y + 38, UiDrawing.TEXT, false);
-            graphics.text(minecraft.font, "[" + key + "] Raise / lower exile support before the clock starts.",
+            fit(graphics, minecraft.font, "[" + key + "] Raise / lower exile support before the clock starts.",
                     x + 8, y + 51, UiDrawing.MUTED, false);
             return;
         }
 
         if (ClientState.currentNominee != null) {
             String nomination = label(ClientState.currentNominator) + " → " + label(ClientState.currentNominee);
-            graphics.text(minecraft.font, nomination, x + 8, y + 22, UiDrawing.TEXT, UiTheme.dark());
+            fit(graphics, minecraft.font, nomination, x + 8, y + 22, UiDrawing.TEXT, UiTheme.dark());
         }
 
         if (ClientState.voteInProgress) {
@@ -116,14 +117,14 @@ public final class ElectionHUD {
             if (ClientState.voteClockComplete) {
                 String counted = "Counted: " + ClientState.effectiveVoteCount + "   Required: " + ClientState.voteThreshold;
                 if (ClientState.voteCountOverrideActive) counted += "   [ST override]";
-                graphics.text(minecraft.font, counted, x + 8, lineY, UiTheme.dark() ? 0xFF55CC66 : 0xFF2F7A3C, UiTheme.dark());
-                graphics.text(minecraft.font, "Waiting for Storyteller to finish the vote.", x + 8, lineY + 13, UiDrawing.MUTED, false);
+                fit(graphics, minecraft.font, counted, x + 8, lineY, UiTheme.dark() ? 0xFF55CC66 : 0xFF2F7A3C, UiTheme.dark());
+                fit(graphics, minecraft.font, "Waiting for Storyteller to finish the vote.", x + 8, lineY + 13, UiDrawing.MUTED, false);
             } else {
                 int shownIndex = Math.min(ClientState.voteClockIndex + 1, Math.max(1, ClientState.voteClockTotal));
                 String voter = "Now counting: " + label(ClientState.currentVoteClockPlayer)
                         + "   (" + shownIndex + "/" + ClientState.voteClockTotal + ")";
-                graphics.text(minecraft.font, voter, x + 8, lineY, UiDrawing.TEXT, UiTheme.dark());
-                graphics.text(minecraft.font,
+                fit(graphics, minecraft.font, voter, x + 8, lineY, UiDrawing.TEXT, UiTheme.dark());
+                fit(graphics, minecraft.font,
                         "Locked: " + ClientState.effectiveVoteCount + "   Required: " + ClientState.voteThreshold
                                 + "   Hands up: " + ClientState.handsRaised,
                         x + 8, lineY + 13, UiDrawing.MUTED, false);
@@ -134,10 +135,10 @@ public final class ElectionHUD {
         if (ClientState.currentNominee != null) {
             String key = KeyInputHandler.toggleVoteHandKey == null
                     ? "U" : KeyInputHandler.toggleVoteHandKey.getTranslatedKeyMessage().getString();
-            graphics.text(minecraft.font,
+            fit(graphics, minecraft.font,
                     "Required: " + ClientState.voteThreshold + "   Hands raised: " + ClientState.handsRaised,
                     x + 8, y + 38, UiDrawing.TEXT, false);
-            graphics.text(minecraft.font, "[" + key + "] Raise / lower your hand before the clock starts.",
+            fit(graphics, minecraft.font, "[" + key + "] Raise / lower your hand before the clock starts.",
                     x + 8, y + 51, UiDrawing.MUTED, false);
             return;
         }
@@ -145,19 +146,33 @@ public final class ElectionHUD {
         if (ClientState.markedForExecution != null || ClientState.storytellerMFE != null) {
             UUID marked = ClientState.storytellerMFE != null ? ClientState.storytellerMFE : ClientState.markedForExecution;
             int high = ClientState.storytellerMFE != null ? ClientState.storytellerMFEVotes : ClientState.votesForMarkedPlayer;
-            graphics.text(minecraft.font, label(marked) + " — " + high + " vote(s)", x + 8, y + 24, UiDrawing.TEXT, UiTheme.dark());
+            fit(graphics, minecraft.font, label(marked) + " — " + high + " vote(s)", x + 8, y + 24, UiDrawing.TEXT, UiTheme.dark());
             return;
         }
 
         if (hasLastResult) {
             String result = prettyResult(ClientState.lastVoteResult);
-            graphics.text(minecraft.font,
+            fit(graphics, minecraft.font,
                     label(ClientState.lastVoteNominee) + " — " + ClientState.lastVoteCount + " vote(s) — " + result,
                     x + 8, y + 24, UiDrawing.TEXT, UiTheme.dark());
             return;
         }
 
-        graphics.text(minecraft.font, "Players may nominate.", x + 8, y + 24, UiDrawing.TEXT, false);
+        fit(graphics, minecraft.font, "Players may nominate.", x + 8, y + 24, UiDrawing.TEXT, false);
+    }
+
+    /** Room for one line inside the card (its width less the 8px margins). */
+    private static int lineWidth = 252;
+
+    /** A card line that shrinks, then shortens, rather than running past the card's edge. */
+    private static void fit(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font, String text,
+                            int x, int y, int colour, boolean shadow) {
+        fit(graphics, font, net.minecraft.network.chat.Component.literal(text), x, y, colour, shadow);
+    }
+
+    private static void fit(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                            net.minecraft.network.chat.Component text, int x, int y, int colour, boolean shadow) {
+        UiDrawing.textScaledToFit(graphics, font, text, x, y, lineWidth, colour, shadow);
     }
 
     private static void renderBottomStatus(GuiGraphicsExtractor graphics, Minecraft minecraft, String text) {
