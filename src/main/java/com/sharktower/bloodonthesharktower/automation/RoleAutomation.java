@@ -104,13 +104,13 @@ public final class RoleAutomation {
         return List.copyOf(PROMPTS.values());
     }
 
-    private static void offer(MinecraftServer server, StorytellerPrompt prompt) {
+    static void offer(MinecraftServer server, StorytellerPrompt prompt) {
         PROMPTS.put(prompt.id(), prompt);
         if (server != null) promptServer = server;
         if (promptServer != null) StateBroadcaster.broadcastPrompts(promptServer);
     }
 
-    private static void resolve(String id) {
+    static void resolve(String id) {
         if (PROMPTS.remove(id) != null && promptServer != null) StateBroadcaster.broadcastPrompts(promptServer);
     }
 
@@ -128,6 +128,7 @@ public final class RoleAutomation {
         pendingWitchDay = -1;
         clearPendingSlayer();
         SLAYER_SHOT_TAKEN.clear();
+        RavenkeeperAutomation.reset();
         PROMPTS.clear();
     }
 
@@ -512,6 +513,7 @@ public final class RoleAutomation {
     public static void onDeath(MinecraftServer server, UUID dead, boolean execution, boolean demonKill) {
         if (server == null || dead == null || ServerState.gameEnded) return;
         PendingRoleAssignment deadRole = actualRole(dead);
+        RavenkeeperAutomation.onDeath(server, dead, execution, demonKill || PhaseOperations.isNight());
 
         if (execution && mastermindDay >= 0 && ServerState.currentDay == mastermindDay + 1 && deadRole != null) {
             mastermindDay = -1;
@@ -932,7 +934,7 @@ public final class RoleAutomation {
         return seat == null ? "Player" : "Seat " + seat;
     }
 
-    private static Component button(String text, String command, String hover) {
+    static Component button(String text, String command, String hover) {
         return Component.literal(text)
                 .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD, ChatFormatting.UNDERLINE)
                 .withStyle(style -> style
@@ -949,7 +951,7 @@ public final class RoleAutomation {
         tellStorytellers(server, Component.literal(text).withStyle(colour));
     }
 
-    private static void tellStorytellers(MinecraftServer server, Component message) {
+    static void tellStorytellers(MinecraftServer server, Component message) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (StorytellerState.isStoryteller(player.getUUID())) player.sendSystemMessage(message);
         }
