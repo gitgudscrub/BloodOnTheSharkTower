@@ -62,7 +62,7 @@ public final class SlayerCrossbow {
         if (!player.getInventory().add(create(shotId))) return "Make room in your inventory for the crossbow.";
         LIVE.put(shotId, new Shot(player.getUUID(), -1));
         RoleAutomation.announce(server, RoleAutomation.label(server, player.getUUID())
-                + " raises a crossbow, claiming to be the Slayer!", ChatFormatting.GOLD);
+                + " claims Slayer!", ChatFormatting.GOLD);
         player.sendSystemMessage(Component.literal(
                 "One bolt. Aim at a player and fire: whoever it hits is your target. The Storyteller decides what happens.")
                 .withStyle(ChatFormatting.GRAY));
