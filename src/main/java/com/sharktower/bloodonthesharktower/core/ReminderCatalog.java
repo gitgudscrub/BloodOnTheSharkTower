@@ -53,6 +53,70 @@ public final class ReminderCatalog {
         if (role.equals("fanggu") && label.equals("once")) return true;
         return role.equals("leviathan") && label.startsWith("day ");
     }
+    /**
+     * Best guess at the character a reminder belongs to when it was placed
+     * without one (typed by hand, or a generic marker): a script character
+     * named in the text ("Is the Drunk"), then a script character whose
+     * official or custom reminders include the text ("Red Herring"), then a
+     * standard character for common generic markers. Empty when nothing fits.
+     * Only used to choose an icon; the reminder itself is unchanged.
+     */
+    public static Optional<String> inferSourceId(String text, Script script) {
+        String label = text == null ? "" : text.trim();
+        if (label.isEmpty()) return Optional.empty();
+        String flat = normalize(label);
+        List<ScriptRole> roles = script == null ? List.of() : script.allRoles();
+        ScriptRole named = null;
+        for (ScriptRole role : roles) {
+            String name = normalize(role.getDisplayName());
+            if (name.length() >= 3 && flat.contains(name)
+                    && (named == null || name.length() > normalize(named.getDisplayName()).length())) named = role;
+        }
+        if (named != null) return Optional.of(named.getId());
+        for (ScriptRole role : roles) {
+            List<String> labels = role instanceof ScriptRole.Custom custom
+                    ? concat(custom.customRole().reminders(), custom.customRole().remindersGlobal())
+                    : OFFICIAL.getOrDefault(normalize(role.getId()), List.of());
+            for (String candidate : labels) {
+                if (candidate.equalsIgnoreCase(label)) return Optional.of(role.getId());
+            }
+        }
+        String fallback = switch (flat) {
+            case "poisoned" -> "poisoner";
+            case "drunk" -> "drunk";
+            case "protected", "safe" -> "monk";
+            case "demon" -> "imp";
+            case "minion" -> "baron";
+            case "redherring" -> "fortuneteller";
+            case "mad" -> "cerenovus";
+            default -> "";
+        };
+        if (!fallback.isEmpty()) return Optional.of(fallback);
+        // Any official character named in the text, even off-script ("Washerwoman Townsfolk").
+        Role namedOfficial = null;
+        for (Role role : Role.values()) {
+            String name = normalize(role.getDisplayName());
+            if (name.length() >= 4 && flat.contains(name)
+                    && (namedOfficial == null || name.length() > normalize(namedOfficial.getDisplayName()).length())) namedOfficial = role;
+        }
+        if (namedOfficial != null) return Optional.of(namedOfficial.getId());
+        String unique = null;
+        for (var entry : OFFICIAL.entrySet()) {
+            for (String candidate : entry.getValue()) {
+                if (!candidate.equalsIgnoreCase(label)) continue;
+                if (unique != null && !unique.equals(entry.getKey())) return Optional.empty();
+                unique = entry.getKey();
+            }
+        }
+        return Optional.ofNullable(unique);
+    }
+
+    private static List<String> concat(List<String> a, List<String> b) {
+        List<String> all = new ArrayList<>(a);
+        all.addAll(b);
+        return all;
+    }
+
     public static String normalize(String id) { return id == null ? "" : id.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", ""); }
     private static Map<String, List<String>> load() {
         try (var input = ReminderCatalog.class.getResourceAsStream("/data/blood_on_the_sharktower/reminders/official.json")) {

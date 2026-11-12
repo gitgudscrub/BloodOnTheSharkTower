@@ -438,7 +438,6 @@ public class AssignRolesScreen extends Screen {
         List<int[]> spots = new ArrayList<>();
         for (double a : angles) {
             if (Math.abs(angleDiff(a, outward + Math.PI)) < Math.toRadians(45)) continue;
-            if (labels && Math.abs(angleDiff(a, Math.PI / 2)) < Math.toRadians(40)) continue;
             if (badge && Math.abs(angleDiff(a, Math.PI / 4)) < Math.toRadians(35)) continue;
             int x = (int) Math.round(cx + ringRadius * Math.cos(a)) - size / 2;
             int y = (int) Math.round(cy + ringRadius * Math.sin(a)) - size / 2;
@@ -446,6 +445,8 @@ public class AssignRolesScreen extends Screen {
             if (area[0] < 4 || area[0] + area[2] > layoutWidth() - 4
                     || area[1] < 16 || area[1] + area[3] > layoutHeight() - 30) continue;
             if (collidesWithWidget(area, roleX, roleY)) continue;
+            // The role name under the token is up to ROLE_SIZE + 18 wide (GrimoirePlayerWidget.drawRoleLabel).
+            if (labels && overlaps(area, new int[]{roleX - 10, roleY + ROLE_SIZE + 1, ROLE_SIZE + 20, 11})) continue;
             boolean onAnother = false;
             for (int[] spot : spots) {
                 if (overlaps(new int[]{x, y, size, size}, new int[]{spot[0], spot[1], size, size})) { onAnother = true; break; }
@@ -800,11 +801,19 @@ public class AssignRolesScreen extends Screen {
         }
 
         if (hint == null || hint.isBlank()) return;
+        // Bottom edge, clear of the lowest seat's role name; a soft backing keeps it readable over the world.
         int hintWidth = Math.max(80, layoutWidth() - 320);
-        int hintLeft = (layoutWidth() - hintWidth) / 2;
         var lines = this.font.split(Component.literal(hint), hintWidth);
-        for (int i=0; i<Math.min(2,lines.size()); i++)
-            graphics.text(this.font, lines.get(i), hintLeft, layoutHeight() - 29 + i*10, UiDrawing.MUTED, false);
+        int count = Math.min(2, lines.size());
+        int widest = 0;
+        for (int i = 0; i < count; i++) widest = Math.max(widest, this.font.width(lines.get(i)));
+        int top = layoutHeight() - 4 - count * 10;
+        int left = (layoutWidth() - widest) / 2;
+        graphics.fill(left - 4, top - 2, left + widest + 4, top + count * 10, UiDrawing.PANEL_SOFT);
+        for (int i = 0; i < count; i++) {
+            int lineWidth = this.font.width(lines.get(i));
+            graphics.text(this.font, lines.get(i), (layoutWidth() - lineWidth) / 2, top + i * 10, UiDrawing.MUTED, false);
+        }
     }
 
     private void renderPhaseIndicator(GuiGraphicsExtractor graphics) {
