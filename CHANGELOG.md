@@ -3,6 +3,15 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.32 — Nomination ring clear of names and reminders (unreleased)
+
+- Role names under Grimoire tokens sit a little lower and are drawn after
+  the nominator/nominee/hover rings, so no ring covers the name.
+- The soft glow behind the nominee is smaller, so it no longer swamps the
+  rim reminder tokens.
+- On Parchment the nomination ring and glow use a deeper amber that stands
+  out on the light background (Candlelit keeps the bright amber).
+
 ## 1.0.2-alpha.31 — Resolve panel: coloured roles, text always fits (unreleased)
 
 - Character names in Resolve panel text are coloured by team (Townsfolk

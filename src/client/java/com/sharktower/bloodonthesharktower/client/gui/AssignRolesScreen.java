@@ -450,7 +450,8 @@ public class AssignRolesScreen extends Screen {
                     || area[1] < 16 || area[1] + area[3] > layoutHeight() - 30) continue;
             if (collidesWithWidget(area, roleX, roleY)) continue;
             // The role name under the token is up to ROLE_SIZE + 18 wide (GrimoirePlayerWidget.drawRoleLabel).
-            if (labels && overlaps(area, new int[]{roleX - 10, roleY + ROLE_SIZE + 1, ROLE_SIZE + 20, 11})) continue;
+            if (labels && overlaps(area, new int[]{roleX - 10, roleY + ROLE_SIZE
+                    + com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerWidget.LABEL_GAP - 2, ROLE_SIZE + 20, 11})) continue;
             boolean onAnother = false;
             for (int[] spot : spots) {
                 if (overlaps(new int[]{x, y, size, size}, new int[]{spot[0], spot[1], size, size})) { onAnother = true; break; }
