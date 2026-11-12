@@ -2,6 +2,7 @@ package com.sharktower.bloodonthesharktower.client.gui.grimoire;
 
 import com.sharktower.bloodonthesharktower.client.gui.ReminderChooseScreen;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+import com.sharktower.bloodonthesharktower.client.gui.UiTheme;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -31,9 +32,9 @@ public final class GrimoireReminderWidget extends AbstractWidget {
     public static final int CHIP_MAX_WIDTH = 86;
     private static final int ICON = 9;
 
-    private static final int HARMFUL = 0xFFD0453A;
-    private static final int PROTECTIVE = 0xFF4CB05A;
-    private static final int NEUTRAL = 0xFFB8A878;
+    private static final int HARMFUL = UiTheme.CHIP_HARMFUL;
+    private static final int PROTECTIVE = UiTheme.CHIP_PROTECTIVE;
+    private static final int NEUTRAL = UiTheme.CHIP_NEUTRAL;
 
     private final UUID playerId;
     private final int seat;
@@ -71,7 +72,7 @@ public final class GrimoireReminderWidget extends AbstractWidget {
     public static int chipWidth(Reminder reminder) {
         Font font = Minecraft.getInstance().font;
         String text = reminder == null ? "" : reminder.text();
-        return Math.min(CHIP_MAX_WIDTH, 1 + ICON + 3 + font.width(text) + 3);
+        return Math.min(CHIP_MAX_WIDTH, 9 + ICON + 3 + font.width(text) + 4);
     }
 
     public static int overflowWidth(int hidden) {
@@ -124,21 +125,27 @@ public final class GrimoireReminderWidget extends AbstractWidget {
         int x = getX();
         int y = getY();
         int edge = effectColour(reminder.text());
-        graphics.fill(x, y, x + width, y + height, 0xE8141418);
-        graphics.outline(x, y, width, height, (edge & 0x00FFFFFF) | 0xA0000000);
-        graphics.fill(x, y, x + 1, y + height, edge);
-        drawIcon(graphics, x + 1, y + 1, ICON);
+        // Parchment chip (ink chip in light mode), rounded ends, a wax-seal dot in the effect colour.
+        graphics.fill(x + 1, y, x + width - 1, y + height, UiTheme.chipBackground());
+        graphics.fill(x, y + 1, x + width, y + height - 1, UiTheme.chipBackground());
+        graphics.fill(x + 1, y, x + width - 1, y + 1, UiTheme.chipBorder());
+        graphics.fill(x + 1, y + height - 1, x + width - 1, y + height, UiTheme.chipBorder());
+        graphics.fill(x, y + 1, x + 1, y + height - 1, UiTheme.chipBorder());
+        graphics.fill(x + width - 1, y + 1, x + width, y + height - 1, UiTheme.chipBorder());
+        graphics.fill(x + 3, y + 3, x + 7, y + 8, edge);
+        graphics.fill(x + 4, y + 2, x + 6, y + 9, edge);
+        drawIcon(graphics, x + 9, y + 1, ICON);
         String text = reminder.text();
-        int room = width - (1 + ICON + 3) - 2;
+        int room = width - (9 + ICON + 3) - 2;
         if (font.width(text) > room) text = font.plainSubstrByWidth(text, room - font.width(".")) + ".";
-        graphics.text(font, text, x + 1 + ICON + 3, y + 2, 0xFFF2EEE2, false);
+        graphics.text(font, text, x + 9 + ICON + 3, y + 2, UiTheme.chipText(), false);
     }
 
     private void drawOverflow(GuiGraphicsExtractor graphics) {
         Font font = Minecraft.getInstance().font;
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, 0xE8141418);
-        graphics.outline(getX(), getY(), width, height, UiDrawing.BORDER);
-        graphics.text(font, "+" + overflow, getX() + 3, getY() + 2, UiDrawing.GOLD, false);
+        graphics.fill(getX(), getY(), getX() + width, getY() + height, UiTheme.chipBackground());
+        graphics.outline(getX(), getY(), width, height, UiTheme.chipBorder());
+        graphics.text(font, "+" + overflow, getX() + 3, getY() + 2, UiTheme.dark() ? 0xFF8A5A10 : UiTheme.AMBER, false);
     }
 
     private void drawSquare(GuiGraphicsExtractor graphics) {
@@ -155,7 +162,7 @@ public final class GrimoireReminderWidget extends AbstractWidget {
         Font font = Minecraft.getInstance().font;
         ScriptRole source = sourceRole();
         if (source != null) {
-            UiDrawing.roleToken(graphics, source, x, y, size);
+            UiDrawing.roleIcon(graphics, source, x, y, size);
             return;
         }
         String text = reminder.text();

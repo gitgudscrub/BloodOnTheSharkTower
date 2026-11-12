@@ -33,7 +33,7 @@ public final class GrimoireStorytellerWidget extends AbstractWidget {
         boolean drewFace = ClientState.connectedPlayers.contains(storytellerId)
                 && PlayerFaceCompat.draw(graphics, storytellerId, headX, headY, headSize);
         if (!drewFace) {
-            graphics.fill(headX, headY, headX + headSize, headY + headSize, 0xDD251A2D);
+            graphics.fill(headX, headY, headX + headSize, headY + headSize, com.sharktower.bloodonthesharktower.client.gui.UiTheme.dark() ? 0xDD251A2D : 0xDDE6D9BB);
             String st = "ST";
             graphics.text(Minecraft.getInstance().font, st,
                     headX + headSize / 2 - Minecraft.getInstance().font.width(st) / 2,
@@ -47,11 +47,11 @@ public final class GrimoireStorytellerWidget extends AbstractWidget {
         var font = Minecraft.getInstance().font;
         if (font.width(name) > this.width - 6) name = font.plainSubstrByWidth(name,this.width - 6 - font.width("…")) + "…";
         int nameX = getX() + this.width / 2 - Minecraft.getInstance().font.width(name) / 2;
-        graphics.text(Minecraft.getInstance().font, name, nameX, headY + headSize + 3, UiDrawing.TEXT, true);
+        graphics.text(Minecraft.getInstance().font, name, nameX, headY + headSize + 3, UiDrawing.TEXT, com.sharktower.bloodonthesharktower.client.gui.UiTheme.dark());
 
         String label = "STORYTELLER";
         int labelX = getX() + this.width / 2 - Minecraft.getInstance().font.width(label) / 2;
-        graphics.text(Minecraft.getInstance().font, label, labelX, headY + headSize + 13, UiDrawing.MUTED, true);
+        graphics.text(Minecraft.getInstance().font, label, labelX, headY + headSize + 13, UiDrawing.MUTED, com.sharktower.bloodonthesharktower.client.gui.UiTheme.dark());
 
         if (isHovered()) {
             GrimoireHoverHints.set("Storyteller — click for private chat / Storyteller interaction");

@@ -128,16 +128,16 @@ public class StorytellerToolsScreen extends Screen {
         int cx = this.width / 2;
         int top = 46;
         int row = rowSpacing();
-        drawCentered(graphics, "Storyteller Tools", 14, UiDrawing.TEXT, true);
+        UiTheme.drawTitle(graphics, this.font, "Storyteller Tools", cx, 4);
         drawCentered(graphics,
-                "Phase: " + ClientState.phase() + "   Script: " + ClientState.displayScriptName() + "   Seats: " + ClientState.seatedPlayerCount(),
-                27, UiDrawing.MUTED, false);
+                KeysHelpScreen.phaseName(ClientState.phase()) + "   ·   Script: " + ClientState.displayScriptName() + "   ·   Seats: " + ClientState.seatedPlayerCount(),
+                24, UiDrawing.MUTED, false);
 
-        graphics.text(this.font, "Setup", cx - 155, top - 12, UiDrawing.GOLD, true);
-        graphics.text(this.font, "Night Cycle", cx - 155, top + row - 12, UiDrawing.GOLD, true);
-        graphics.text(this.font, "Management", cx - 155, top + row * 2 - 12, UiDrawing.GOLD, true);
-        graphics.text(this.font, "Voting", cx - 155, top + row * 3 - 12, UiDrawing.GOLD, true);
-        graphics.text(this.font, "Recovery", cx - 155, top + row * 4 - 12, UiDrawing.GOLD, true);
+        UiTheme.drawSectionLabel(graphics, this.font, "Setup", cx - 155, top - 11);
+        UiTheme.drawSectionLabel(graphics, this.font, "Night Cycle", cx - 155, top + row - 11);
+        UiTheme.drawSectionLabel(graphics, this.font, "Management", cx - 155, top + row * 2 - 11);
+        UiTheme.drawSectionLabel(graphics, this.font, "Voting", cx - 155, top + row * 3 - 11);
+        UiTheme.drawSectionLabel(graphics, this.font, "Recovery", cx - 155, top + row * 4 - 11);
     }
 
     /**

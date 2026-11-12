@@ -69,7 +69,7 @@ public final class StorytellerInteractionScreen extends Screen {
         boolean drewFace = ClientState.connectedPlayers.contains(storytellerId)
                 && PlayerFaceCompat.draw(graphics, storytellerId, headX, headY, headSize);
         if (!drewFace) {
-            graphics.fill(headX, headY, headX + headSize, headY + headSize, 0xDD251A2D);
+            graphics.fill(headX, headY, headX + headSize, headY + headSize, com.sharktower.bloodonthesharktower.client.gui.UiTheme.dark() ? 0xDD251A2D : 0xDDE6D9BB);
             graphics.text(this.font, "ST", centerX - this.font.width("ST") / 2, headY + 11, UiDrawing.GOLD, true);
         }
         graphics.outline(headX - 1, headY - 1, headSize + 2, headSize + 2, UiDrawing.GOLD);

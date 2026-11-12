@@ -25,7 +25,7 @@ public final class GrimoireControlsScreen extends Screen {
         int y = 28;
         int wrap = Math.max(160, this.width - 32);
 
-        drawCentered(graphics, "GRIMOIRE CONTROLS", cx, y, UiDrawing.GOLD, true, wrap);
+        UiTheme.drawTitle(graphics, this.font, "Grimoire Controls", cx, y - 8);
         y += 22;
         y = drawCentered(graphics, "Left-click portrait/token — Edit role, alignment and reminders", cx, y, UiDrawing.TEXT, false, wrap) + 6;
         y = drawCentered(graphics, "Storyteller right-click portrait/token — Open Player Actions", cx, y, UiDrawing.TEXT, false, wrap) + 6;

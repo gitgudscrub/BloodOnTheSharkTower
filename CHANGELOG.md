@@ -3,6 +3,31 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.22 — Clocktower look, light and dark (unreleased)
+
+- Every Sharktower screen and HUD now shares one look: round parchment
+  tokens with a gold rim, framed panels, and the Cinzel serif face for
+  titles, section labels and role names. Buttons keep the Minecraft font so
+  labels stay readable at every size.
+- Two modes, chosen with the **Theme** button in Settings and saved per
+  player: **Candlelit** (ink-dark panels, gold frames, vignette behind each
+  screen) and **Parchment** (light parchment panels, ink text, a parchment
+  sheet behind each screen). Reminder chips invert with the mode so they
+  always contrast with the panel.
+- Grimoire: dead players get a dimmed token with a shroud at the corner,
+  alignment rings and G/E badges sit on the token, the nominator and
+  nominee are ringed, empty bluff and seat slots are round, and seat
+  numbers are small badges. Name labels drop their shadow in Parchment.
+- Role card: round token, team-colour ribbon, role name in the display
+  face, "TOWNSFOLK · GOOD" line and a muted key hint.
+- Storyteller Tools: title and gold rule, section labels that no longer
+  collide with the status line, and the phase shown in words ("Vote
+  pending") instead of the internal name.
+- Nomination panel keeps clear of the role count strip and of the role
+  card on narrow GUIs (to the right if it fits, otherwise below).
+- Bundled font: Cinzel Bold (SIL Open Font License, see
+  `docs/licenses/Cinzel-OFL.txt`).
+
 ## 1.0.2-alpha.21 — Readable reminder tokens (unreleased)
 
 - Grimoire reminders are now labelled chips: the source character's icon

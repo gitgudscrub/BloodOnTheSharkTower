@@ -31,6 +31,21 @@ name to the released `1.0.0`, is in `CHANGELOG.md`.
 Work in progress is tracked in the README roadmap and in `docs/*.md` notes named
 after the alpha that introduced each change.
 
+## Client theme
+
+- `client/gui/UiTheme` owns the look: two modes (`Candlelit`, `Parchment`)
+  stored as `theme` in the client settings file. `UiTheme.apply()` writes the
+  mode's colours into the shared `UiDrawing` / `SharktowerButton` fields, so
+  screens that only read those fields follow the theme without changes.
+- `ScreenBackdropMixin` paints the vignette (dark) or parchment sheet (light)
+  behind every `com.sharktower.bloodonthesharktower` screen.
+- Display face: Cinzel Bold (`assets/.../font/display.json`, `title.json`;
+  OFL in `docs/licenses/`). Titles, section labels and role names use it;
+  buttons and body text stay in the Minecraft font.
+- HUDs that float over the world (night order, sidebar, setup, voice route)
+  keep their own dark fills in both modes; only panel HUDs (role card,
+  nomination) follow the theme.
+
 ## Storyteller control
 
 - Anyone can claim Storyteller control during Setup with `/bots storyteller claim`.

@@ -30,6 +30,8 @@ public final class ClientSettings {
     public static boolean grimoireLabels = true;
     /** "G" / "E" letters beside alignment colours, so alignment never relies on colour alone. */
     public static boolean alignmentLetters = true;
+    /** "candlelit" (dark) or "parchment" (light); see UiTheme. */
+    public static String theme = "candlelit";
 
     private ClientSettings() {}
 
@@ -53,6 +55,8 @@ public final class ClientSettings {
         timerHud = read(p, "timerHud", true);
         grimoireLabels = read(p, "grimoireLabels", true);
         alignmentLetters = read(p, "alignmentLetters", true);
+        theme = p.getProperty("theme", "candlelit");
+        com.sharktower.bloodonthesharktower.client.gui.UiTheme.apply();
     }
 
     public static void save() {
@@ -70,6 +74,7 @@ public final class ClientSettings {
         p.setProperty("timerHud", Boolean.toString(timerHud));
         p.setProperty("grimoireLabels", Boolean.toString(grimoireLabels));
         p.setProperty("alignmentLetters", Boolean.toString(alignmentLetters));
+        p.setProperty("theme", theme);
         try {
             Files.createDirectories(FILE.getParent());
             try (OutputStream out = Files.newOutputStream(FILE)) {
