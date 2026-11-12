@@ -117,12 +117,13 @@ public class AssignRolesScreen extends Screen {
                 Math.max(28,horizontal - 48));
     }
 
-    private record ResolveEntry(int x, int y, String title, List<net.minecraft.util.FormattedCharSequence> body) {}
+    private record ResolveEntry(int x, int y, int width, String title, List<net.minecraft.util.FormattedCharSequence> body, float scale) {}
 
     private final List<ResolveEntry> resolveEntries = new ArrayList<>();
     private final java.util.Set<net.minecraft.client.gui.components.AbstractWidget> resolveButtons = new java.util.HashSet<>();
     private int resolvePanelX, resolvePanelY, resolvePanelH;
     private int resolveIndex;
+    private boolean resolveCoversVote;
     private String resolvePage = "";
     private int lastPromptsRevision = -1;
 
@@ -897,6 +898,7 @@ public class AssignRolesScreen extends Screen {
         resolveEntries.clear();
         resolveButtons.clear();
         resolvePanelH = 0;
+        resolveCoversVote = false;
         lastPromptsRevision = ClientState.storytellerPromptsRevision;
         List<com.sharktower.bloodonthesharktower.automation.StorytellerPrompt> prompts = ClientState.storytellerPrompts;
         if (prompts.isEmpty() || !ClientGrimoireEdits.isLocalStoryteller()) return;
@@ -905,14 +907,24 @@ public class AssignRolesScreen extends Screen {
         int w = RESOLVE_W;
         int x = layoutWidth() - w - MARGIN;
         int innerW = w - 8;
-        List<net.minecraft.util.FormattedCharSequence> body = this.font.split(Component.literal(prompt.body()), innerW);
-        if (body.size() > 5) body = body.subList(0, 5);
+        // The whole message always fits: past 5 lines it shrinks to 3/4 size,
+        // then 5/8, and only beyond 12 small lines is the end cut.
+        Component bodyText = ResolveText.colourRoles(prompt.body(), ClientState.currentScript);
+        float bodyScale = 1.0F;
+        List<net.minecraft.util.FormattedCharSequence> body = this.font.split(bodyText, innerW);
+        for (float scale : new float[]{0.75F, 0.625F}) {
+            if (body.size() <= 5) break;
+            bodyScale = scale;
+            body = this.font.split(bodyText, (int) (innerW / scale));
+        }
+        if (body.size() > 12) body = body.subList(0, 12);
+        int bodyH = (int) Math.ceil(body.size() * 9 * bodyScale);
         var actions = prompt.actions();
         int halfW = (innerW - 4) / 2;
         boolean wide = actions.stream().anyMatch(action -> this.font.width(action.label()) + 10 > halfW);
         int perRow = wide ? 1 : 2;
         int rows = (actions.size() + perRow - 1) / perRow;
-        int height = 18 + 10 + body.size() * 9 + 3 + rows * 22 + 4;
+        int height = 18 + 10 + bodyH + 3 + rows * 22 + 4;
 
         int top = railBottom() + 6;
         int bottom = layoutHeight() - 36;
@@ -923,10 +935,20 @@ public class AssignRolesScreen extends Screen {
             if (voteBottom + 6 + height <= bottom) y = bottom - height;
             else if (top + height <= voteTop - 6) y = voteTop - 6 - height;
             else {
-                // No room above or below the vote panel: sit beside it, to its
-                // left, resting on the bottom row, so no button runs off screen.
-                x = layoutWidth() - CONTROL_W - MARGIN - 6 - w;
-                y = Math.max(10, bottom - height);
+                // No room above or below the vote panel. Sit beside it, to its
+                // left, when that clears the seat ring (big windows); otherwise
+                // cover the vote counter, whose numbers are also on the
+                // in-world nomination card. Either way no button leaves the screen.
+                GrimLayout ring = grimoireLayout(sortedSeats().size());
+                int ringRight = ring.centerX() + Math.max(ring.roleRadiusX(), ring.headRadiusX()) + ROLE_SIZE / 2 + 45;
+                int besideX = layoutWidth() - CONTROL_W - MARGIN - 6 - w;
+                if (besideX >= ringRight) {
+                    x = besideX;
+                    y = Math.max(10, bottom - height);
+                } else {
+                    y = Math.max(top, bottom - height);
+                    resolveCoversVote = true;
+                }
             }
         } else {
             y = Math.max(top, bottom - height);
@@ -948,8 +970,8 @@ public class AssignRolesScreen extends Screen {
             resolvePage = "";
         }
         int cursor = y + 18;
-        resolveEntries.add(new ResolveEntry(x + 4, cursor, prompt.title(), body));
-        cursor += 10 + body.size() * 9 + 3;
+        resolveEntries.add(new ResolveEntry(x + 4, cursor, innerW, prompt.title(), body, bodyScale));
+        cursor += 10 + bodyH + 3;
         for (int i = 0; i < actions.size(); i += perRow) {
             int inRow = Math.min(perRow, actions.size() - i);
             int bw = (innerW - (inRow - 1) * 4) / inRow;
@@ -990,13 +1012,20 @@ public class AssignRolesScreen extends Screen {
                 graphics.text(AssignRolesScreen.this.font, resolvePage,
                         getX() + getWidth() - 20 - AssignRolesScreen.this.font.width(resolvePage), getY() + 5, UiDrawing.MUTED, false);
             }
+            var font = AssignRolesScreen.this.font;
             for (ResolveEntry entry : resolveEntries) {
-                graphics.text(AssignRolesScreen.this.font, entry.title(), entry.x(), entry.y(), UiDrawing.GOLD, UiTheme.dark());
-                int ly = entry.y() + 10;
+                UiDrawing.textScaledToFit(graphics, font, Component.literal(entry.title()), entry.x(), entry.y(),
+                        entry.width(), UiDrawing.GOLD, UiTheme.dark());
+                float scale = entry.scale();
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(entry.x(), entry.y() + 10);
+                graphics.pose().scale(scale, scale);
+                int ly = 0;
                 for (net.minecraft.util.FormattedCharSequence line : entry.body()) {
-                    graphics.text(AssignRolesScreen.this.font, line, entry.x(), ly, UiDrawing.TEXT, false);
+                    graphics.text(font, line, 0, ly, UiDrawing.TEXT, false);
                     ly += 9;
                 }
+                graphics.pose().popMatrix();
             }
         }
 
@@ -1007,6 +1036,7 @@ public class AssignRolesScreen extends Screen {
 
     private void renderHandVotingPanel(GuiGraphicsExtractor graphics) {
         if (!ClientState.nominationsOpen && !ClientState.voteInProgress) return;
+        if (resolveCoversVote && resolvePanelH > 0) return;
 
         int x = layoutWidth() - CONTROL_W - MARGIN;
         int h = ClientState.voteInProgress ? 70 : 48;

@@ -151,7 +151,7 @@ public final class RoleAutomation {
         PendingRoleAssignment nominatorRole = actualRole(nominator);
         String virgin = label(server, nominee);
         String who = label(server, nominator);
-        String role = nominatorRole == null ? "no role" : nominatorRole.getDisplayName();
+        String role = nominatorRole == null ? "no role" : pretty(nominatorRole.getDisplayName());
         String advice;
         if (droisoned(nominee)) {
             advice = "The Virgin is drunk or poisoned, so nothing should happen.";
@@ -393,7 +393,7 @@ public final class RoleAutomation {
         if (announceClaim) announce(server, who + " claims Slayer!", ChatFormatting.GOLD);
         announce(server, who + " shoots " + whom + "!", ChatFormatting.GOLD);
         String why;
-        if (kills) why = who + " is the real Slayer and " + whom + " is the " + targetRole.getDisplayName() + ": " + whom + " should die.";
+        if (kills) why = who + " is the real Slayer and " + whom + " is the " + pretty(targetRole.getDisplayName()) + ": " + whom + " should die.";
         else if (!realSlayer) why = who + " is not the Slayer (" + roleName(shooter) + "), so nothing should happen.";
         else if (spent) why = who + " had already used the Slayer ability, so nothing should happen.";
         else if (droisoned(shooter)) why = who + " is the Slayer but drunk or poisoned, so nothing should happen. The ability is now spent.";
@@ -455,7 +455,7 @@ public final class RoleAutomation {
             if (text.equals("safe") || text.equals("protected")) {
                 Role source = reminder.role().orElse(null);
                 if (source == null || !protectorDroisoned(source)) {
-                    String by = source == null ? "a reminder" : "the " + source.getDisplayName();
+                    String by = source == null ? "a reminder" : "the " + pretty(source.getDisplayName());
                     return "That player is protected tonight by " + by + " (\"" + reminder.text() + "\").";
                 }
             }
@@ -555,7 +555,7 @@ public final class RoleAutomation {
             if (scarlet != null && aliveBefore >= 5 && !droisoned(scarlet)) {
                 if (deadRole.isCustomRole()) {
                     tellStorytellers(server, "Scarlet Woman: " + label(server, scarlet)
-                            + " becomes the Demon, but " + deadRole.getDisplayName()
+                            + " becomes the Demon, but " + pretty(deadRole.getDisplayName())
                             + " is a custom role. Change their role in the Grimoire by hand.", ChatFormatting.GOLD);
                 } else {
                     PendingRoleAssignment current = actualRole(scarlet);
@@ -566,11 +566,11 @@ public final class RoleAutomation {
                     StateBroadcaster.broadcastGrimoire(server);
                     ServerPlayer online = server.getPlayerList().getPlayer(scarlet);
                     if (online != null) StateBroadcaster.sendRoleTo(online, false);
-                    tellStorytellers(server, "Scarlet Woman: the " + deadRole.getDisplayName() + " died with "
+                    tellStorytellers(server, "Scarlet Woman: the " + pretty(deadRole.getDisplayName()) + " died with "
                             + aliveBefore + " players alive, so " + label(server, scarlet) + " is now the "
-                            + deadRole.getDisplayName() + ". Their role card has been updated.", ChatFormatting.GOLD);
+                            + pretty(deadRole.getDisplayName()) + ". Their role card has been updated.", ChatFormatting.GOLD);
                     BloodOnTheSharktower.LOGGER.info("Scarlet Woman {} became {} after {} died",
-                            scarlet, deadRole.getDisplayName(), dead);
+                            scarlet, pretty(deadRole.getDisplayName()), dead);
                 }
             } else {
                 if (scarlet != null && aliveBefore >= 5) {
@@ -617,7 +617,7 @@ public final class RoleAutomation {
                 + " killed themselves. Choose the Minion who becomes the Imp: ").withStyle(ChatFormatting.GOLD);
         for (UUID minion : minions) {
             int seat = ServerState.PLAYER_SEAT_NUMBERS.get(minion);
-            String name = label(server, minion) + " (" + actualRole(minion).getDisplayName() + ")";
+            String name = label(server, minion) + " (" + pretty(actualRole(minion).getDisplayName()) + ")";
             message = message.copy().append(button("[" + name + "]", "/bots automation starpass " + seat,
                     name + " becomes the Imp")).append(Component.literal(" "));
         }
@@ -625,7 +625,7 @@ public final class RoleAutomation {
         List<StorytellerPrompt.Action> choices = new ArrayList<>();
         for (UUID minion : minions) {
             int seat = ServerState.PLAYER_SEAT_NUMBERS.get(minion);
-            choices.add(StorytellerPrompt.Action.neutral(label(server, minion) + " (" + actualRole(minion).getDisplayName() + ")",
+            choices.add(StorytellerPrompt.Action.neutral(label(server, minion) + " (" + pretty(actualRole(minion).getDisplayName()) + ")",
                     "/bots automation starpass " + seat));
         }
         offer(server, new StorytellerPrompt("starpass", "Imp star-pass",
@@ -649,7 +649,7 @@ public final class RoleAutomation {
         StateBroadcaster.broadcastGrimoire(server);
         ServerPlayer online = server.getPlayerList().getPlayer(minion);
         if (online != null) StateBroadcaster.sendRoleTo(online, false);
-        tellStorytellers(server, "Star-pass: " + label(server, minion) + " (" + current.getDisplayName()
+        tellStorytellers(server, "Star-pass: " + label(server, minion) + " (" + pretty(current.getDisplayName())
                 + ") is now the Imp. Their role card has been updated; wake them to tell them.", ChatFormatting.GOLD);
         BloodOnTheSharktower.LOGGER.info("Star-pass: {} became the Imp", minion);
         return null;
@@ -719,7 +719,7 @@ public final class RoleAutomation {
                 Set<String> texts = source == null ? null : rules.get(source);
                 if (texts == null || !texts.contains(normalize(reminder.text()))) return false;
                 cleared.add((server == null ? "Seat " + ServerState.PLAYER_SEAT_NUMBERS.getOrDefault(entry.getKey(), 0)
-                        : label(server, entry.getKey())) + " " + reminder.text() + " (" + source.getDisplayName() + ")");
+                        : label(server, entry.getKey())) + " " + reminder.text() + " (" + pretty(source.getDisplayName()) + ")");
                 return true;
             });
         }
@@ -905,7 +905,19 @@ public final class RoleAutomation {
 
     private static String roleName(UUID player) {
         PendingRoleAssignment assignment = actualRole(player);
-        return assignment == null ? "no role" : assignment.getDisplayName();
+        return assignment == null ? "no role" : pretty(assignment.getDisplayName());
+    }
+
+    /** "IMP" -> "Imp", "FORTUNE TELLER" -> "Fortune Teller"; mixed-case names are kept. */
+    static String pretty(String name) {
+        if (name == null || name.isEmpty() || !name.equals(name.toUpperCase(Locale.ROOT))) return name;
+        StringBuilder out = new StringBuilder(name.length());
+        boolean start = true;
+        for (char ch : name.toCharArray()) {
+            out.append(start ? ch : Character.toLowerCase(ch));
+            start = !Character.isLetter(ch) && ch != '\'';
+        }
+        return out.toString();
     }
 
     private static String normalize(String text) {

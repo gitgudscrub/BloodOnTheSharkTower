@@ -106,6 +106,32 @@ public final class UiDrawing {
         return type.getColor();
     }
 
+    /**
+     * One line of text that always stays inside {@code maxWidth}: drawn at
+     * full size when it fits, shrunk (down to 60%) when it does not, and only
+     * then shortened with "...".
+     */
+    public static void textScaledToFit(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                                       net.minecraft.network.chat.Component text, int x, int y, int maxWidth,
+                                       int colour, boolean shadow) {
+        int natural = font.width(text);
+        if (natural <= maxWidth) {
+            graphics.text(font, text, x, y, colour, shadow);
+            return;
+        }
+        float scale = Math.max(0.6F, maxWidth / (float) natural);
+        int room = (int) (maxWidth / scale);
+        String plain = text.getString();
+        if (font.width(plain) > room) {
+            plain = font.plainSubstrByWidth(plain, Math.max(0, room - font.width("\u2026"))) + "\u2026";
+        }
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y + (1 - scale) * font.lineHeight / 2);
+        graphics.pose().scale(scale, scale);
+        graphics.text(font, plain, 0, 0, colour, shadow);
+        graphics.pose().popMatrix();
+    }
+
     public static int opaque(int colour) {
         return colour | 0xFF000000;
     }
