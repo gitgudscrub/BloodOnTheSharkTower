@@ -51,7 +51,7 @@ public class CharacterDetailsScreen extends Screen {
         UiDrawing.roleIcon(graphics, role, this.width / 2 - iconSize / 2, top, iconSize);
 
         int y = top + iconSize + 5;
-        drawCentered(graphics, role.getDisplayName(), y, UiDrawing.TEXT, true);
+        drawCentered(graphics, role.getDisplayName(), y, UiDrawing.TEXT, UiTheme.dark());
         y += 12;
         drawCentered(graphics, role.getTeam().getDisplayName(), y, UiDrawing.teamColor(role.getTeam()), false);
         y += 19;

@@ -1,5 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.hud;
 
+import com.sharktower.bloodonthesharktower.client.gui.UiTheme;
+
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import com.sharktower.bloodonthesharktower.timer.ClientTimerState;
@@ -18,7 +20,7 @@ public final class TimerHUD {
         int x = (screenWidth - width) / 2;
         int y = ClientState.voteInProgress || ClientState.nominationsOpen ? 66 : 8;
         UiDrawing.panel(graphics, x, y, width, 24);
-        graphics.text(minecraft.font, text, x + 9, y + 8, ClientTimerState.isPaused ? UiDrawing.GOLD : UiDrawing.TEXT, true);
+        graphics.text(minecraft.font, text, x + 9, y + 8, ClientTimerState.isPaused ? UiDrawing.GOLD : UiDrawing.TEXT, UiTheme.dark());
     }
 
     private static String format(int seconds) {

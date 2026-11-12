@@ -111,10 +111,10 @@ public final class ReminderChooseScreen extends Screen {
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String title = "Seat " + seat + " — " + ClientState.playerName(playerId, seat);
-        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, true);
+        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
         String sub = tab == 1 ? "Script reminders for this player" : tab == 2 ? "Remove placed reminders" : "Generic reminders";
         graphics.text(this.font, sub, (this.width - this.font.width(sub)) / 2, 32, UiDrawing.MUTED, false);
         String number = (page + 1) + "/" + pages;
-        graphics.text(this.font, number, (this.width - this.font.width(number)) / 2, this.height - 97, UiDrawing.TEXT, true);
+        graphics.text(this.font, number, (this.width - this.font.width(number)) / 2, this.height - 97, UiDrawing.TEXT, UiTheme.dark());
     }
 }

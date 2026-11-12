@@ -159,7 +159,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
         String name = ClientState.playerName(playerId, seat);
         String heading = "Seat " + seat + " — " + name;
         graphics.text(this.font, heading,
-                (this.width - this.font.width(heading)) / 2, 18, UiDrawing.GOLD, true);
+                (this.width - this.font.width(heading)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
 
         String status = ClientState.playerDeathStatus.getOrDefault(playerId, false) ? "DEAD" : "ALIVE";
         if (playerId.equals(ClientState.markedForExecution)) status += "   •   ON THE BLOCK";

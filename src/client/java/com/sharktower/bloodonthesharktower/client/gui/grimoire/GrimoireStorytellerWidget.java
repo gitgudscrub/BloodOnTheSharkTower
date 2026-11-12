@@ -1,5 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.gui.grimoire;
 
+import com.sharktower.bloodonthesharktower.client.gui.UiTheme;
+
 import com.sharktower.bloodonthesharktower.client.gui.PlayerFaceCompat;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -37,7 +39,7 @@ public final class GrimoireStorytellerWidget extends AbstractWidget {
             String st = "ST";
             graphics.text(Minecraft.getInstance().font, st,
                     headX + headSize / 2 - Minecraft.getInstance().font.width(st) / 2,
-                    headY + 9, UiDrawing.GOLD, true);
+                    headY + 9, UiDrawing.GOLD, UiTheme.dark());
         }
 
         graphics.outline(headX - 1, headY - 1, headSize + 2, headSize + 2,

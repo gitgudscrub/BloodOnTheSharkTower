@@ -335,7 +335,7 @@ public final class RoleBagScreen extends Screen {
         graphics.fill(6, 4, this.width - 6, searchY + 23, UiDrawing.PANEL);
 
         String title = "Role Bag — " + ClientState.displayScriptName();
-        drawCentered(graphics, title, 8, UiDrawing.GOLD, true);
+        drawCentered(graphics, title, 8, UiDrawing.GOLD, UiTheme.dark());
 
         int seated = seatedCount();
         int selected = SELECTED.size();
@@ -360,12 +360,12 @@ public final class RoleBagScreen extends Screen {
                     + minions + "/" + base.minions() + " Minion   •   "
                     + demons + "/" + base.demons() + " Demon";
         }
-        drawCentered(graphics, counts, 34, UiDrawing.TEXT, true);
+        drawCentered(graphics, counts, 34, UiDrawing.TEXT, UiTheme.dark());
 
         if (base != null && xaanSelected()) {
             drawCentered(graphics,
                     "Xaan: X = " + outsiders + "  •  other Outsider setup modifiers ignored",
-                    46, UiDrawing.GOLD, true);
+                    46, UiDrawing.GOLD, UiTheme.dark());
         } else {
             OutsiderSetup outsiderSetup = outsiderSetup();
             if (base != null && (outsiderSetup.unknown() || !outsiderSetup.values().equals(Set.of(0)))) {
@@ -380,7 +380,7 @@ public final class RoleBagScreen extends Screen {
                     setupText = "Outsider setup modifier: " + range;
                     if (outsiderSetup.values().contains(chosen)) setupText += "  •  current " + signed(chosen);
                 }
-                drawCentered(graphics, setupText, 46, UiDrawing.TEXT, true);
+                drawCentered(graphics, setupText, 46, UiDrawing.TEXT, UiTheme.dark());
             }
         }
 

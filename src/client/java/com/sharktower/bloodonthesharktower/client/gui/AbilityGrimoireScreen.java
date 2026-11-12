@@ -63,7 +63,7 @@ public final class AbilityGrimoireScreen extends Screen {
 
         String source = pretty(sourceRoleId);
         String title = source.isBlank() ? "TRUE GRIMOIRE" : "TRUE GRIMOIRE — " + source;
-        drawCentered(graphics, title, 10, UiDrawing.GOLD, true);
+        drawCentered(graphics, title, 10, UiDrawing.GOLD, UiTheme.dark());
         drawCentered(graphics, "Read-only ability view — your personal Grimoire is unchanged.",
                 23, UiDrawing.MUTED, false);
 
@@ -118,16 +118,16 @@ public final class AbilityGrimoireScreen extends Screen {
             if (!drewFace) {
                 graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, 0xCC15151A);
                 drawCenteredAt(graphics, Integer.toString(seat), headX + HEAD_SIZE / 2,
-                        headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
+                        headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, UiTheme.dark());
             }
             graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
             drawCenteredAt(graphics, ClientState.playerName(id, seat), headX + HEAD_SIZE / 2,
-                    headY + HEAD_SIZE + 2, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
+                    headY + HEAD_SIZE + 2, dead ? UiDrawing.DEAD : UiDrawing.TEXT, UiTheme.dark());
 
             int seatRadius = radius + 22;
             int sx = (int) Math.round(centerX + seatRadius * Math.cos(angle));
             int sy = (int) Math.round(centerY + seatRadius * Math.sin(angle));
-            drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, true);
+            drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, UiTheme.dark());
         }
     }
 

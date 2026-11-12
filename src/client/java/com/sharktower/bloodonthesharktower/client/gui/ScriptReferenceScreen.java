@@ -76,11 +76,11 @@ public class ScriptReferenceScreen extends Screen {
         next.active = referenceIndex < maxPage;
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         if (script == null) {
-            drawCentered(graphics, "No script is currently assigned.", this.height / 2 - 5, UiDrawing.TEXT, true);
+            drawCentered(graphics, "No script is currently assigned.", this.height / 2 - 5, UiDrawing.TEXT, UiTheme.dark());
             return;
         }
 
-        drawCentered(graphics, script.name(), 8, UiDrawing.TEXT, true);
+        drawCentered(graphics, script.name(), 8, UiDrawing.TEXT, UiTheme.dark());
         if (script.author() != null && !script.author().isBlank() && !"Unknown Author".equals(script.author())) {
             drawCentered(graphics, "by " + script.author(), 17, UiDrawing.MUTED, false);
         }
@@ -128,7 +128,7 @@ public class ScriptReferenceScreen extends Screen {
 
 
             String header = type.getDisplayName() + " (" + roles.size() + ")";
-            graphics.text(this.font, header, x0 + 4, y, UiDrawing.teamColor(type), true);
+            graphics.text(this.font, header, x0 + 4, y, UiDrawing.teamColor(type), UiTheme.dark());
             y += 14;
 
             int cellWidth = 75;
@@ -165,7 +165,7 @@ public class ScriptReferenceScreen extends Screen {
 
         if (script.bootlegger() != null && !script.bootlegger().isEmpty()) {
             String rules = "Bootlegger: " + String.join("  •  ", script.bootlegger());
-            drawCentered(graphics, rules, this.height - 14, UiDrawing.GOLD, true);
+            drawCentered(graphics, rules, this.height - 14, UiDrawing.GOLD, UiTheme.dark());
         }
 
         if (hovered != null) drawRoleHover(graphics, hovered, mouseX, mouseY);
@@ -193,9 +193,9 @@ public class ScriptReferenceScreen extends Screen {
         int top = 59;
         int half = this.width / 2;
         graphics.text(this.font, "First Night", (half - this.font.width("First Night")) / 2,
-                top, UiDrawing.GOLD, true);
+                top, UiDrawing.GOLD, UiTheme.dark());
         graphics.text(this.font, "Other Nights", half + (half - this.font.width("Other Nights")) / 2,
-                top, UiDrawing.GOLD, true);
+                top, UiDrawing.GOLD, UiTheme.dark());
         int start = referenceIndex * referenceRows();
         int availableWidth = Math.max(50, half - 26);
         int end = start + referenceRows();
@@ -266,7 +266,7 @@ public class ScriptReferenceScreen extends Screen {
 
     private void drawJinxes(GuiGraphicsExtractor graphics, Script script) {
         List<ReferenceLine> lines = jinxLines(script);
-        drawCentered(graphics, "Jinxes / Special Rules", 57, UiDrawing.GOLD, true);
+        drawCentered(graphics, "Jinxes / Special Rules", 57, UiDrawing.GOLD, UiTheme.dark());
         int start = referenceIndex * referenceRows();
         int end = Math.min(lines.size(), start + referenceRows());
         int x = Math.max(12, (this.width - 440) / 2);
@@ -291,7 +291,7 @@ public class ScriptReferenceScreen extends Screen {
         int x = Math.max(6, Math.min(mouseX + 12, this.width - width - 6));
         int y = Math.max(6, Math.min(mouseY + 10, this.height - 74));
         UiDrawing.panel(graphics, x, y, width, 66);
-        graphics.text(this.font, role.getDisplayName(), x + 6, y + 6, UiDrawing.teamColor(role.getTeam()), true);
+        graphics.text(this.font, role.getDisplayName(), x + 6, y + 6, UiDrawing.teamColor(role.getTeam()), UiTheme.dark());
         drawWrapped(graphics, ability, x + 6, y + 20, width - 12, 10, 4);
     }
 

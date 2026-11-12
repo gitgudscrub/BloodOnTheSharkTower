@@ -124,9 +124,9 @@ public final class SharktowerSettingsScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         UiTheme.drawTitle(graphics, font, "Sharktower Settings", width / 2, 12);
-        drawCentered(graphics, "Player HUD", 39, UiDrawing.GOLD, true);
+        drawCentered(graphics, "Player HUD", 39, UiDrawing.GOLD, UiTheme.dark());
         if (isStoryteller()) {
-            drawCentered(graphics, "Storyteller Vote Presentation", 175, UiDrawing.GOLD, true);
+            drawCentered(graphics, "Storyteller Vote Presentation", 175, UiDrawing.GOLD, UiTheme.dark());
             drawCentered(graphics,
                     String.format(Locale.ROOT, "Clock hand scale: %.2f", ClientState.clockHandScale),
                     54 + 28 * 5 + 24, UiDrawing.MUTED, false);

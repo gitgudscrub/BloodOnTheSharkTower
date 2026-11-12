@@ -755,11 +755,11 @@ public class AssignRolesScreen extends Screen {
             if (!drewFace) {
                 graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, UiTheme.dark() ? 0xCC15151A : 0xCCE6D9BB);
                 drawCenteredAt(graphics, Integer.toString(seat), headX + HEAD_SIZE / 2,
-                        headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
+                        headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, UiTheme.dark());
             }
             graphics.outline(headX, headY, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
             if (GrimoireInteractionState.isSelectedNominator(uuid)) {
-                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.YES);
+                graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiTheme.yes());
             } else if (uuid.equals(ClientState.currentNominee)) {
                 graphics.outline(headX - 2, headY - 2, HEAD_SIZE + 4, HEAD_SIZE + 4, UiDrawing.GOLD);
             }
@@ -785,7 +785,7 @@ public class AssignRolesScreen extends Screen {
                 drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY - 16);
                 if (speaking)
                     graphics.text(this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
-                            headX + HEAD_SIZE + 14, headY - 16, UiDrawing.GOLD, true);
+                            headX + HEAD_SIZE + 14, headY - 16, UiDrawing.GOLD, UiTheme.dark());
             }
             } finally {
                 GrimoireRevealAnimation.endElement(graphics);
@@ -903,10 +903,10 @@ public class AssignRolesScreen extends Screen {
         if (icon != null) {
             graphics.blit(RenderPipelines.GUI_TEXTURED, icon,
                     x + 2, y + 2, 0, 0, iconSize, iconSize, iconSize, iconSize);
-            graphics.text(this.font, label, x + 35, y + 12, UiDrawing.GOLD, true);
+            graphics.text(this.font, label, x + 35, y + 12, UiDrawing.GOLD, UiTheme.dark());
         } else {
             graphics.text(this.font, label,
-                    x + (panelWidth - this.font.width(label)) / 2, y + 12, UiDrawing.GOLD, true);
+                    x + (panelWidth - this.font.width(label)) / 2, y + 12, UiDrawing.GOLD, UiTheme.dark());
         }
     }
 
@@ -924,14 +924,14 @@ public class AssignRolesScreen extends Screen {
         int y=Math.max(railBottom+10,Math.min(225,layoutHeight()-h-40));
         UiDrawing.panel(graphics, x, y, CONTROL_W, h);
         drawCenteredAt(graphics, ClientState.voteClockComplete ? "VOTE READY" : "VOTING",
-                x + CONTROL_W / 2, y + 6, UiDrawing.GOLD, true);
+                x + CONTROL_W / 2, y + 6, UiDrawing.GOLD, UiTheme.dark());
         drawCenteredAt(graphics, "Required: " + ClientState.voteThreshold, x + CONTROL_W / 2, y + 19, UiDrawing.TEXT, false);
         drawCenteredAt(graphics, "Raised: " + ClientState.handsRaised, x + CONTROL_W / 2, y + 30,
-                ClientState.handsRaised >= ClientState.voteThreshold ? 0xFF55CC66 : UiDrawing.TEXT, false);
+                ClientState.handsRaised >= ClientState.voteThreshold ? UiTheme.ok() : UiDrawing.TEXT, false);
         if (ClientState.voteInProgress) {
             drawCenteredAt(graphics, "Counted: " + ClientState.effectiveVoteCount, x + CONTROL_W / 2, y + 42, UiDrawing.MUTED, false);
             if (ClientState.voteClockComplete) {
-                drawCenteredAt(graphics, "Finish / Override", x + CONTROL_W / 2, y + 54, 0xFF55CC66, true);
+                drawCenteredAt(graphics, "Finish / Override", x + CONTROL_W / 2, y + 54, UiTheme.ok(), UiTheme.dark());
             } else {
                 int seat = ClientState.playerSeatNumbers.getOrDefault(ClientState.currentVoteClockPlayer, 0);
                 drawCenteredAt(graphics, "Now: " + (seat > 0 ? "Seat " + seat : "ST"), x + CONTROL_W / 2, y + 54, UiDrawing.MUTED, false);

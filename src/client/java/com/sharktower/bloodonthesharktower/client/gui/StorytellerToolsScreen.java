@@ -128,10 +128,10 @@ public class StorytellerToolsScreen extends Screen {
         int cx = this.width / 2;
         int top = 46;
         int row = rowSpacing();
-        UiTheme.drawTitle(graphics, this.font, "Storyteller Tools", cx, 4);
+        UiTheme.drawTitle(graphics, this.font, "Storyteller Tools", cx, 7);
         drawCentered(graphics,
                 KeysHelpScreen.phaseName(ClientState.phase()) + "   ·   Script: " + ClientState.displayScriptName() + "   ·   Seats: " + ClientState.seatedPlayerCount(),
-                24, UiDrawing.MUTED, false);
+                27, UiDrawing.MUTED, false);
 
         UiTheme.drawSectionLabel(graphics, this.font, "Setup", cx - 155, top - 11);
         UiTheme.drawSectionLabel(graphics, this.font, "Night Cycle", cx - 155, top + row - 11);

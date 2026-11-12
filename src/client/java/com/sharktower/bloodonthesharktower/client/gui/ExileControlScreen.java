@@ -148,20 +148,20 @@ public final class ExileControlScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        drawCentered(graphics, "TRAVELLER EXILE", 12, 0xFFFF55FF, true);
+        drawCentered(graphics, "TRAVELLER EXILE", 12, UiTheme.traveller(), UiTheme.dark());
         drawCentered(graphics,
                 "Selection: " + (selectingCaller ? "CALLER" : "TRAVELLER")
                         + "   |   Required: " + ClientState.voteThreshold,
                 25, UiDrawing.MUTED, false);
         drawCentered(graphics,
                 "Caller: " + label(selectedCaller) + "   →   Traveller: " + label(selectedTraveler),
-                63, UiDrawing.TEXT, true);
+                63, UiDrawing.TEXT, UiTheme.dark());
 
         int statusY = statusBlockY();
         if (ClientState.currentExileTarget != null) {
             drawCentered(graphics,
                     "ACTIVE: " + label(ClientState.currentExileCaller) + " → " + label(ClientState.currentExileTarget),
-                    statusY, 0xFFFF55FF, true);
+                    statusY, UiTheme.traveller(), UiTheme.dark());
             if (ClientState.exileSupportVote) {
                 String clock = ClientState.voteClockComplete
                         ? "CLOCK COMPLETE — " + ClientState.effectiveVoteCount + "/" + ClientState.voteThreshold + " support"
@@ -169,7 +169,7 @@ public final class ExileControlScreen extends Screen {
                         + "/" + ClientState.voteClockTotal + " — " + label(ClientState.currentVoteClockPlayer);
                 if (ClientState.voteCountOverrideActive) clock += "   OVERRIDE=" + ClientState.voteCountOverride;
                 drawCentered(graphics, clock, statusY + 12,
-                        ClientState.voteClockComplete ? 0xFF55CC66 : UiDrawing.TEXT, true);
+                        ClientState.voteClockComplete ? UiTheme.ok() : UiDrawing.TEXT, UiTheme.dark());
             } else {
                 drawCentered(graphics,
                         "Ready to start exile clock — " + ClientState.handsRaised + " hand(s) currently raised",

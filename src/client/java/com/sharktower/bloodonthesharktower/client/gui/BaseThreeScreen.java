@@ -67,7 +67,7 @@ public final class BaseThreeScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         String title = "Base 3 Scripts";
-        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, true);
+        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
 
         String subtitle = "Bundled separately from custom scripts — one click loads the full official script";
         graphics.text(this.font, subtitle, (this.width - this.font.width(subtitle)) / 2, 34, UiDrawing.MUTED, false);

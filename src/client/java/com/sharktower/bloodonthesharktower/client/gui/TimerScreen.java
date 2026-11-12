@@ -94,10 +94,10 @@ public class TimerScreen extends Screen {
         int cx = this.width / 2;
         int top = this.height / 2 - 110;
 
-        drawCentered(graphics, "Clocktower Timer", top - 24, UiDrawing.TEXT, true);
+        drawCentered(graphics, "Clocktower Timer", top - 24, UiDrawing.TEXT, UiTheme.dark());
         String status = !ClientTimerState.isActive ? "IDLE" : (ClientTimerState.isPaused ? "PAUSED" : "RUNNING");
         drawCentered(graphics, status + "   " + format(ClientTimerState.remainingSeconds), top + 105,
-                ClientTimerState.isPaused ? UiDrawing.GOLD : UiDrawing.TEXT, true);
+                ClientTimerState.isPaused ? UiDrawing.GOLD : UiDrawing.TEXT, UiTheme.dark());
 
         drawCentered(graphics, "Custom: 1–3600 seconds, e.g. 90 or 1:30", top + 85, UiDrawing.MUTED, false);
         drawCentered(graphics, "Server timer — visible to all players",

@@ -267,7 +267,7 @@ public final class CustomScriptsScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int x, int y, float delta) {
         super.extractRenderState(g, x, y, delta);
-        g.text(this.font, "Custom Scripts", (this.width - this.font.width("Custom Scripts")) / 2, 14, UiDrawing.GOLD, true);
+        g.text(this.font, "Custom Scripts", (this.width - this.font.width("Custom Scripts")) / 2, 14, UiDrawing.GOLD, UiTheme.dark());
         g.text(this.font, this.font.plainSubstrByWidth(visibleStatus(), this.width - 24), 12, 112, UiDrawing.MUTED, false);
     }
 }

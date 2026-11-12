@@ -78,7 +78,7 @@ public final class NightInfoReminderScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String title = "Night Info Markers — " + ClientState.playerName(playerId, seat);
-        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, true);
+        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
         String sub = "Markers are tied to their source role, matching the original mod.";
         graphics.text(this.font, sub, (this.width - this.font.width(sub)) / 2, 34, UiDrawing.MUTED, false);
 
