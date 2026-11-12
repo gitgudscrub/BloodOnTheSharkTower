@@ -911,24 +911,36 @@ public class AssignRolesScreen extends Screen {
         // The whole message always fits: past 5 lines it shrinks to 3/4 size,
         // then 5/8, and only beyond 12 small lines is the end cut.
         Component bodyText = ResolveText.colourRoles(prompt.body(), ClientState.currentScript);
-        float bodyScale = 1.0F;
-        List<net.minecraft.util.FormattedCharSequence> body = this.font.split(bodyText, innerW);
-        for (float scale : new float[]{0.75F, 0.625F}) {
-            if (body.size() <= 5) break;
-            bodyScale = scale;
-            body = this.font.split(bodyText, (int) (innerW / scale));
-        }
-        if (body.size() > 12) body = body.subList(0, 12);
-        int bodyH = (int) Math.ceil(body.size() * 9 * bodyScale);
         var actions = prompt.actions();
         int halfW = (innerW - 4) / 2;
         boolean wide = actions.stream().anyMatch(action -> this.font.width(action.label()) + 10 > halfW);
-        int perRow = wide ? 1 : 2;
-        int rows = (actions.size() + perRow - 1) / perRow;
-        int height = 18 + 10 + bodyH + 3 + rows * 22 + 4;
-
         int top = railBottom() + 6;
         int bottom = layoutHeight() - 36;
+
+        // Normal layout first. If it is taller than the gap between the rail
+        // and the bottom buttons (an 854x480 window), compact it in steps:
+        // buttons side by side (their labels shrink), then smaller body text.
+        float bodyScale = 1.0F;
+        List<net.minecraft.util.FormattedCharSequence> body = List.of();
+        int bodyH = 0;
+        int perRow = 2;
+        int height = 0;
+        for (int step = 0; step < 4; step++) {
+            perRow = (wide && step == 0) ? 1 : 2;
+            float minScale = step <= 1 ? 1.0F : (step == 2 ? 0.75F : 0.625F);
+            bodyScale = minScale;
+            body = this.font.split(bodyText, (int) (innerW / bodyScale));
+            for (float scale : new float[]{0.75F, 0.625F}) {
+                if (body.size() <= 5 || scale >= bodyScale) continue;
+                bodyScale = scale;
+                body = this.font.split(bodyText, (int) (innerW / scale));
+            }
+            if (body.size() > 12) body = body.subList(0, 12);
+            bodyH = (int) Math.ceil(body.size() * 9 * bodyScale);
+            int rows = (actions.size() + perRow - 1) / perRow;
+            height = 18 + 10 + bodyH + 3 + rows * 22 + 4;
+            if (height <= bottom - top) break;
+        }
         int y;
         if (ClientState.nominationsOpen || ClientState.voteInProgress) {
             int voteTop = votePanelTop();

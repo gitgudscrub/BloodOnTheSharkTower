@@ -58,7 +58,7 @@ public final class RavenkeeperAutomation {
         if (player != null) {
             player.sendSystemMessage(Component.literal("Ravenkeeper: you died tonight. Choose a player to learn their character:")
                     .withStyle(ChatFormatting.GOLD));
-            player.sendSystemMessage(seatButtons(server, dead));
+            player.sendSystemMessage(seatButtons(server, dead, "/raven "));
         }
         RoleAutomation.tellStorytellers(server, Component.literal("Ravenkeeper: " + who + " died at night and "
                 + (player == null ? "is offline. Ask them in person, or choose with /bots automation ravenkeeper choose <seat>."
@@ -68,7 +68,8 @@ public final class RavenkeeperAutomation {
                 List.of(StorytellerPrompt.Action.ok("I'll handle it", "/bots automation ravenkeeper dismiss"))));
     }
 
-    private static Component seatButtons(MinecraftServer server, UUID self) {
+    /** Every seat as a clickable {@code [N Name]} that runs {@code command + seat}. */
+    static Component seatButtons(MinecraftServer server, UUID self, String command) {
         List<Map.Entry<UUID, Integer>> seats = new ArrayList<>(ServerState.PLAYER_SEAT_NUMBERS.entrySet());
         seats.sort(Comparator.comparingInt(Map.Entry::getValue));
         MutableComponent line = Component.empty();
@@ -81,7 +82,7 @@ public final class RavenkeeperAutomation {
             line.append(Component.literal("[" + name + "]")
                     .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                     .withStyle(style -> style
-                            .withClickEvent(new ClickEvent.RunCommand("/raven " + seat.getValue()))
+                            .withClickEvent(new ClickEvent.RunCommand(command + seat.getValue()))
                             .withHoverEvent(new HoverEvent.ShowText(Component.literal("Choose " + name)))));
         }
         return line;

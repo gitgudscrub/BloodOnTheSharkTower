@@ -298,6 +298,14 @@ public final class BotsCommands {
                                 .then(Commands.literal("starpass")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationStarPass)))
+                                .then(Commands.literal("poisoner")
+                                        .then(Commands.literal("dismiss")
+                                                .executes(BotsCommands::executeAutomationPoisonerDismiss))
+                                        .then(Commands.literal("poison")
+                                                .executes(BotsCommands::executeAutomationPoisonerPoison))
+                                        .then(Commands.literal("choose")
+                                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                        .executes(BotsCommands::executeAutomationPoisonerChoose))))
                                 .then(Commands.literal("ravenkeeper")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationRavenDismiss))
@@ -1528,6 +1536,30 @@ public final class BotsCommands {
         if (!requireStoryteller(context)) return 0;
         String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
                 .slayerDismiss(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationPoisonerDismiss(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.PoisonerAutomation.dismiss();
+        send(context, refusal == null ? "Poisoner: no reminder placed." : refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationPoisonerPoison(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.PoisonerAutomation
+                .poison(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationPoisonerChoose(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        UUID target = SetupOperations.playerBySeat(IntegerArgumentType.getInteger(context, "seat"));
+        String refusal = com.sharktower.bloodonthesharktower.automation.PoisonerAutomation
+                .choose(context.getSource().getServer(), null, target, true);
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }
