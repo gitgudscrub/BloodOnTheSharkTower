@@ -298,6 +298,11 @@ public final class BotsCommands {
                                 .then(Commands.literal("starpass")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationStarPass)))
+                                .then(Commands.literal("psychopath")
+                                        .then(Commands.literal("kill")
+                                                .executes(BotsCommands::executeAutomationPsychopathKill))
+                                        .then(Commands.literal("dismiss")
+                                                .executes(BotsCommands::executeAutomationPsychopathDismiss)))
                                 .then(Commands.literal("poisoner")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationPoisonerDismiss))
@@ -1536,6 +1541,20 @@ public final class BotsCommands {
         if (!requireStoryteller(context)) return 0;
         String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
                 .slayerDismiss(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationPsychopathKill(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathAxe.kill(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationPsychopathDismiss(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathAxe.dismiss(context.getSource().getServer());
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }

@@ -51,6 +51,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.command.SlayCommand.register();
         com.sharktower.bloodonthesharktower.command.RavenCommand.register();
         com.sharktower.bloodonthesharktower.command.PoisonCommand.register();
+        com.sharktower.bloodonthesharktower.automation.PsychopathAxe.register();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();
         ServerTickEvents.END_SERVER_TICK.register(NightChatManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.networking.SocialStateManager::tick);
@@ -60,6 +61,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(DayPublicInfoBookManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(TeamInfoBookManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.automation.SlayerCrossbow::serverTick);
+        ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.automation.PsychopathAxe::serverTick);
         LOGGER.info("Night-chat automation, world clock-hand voting, enforced vote seating, dusk Home Compass routing and temporary info books registered.");
     }
 }

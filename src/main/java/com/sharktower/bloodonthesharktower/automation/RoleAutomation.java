@@ -130,6 +130,7 @@ public final class RoleAutomation {
         SLAYER_SHOT_TAKEN.clear();
         RavenkeeperAutomation.reset();
         PoisonerAutomation.reset();
+        PsychopathAxe.reset();
         PROMPTS.clear();
     }
 
@@ -282,7 +283,7 @@ public final class RoleAutomation {
     }
 
     /** A public, immediate death (Slayer shot, Witch curse): revealed at once, then the usual death rules. */
-    private static void killPublicly(MinecraftServer server, UUID target) {
+    static void killPublicly(MinecraftServer server, UUID target) {
         ServerState.PLAYER_DEATH_STATUS.put(target, true);
         DeathVisibility.remove(target);
         TriggeredNightOrderManager.onDeath(target, TriggeredNightOrderManager.DeathCause.GENERIC);
@@ -491,7 +492,7 @@ public final class RoleAutomation {
     }
 
     /** True when the one living holder of {@code role} is drunk or poisoned (or nobody holds it). */
-    private static boolean protectorDroisoned(Role role) {
+    static boolean protectorDroisoned(Role role) {
         UUID holder = findAlive(role);
         return holder != null && droisoned(holder);
     }
@@ -670,6 +671,7 @@ public final class RoleAutomation {
         clearPendingSlayer();
         expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
         PoisonerAutomation.onDusk(server);
+        PsychopathAxe.onDusk();
         if (minstrelDrunkDay >= 0 && ServerState.currentDay > minstrelDrunkDay) {
             minstrelDrunkDay = -1;
             expireReminders(server, Map.of(Role.MINSTREL, Set.of("everyoneisdrunk")), "Dusk");
