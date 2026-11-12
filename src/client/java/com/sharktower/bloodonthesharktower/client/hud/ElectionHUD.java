@@ -45,23 +45,27 @@ public final class ElectionHUD {
         }
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int width = 268;
+        boolean compact = com.sharktower.bloodonthesharktower.client.config.ClientSettings.compactCards;
+        // Compact cards leave out the "[U] Raise / lower..." line: the hand box shows the key.
+        boolean hint = !compact || !HandVoteHUD.visible(minecraft);
+        int width = compact ? 200 : 268;
         int x = (screenWidth - width) / 2;
         // Leave the role-count strip (y 8..17) readable above the panel, and
         // slide right of the role card on narrow GUIs rather than over it.
         int y = com.sharktower.bloodonthesharktower.client.config.ClientSettings.roleCountsHud ? 22 : 8;
         boolean exileActive = ClientState.currentExileTarget != null;
         boolean electionRunning = ClientState.voteInProgress || ClientState.exileSupportVote;
-        int height = electionRunning ? 82 : ((ClientState.currentNominee != null || exileActive) ? 68 : 54);
-        if (RoleHUD.visible(minecraft) && x < RoleHUD.RIGHT + 8) {
+        int height = electionRunning ? (compact ? 64 : 82)
+                : ((ClientState.currentNominee != null || exileActive) ? (hint ? 68 : 52) : (compact ? 38 : 54));
+        if (RoleHUD.visible(minecraft) && x < RoleHUD.right() + 8) {
             // Beside the role card, narrowed a little if needed (a 1080p screen
             // at auto GUI scale is 480 wide, just short of the full card).
-            int room = screenWidth - (RoleHUD.RIGHT + 8) - 4;
+            int room = screenWidth - (RoleHUD.right() + 8) - 4;
             if (room >= MIN_WIDTH) {
-                x = RoleHUD.RIGHT + 8;
+                x = RoleHUD.right() + 8;
                 width = Math.min(width, room);
             } else {
-                y = Math.max(y, RoleHUD.BOTTOM + 6);
+                y = Math.max(y, RoleHUD.bottom() + 6);
             }
         }
         // Never run down into the hand-vote box above the hotbar.
@@ -112,7 +116,7 @@ public final class ElectionHUD {
             fit(graphics, minecraft.font,
                     "Required: " + ClientState.voteThreshold + "   Hands raised: " + ClientState.handsRaised,
                     x + 8, y + 38, UiDrawing.TEXT, false);
-            fit(graphics, minecraft.font, "[" + key + "] Raise / lower exile support before the clock starts.",
+            if (hint) fit(graphics, minecraft.font, "[" + key + "] Raise / lower exile support before the clock starts.",
                     x + 8, y + 51, UiDrawing.MUTED, false);
             return;
         }
@@ -148,7 +152,7 @@ public final class ElectionHUD {
             fit(graphics, minecraft.font,
                     "Required: " + ClientState.voteThreshold + "   Hands raised: " + ClientState.handsRaised,
                     x + 8, y + 38, UiDrawing.TEXT, false);
-            fit(graphics, minecraft.font, "[" + key + "] Raise / lower your hand before the clock starts.",
+            if (hint) fit(graphics, minecraft.font, "[" + key + "] Raise / lower your hand before the clock starts.",
                     x + 8, y + 51, UiDrawing.MUTED, false);
             return;
         }

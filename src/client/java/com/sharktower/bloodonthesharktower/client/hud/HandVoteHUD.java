@@ -12,6 +12,17 @@ import java.util.UUID;
 public final class HandVoteHUD {
     private HandVoteHUD() {}
 
+    /** True when the hand box is on screen for this player (so other cards can skip its key hint). */
+    public static boolean visible(Minecraft minecraft) {
+        if (!ClientState.isHudEnabled || minecraft.player == null) return false;
+        if (!com.sharktower.bloodonthesharktower.client.config.ClientSettings.handHud) return false;
+        if (ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF) return false;
+        UUID self = minecraft.player.getUUID();
+        return ClientState.playerSeatNumbers.containsKey(self)
+                && !ClientState.storytellerPlayers.contains(self)
+                && !ClientState.isExiledTraveler(self);
+    }
+
     public static void render(GuiGraphicsExtractor graphics, Minecraft minecraft) {
         if (!ClientState.isHudEnabled || minecraft.player == null) return;
         var mode = ClientState.handRaiseMode();
@@ -58,15 +69,18 @@ public final class HandVoteHUD {
             colour = raised ? UiDrawing.YES : UiDrawing.NO;
         }
 
-        int width = Math.max(138, Math.max(minecraft.font.width(state), minecraft.font.width(hint)) + 18);
-        int height = 30;
+        boolean compact = com.sharktower.bloodonthesharktower.client.config.ClientSettings.compactCards;
+        int pad = compact ? 12 : 18;
+        int width = Math.max(compact ? 100 : 138, Math.max(minecraft.font.width(state), minecraft.font.width(hint)) + pad);
+        int height = compact ? 26 : 30;
         int x = (minecraft.getWindow().getGuiScaledWidth() - width) / 2;
-        int y = minecraft.getWindow().getGuiScaledHeight() - 70;
+        int y = minecraft.getWindow().getGuiScaledHeight() - 70 + (30 - height);
+        int top = compact ? 4 : 6;
 
         UiDrawing.panel(graphics, x, y, width, height);
         graphics.text(minecraft.font, state,
-                x + width / 2 - minecraft.font.width(state) / 2, y + 6, colour, true);
+                x + width / 2 - minecraft.font.width(state) / 2, y + top, colour, true);
         graphics.text(minecraft.font, hint,
-                x + width / 2 - minecraft.font.width(hint) / 2, y + 17, UiDrawing.TEXT, false);
+                x + width / 2 - minecraft.font.width(hint) / 2, y + top + 11, UiDrawing.TEXT, false);
     }
 }
