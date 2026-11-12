@@ -72,13 +72,21 @@ public class SharktowerButton extends AbstractWidget {
         int maxWidth = this.width - 8;
         // Labels stay in the regular font so every button on a screen matches;
         // the display face is for titles, section labels and role names.
-        if (font.width(text) > maxWidth) {
+        // A long label (a long player name, say) shrinks to fit, down to 60%,
+        // and is only shortened with an ellipsis past that.
+        float scale = Math.max(0.6F, Math.min(1.0F, maxWidth / (float) Math.max(1, font.width(text))));
+        int room = (int) (maxWidth / scale);
+        if (font.width(text) > room) {
             String ellipsis = "…";
-            text = font.plainSubstrByWidth(text, Math.max(0, maxWidth - font.width(ellipsis))) + ellipsis;
+            text = font.plainSubstrByWidth(text, Math.max(0, room - font.width(ellipsis))) + ellipsis;
         }
-        int textX = getX() + (this.width - font.width(text)) / 2;
-        int textY = getY() + (this.height - font.lineHeight) / 2 + 1;
-        graphics.text(font, text, textX, textY, colour, dark);
+        float textX = getX() + (this.width - font.width(text) * scale) / 2;
+        float textY = getY() + (this.height - font.lineHeight * scale) / 2 + scale;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(textX, textY);
+        graphics.pose().scale(scale, scale);
+        graphics.text(font, text, 0, 0, colour, dark);
+        graphics.pose().popMatrix();
     }
 
     /** The label's own colour when it was styled (team or action colour), otherwise white. */

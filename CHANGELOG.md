@@ -3,6 +3,20 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.31 — Resolve panel: coloured roles, text always fits (unreleased)
+
+- Character names in Resolve panel text are coloured by team (Townsfolk
+  blue, Outsider teal, Minion orange-red, Demon red; darker inks on
+  Parchment). Automation messages write names in normal case ("the Imp",
+  not "the IMP").
+- Resolve text always fits its box: past five lines it shrinks to 3/4 and
+  then 5/8 size instead of being cut off. The title shrinks to fit too.
+- Button labels everywhere shrink to fit (down to 60%) before being
+  shortened with "…", so a long player name fits on a Resolve button.
+- In a small window, when a vote is open and the Resolve panel cannot sit
+  beside the vote counter without covering the seat ring, it covers the
+  counter instead (its numbers are also on the in-world nomination card).
+
 ## 1.0.2-alpha.30 — Parchment button contrast, Resolve panel fits beside votes (unreleased)
 
 - On the Parchment theme, coloured button labels use darker inks with the
