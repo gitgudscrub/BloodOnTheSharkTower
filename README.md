@@ -88,6 +88,12 @@ Client and server builds are produced together by GitHub Actions so that both pa
   and Courtier drunkenness timers, and Vortox, Evil Twin and Mastermind
   endings.
 
+### Accessibility and help
+
+- Keys & Help screen (H) with live key bindings and phase hints.
+- Role names under Grimoire tokens and G/E alignment letters (both in
+  Settings), and a role count strip that names each team.
+
 ### Night and voice chat
 
 - Dusk/Dawn phase flow and Storyteller night-order controls.

@@ -26,6 +26,10 @@ public final class ClientSettings {
     public static boolean electionHud = true;
     public static boolean handHud = true;
     public static boolean timerHud = true;
+    /** Role names under Grimoire tokens, so roles can be read without hovering. */
+    public static boolean grimoireLabels = true;
+    /** "G" / "E" letters beside alignment colours, so alignment never relies on colour alone. */
+    public static boolean alignmentLetters = true;
 
     private ClientSettings() {}
 
@@ -47,6 +51,8 @@ public final class ClientSettings {
         electionHud = read(p, "electionHud", true);
         handHud = read(p, "handHud", true);
         timerHud = read(p, "timerHud", true);
+        grimoireLabels = read(p, "grimoireLabels", true);
+        alignmentLetters = read(p, "alignmentLetters", true);
     }
 
     public static void save() {
@@ -62,6 +68,8 @@ public final class ClientSettings {
         p.setProperty("electionHud", Boolean.toString(electionHud));
         p.setProperty("handHud", Boolean.toString(handHud));
         p.setProperty("timerHud", Boolean.toString(timerHud));
+        p.setProperty("grimoireLabels", Boolean.toString(grimoireLabels));
+        p.setProperty("alignmentLetters", Boolean.toString(alignmentLetters));
         try {
             Files.createDirectories(FILE.getParent());
             try (OutputStream out = Files.newOutputStream(FILE)) {

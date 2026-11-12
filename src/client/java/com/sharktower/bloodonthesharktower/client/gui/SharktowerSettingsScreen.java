@@ -38,6 +38,10 @@ public final class SharktowerSettingsScreen extends Screen {
         addToggle(mid, top + row * 2, "Role Counts", () -> ClientSettings.roleCountsHud, v -> ClientSettings.roleCountsHud = v);
         addToggle(right, top + row * 2, "World Roles", () -> ClientSettings.worldRoleIcons, v -> ClientSettings.worldRoleIcons = v);
         addToggle(left, top + row * 3, "Pronoun Tags", () -> ClientSettings.pronounTags, v -> ClientSettings.pronounTags = v);
+        addToggle(mid, top + row * 3, "Role Names", () -> ClientSettings.grimoireLabels, v -> ClientSettings.grimoireLabels = v,
+                "Show each role's name under its Grimoire token.");
+        addToggle(right, top + row * 3, "G/E Letters", () -> ClientSettings.alignmentLetters, v -> ClientSettings.alignmentLetters = v,
+                "Add G or E beside Good/Evil colours, for colour-blind players.");
 
         if (isStoryteller()) {
             this.addRenderableWidget(SharktowerButton.builder(voteSpeedLabel(), b -> {
@@ -63,11 +67,19 @@ public final class SharktowerSettingsScreen extends Screen {
             }).bounds(right + 79, top + row * 5, 76, 20).build());
         }
 
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Keys & Help"), b ->
+                        minecraft.gui.setScreen(new KeysHelpScreen(this)))
+                .bounds(cx - 155, height - 30, 100, 20).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Done"), b -> onClose())
-                .bounds(cx - 100, height - 30, 200, 20).build());
+                .bounds(cx - 45, height - 30, 200, 20).build());
     }
 
-    private void addToggle(int x, int y, String label, BoolGetter getter, BoolSetter setter) {
+    private void addToggle(int x, int y, String label, BoolGetter getter, BoolSetter setter, String tooltip) {
+        addToggle(x, y, label, getter, setter).setTooltip(
+                net.minecraft.client.gui.components.Tooltip.create(Component.literal(tooltip)));
+    }
+
+    private SharktowerButton addToggle(int x, int y, String label, BoolGetter getter, BoolSetter setter) {
         SharktowerButton button = SharktowerButton.builder(Component.empty(), b -> {
             setter.set(!getter.get());
             ClientSettings.save();
@@ -75,6 +87,7 @@ public final class SharktowerSettingsScreen extends Screen {
         }).bounds(x, y, 100, 20).build();
         button.setMessage(toggleLabel(label, getter.get()));
         this.addRenderableWidget(button);
+        return button;
     }
 
     private Component toggleLabel(String label, boolean enabled) {

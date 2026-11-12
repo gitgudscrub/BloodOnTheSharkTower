@@ -3,6 +3,26 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.20 — Easier to read, easier to run (unreleased)
+
+- New Keys & Help screen (H, or the button in Settings and Storyteller
+  Tools). It lists every Sharktower key with its current binding, so
+  rebinds show up there, and gives a short "Right now" hint for the current
+  phase. Players and the Storyteller get different hints.
+- The role count strip now uses words as well as colours:
+  "5 Townsfolk · 2 Outsiders · 1 Minion · 1 Demon". It switches to a
+  short form on narrow screens.
+- Grimoire tokens show the role name underneath, so you don't need to hover
+  to read them. There is a new Role Names setting.
+- Alignment no longer relies on colour alone. A "G" or "E" badge sits beside
+  the blue or red ring. There is a new G/E Letters setting.
+- Storyteller Tools:
+  - Every button has a tooltip.
+  - The phase button that comes next is marked in gold.
+  - Full Reset, End Game and Restore Previous are red.
+  - Full Reset needs a second click to confirm.
+- The Grimoire Controls text wraps instead of running off small windows.
+
 ## 1.0.2-alpha.19 — More role automation (unreleased)
 
 - Witch: when a Cursed player nominates, the Storyteller gets

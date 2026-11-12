@@ -1,6 +1,9 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
+import com.sharktower.bloodonthesharktower.core.GamePhase;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.Tooltip;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -27,52 +30,96 @@ public class StorytellerToolsScreen extends Screen {
         int row = rowSpacing();
 
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Grimoire"), b -> this.minecraft.gui.setScreen(new AssignRolesScreen()))
-                .bounds(left, top, 100, 20).build());
+                .bounds(left, top, 100, 20)
+                .tooltip(tip("Seats, roles, reminders and nominations (R).")).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Script"), b -> this.minecraft.gui.setScreen(new ScriptReferenceScreen()))
-                .bounds(mid, top, 100, 20).build());
+                .bounds(mid, top, 100, 20)
+                .tooltip(tip("The current script and night order (C).")).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Role Catalog"), b -> this.minecraft.gui.setScreen(new RoleCatalogScreen()))
-                .bounds(right, top, 100, 20).build());
+                .bounds(right, top, 100, 20)
+                .tooltip(tip("Every character, with abilities (K).")).build());
 
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Night"), b -> ClientStorytellerActions.send("phase_night"))
-                .bounds(left, top + row, 100, 20).build());
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Day"), b -> ClientStorytellerActions.send("phase_day"))
-                .bounds(mid, top + row, 100, 20).build());
+        // The phase button that comes next is marked with an arrow and gold text.
+        boolean nightNext = ClientState.phase() != GamePhase.NIGHT;
+        this.addRenderableWidget(SharktowerButton.builder(nextLabel("Start Night", nightNext), b -> ClientStorytellerActions.send("phase_night"))
+                .bounds(left, top + row, 100, 20)
+                .tooltip(tip("Dusk: players go home and the night order starts."))
+                .build());
+        this.addRenderableWidget(SharktowerButton.builder(nextLabel("Start Day", !nightNext), b -> ClientStorytellerActions.send("phase_day"))
+                .bounds(mid, top + row, 100, 20)
+                .tooltip(tip("Dawn: deaths are announced and the day begins."))
+                .build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Night Status"), b ->
                         ClientStorytellerActions.send("night_status"))
-                .bounds(right, top + row, 100, 20).build());
+                .bounds(right, top + row, 100, 20)
+                .tooltip(tip("Print who still needs waking tonight.")).build());
 
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Timer"), b -> this.minecraft.gui.setScreen(new TimerScreen()))
-                .bounds(left, top + row * 2, 100, 20).build());
+                .bounds(left, top + row * 2, 100, 20)
+                .tooltip(tip("Start or stop a discussion timer (Y).")).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Sync State"), b ->
                         ClientStorytellerActions.send("sync_state"))
-                .bounds(mid, top + row * 2, 100, 20).build());
+                .bounds(mid, top + row * 2, 100, 20)
+                .tooltip(tip("Resend the game state to every player. Use if a screen looks out of date.")).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Status"), b ->
                         ClientStorytellerActions.send("storyteller_status"))
-                .bounds(right, top + row * 2, 100, 20).build());
+                .bounds(right, top + row * 2, 100, 20)
+                .tooltip(tip("Print a summary of the game in chat.")).build());
 
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Nomination Flow"), b ->
                         this.minecraft.gui.setScreen(new NominationControlScreen()))
-                .bounds(left, top + row * 3, 100, 20).build());
+                .bounds(left, top + row * 3, 100, 20)
+                .tooltip(tip("Open, run and close nominations and votes.")).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Traveller Exile"), b ->
                         this.minecraft.gui.setScreen(new ExileControlScreen()))
-                .bounds(mid, top + row * 3, 100, 20).build());
+                .bounds(mid, top + row * 3, 100, 20)
+                .tooltip(tip("Call for and count a Traveller exile.")).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Execute Marked"), b -> ClientStorytellerActions.send("execute_marked"))
-                .bounds(right, top + row * 3, 100, 20).build());
+                .bounds(right, top + row * 3, 100, 20)
+                .tooltip(tip("Execute the player on the block. You are warned first if they should survive.")).build());
 
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Full Reset"), b -> ClientStorytellerActions.send("reset_hard"))
-                .bounds(left, top + row * 4, 100, 20).build());
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("End Game"), b ->
+        // Press twice: the first press arms it for a few seconds.
+        this.addRenderableWidget(SharktowerButton.builder(SharktowerButton.label("Full Reset", ChatFormatting.RED), b -> {
+                    long now = System.currentTimeMillis();
+                    if (now - resetArmedAt < 4000L) {
+                        resetArmedAt = 0L;
+                        b.setMessage(SharktowerButton.label("Full Reset", ChatFormatting.RED));
+                        ClientStorytellerActions.send("reset_hard");
+                    } else {
+                        resetArmedAt = now;
+                        b.setMessage(SharktowerButton.label("Click to confirm", ChatFormatting.RED));
+                    }
+                })
+                .bounds(left, top + row * 4, 100, 20)
+                .tooltip(tip("Clear roles, deaths and setup for a new game. Click twice to confirm."))
+                .build());
+        this.addRenderableWidget(SharktowerButton.builder(SharktowerButton.label("End Game", ChatFormatting.RED), b ->
                         this.minecraft.gui.setScreen(new EndGameControlScreen(this)))
-                .bounds(mid, top + row * 4, 100, 20).build());
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Restore Previous"), b ->
+                .bounds(mid, top + row * 4, 100, 20)
+                .tooltip(tip("Choose the winning team and reveal the Grimoire.")).build());
+        this.addRenderableWidget(SharktowerButton.builder(SharktowerButton.label("Restore Previous", ChatFormatting.RED), b ->
                         ClientStorytellerActions.send("snapshot_restore_previous"))
-                .bounds(right, top + row * 4, 100, 20).build());
+                .bounds(right, top + row * 4, 100, 20)
+                .tooltip(tip("Undo back to the previous saved game state.")).build());
 
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Settings"), b ->
                         this.minecraft.gui.setScreen(new SharktowerSettingsScreen(this)))
-                .bounds(cx - 105, this.height - 28, 100, 20).build());
+                .bounds(left, this.height - 28, 100, 20).build());
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Keys & Help"), b ->
+                        this.minecraft.gui.setScreen(new KeysHelpScreen(this)))
+                .bounds(mid, this.height - 28, 100, 20).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b -> this.onClose())
-                .bounds(cx + 5, this.height - 28, 100, 20).build());
+                .bounds(right, this.height - 28, 100, 20).build());
+    }
+
+    private long resetArmedAt;
+
+    private static Tooltip tip(String text) {
+        return Tooltip.create(Component.literal(text));
+    }
+
+    private static Component nextLabel(String text, boolean next) {
+        return next ? SharktowerButton.label("> " + text, ChatFormatting.GOLD) : Component.literal(text);
     }
 
     @Override
