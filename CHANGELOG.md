@@ -3,6 +3,12 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.34 — Nomination card text fits (unreleased)
+
+- Every line on the in-world nomination / vote / exile card shrinks to fit
+  inside the card (then shortens with "…") instead of running past its
+  right edge, e.g. "[U] Raise / lower your hand before the clock starts."
+
 ## 1.0.2-alpha.33 — G/E badge on top (unreleased)
 
 - The G/E alignment badge on a Grimoire token is drawn after the
