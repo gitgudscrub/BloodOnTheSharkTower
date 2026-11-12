@@ -50,13 +50,23 @@ public final class ElectionHUD {
         // Leave the role-count strip (y 8..17) readable above the panel, and
         // slide right of the role card on narrow GUIs rather than over it.
         int y = com.sharktower.bloodonthesharktower.client.config.ClientSettings.roleCountsHud ? 22 : 8;
-        if (RoleHUD.visible(minecraft) && x < RoleHUD.RIGHT + 8) {
-            if (RoleHUD.RIGHT + 8 + width + 4 <= screenWidth) x = RoleHUD.RIGHT + 8;
-            else y = Math.max(y, RoleHUD.BOTTOM + 6);
-        }
         boolean exileActive = ClientState.currentExileTarget != null;
         boolean electionRunning = ClientState.voteInProgress || ClientState.exileSupportVote;
         int height = electionRunning ? 82 : ((ClientState.currentNominee != null || exileActive) ? 68 : 54);
+        if (RoleHUD.visible(minecraft) && x < RoleHUD.RIGHT + 8) {
+            // Beside the role card, narrowed a little if needed (a 1080p screen
+            // at auto GUI scale is 480 wide, just short of the full card).
+            int room = screenWidth - (RoleHUD.RIGHT + 8) - 4;
+            if (room >= MIN_WIDTH) {
+                x = RoleHUD.RIGHT + 8;
+                width = Math.min(width, room);
+            } else {
+                y = Math.max(y, RoleHUD.BOTTOM + 6);
+            }
+        }
+        // Never run down into the hand-vote box above the hotbar.
+        int handTop = minecraft.getWindow().getGuiScaledHeight() - 70 - 4;
+        if (y + height > handTop) y = Math.max(8, handTop - height);
         UiDrawing.panel(graphics, x, y, width, height);
         lineWidth = width - 16;
 
@@ -160,6 +170,9 @@ public final class ElectionHUD {
 
         fit(graphics, minecraft.font, "Players may nominate.", x + 8, y + 24, UiDrawing.TEXT, false);
     }
+
+    /** Narrowest the card gets before it moves below the role card instead. */
+    private static final int MIN_WIDTH = 220;
 
     /** Room for one line inside the card (its width less the 8px margins). */
     private static int lineWidth = 252;

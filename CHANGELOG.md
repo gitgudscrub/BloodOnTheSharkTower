@@ -3,6 +3,13 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.36 — Nomination card clear of the vote box (unreleased)
+
+- On a 1080p screen at auto GUI scale the nomination / vote card no longer
+  drops below the role card onto the VOTE box. It sits beside the role card,
+  a little narrower, and its lines shrink to fit; when there is truly no
+  room beside it, it is kept above the VOTE box.
+
 ## 1.0.2-alpha.35 — Ravenkeeper choice (unreleased)
 
 - When the Ravenkeeper dies at night (Demon Kill or any night death), they
