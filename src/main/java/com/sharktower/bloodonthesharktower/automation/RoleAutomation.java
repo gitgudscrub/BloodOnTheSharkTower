@@ -341,14 +341,26 @@ public final class RoleAutomation {
      *
      * @return null on success, otherwise why the shot could not be made.
      */
-    public static String slayerShot(MinecraftServer server, UUID shooter, UUID target) {
-        if (server == null || shooter == null || target == null) return "Choose a player to shoot.";
+    /**
+     * Why {@code shooter} cannot claim the Slayer shot right now, or null when
+     * they can. Anyone living and seated may claim it during the day: the
+     * claim is a bluff everyone is allowed to make.
+     */
+    public static String slayerShooterRefusal(UUID shooter) {
+        if (shooter == null) return "Only a seated player can claim the Slayer shot.";
         if (ServerState.gameEnded) return "The game has ended.";
         if (ServerState.currentDay <= 0 || ServerState.currentNight != ServerState.currentDay) {
             return "The Slayer can only shoot during the day.";
         }
         if (!ServerState.PLAYER_SEAT_NUMBERS.containsKey(shooter)) return "You are not seated in this game.";
         if (!isAlive(shooter)) return "Dead players cannot use the Slayer ability.";
+        return null;
+    }
+
+    public static String slayerShot(MinecraftServer server, UUID shooter, UUID target) {
+        if (server == null || shooter == null || target == null) return "Choose a player to shoot.";
+        String refusal = slayerShooterRefusal(shooter);
+        if (refusal != null) return refusal;
         if (!ServerState.PLAYER_SEAT_NUMBERS.containsKey(target)) return "That player is not seated.";
         if (shooter.equals(target)) return "You cannot shoot yourself.";
         if (!isAlive(target)) return label(server, target) + " is already dead.";
@@ -900,7 +912,7 @@ public final class RoleAutomation {
                         .withHoverEvent(new HoverEvent.ShowText(Component.literal(hover))));
     }
 
-    private static void announce(MinecraftServer server, String text, ChatFormatting colour) {
+    static void announce(MinecraftServer server, String text, ChatFormatting colour) {
         Component message = Component.literal(text).withStyle(colour);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) player.sendSystemMessage(message);
     }

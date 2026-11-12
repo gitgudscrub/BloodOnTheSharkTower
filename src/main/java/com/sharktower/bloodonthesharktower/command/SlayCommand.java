@@ -3,6 +3,7 @@ package com.sharktower.bloodonthesharktower.command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.sharktower.bloodonthesharktower.automation.RoleAutomation;
+import com.sharktower.bloodonthesharktower.automation.SlayerCrossbow;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.ChatFormatting;
@@ -19,11 +20,16 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * {@code /slay <player|seat>}: the public Slayer shot.
+ * The public Slayer shot.
+ *
+ * {@code /slay} hands the player a crossbow loaded with one bolt
+ * ({@link SlayerCrossbow}); whoever the bolt hits is the target.
+ * {@code /slay <player|seat>} shoots straight away, without aiming.
  *
  * Any living seated player may use it during the day, because claiming to be
  * the Slayer is a bluff everyone is allowed to make. The server works out
- * whether anything happens ({@link RoleAutomation#slayerShot}).
+ * whether anything should happen ({@link RoleAutomation#slayerShot}) and the
+ * Storyteller confirms the kill or rules that nothing happens.
  */
 public final class SlayCommand {
     private SlayCommand() {}
@@ -31,16 +37,24 @@ public final class SlayCommand {
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 dispatcher.register(Commands.literal("slay")
-                        .executes(SlayCommand::executeHelp)
+                        .executes(SlayCommand::executeCrossbow)
                         .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests((context, builder) ->
                                         SharedSuggestionProvider.suggest(seatedNames(context.getSource().getServer()), builder))
                                 .executes(SlayCommand::executeShot))));
     }
 
-    private static int executeHelp(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendSuccess(() -> Component.literal(
-                "Usage: /slay <player or seat number>. Publicly claim the Slayer ability and shoot someone."), false);
+    private static int executeCrossbow(CommandContext<CommandSourceStack> context) {
+        ServerPlayer shooter = context.getSource().getPlayer();
+        if (shooter == null) {
+            context.getSource().sendFailure(Component.literal("Only a seated player can use /slay."));
+            return 0;
+        }
+        String refusal = SlayerCrossbow.give(context.getSource().getServer(), shooter);
+        if (refusal != null) {
+            shooter.sendSystemMessage(Component.literal(refusal).withStyle(ChatFormatting.RED));
+            return 0;
+        }
         return 1;
     }
 

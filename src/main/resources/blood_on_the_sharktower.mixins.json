@@ -2,6 +2,6 @@
   "required": true,
   "package": "com.sharktower.bloodonthesharktower.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["CommandNodeAccess", "PlayerDisplayNameMixin", "ServerPlayerTabListMixin"],
+  "mixins": ["CommandNodeAccess", "PlayerDisplayNameMixin", "ServerPlayerTabListMixin", "SlayerBoltMixin"],
   "injectors": {"defaultRequire": 1}
 }
