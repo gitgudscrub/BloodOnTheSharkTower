@@ -490,17 +490,17 @@ public class AssignRolesScreen extends Screen {
             List<GrimoireReminderWidget> column = new ArrayList<>();
             int rows = shown + (hidden > 0 ? 1 : 0);
             int y = switch (side) {
-                case 2 -> roleY - 4 - rows * rowStep + 1;
-                case 3 -> roleY + ROLE_SIZE + 14;
-                default -> roleY - 2;
+                case 2 -> roleY - 6 - rows * rowStep + 1;
+                case 3 -> roleY + ROLE_SIZE + 16;
+                default -> roleY + ROLE_SIZE / 2 - (rows * rowStep - 1) / 2;
             };
             boolean fits = true;
             for (int i = 0; i < rows; i++) {
                 int w = i < shown ? GrimoireReminderWidget.chipWidth(reminders.get(i))
                         : GrimoireReminderWidget.overflowWidth(hidden);
                 int x = switch (side) {
-                    case 0 -> roleX - 3 - w;
-                    case 1 -> roleX + ROLE_SIZE + 3;
+                    case 0 -> roleX - 7 - w;
+                    case 1 -> roleX + ROLE_SIZE + 7;
                     default -> roleX + ROLE_SIZE / 2 - w / 2;
                 };
                 int[] area = {x - 1, y - 1, w + 2, GrimoireReminderWidget.CHIP_HEIGHT + 2};
@@ -753,7 +753,7 @@ public class AssignRolesScreen extends Screen {
             // player's head appear as soon as Minecraft knows their profile.
             boolean drewFace = PlayerFaceCompat.draw(graphics, uuid, headX, headY, HEAD_SIZE);
             if (!drewFace) {
-                graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, 0xCC15151A);
+                graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, UiTheme.dark() ? 0xCC15151A : 0xCCE6D9BB);
                 drawCenteredAt(graphics, Integer.toString(seat), headX + HEAD_SIZE / 2,
                         headY + 7, dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
             }
@@ -772,9 +772,9 @@ public class AssignRolesScreen extends Screen {
                 int[] area = nameArea(label,headX,headY,angle,labelAreas);
                 if (area == null) continue;
                 labelAreas.add(area);
-                graphics.fill(area[0],area[1],area[0]+area[2],area[1]+area[3],0xB015151A);
+                graphics.fill(area[0],area[1],area[0]+area[2],area[1]+area[3],UiTheme.dark() ? 0xB015151A : 0xC0F5EDD9);
                 graphics.text(this.font,label,area[0]+3,area[1]+2,
-                        notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()),true);
+                        notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()),UiTheme.dark());
                 break;
             }
             if (dead) UiDrawing.deathShroud(graphics, headX, headY, HEAD_SIZE);
@@ -834,9 +834,8 @@ public class AssignRolesScreen extends Screen {
                 continue;
             }
             try {
-                graphics.fill(sx - 7, sy - 7, sx + 7, sy + 7, 0xE015151A);
-                graphics.outline(sx - 7, sy - 7, 14, 14, UiDrawing.BORDER);
-                drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.GOLD, true);
+                UiTheme.badge(graphics, sx - 7, sy - 7, 14, UiTheme.dark() ? 0xFF1E1822 : 0xFFF5EDD9,
+                        Integer.toString(seat), UiTheme.dark() ? UiTheme.GOLD : 0xFF5C4315);
             } finally {
                 GrimoireRevealAnimation.endElement(graphics);
             }
@@ -846,11 +845,13 @@ public class AssignRolesScreen extends Screen {
     private void renderCenterStatus(GuiGraphicsExtractor graphics, int playerCount) {
         if (ClientState.phase() != GamePhase.SETUP) return;
 
-        String players = "Players: " + playerCount;
+        String players = playerCount + (playerCount == 1 ? " PLAYER" : " PLAYERS");
         String storytellers = "Storytellers: " + ClientState.storytellerPlayers.size();
         int baseY = layoutHeight() / 2 + 16;
-        drawCentered(graphics, players, baseY, UiDrawing.TEXT, true);
-        drawCentered(graphics, storytellers, baseY + 12, UiDrawing.MUTED, true);
+        Component label = UiTheme.display(players);
+        graphics.text(this.font, label, (layoutWidth() - this.font.width(label)) / 2, baseY,
+                UiTheme.dark() ? UiTheme.GOLD : 0xFF5C4315, UiTheme.dark());
+        drawCentered(graphics, storytellers, baseY + 13, UiDrawing.MUTED, UiTheme.dark());
     }
 
     private void renderHoverHint(GuiGraphicsExtractor graphics) {

@@ -3,6 +3,7 @@ package com.sharktower.bloodonthesharktower.client.gui.grimoire;
 import com.sharktower.bloodonthesharktower.client.gui.AssignRolesScreen;
 import com.sharktower.bloodonthesharktower.client.gui.RoleSelectionScreen;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+import com.sharktower.bloodonthesharktower.client.gui.UiTheme;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -39,14 +40,14 @@ public final class GrimoirePerceivedRoleWidget extends AbstractWidget {
         ScriptRole role = UiDrawing.roleOf(perceived);
 
         if (role == null) {
-            UiDrawing.emptyRoleSlot(graphics, getX(), getY(), this.width);
+            UiTheme.emptyToken(graphics, getX(), getY(), this.width);
         } else {
             UiDrawing.roleToken(graphics, role, getX(), getY(), this.width);
-            graphics.outline(getX(), getY(), this.width, this.height, 0xFFD8D8D8);
+
         }
 
         if (isHovered()) {
-            graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
+            UiTheme.ring(graphics, getX() - 2, getY() - 2, this.width + 4, UiTheme.GOLD);
             GrimoireHoverHints.set("Seat " + seat + " believed role — click to edit");
         }
         } finally {

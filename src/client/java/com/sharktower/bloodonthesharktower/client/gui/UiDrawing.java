@@ -24,17 +24,19 @@ import net.minecraft.resources.Identifier;
  * </ul>
  */
 public final class UiDrawing {
-    public static final int PANEL = 0xD0101014;
-    public static final int PANEL_SOFT = 0xB8202028;
-    public static final int BORDER = 0xFF8E8E98;
-    public static final int TEXT = 0xFFFFFFFF;
-    public static final int MUTED = 0xFFB7B7C0;
+    // Theme-dependent (set by UiTheme.apply(); read at draw time, so not final).
+    public static int PANEL = 0xD0101014;
+    public static int PANEL_SOFT = 0xB8202028;
+    public static int BORDER = 0xFF8E8E98;
+    public static int TEXT = 0xFFFFFFFF;
+    public static int MUTED = 0xFFB7B7C0;
+    public static int GOLD = 0xFFFFD166;
+    public static int DEAD = 0xFF8A8A8A;
+    // Fixed meanings.
     public static final int GOOD = 0xFF55AAFF;
     public static final int EVIL = 0xFFFF5555;
-    public static final int GOLD = 0xFFFFD166;
     public static final int YES = 0xFF55FF55;
     public static final int NO = 0xFFFF5555;
-    public static final int DEAD = 0xFF8A8A8A;
     public static final int BLACK = 0xFF000000;
 
     private static final Identifier EMPTY_ROLE_SLOT = Identifier.fromNamespaceAndPath(
@@ -45,13 +47,12 @@ public final class UiDrawing {
     private UiDrawing() {}
 
     public static void panel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
-        graphics.fill(x, y, x + width, y + height, PANEL);
-        graphics.outline(x, y, width, height, BORDER);
+        UiTheme.framedPanel(graphics, x, y, width, height);
     }
 
     public static void softPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         graphics.fill(x, y, x + width, y + height, PANEL_SOFT);
-        graphics.outline(x, y, width, height, 0xFF5D5D68);
+        graphics.outline(x, y, width, height, UiTheme.GOLD_SHADOW);
     }
 
     /** Draws the full role texture scaled to the requested square. */
@@ -74,14 +75,13 @@ public final class UiDrawing {
         return EMPTY_ROLE_SLOT;
     }
 
+    /** Round parchment token (the Clocktower look); an empty round slot when there is no role. */
     public static void roleToken(GuiGraphicsExtractor graphics, ScriptRole role, int x, int y, int size) {
         if (role == null || role.getIcon() == null) {
-            emptyRoleSlot(graphics, x, y, size);
+            UiTheme.emptyToken(graphics, x, y, size);
             return;
         }
-        int colour = teamColor(role.getTeam());
-        graphics.fill(x, y, x + size, y + size, opaque(colour));
-        if (size > 2) roleIcon(graphics, role, x + 1, y + 1, size - 2);
+        UiTheme.roundToken(graphics, role, x, y, size);
     }
 
     /**

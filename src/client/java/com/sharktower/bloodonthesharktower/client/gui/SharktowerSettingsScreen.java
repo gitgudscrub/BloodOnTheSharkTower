@@ -70,8 +70,19 @@ public final class SharktowerSettingsScreen extends Screen {
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Keys & Help"), b ->
                         minecraft.gui.setScreen(new KeysHelpScreen(this)))
                 .bounds(cx - 155, height - 30, 100, 20).build());
+        SharktowerButton theme = SharktowerButton.builder(Component.empty(), b -> {
+            ClientSettings.theme = UiTheme.mode().next().name().toLowerCase(java.util.Locale.ROOT);
+            ClientSettings.save();
+            UiTheme.apply();
+            b.setMessage(Component.literal("Theme: " + UiTheme.mode().label));
+        }).bounds(cx - 50, height - 30, 100, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "Candlelit is dark with gold frames. Parchment is light with ink text.")))
+                .build();
+        theme.setMessage(Component.literal("Theme: " + UiTheme.mode().label));
+        this.addRenderableWidget(theme);
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Done"), b -> onClose())
-                .bounds(cx - 45, height - 30, 200, 20).build());
+                .bounds(cx + 55, height - 30, 100, 20).build());
     }
 
     private void addToggle(int x, int y, String label, BoolGetter getter, BoolSetter setter, String tooltip) {
@@ -112,7 +123,7 @@ public final class SharktowerSettingsScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        drawCentered(graphics, "Sharktower Settings", 16, UiDrawing.TEXT, true);
+        UiTheme.drawTitle(graphics, font, "Sharktower Settings", width / 2, 12);
         drawCentered(graphics, "Player HUD", 39, UiDrawing.GOLD, true);
         if (isStoryteller()) {
             drawCentered(graphics, "Storyteller Vote Presentation", 175, UiDrawing.GOLD, true);

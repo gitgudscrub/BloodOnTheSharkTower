@@ -85,7 +85,7 @@ public class KeysHelpScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         boolean st = storyteller();
         int cx = this.width / 2;
-        drawCentered(graphics, "Keys & Help", 10, UiDrawing.TEXT);
+        UiTheme.drawTitle(graphics, this.font, "Keys & Help", cx, 6);
 
         int columnWidth = Math.min(190, (this.width - 36) / 2);
         int leftX = cx - columnWidth - 6;
@@ -159,7 +159,7 @@ public class KeysHelpScreen extends Screen {
         return y;
     }
 
-    private static String phaseName(GamePhase phase) {
+    static String phaseName(GamePhase phase) {
         return switch (phase) {
             case SETUP -> "Setup";
             case NIGHT -> "Night";

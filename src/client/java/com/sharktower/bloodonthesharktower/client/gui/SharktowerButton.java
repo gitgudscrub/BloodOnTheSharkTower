@@ -25,12 +25,13 @@ import net.minecraft.network.chat.TextColor;
  * class name.
  */
 public class SharktowerButton extends AbstractWidget {
-    public static final int BACKGROUND = 0xE0141418;
-    public static final int BACKGROUND_HOVER = 0xE8222634;
-    public static final int BACKGROUND_INACTIVE = 0xB00E0E12;
-    public static final int BORDER_SOFT = 0xFF5D5D68;
-    public static final int BORDER_HOVER = UiDrawing.GOLD;
-    public static final int TEXT_INACTIVE = 0xFF7C7C86;
+    // Set by UiTheme.apply(); read at draw time.
+    public static int BACKGROUND = 0xE0141418;
+    public static int BACKGROUND_HOVER = 0xE8222634;
+    public static int BACKGROUND_INACTIVE = 0xB00E0E12;
+    public static int BORDER_SOFT = 0xFF5D5D68;
+    public static int BORDER_HOVER = 0xFFFFD166;
+    public static int TEXT_INACTIVE = 0xFF7C7C86;
 
     @FunctionalInterface
     public interface OnPress {
@@ -53,20 +54,31 @@ public class SharktowerButton extends AbstractWidget {
         boolean highlighted = this.active && isHoveredOrFocused();
         int background = !this.active ? BACKGROUND_INACTIVE : highlighted ? BACKGROUND_HOVER : BACKGROUND;
         graphics.fill(getX(), getY(), getX() + this.width, getY() + this.height, background);
+        // Bevel: a light line along the top, a dark one along the bottom.
+        boolean dark = UiTheme.dark();
+        graphics.fill(getX() + 1, getY() + 1, getX() + this.width - 1, getY() + 2, dark ? 0x18FFFFFF : 0x80FFFFFF);
+        graphics.fill(getX() + 1, getY() + this.height - 2, getX() + this.width - 1, getY() + this.height - 1, dark ? 0x60000000 : 0x30000000);
         graphics.outline(getX(), getY(), this.width, this.height, highlighted ? BORDER_HOVER : BORDER_SOFT);
+        if (highlighted && this.active) {
+            graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, dark ? 0x60C9A24A : 0x405C4315);
+        }
 
         Font font = Minecraft.getInstance().font;
         Component message = getMessage();
         int colour = this.active ? labelColour(message) : TEXT_INACTIVE;
+        if (!this.active && !dark) colour = TEXT_INACTIVE;
+        else if (this.active && !dark && colour == 0xFFFFFFFF) colour = UiDrawing.TEXT;
         String text = message.getString();
         int maxWidth = this.width - 8;
+        // Labels stay in the regular font so every button on a screen matches;
+        // the display face is for titles, section labels and role names.
         if (font.width(text) > maxWidth) {
             String ellipsis = "…";
             text = font.plainSubstrByWidth(text, Math.max(0, maxWidth - font.width(ellipsis))) + ellipsis;
         }
         int textX = getX() + (this.width - font.width(text)) / 2;
         int textY = getY() + (this.height - font.lineHeight) / 2 + 1;
-        graphics.text(font, text, textX, textY, colour, true);
+        graphics.text(font, text, textX, textY, colour, dark);
     }
 
     /** The label's own colour when it was styled (team or action colour), otherwise white. */

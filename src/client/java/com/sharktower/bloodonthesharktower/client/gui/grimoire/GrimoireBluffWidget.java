@@ -5,6 +5,7 @@ import com.sharktower.bloodonthesharktower.client.gui.LunaticBluffSelectionScree
 import com.sharktower.bloodonthesharktower.client.gui.AssignRolesScreen;
 import com.sharktower.bloodonthesharktower.client.ClientGrimoireEdits;
 import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+import com.sharktower.bloodonthesharktower.client.gui.UiTheme;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
@@ -40,10 +41,10 @@ public final class GrimoireBluffWidget extends AbstractWidget {
             graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2,
                     UiDrawing.opaque(UiDrawing.teamColor(role.getTeam())));
         } else {
-            UiDrawing.emptyRoleSlot(graphics, getX(), getY(), this.width);
+            UiTheme.emptyToken(graphics, getX(), getY(), this.width);
         }
         if (isHovered()) {
-            graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, UiDrawing.GOLD);
+            UiTheme.ring(graphics, getX() - 2, getY() - 2, this.width + 4, UiTheme.GOLD);
             boolean editable = ClientGrimoireEdits.isLocalStoryteller();
             String kind = lunatic ? "Lunatic bluff" : "Demon bluff";
             GrimoireHoverHints.set(role == null

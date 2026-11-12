@@ -1,0 +1,11 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "blood_on_the_sharktower:cinzel_bold.ttf",
+      "size": 11.0,
+      "oversample": 4.0,
+      "shift": [0.0, 0.0]
+    }
+  ]
+}

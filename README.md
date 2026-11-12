@@ -95,6 +95,9 @@ Client and server builds are produced together by GitHub Actions so that both pa
   Settings), and a role count strip that names each team.
 - Reminders show as labelled chips (icon + text, coloured by effect) beside
   each token, so they can be read without hovering.
+- One Clocktower look across every screen (round tokens, framed panels,
+  Cinzel titles) in two modes: **Candlelit** (dark) and **Parchment**
+  (light), switched with the Theme button in Settings.
 
 ### Night and voice chat
 

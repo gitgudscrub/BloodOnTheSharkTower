@@ -5,7 +5,8 @@
     "LivingEntityRendererMixin",
     "AvatarRendererMixin",
     "EntityRendererMixin",
-    "VoiceGroupIconMixin"
+    "VoiceGroupIconMixin",
+    "ScreenBackdropMixin"
   ],
   "injectors": {
     "defaultRequire": 1
