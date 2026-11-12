@@ -3,6 +3,22 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.24 — Reminder icons, lower Grimoire hint (unreleased)
+
+- Rim reminder tokens always show a picture, never a letter. A reminder
+  placed without a character (typed by hand, or a generic marker) takes the
+  icon of the character it points to: one named in the text ("Is the
+  Drunk", "Washerwoman Townsfolk"), else a script character whose reminder
+  it is ("Red Herring" on the Fortune Teller), else a standard one
+  ("Poisoned" the Poisoner, "Protected" the Monk, "Demon" the Imp,
+  "Minion" the Baron). Good, Evil, Dead and No ability get their own
+  icons; free text gets a note icon. Hover still shows the exact text.
+- Rim tokens keep clear of the full width of the role name under a token,
+  not just the space straight below it.
+- The Grimoire hover hint ("Storyteller — click for private chat ...") sits
+  at the bottom edge on a soft backing, so it no longer overlaps the lowest
+  seat's role name.
+
 ## 1.0.2-alpha.23 — Resolve panel and rim reminders (unreleased)
 
 - Grimoire **Resolve** panel (Storyteller only, lower right): every decision

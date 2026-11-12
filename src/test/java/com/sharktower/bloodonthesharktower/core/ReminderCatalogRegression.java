@@ -28,6 +28,14 @@ public final class ReminderCatalogRegression {
         var customOptions = ReminderCatalog.forScript(custom, monk);
         check(customOptions.stream().filter(o -> o.text().equals("Chosen")).count() == 1, "custom labels deduplicated");
         check(customOptions.stream().anyMatch(o -> o.text().equals("Global")), "custom global reminders supported");
+        check(ReminderCatalog.inferSourceId("Poisoned", script).orElse("").equals(Role.POISONER.getId()), "on-script reminder label finds its character");
+        check(ReminderCatalog.inferSourceId("Is the Monk", script).orElse("").equals(Role.MONK.getId()), "character named in text wins");
+        check(ReminderCatalog.inferSourceId("Red Herring", null).orElse("").equals(Role.FORTUNE_TELLER.getId()), "generic marker falls back to a standard character");
+        check(ReminderCatalog.inferSourceId("Is the Drunk", null).orElse("").equals(Role.DRUNK.getId()), "label unique to one character found off-script");
+        check(ReminderCatalog.inferSourceId("Dead", null).isEmpty(), "label shared by many characters stays generic");
+        check(ReminderCatalog.inferSourceId("Washerwoman Townsfolk", null).orElse("").equals(Role.WASHERWOMAN.getId()), "off-script character named in text");
+        check(ReminderCatalog.inferSourceId("Watch this one", null).isEmpty(), "free text stays a note");
+        check(ReminderCatalog.inferSourceId("Chosen", custom).orElse("").equals("customtest"), "custom character reminders inferred");
         UUID player = UUID.randomUUID();
         ServerState.currentScript = script;
         ServerState.PLAYER_SEAT_NUMBERS.put(player, 1);

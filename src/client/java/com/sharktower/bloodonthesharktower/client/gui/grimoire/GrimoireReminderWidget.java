@@ -99,18 +99,52 @@ public final class GrimoireReminderWidget extends AbstractWidget {
         return source == null ? reminder.text() : source.getDisplayName() + ": " + reminder.text();
     }
 
-    /** Source character icon; Good/Evil get a coloured G/E; other text its first letter. */
+    private static final net.minecraft.resources.Identifier ICON_GOOD = icon("good");
+    private static final net.minecraft.resources.Identifier ICON_EVIL = icon("evil");
+    private static final net.minecraft.resources.Identifier ICON_DEAD = icon("skull");
+    private static final net.minecraft.resources.Identifier ICON_NO_ABILITY = icon("barrier");
+    private static final net.minecraft.resources.Identifier ICON_NOTE = icon("reminder_custom");
+
+    private static net.minecraft.resources.Identifier icon(String name) {
+        return net.minecraft.resources.Identifier.fromNamespaceAndPath(
+                com.sharktower.bloodonthesharktower.BloodOnTheSharktower.MOD_ID, "textures/icons/" + name + ".png");
+    }
+
+    /**
+     * Always a picture, never a letter: the source character's icon, else the
+     * character the text points to (see ReminderCatalog.inferSourceId), else
+     * a generic marker icon (Good, Evil, Dead, No ability, or a note).
+     */
     private void drawIcon(GuiGraphicsExtractor graphics, int x, int y, int size) {
         ScriptRole source = sourceRole();
-        if (source != null) {
+        if (source == null) source = inferredRole();
+        if (source != null && source.getIcon() != null) {
             UiDrawing.roleIcon(graphics, source, x, y, size);
             return;
         }
-        String text = reminder.text();
-        int ink = text.equalsIgnoreCase("Good") ? UiTheme.GOOD_BADGE
-                : text.equalsIgnoreCase("Evil") ? UiTheme.EVIL_BADGE : UiTheme.PARCHMENT_INK;
-        String mark = text.isEmpty() ? "·" : text.substring(0, 1).toUpperCase(Locale.ROOT);
-        drawMark(graphics, x, y, size, mark, ink);
+        String flat = com.sharktower.bloodonthesharktower.core.ReminderCatalog.normalize(reminder.text());
+        net.minecraft.resources.Identifier texture = switch (flat) {
+            case "good" -> ICON_GOOD;
+            case "evil" -> ICON_EVIL;
+            case "dead", "died", "killed", "executed", "tinkerdeath" -> ICON_DEAD;
+            case "noability", "abilityused", "used", "guessused" -> ICON_NO_ABILITY;
+            default -> ICON_NOTE;
+        };
+        int inset = texture == ICON_NOTE ? 1 : 0;
+        graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture,
+                x + inset, y + inset, 0, 0, size - inset * 2, size - inset * 2, size - inset * 2, size - inset * 2);
+    }
+
+    private ScriptRole inferredRole() {
+        var id = com.sharktower.bloodonthesharktower.core.ReminderCatalog.inferSourceId(reminder.text(), ClientState.currentScript);
+        if (id.isEmpty()) return null;
+        if (ClientState.currentScript != null) {
+            for (ScriptRole role : ClientState.currentScript.allRoles()) {
+                if (role.getId().equalsIgnoreCase(id.get())) return role;
+            }
+        }
+        var official = com.sharktower.bloodonthesharktower.core.Role.findById(id.get());
+        return official == null ? null : new ScriptRole.Official(official);
     }
 
     /** Small centred text (75%) inside a disc. */

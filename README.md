@@ -93,8 +93,8 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Keys & Help screen (H) with live key bindings and phase hints.
 - Role names under Grimoire tokens and G/E alignment letters (both in
   Settings), and a role count strip that names each team.
-- Reminders are mini tokens on the rim of each role token (character icon
-  or initial, coloured by effect); hover for the text, "+N" for extras.
+- Reminders are mini tokens on the rim of each role token (the character's
+  icon, coloured by effect); hover for the text, "+N" for extras.
 - Storyteller Resolve panel in the Grimoire: Virgin nominations, Witch
   curses, Slayer shots and star-passes wait at the lower right with a
   button per choice.
