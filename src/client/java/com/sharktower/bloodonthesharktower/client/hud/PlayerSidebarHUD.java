@@ -132,7 +132,9 @@ public final class PlayerSidebarHUD {
         int reservedRight = 24;
         int nameMaxWidth = Math.max(8, headX - reservedRight - nameX);
         var role = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(id));
-        int nameColour = role == null ? UiDrawing.TEXT : UiDrawing.teamColor(role.getTeam());
+        // The sidebar always sits on a dark strip over the world, so names stay
+        // white even when the Parchment theme makes UiDrawing.TEXT dark ink.
+        int nameColour = role == null || role.getTeam() == null ? 0xFFFFFFFF : UiDrawing.teamColor(role.getTeam());
         drawNameScaledToFit(graphics, font, player.name(), nameX, textY, nameMaxWidth, nameColour);
 
         // Pronouns follow the name in muted text when the row has room for both at

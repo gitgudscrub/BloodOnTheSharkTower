@@ -3,6 +3,20 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.28 — One Slayer shot per game, readable seat list (unreleased)
+
+- Each player gets one Slayer shot per game. Firing the crossbow uses it,
+  hit or miss, and so does `/slay <player>`; a second `/slay` is refused
+  with "You have already taken your one Slayer shot this game." A crossbow
+  taken away before it is fired (at dusk, say) does not use the shot. A new
+  game gives everyone their shot back.
+- The shot is announced as "X shoots Y!" (was "X claims to be the Slayer
+  and shoots Y!"). `/slay <player>` posts "X claims Slayer!" first, so both
+  ways read the same.
+- Player names in the seat list on the right of the screen are white when
+  no role is shown (setup, or players whose role you do not know). On the
+  Parchment theme they were dark ink on the dark strip and hard to read.
+
 ## 1.0.2-alpha.27 — Shorter Slayer claim (unreleased)
 
 - `/slay` now tells everyone "X claims Slayer!" when the crossbow is handed

@@ -29,8 +29,8 @@ import java.util.UUID;
  * crossbow already loaded with one bolt. The bolt does no damage. Whoever it
  * hits becomes the target of {@link RoleAutomation#slayerShot}, which
  * announces the shot and asks the Storyteller to confirm the kill or rule
- * that nothing happens. A miss costs nothing, so the player can
- * {@code /slay} again.
+ * that nothing happens. Each player gets one shot per game: firing uses it,
+ * hit or miss. A crossbow taken away unfired (at dusk, say) does not.
  *
  * The crossbow is taken away once it has fired, at the end of the day, and
  * when its holder dies or leaves the game, so it can never be reloaded or
@@ -58,13 +58,16 @@ public final class SlayerCrossbow {
         String refusal = RoleAutomation.slayerShooterRefusal(player.getUUID());
         if (refusal != null) return refusal;
         if (holds(player)) return "You already have the Slayer's crossbow. Aim at a player and fire.";
+        for (Shot live : LIVE.values()) {
+            if (live.shooter().equals(player.getUUID())) return "Your bolt is still in the air.";
+        }
         String shotId = UUID.randomUUID().toString();
         if (!player.getInventory().add(create(shotId))) return "Make room in your inventory for the crossbow.";
         LIVE.put(shotId, new Shot(player.getUUID(), -1));
         RoleAutomation.announce(server, RoleAutomation.label(server, player.getUUID())
                 + " claims Slayer!", ChatFormatting.GOLD);
         player.sendSystemMessage(Component.literal(
-                "One bolt. Aim at a player and fire: whoever it hits is your target. The Storyteller decides what happens.")
+                "One bolt, one shot this game. Aim at a player and fire: whoever it hits is your target. The Storyteller decides what happens.")
                 .withStyle(ChatFormatting.GRAY));
         return null;
     }
@@ -110,27 +113,22 @@ public final class SlayerCrossbow {
         if (!(arrow.getOwner() instanceof ServerPlayer shooter) || !shooter.getUUID().equals(shot.shooter())) return;
         MinecraftServer server = level.getServer();
         if (hit instanceof ServerPlayer target && target != shooter) {
-            String refusal = RoleAutomation.slayerShot(server, shooter.getUUID(), target.getUUID());
+            String refusal = RoleAutomation.slayerShot(server, shooter.getUUID(), target.getUUID(), false);
             if (refusal == null) {
                 level.playSound(null, target.blockPosition(), SoundEvents.ARROW_HIT_PLAYER, SoundSource.PLAYERS, 1.0F, 1.0F);
                 return;
             }
-            shooter.sendSystemMessage(Component.literal(refusal).withStyle(ChatFormatting.RED));
-            offerRetry(shooter);
+            RoleAutomation.takeSlayerShot(shooter.getUUID());
+            shooter.sendSystemMessage(Component.literal(refusal + " That was your one shot this game.").withStyle(ChatFormatting.RED));
         } else {
             missed(shooter);
         }
     }
 
     private static void missed(ServerPlayer shooter) {
-        shooter.sendSystemMessage(Component.literal("Your bolt missed. Nothing happens.").withStyle(ChatFormatting.GRAY));
-        offerRetry(shooter);
-    }
-
-    private static void offerRetry(ServerPlayer shooter) {
-        if (RoleAutomation.slayerShooterRefusal(shooter.getUUID()) == null) {
-            shooter.sendSystemMessage(Component.literal("Use /slay to try again.").withStyle(ChatFormatting.GRAY));
-        }
+        RoleAutomation.takeSlayerShot(shooter.getUUID());
+        shooter.sendSystemMessage(Component.literal("Your bolt missed. Nothing happens. That was your one shot this game.")
+                .withStyle(ChatFormatting.GRAY));
     }
 
     public static void serverTick(MinecraftServer server) {
@@ -144,6 +142,7 @@ public final class SlayerCrossbow {
             Shot shot = it.next();
             if (shot.firedAt() < 0 || now - shot.firedAt() < BOLT_LIFE_TICKS) continue;
             it.remove();
+            RoleAutomation.takeSlayerShot(shot.shooter());
             ServerPlayer shooter = server.getPlayerList().getPlayer(shot.shooter());
             if (shooter != null) missed(shooter);
         }

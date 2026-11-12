@@ -77,7 +77,7 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - TOR-aware Butler behaviour.
 - Role automation with the Storyteller keeping the final say: the Virgin's
   nomination execution (offered to the Storyteller to approve), the public
-  Slayer shot (`/slay` hands out a one-bolt crossbow, whoever the bolt hits is the target;
+  Slayer shot, once per player per game (`/slay` hands out a one-bolt crossbow, whoever the bolt hits is the target;
   `/slay <player or seat>` shoots without aiming; resolved by the Storyteller), the Scarlet Woman becoming the
   Demon, the Imp star-pass choice, Demon Kill refusing protected targets
   (Soldier, Sailor, Monk/Innkeeper "Safe", Tea Lady, Fool) with a Mayor

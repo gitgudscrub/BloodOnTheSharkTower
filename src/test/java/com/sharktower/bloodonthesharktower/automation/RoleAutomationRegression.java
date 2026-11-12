@@ -228,6 +228,20 @@ public final class RoleAutomationRegression {
         check(!RoleAutomation.twinsBothAlive(), "a dead twin ends the block");
         check(!RoleAutomation.anyDemonAlive(), "no Demon in this game");
 
+        // One Slayer shot per player per game, hit or miss; a new game resets it.
+        fresh();
+        ServerState.currentDay = 1;
+        UUID claimer = seat(1, Role.CHEF);
+        UUID other = seat(2, Role.SLAYER);
+        check(RoleAutomation.slayerShooterRefusal(claimer) == null, "anyone may claim Slayer during the day");
+        RoleAutomation.takeSlayerShot(claimer);
+        check(RoleAutomation.slayerShooterRefusal(claimer) != null, "a player who has shot cannot shoot again");
+        check(RoleAutomation.slayerShooterRefusal(other) == null, "one player's shot does not use another's");
+        RoleAutomation.reset();
+        check(RoleAutomation.slayerShooterRefusal(claimer) == null, "a new game gives the shot back");
+        ServerState.currentNight = 2;
+        check(RoleAutomation.slayerShooterRefusal(other) != null, "no Slayer shot at night");
+
         System.out.println("PASS: " + checks + " role automation rule checks");
     }
 }
