@@ -3,6 +3,17 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.30 — Parchment button contrast, Resolve panel fits beside votes (unreleased)
+
+- On the Parchment theme, coloured button labels use darker inks with the
+  same meaning: green "No effect", grey "Spectator" / "Cancel Nom.", and
+  the yellow, aqua, blue and purple labels were washed out on the light
+  buttons.
+- When a nomination or vote is open and the Resolve panel cannot fit above
+  or below the vote counter, it now sits to the left of it, resting on the
+  bottom row. It used to be pushed below the counter and off the bottom of
+  the screen, cutting off its buttons.
+
 ## 1.0.2-alpha.29 — Slayer shots until one lands (unreleased)
 
 - A player can `/slay` as often as they like until a bolt hits a living

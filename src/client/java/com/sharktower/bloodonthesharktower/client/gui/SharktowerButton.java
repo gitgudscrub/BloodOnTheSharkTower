@@ -67,7 +67,7 @@ public class SharktowerButton extends AbstractWidget {
         Component message = getMessage();
         int colour = this.active ? labelColour(message) : TEXT_INACTIVE;
         if (!this.active && !dark) colour = TEXT_INACTIVE;
-        else if (this.active && !dark && colour == 0xFFFFFFFF) colour = UiDrawing.TEXT;
+        else if (this.active && !dark) colour = parchmentInk(colour);
         String text = message.getString();
         int maxWidth = this.width - 8;
         // Labels stay in the regular font so every button on a screen matches;
@@ -90,6 +90,26 @@ public class SharktowerButton extends AbstractWidget {
             if (colour != null) return UiDrawing.opaque(colour.getValue());
         }
         return UiDrawing.TEXT;
+    }
+
+    /**
+     * On the light Parchment buttons the bright chat colours (green, grey,
+     * yellow, aqua...) wash out, so each one is swapped for a darker ink
+     * with the same meaning. Other colours (team colours) pass through.
+     */
+    static int parchmentInk(int colour) {
+        return switch (colour & 0xFFFFFF) {
+            case 0xFFFFFF -> UiDrawing.TEXT;
+            case 0x55FF55 -> 0xFF2E6B2E; // green: safe / ok
+            case 0xAAAAAA -> 0xFF5E5240; // grey: quiet actions
+            case 0xFF5555 -> 0xFF9E2A20; // red: danger
+            case 0xFFFF55 -> 0xFF7A5C00; // yellow
+            case 0xFFAA00 -> 0xFF8A5A10; // gold
+            case 0x55FFFF -> 0xFF1F6670; // aqua
+            case 0x5555FF -> 0xFF2F4FA0; // blue
+            case 0xFF55FF -> 0xFF8A2C8A; // light purple
+            default -> colour;
+        };
     }
 
     public void press() {
