@@ -3,6 +3,11 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.27 — Shorter Slayer claim (unreleased)
+
+- `/slay` now tells everyone "X claims Slayer!" when the crossbow is handed
+  out (was "X raises a crossbow, claiming to be the Slayer!").
+
 ## 1.0.2-alpha.26 — Slayer's crossbow (unreleased)
 
 - `/slay` with no target hands the player a Slayer's Crossbow loaded with
