@@ -64,13 +64,9 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
 
         // Alignment ring just outside the gold rim; the G/E badge sits on the lower-right.
         AlignmentOverride alignment = ClientGrimoireEdits.visibleAlignmentFor(playerId);
+        int alignmentColour = alignment == AlignmentOverride.FORCE_GOOD ? UiTheme.GOOD_BADGE : UiTheme.EVIL_BADGE;
         if (alignment != AlignmentOverride.DEFAULT) {
-            int ringColour = alignment == AlignmentOverride.FORCE_GOOD ? UiTheme.GOOD_BADGE : UiTheme.EVIL_BADGE;
-            UiTheme.ring(graphics, getX() - 3, getY() - 3, this.width + 6, ringColour);
-            if (com.sharktower.bloodonthesharktower.client.config.ClientSettings.alignmentLetters) {
-                String letter = alignment == AlignmentOverride.FORCE_GOOD ? "G" : "E";
-                UiTheme.badge(graphics, getX() + this.width - 9, getY() + this.height - 9, 11, ringColour, letter, 0xFFFFFFFF);
-            }
+            UiTheme.ring(graphics, getX() - 3, getY() - 3, this.width + 6, alignmentColour);
         }
         if (!currentDead && ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
             // Marked dead but not yet revealed: a lighter dim and the shroud, Storyteller-only.
@@ -87,7 +83,12 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             UiTheme.ring(graphics, getX() - 3, getY() - 3, this.width + 6, UiTheme.GOLD);
         }
 
-        // The name goes on last, below the widest ring (5px out), so no ring covers it.
+        // The G/E badge and the name go on last, so no ring covers them.
+        if (alignment != AlignmentOverride.DEFAULT
+                && com.sharktower.bloodonthesharktower.client.config.ClientSettings.alignmentLetters) {
+            String letter = alignment == AlignmentOverride.FORCE_GOOD ? "G" : "E";
+            UiTheme.badge(graphics, getX() + this.width - 9, getY() + this.height - 9, 11, alignmentColour, letter, 0xFFFFFFFF);
+        }
         if (com.sharktower.bloodonthesharktower.client.config.ClientSettings.grimoireLabels && role != null) {
             drawRoleLabel(graphics, role);
         }

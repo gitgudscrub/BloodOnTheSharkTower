@@ -3,6 +3,11 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.33 — G/E badge on top (unreleased)
+
+- The G/E alignment badge on a Grimoire token is drawn after the
+  nominator/nominee/hover rings, so it sits on top instead of under them.
+
 ## 1.0.2-alpha.32 — Nomination ring clear of names and reminders (unreleased)
 
 - Role names under Grimoire tokens sit a little lower and are drawn after
