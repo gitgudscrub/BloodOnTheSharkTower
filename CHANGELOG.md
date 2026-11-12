@@ -3,6 +3,20 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.37 — Poisoner choice (unreleased)
+
+- Each dusk the living Poisoner gets a private, clickable list of seats in
+  chat (`/poison <seat>`). They can change their mind until the Storyteller
+  acts; other players and daytime use are refused.
+- The Storyteller gets a Resolve prompt: "X chose Y, the Empath.", with a
+  note when the Poisoner is drunk or poisoned. **Poison** places the
+  Poisoner's Poisoned reminder on Y (it clears at the next dusk as before);
+  **No poison** dismisses. For an in-person choice use
+  `/bots automation poisoner choose <seat>`.
+- Resolve panel: on small windows (854x480) a tall prompt no longer covers
+  TOOLS / CONTROLS. It puts its buttons side by side and shrinks its text
+  until it fits.
+
 ## 1.0.2-alpha.36 — Nomination card clear of the vote box (unreleased)
 
 - On a 1080p screen at auto GUI scale the nomination / vote card no longer

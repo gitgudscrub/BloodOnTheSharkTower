@@ -50,6 +50,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.command.NickCommands.register();
         com.sharktower.bloodonthesharktower.command.SlayCommand.register();
         com.sharktower.bloodonthesharktower.command.RavenCommand.register();
+        com.sharktower.bloodonthesharktower.command.PoisonCommand.register();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();
         ServerTickEvents.END_SERVER_TICK.register(NightChatManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.networking.SocialStateManager::tick);

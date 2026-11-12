@@ -129,6 +129,7 @@ public final class RoleAutomation {
         clearPendingSlayer();
         SLAYER_SHOT_TAKEN.clear();
         RavenkeeperAutomation.reset();
+        PoisonerAutomation.reset();
         PROMPTS.clear();
     }
 
@@ -668,6 +669,7 @@ public final class RoleAutomation {
         resolve("witch");
         clearPendingSlayer();
         expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
+        PoisonerAutomation.onDusk(server);
         if (minstrelDrunkDay >= 0 && ServerState.currentDay > minstrelDrunkDay) {
             minstrelDrunkDay = -1;
             expireReminders(server, Map.of(Role.MINSTREL, Set.of("everyoneisdrunk")), "Dusk");

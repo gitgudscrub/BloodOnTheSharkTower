@@ -80,7 +80,9 @@ Client and server builds are produced together by GitHub Actions so that both pa
   Slayer shot, retry until one lands, then once per game (`/slay` hands out a one-bolt crossbow, whoever the bolt hits is the target;
   `/slay <player or seat>` shoots without aiming; resolved by the Storyteller), the Ravenkeeper's night-death choice
   (`/raven <seat>` from a private clickable list; the Storyteller picks what
-  they are shown), the Scarlet Woman becoming the
+  they are shown), the Poisoner's nightly target (`/poison <seat>`; the
+  Storyteller places the Poisoned reminder, which clears at the next dusk),
+  the Scarlet Woman becoming the
   Demon, the Imp star-pass choice, Demon Kill refusing protected targets
   (Soldier, Sailor, Monk/Innkeeper "Safe", Tea Lady, Fool) with a Mayor
   bounce check, automatic expiry of Poisoner/Monk/Innkeeper-style reminders,
