@@ -29,8 +29,9 @@ import java.util.UUID;
  * crossbow already loaded with one bolt. The bolt does no damage. Whoever it
  * hits becomes the target of {@link RoleAutomation#slayerShot}, which
  * announces the shot and asks the Storyteller to confirm the kill or rule
- * that nothing happens. Each player gets one shot per game: firing uses it,
- * hit or miss. A crossbow taken away unfired (at dusk, say) does not.
+ * that nothing happens. A player may keep trying until a bolt hits a living
+ * seated player; that hit is their one Slayer shot for the game. Misses,
+ * expired bolts and hits on someone who cannot be targeted are free.
  *
  * The crossbow is taken away once it has fired, at the end of the day, and
  * when its holder dies or leaves the game, so it can never be reloaded or
@@ -67,7 +68,7 @@ public final class SlayerCrossbow {
         RoleAutomation.announce(server, RoleAutomation.label(server, player.getUUID())
                 + " claims Slayer!", ChatFormatting.GOLD);
         player.sendSystemMessage(Component.literal(
-                "One bolt, one shot this game. Aim at a player and fire: whoever it hits is your target. The Storyteller decides what happens.")
+                "One bolt. Aim at a player and fire: whoever it hits is your target, and that is your one Slayer shot this game. The Storyteller decides what happens.")
                 .withStyle(ChatFormatting.GRAY));
         return null;
     }
@@ -118,17 +119,22 @@ public final class SlayerCrossbow {
                 level.playSound(null, target.blockPosition(), SoundEvents.ARROW_HIT_PLAYER, SoundSource.PLAYERS, 1.0F, 1.0F);
                 return;
             }
-            RoleAutomation.takeSlayerShot(shooter.getUUID());
-            shooter.sendSystemMessage(Component.literal(refusal + " That was your one shot this game.").withStyle(ChatFormatting.RED));
+            shooter.sendSystemMessage(Component.literal(refusal).withStyle(ChatFormatting.RED));
+            offerRetry(shooter);
         } else {
             missed(shooter);
         }
     }
 
     private static void missed(ServerPlayer shooter) {
-        RoleAutomation.takeSlayerShot(shooter.getUUID());
-        shooter.sendSystemMessage(Component.literal("Your bolt missed. Nothing happens. That was your one shot this game.")
-                .withStyle(ChatFormatting.GRAY));
+        shooter.sendSystemMessage(Component.literal("Your bolt missed. Nothing happens.").withStyle(ChatFormatting.GRAY));
+        offerRetry(shooter);
+    }
+
+    private static void offerRetry(ServerPlayer shooter) {
+        if (RoleAutomation.slayerShooterRefusal(shooter.getUUID()) == null) {
+            shooter.sendSystemMessage(Component.literal("Use /slay to try again.").withStyle(ChatFormatting.GRAY));
+        }
     }
 
     public static void serverTick(MinecraftServer server) {
@@ -142,7 +148,6 @@ public final class SlayerCrossbow {
             Shot shot = it.next();
             if (shot.firedAt() < 0 || now - shot.firedAt() < BOLT_LIFE_TICKS) continue;
             it.remove();
-            RoleAutomation.takeSlayerShot(shot.shooter());
             ServerPlayer shooter = server.getPlayerList().getPlayer(shot.shooter());
             if (shooter != null) missed(shooter);
         }

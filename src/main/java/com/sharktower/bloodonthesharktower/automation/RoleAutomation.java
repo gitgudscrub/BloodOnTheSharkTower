@@ -89,7 +89,7 @@ public final class RoleAutomation {
     private static UUID pendingSlayerShooter;
     private static UUID pendingSlayerTarget;
     private static int pendingSlayerDay = -1;
-    /** Players who have taken their one Slayer shot this game (hit or miss). */
+    /** Players whose Slayer shot has hit a valid target this game; misses do not count. */
     private static final java.util.Set<UUID> SLAYER_SHOT_TAKEN = new java.util.HashSet<>();
 
     /** Decisions waiting on the Storyteller, by id; shown in the Grimoire's Resolve panel. */
