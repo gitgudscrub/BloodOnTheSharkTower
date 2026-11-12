@@ -86,7 +86,31 @@ public final class RoleAutomation {
     private static UUID pendingWitchVictim;
     private static int pendingWitchDay = -1;
 
+    private static UUID pendingSlayerShooter;
+    private static UUID pendingSlayerTarget;
+    private static int pendingSlayerDay = -1;
+
+    /** Decisions waiting on the Storyteller, by id; shown in the Grimoire's Resolve panel. */
+    private static final Map<String, StorytellerPrompt> PROMPTS = new java.util.LinkedHashMap<>();
+    private static MinecraftServer promptServer;
+
     private RoleAutomation() {}
+
+    // ----------------------------------------------------------------- Prompts
+
+    public static List<StorytellerPrompt> prompts() {
+        return List.copyOf(PROMPTS.values());
+    }
+
+    private static void offer(MinecraftServer server, StorytellerPrompt prompt) {
+        PROMPTS.put(prompt.id(), prompt);
+        if (server != null) promptServer = server;
+        if (promptServer != null) StateBroadcaster.broadcastPrompts(promptServer);
+    }
+
+    private static void resolve(String id) {
+        if (PROMPTS.remove(id) != null && promptServer != null) StateBroadcaster.broadcastPrompts(promptServer);
+    }
 
     /** Forget the dedupe key so the next game can prompt again from scratch. */
     public static void reset() {
@@ -100,6 +124,8 @@ public final class RoleAutomation {
         EXECUTION_WARNED.clear();
         pendingWitchVictim = null;
         pendingWitchDay = -1;
+        clearPendingSlayer();
+        PROMPTS.clear();
     }
 
     // ------------------------------------------------------------------ Virgin
@@ -152,6 +178,12 @@ public final class RoleAutomation {
                             "Nothing happens; the nomination continues as normal"));
         }
         tellStorytellers(server, message);
+        if (seat != null) {
+            offer(server, new StorytellerPrompt("virgin", "Virgin nominated",
+                    who + " (" + role + ") nominated " + virgin + ". " + advice,
+                    List.of(StorytellerPrompt.Action.danger("Execute " + who, "/bots automation virgin " + seat),
+                            StorytellerPrompt.Action.ok("No effect", "/bots automation virgin dismiss"))));
+        }
     }
 
     /** The Storyteller approved the Virgin trigger: execute the nominator now. */
@@ -184,6 +216,7 @@ public final class RoleAutomation {
         pendingVirginNominator = null;
         pendingVirginNominee = null;
         pendingVirginDay = -1;
+        resolve("virgin");
     }
 
     // ------------------------------------------------------------------- Witch
@@ -213,6 +246,12 @@ public final class RoleAutomation {
                     .append(button("[No effect]", "/bots automation witch dismiss", "Nothing happens"));
         }
         tellStorytellers(server, message);
+        if (seat != null) {
+            offer(server, new StorytellerPrompt("witch", "Witch curse",
+                    who + " is Cursed and nominated. " + advice,
+                    List.of(StorytellerPrompt.Action.danger("Kill " + who, "/bots automation witch " + seat),
+                            StorytellerPrompt.Action.ok("No effect", "/bots automation witch dismiss"))));
+        }
     }
 
     /** The Storyteller confirmed the Witch's curse. */
@@ -222,6 +261,7 @@ public final class RoleAutomation {
         }
         pendingWitchVictim = null;
         pendingWitchDay = -1;
+        resolve("witch");
         if (!isAlive(victim)) return "That player is already dead.";
         removeReminderFrom(victim, "Cursed", Role.WITCH);
         killPublicly(server, victim);
@@ -232,6 +272,7 @@ public final class RoleAutomation {
         if (pendingWitchVictim == null) return "There is no Witch decision waiting.";
         pendingWitchVictim = null;
         pendingWitchDay = -1;
+        resolve("witch");
         return null;
     }
 
@@ -323,28 +364,54 @@ public final class RoleAutomation {
         boolean kills = realSlayer && !spent && !droisoned(shooter) && demon;
 
         announce(server, who + " claims to be the Slayer and shoots " + whom + "!", ChatFormatting.GOLD);
-        if (kills) {
-            ServerState.PLAYER_DEATH_STATUS.put(target, true);
-            DeathVisibility.remove(target);
-            TriggeredNightOrderManager.onDeath(target, TriggeredNightOrderManager.DeathCause.GENERIC);
-            announce(server, whom + " dies!", ChatFormatting.RED);
-            StateBroadcaster.broadcastDeathStatus(server);
-            StateBroadcaster.broadcastGrimoire(server);
-            tellStorytellers(server, "Slayer: " + who + " is the real Slayer and " + whom + " is the "
-                    + targetRole.getDisplayName() + ". The kill was applied.", ChatFormatting.GOLD);
-            onDeath(server, target, false);
-            return null;
-        }
-        announce(server, "Nothing happens.", ChatFormatting.GRAY);
         String why;
-        if (!realSlayer) why = who + " is not the Slayer (" + roleName(shooter) + ").";
-        else if (spent) why = who + " had already used the Slayer ability.";
-        else if (droisoned(shooter)) why = who + " is the Slayer but drunk or poisoned. The ability is now spent.";
-        else why = whom + " is the " + roleName(target) + ", not the Demon. The ability is now spent."
-                + (is(target, Role.RECLUSE) ? " (Recluse may register as the Demon: use Mark Dead if you choose so.)" : "");
-        tellStorytellers(server, "Slayer: " + why, ChatFormatting.GOLD);
+        if (kills) why = who + " is the real Slayer and " + whom + " is the " + targetRole.getDisplayName() + ": " + whom + " should die.";
+        else if (!realSlayer) why = who + " is not the Slayer (" + roleName(shooter) + "), so nothing should happen.";
+        else if (spent) why = who + " had already used the Slayer ability, so nothing should happen.";
+        else if (droisoned(shooter)) why = who + " is the Slayer but drunk or poisoned, so nothing should happen. The ability is now spent.";
+        else why = whom + " is the " + roleName(target) + ", not the Demon, so nothing should happen. The ability is now spent."
+                + (is(target, Role.RECLUSE) ? " The Recluse may register as the Demon: your call." : "");
+
+        pendingSlayerShooter = shooter;
+        pendingSlayerTarget = target;
+        pendingSlayerDay = ServerState.currentDay;
+        Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(target);
+        Component message = Component.literal("Slayer: " + why + " Decide: ").withStyle(ChatFormatting.GOLD)
+                .append(button("[" + whom + " dies]", "/bots automation slayer " + seat, whom + " dies now"))
+                .append(Component.literal(" "))
+                .append(button("[Nothing happens]", "/bots automation slayer dismiss", "The shot has no effect"));
+        tellStorytellers(server, message);
+        offer(server, new StorytellerPrompt("slayer", "Slayer shot", who + " shot " + whom + ". " + why,
+                List.of(StorytellerPrompt.Action.danger(whom + " dies", "/bots automation slayer " + seat),
+                        StorytellerPrompt.Action.ok("No effect", "/bots automation slayer dismiss"))));
         StateBroadcaster.broadcastGrimoire(server);
         return null;
+    }
+
+    /** The Storyteller confirmed the Slayer's kill. */
+    public static String slayerKill(MinecraftServer server, UUID target) {
+        if (target == null || !target.equals(pendingSlayerTarget) || pendingSlayerDay != ServerState.currentDay) {
+            return "There is no Slayer shot waiting for that player today.";
+        }
+        clearPendingSlayer();
+        if (!isAlive(target)) return "That player is already dead.";
+        killPublicly(server, target);
+        return null;
+    }
+
+    /** The Storyteller ruled that the shot has no effect. */
+    public static String slayerDismiss(MinecraftServer server) {
+        if (pendingSlayerTarget == null) return "There is no Slayer shot waiting.";
+        clearPendingSlayer();
+        announce(server, "Nothing happens.", ChatFormatting.GRAY);
+        return null;
+    }
+
+    private static void clearPendingSlayer() {
+        pendingSlayerShooter = null;
+        pendingSlayerTarget = null;
+        pendingSlayerDay = -1;
+        resolve("slayer");
     }
 
     // ------------------------------------------------------------ Protection
@@ -527,6 +594,14 @@ public final class RoleAutomation {
                     name + " becomes the Imp")).append(Component.literal(" "));
         }
         tellStorytellers(server, message);
+        List<StorytellerPrompt.Action> choices = new ArrayList<>();
+        for (UUID minion : minions) {
+            int seat = ServerState.PLAYER_SEAT_NUMBERS.get(minion);
+            choices.add(StorytellerPrompt.Action.neutral(label(server, minion) + " (" + actualRole(minion).getDisplayName() + ")",
+                    "/bots automation starpass " + seat));
+        }
+        offer(server, new StorytellerPrompt("starpass", "Imp star-pass",
+                label(server, imp) + " killed themselves. Choose the Minion who becomes the Imp.", choices));
         return true;
     }
 
@@ -540,6 +615,7 @@ public final class RoleAutomation {
             return "That player is not a living Minion.";
         }
         pendingStarPassNight = -1;
+        resolve("starpass");
         ServerState.PLAYER_ROLES.put(minion, new PendingRoleAssignment(Role.IMP, current.override()));
         ServerState.PLAYER_PERCEIVED_ROLES.remove(minion);
         StateBroadcaster.broadcastGrimoire(server);
@@ -555,6 +631,12 @@ public final class RoleAutomation {
 
     /** Dusk: clear reminders whose effect lasted "until dusk" or "tonight and tomorrow". */
     public static void onDusk(MinecraftServer server) {
+        if (server != null) promptServer = server;
+        clearPendingVirgin();
+        pendingWitchVictim = null;
+        pendingWitchDay = -1;
+        resolve("witch");
+        clearPendingSlayer();
         expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
         if (minstrelDrunkDay >= 0 && ServerState.currentDay > minstrelDrunkDay) {
             minstrelDrunkDay = -1;
@@ -593,6 +675,9 @@ public final class RoleAutomation {
 
     /** Dawn: clear reminders that only protected the night just gone. */
     public static void onDawn(MinecraftServer server) {
+        if (server != null) promptServer = server;
+        pendingStarPassNight = -1;
+        resolve("starpass");
         expireReminders(server, EXPIRE_AT_DAWN, "Dawn");
     }
 

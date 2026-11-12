@@ -3,6 +3,33 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.23 — Resolve panel and rim reminders (unreleased)
+
+- Grimoire **Resolve** panel (Storyteller only, lower right): every decision
+  the automation hands to the Storyteller now waits here as well as in
+  chat, with a button per choice. Virgin nominations ("Execute X" / "No
+  effect"), Witch curses ("Kill X" / "No effect"), Slayer shots ("X dies"
+  / "No effect") and the Imp star-pass (one button per living Minion).
+  Several decisions page with a `>` arrow. The buttons run the same
+  `/bots automation ...` commands as the chat links, so the server still
+  decides; the panel clears itself when the decision is made, and at dusk
+  or dawn like the chat prompts.
+- Slayer shot is now a Storyteller decision instead of resolving itself:
+  the claim is announced to everyone, the Storyteller sees who really
+  holds the Slayer and whether the target is really the Demon (a Recluse
+  may register), and chooses "<target> dies" or "No effect".
+- Reminders are mini tokens on the rim of the role token (character icon,
+  or the reminder's initial), coloured by effect, instead of chips. They
+  keep clear of the seat label, the G/E badge and each other; extras
+  collapse into a "+N" token. Hover for the text, click to edit.
+- Dead players: the "?" on a privately marked death is gone. The token is
+  dimmed with the shroud at its corner until the death is revealed, and
+  the head portrait uses the same shroud instead of the old hood square.
+- Settings: "Pronoun Tags" is "Pronouns" and the clock-hand scale sits on
+  the vote presentation heading, so every label fits its button at the
+  default GUI scale. "Reveal All Deaths" is "Reveal Deaths" for the same
+  reason.
+
 ## 1.0.2-alpha.22 — Clocktower look, light and dark (unreleased)
 
 - Every Sharktower screen and HUD now shares one look: round parchment

@@ -77,7 +77,7 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - TOR-aware Butler behaviour.
 - Role automation with the Storyteller keeping the final say: the Virgin's
   nomination execution (offered to the Storyteller to approve), the public
-  Slayer shot (`/slay <player or seat>`), the Scarlet Woman becoming the
+  Slayer shot (`/slay <player or seat>`, resolved by the Storyteller), the Scarlet Woman becoming the
   Demon, the Imp star-pass choice, Demon Kill refusing protected targets
   (Soldier, Sailor, Monk/Innkeeper "Safe", Tea Lady, Fool) with a Mayor
   bounce check, automatic expiry of Poisoner/Monk/Innkeeper-style reminders,
@@ -93,8 +93,11 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Keys & Help screen (H) with live key bindings and phase hints.
 - Role names under Grimoire tokens and G/E alignment letters (both in
   Settings), and a role count strip that names each team.
-- Reminders show as labelled chips (icon + text, coloured by effect) beside
-  each token, so they can be read without hovering.
+- Reminders are mini tokens on the rim of each role token (character icon
+  or initial, coloured by effect); hover for the text, "+N" for extras.
+- Storyteller Resolve panel in the Grimoire: Virgin nominations, Witch
+  curses, Slayer shots and star-passes wait at the lower right with a
+  button per choice.
 - One Clocktower look across every screen (round tokens, framed panels,
   Cinzel titles) in two modes: **Candlelit** (dark) and **Parchment**
   (light), switched with the Theme button in Settings.

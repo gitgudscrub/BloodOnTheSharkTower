@@ -72,8 +72,10 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             drawRoleLabel(graphics, role);
         }
 
-        if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
-            drawPendingDeathQuestionMark(graphics, getX() + 1, getY() + 1);
+        if (!currentDead && ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
+            // Marked dead but not yet revealed: a lighter dim and the shroud, Storyteller-only.
+            UiTheme.disc(graphics, getX(), getY(), this.width, UiTheme.dark() ? 0x50120D14 : 0x38EBDFC3);
+            UiTheme.shroud(graphics, getX() - 4, getY() - 4, this.width / 2);
         }
 
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
@@ -120,24 +122,6 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         graphics.fill(-textWidth / 2 - 2, -1, textWidth / 2 + 2, 9, UiTheme.dark() ? 0xC0101014 : 0xC0F5EDD9);
         graphics.text(font, name, -textWidth / 2, 0, UiDrawing.opaque(UiDrawing.teamColor(role.getTeam())), false);
         graphics.pose().popMatrix();
-    }
-
-    /**
-     * Larger pixel-art pending-death marker. This is intentionally about 50%
-     * larger than Minecraft's normal '?' glyph so the ST can spot an unrevealed
-     * death at a glance without changing the surrounding role-token size.
-     */
-    private static void drawPendingDeathQuestionMark(GuiGraphicsExtractor graphics, int x, int y) {
-        drawQuestionMarkPixels(graphics, x + 1, y + 1, 0xCC3A2D0A);
-        drawQuestionMarkPixels(graphics, x, y, UiDrawing.GOLD);
-    }
-
-    private static void drawQuestionMarkPixels(GuiGraphicsExtractor graphics, int x, int y, int colour) {
-        graphics.fill(x + 2, y, x + 8, y + 2, colour);
-        graphics.fill(x + 8, y + 2, x + 10, y + 6, colour);
-        graphics.fill(x + 5, y + 6, x + 10, y + 8, colour);
-        graphics.fill(x + 4, y + 8, x + 6, y + 11, colour);
-        graphics.fill(x + 4, y + 12, x + 6, y + 14, colour);
     }
 
     @Override

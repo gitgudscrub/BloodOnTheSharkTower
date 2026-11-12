@@ -79,11 +79,17 @@ public final class CoreStateReceivers {
                 ClientState.grimoirePerceivedRoles = new java.util.HashMap<>();
                 ClientState.grimoireReminders = new java.util.HashMap<>();
                 ClientState.demonBluffs = java.util.List.of();
+                ClientState.storytellerPrompts = java.util.List.of();
+                ClientState.storytellerPromptsRevision++;
                 ClientTriggeredNightOrder.update("");
                 GameEndAnimationHUD.reset();
                 com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
             }
             ClientState.pendingDeaths = java.util.Set.copyOf(payload.pendingDeaths().keySet());
+        });
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.StorytellerPromptsS2CPayload.TYPE, (payload, context) -> {
+            ClientState.storytellerPrompts = payload.prompts();
+            ClientState.storytellerPromptsRevision++;
         });
         ClientPlayNetworking.registerGlobalReceiver(SyncDayNightS2CPayload.TYPE, (payload, context) ->
                 ClientState.updateDayNight(payload.night(), payload.day(), payload.executionToday())
