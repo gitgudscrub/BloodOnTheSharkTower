@@ -3,6 +3,20 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.26 — Slayer's crossbow (unreleased)
+
+- `/slay` with no target hands the player a Slayer's Crossbow loaded with
+  one bolt and announces that they are claiming to be the Slayer. Whoever
+  the bolt hits is the target: the shot is announced and the Storyteller
+  gets the usual Resolve decision (the target dies, or no effect). The bolt
+  never does damage.
+- A miss costs nothing: the shooter is told and can `/slay` again. A bolt
+  that has not hit anyone within 4 seconds counts as a miss and can never
+  land later, even if it froze outside the loaded area.
+- The crossbow is taken away once fired, at dusk, and when its holder dies
+  or leaves their seat, so it cannot be reloaded or saved for another day.
+- `/slay <player or seat>` still shoots straight away without aiming.
+
 ## 1.0.2-alpha.25 — Grimoire hint gets its own band (unreleased)
 
 - The Grimoire ring is centred in the space above a strip kept free at the
