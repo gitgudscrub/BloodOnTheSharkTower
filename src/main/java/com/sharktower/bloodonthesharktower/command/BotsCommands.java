@@ -298,6 +298,11 @@ public final class BotsCommands {
                                 .then(Commands.literal("starpass")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationStarPass)))
+                                .then(Commands.literal("slayer")
+                                        .then(Commands.literal("dismiss")
+                                                .executes(BotsCommands::executeAutomationSlayerDismiss))
+                                        .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                .executes(BotsCommands::executeAutomationSlayer)))
                                 .then(Commands.literal("virgin")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationVirginDismiss))
@@ -1492,6 +1497,28 @@ public final class BotsCommands {
         }
         String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
                 .starPass(context.getSource().getServer(), target);
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationSlayer(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        int seat = IntegerArgumentType.getInteger(context, "seat");
+        UUID target = SetupOperations.playerBySeat(seat);
+        if (target == null) {
+            send(context, "No player is assigned to seat " + seat + ".");
+            return 0;
+        }
+        String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
+                .slayerKill(context.getSource().getServer(), target);
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationSlayerDismiss(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
+                .slayerDismiss(context.getSource().getServer());
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }

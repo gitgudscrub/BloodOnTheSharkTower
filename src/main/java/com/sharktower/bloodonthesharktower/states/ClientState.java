@@ -114,6 +114,9 @@ public final class ClientState {
     public static Map<UUID, Integer> grimoireSeatNumbers = new HashMap<>();
     public static Map<UUID, List<Reminder>> grimoireReminders = new HashMap<>();
     public static List<String> demonBluffs = List.of();
+    /** Decisions waiting on the local Storyteller (empty for everyone else). */
+    public static List<com.sharktower.bloodonthesharktower.automation.StorytellerPrompt> storytellerPrompts = List.of();
+    public static int storytellerPromptsRevision;
     public static long notebookGeneration;
     public static String notebookText = "";
     public static Map<UUID,Integer> attentionHands = Map.of();

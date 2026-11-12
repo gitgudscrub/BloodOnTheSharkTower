@@ -32,11 +32,23 @@ public final class StateBroadcaster {
         ServerPlayNetworking.send(player, new GameVisibilityS2CPayload(ServerState.resetGeneration, pending));
     }
 
+    /** Pending Storyteller decisions; everyone else gets an empty list. */
+    public static void sendPromptsTo(ServerPlayer player) {
+        boolean storyteller = StorytellerState.isStoryteller(player.getUUID());
+        ServerPlayNetworking.send(player, new StorytellerPromptsS2CPayload(
+                storyteller ? com.sharktower.bloodonthesharktower.automation.RoleAutomation.prompts() : java.util.List.of()));
+    }
+
+    public static void broadcastPrompts(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) sendPromptsTo(player);
+    }
+
     public static int sendCurrentStateTo(ServerPlayer player) {
         com.sharktower.bloodonthesharktower.setup.FreshGameBooks.refreshIfPending(player);
         SocialStateManager.send(player);
         PlayerNotebooks.send(player);
         sendVisibilityTo(player);
+        sendPromptsTo(player);
         ServerPlayNetworking.send(player, new SyncDayNightS2CPayload(
                 ServerState.currentNight,
                 ServerState.currentDay,

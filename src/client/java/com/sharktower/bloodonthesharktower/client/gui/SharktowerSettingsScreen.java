@@ -37,7 +37,7 @@ public final class SharktowerSettingsScreen extends Screen {
         addToggle(left, top + row * 2, "Player List", () -> ClientSettings.playerListHud, v -> ClientSettings.playerListHud = v);
         addToggle(mid, top + row * 2, "Role Counts", () -> ClientSettings.roleCountsHud, v -> ClientSettings.roleCountsHud = v);
         addToggle(right, top + row * 2, "World Roles", () -> ClientSettings.worldRoleIcons, v -> ClientSettings.worldRoleIcons = v);
-        addToggle(left, top + row * 3, "Pronoun Tags", () -> ClientSettings.pronounTags, v -> ClientSettings.pronounTags = v);
+        addToggle(left, top + row * 3, "Pronouns", () -> ClientSettings.pronounTags, v -> ClientSettings.pronounTags = v);
         addToggle(mid, top + row * 3, "Role Names", () -> ClientSettings.grimoireLabels, v -> ClientSettings.grimoireLabels = v,
                 "Show each role's name under its Grimoire token.");
         addToggle(right, top + row * 3, "G/E Letters", () -> ClientSettings.alignmentLetters, v -> ClientSettings.alignmentLetters = v,
@@ -126,10 +126,8 @@ public final class SharktowerSettingsScreen extends Screen {
         UiTheme.drawTitle(graphics, font, "Sharktower Settings", width / 2, 12);
         drawCentered(graphics, "Player HUD", 39, UiDrawing.GOLD, UiTheme.dark());
         if (isStoryteller()) {
-            drawCentered(graphics, "Storyteller Vote Presentation", 175, UiDrawing.GOLD, UiTheme.dark());
-            drawCentered(graphics,
-                    String.format(Locale.ROOT, "Clock hand scale: %.2f", ClientState.clockHandScale),
-                    54 + 28 * 5 + 24, UiDrawing.MUTED, false);
+            drawCentered(graphics, String.format(Locale.ROOT, "Storyteller Vote Presentation  ·  clock hands x%.2f",
+                    ClientState.clockHandScale), 175, UiDrawing.GOLD, UiTheme.dark());
         } else {
             drawCentered(graphics, "Storyteller-only vote settings appear when you are the active Storyteller.",
                     175, UiDrawing.MUTED, false);

@@ -92,33 +92,9 @@ public final class UiDrawing {
      */
     public static void deathShroud(GuiGraphicsExtractor graphics, int x, int y, int size) {
         if (size <= 0) return;
-
-        int markerSize = Math.max(8, size / 2);
-        int markerX = x + (size - markerSize) / 2;
-        int markerY = y + (size - markerSize) / 2;
-
-        graphics.fill(markerX, markerY, markerX + markerSize, markerY + markerSize, 0xAA101014);
-
-        int left = markerX + Math.max(1, markerSize / 6);
-        int right = markerX + markerSize - Math.max(1, markerSize / 6);
-        int hoodLeft = markerX + markerSize / 3;
-        int hoodRight = markerX + markerSize - markerSize / 3;
-        int hoodTop = markerY + Math.max(1, markerSize / 7);
-        int shoulderTop = markerY + markerSize / 3;
-        int lowerTop = markerY + (markerSize * 2) / 3;
-        int bottom = markerY + markerSize - Math.max(1, markerSize / 10);
-
-        int cloth = 0xFFE2E2E8;
-        int shadow = 0xFF34343C;
-
-        graphics.fill(hoodLeft, hoodTop, hoodRight, shoulderTop + 1, cloth);
-        graphics.fill(markerX + markerSize / 4, shoulderTop,
-                markerX + markerSize - markerSize / 4, lowerTop, cloth);
-        graphics.fill(left, lowerTop - 1, right, bottom, cloth);
-        graphics.fill(markerX + markerSize / 3, shoulderTop,
-                markerX + markerSize - markerSize / 3,
-                markerY + markerSize / 2 + 1, shadow);
-        graphics.outline(markerX - 1, markerY - 1, markerSize + 2, markerSize + 2, 0xFFF2F2F4);
+        // Dim the portrait and hang the shroud at its top-left corner, as on tokens.
+        graphics.fill(x, y, x + size, y + size, UiTheme.dark() ? 0x70120D14 : 0x50EBDFC3);
+        UiTheme.shroud(graphics, x - 3, y - 3, Math.max(8, size / 2));
     }
 
     public static ScriptRole roleOf(PendingRoleAssignment assignment) {

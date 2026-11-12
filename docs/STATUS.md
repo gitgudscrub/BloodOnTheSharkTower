@@ -137,7 +137,9 @@ after the alpha that introduced each change.
   refusals on Demon Kill, win-condition prompts, Witch curse, Courtier and
   Minstrel timers, execution survival warnings, Vortox/Evil Twin/Mastermind
   endings), verified on the dev harness in November 2026 (execution
-  warnings, Minstrel, Evil Twin and Mastermind by regression checks only).
+  warnings, Minstrel, Evil Twin and Mastermind by regression checks only);
+- Grimoire Resolve panel listing those decisions with a button per choice
+  (verified live: Slayer and Virgin prompts, paging, execute and dismiss).
 
 ### Night game and information
 

@@ -58,6 +58,7 @@ public class AssignRolesScreen extends Screen {
     private static final int DECEIVED_ROLE_GAP = 4;
     private static final int HEAD_SIZE = 24;
     private static final int CONTROL_W = 90;
+    private static final int RESOLVE_W = 170;
     private static final int CONTROL_H = 20;
     private static final int MARGIN = 10;
     private static final int GAP = 5;
@@ -113,6 +114,15 @@ public class AssignRolesScreen extends Screen {
                 Math.max(28,horizontal - 48));
     }
 
+    private record ResolveEntry(int x, int y, String title, List<net.minecraft.util.FormattedCharSequence> body) {}
+
+    private final List<ResolveEntry> resolveEntries = new ArrayList<>();
+    private final java.util.Set<net.minecraft.client.gui.components.AbstractWidget> resolveButtons = new java.util.HashSet<>();
+    private int resolvePanelX, resolvePanelY, resolvePanelH;
+    private int resolveIndex;
+    private String resolvePage = "";
+    private int lastPromptsRevision = -1;
+
     public AssignRolesScreen() {
         super(Component.literal("Blood on the Sharktower — Grimoire"));
     }
@@ -135,6 +145,7 @@ public class AssignRolesScreen extends Screen {
         buildStorytellerWidgets();
         buildUnseatedWidgets();
         buildBluffWidgets();
+        buildResolveWidgets();
         lastSeatLayoutSignature = seatLayoutSignature();
     }
 
@@ -147,7 +158,8 @@ public class AssignRolesScreen extends Screen {
         String currentSignature = seatLayoutSignature();
         int lunaticRevision = ClientLunaticBluffs.revision();
         if ((!currentSignature.equals(lastSeatLayoutSignature)
-                || lunaticRevision != lastLunaticBluffRevision) && this.minecraft != null) {
+                || lunaticRevision != lastLunaticBluffRevision
+                || ClientState.storytellerPromptsRevision != lastPromptsRevision) && this.minecraft != null) {
             clearWidgets();
             buildContextualControls();
             buildBluffVisibilityControl();
@@ -156,6 +168,7 @@ public class AssignRolesScreen extends Screen {
             buildStorytellerWidgets();
             buildUnseatedWidgets();
             buildBluffWidgets();
+            buildResolveWidgets();
             lastSeatLayoutSignature = currentSignature;
             lastLunaticBluffRevision = lunaticRevision;
         }
@@ -177,7 +190,7 @@ public class AssignRolesScreen extends Screen {
 
         y = addRightAction(rightX, y, "Spectator", ChatFormatting.GRAY, "st_spectator");
         if (phase != GamePhase.SETUP && phase != GamePhase.NIGHT && !ClientState.pendingDeaths.isEmpty()) {
-            y = addRightAction(rightX, y, "Reveal All Deaths", ChatFormatting.RED, "reveal_deaths");
+            y = addRightAction(rightX, y, "Reveal Deaths", ChatFormatting.RED, "reveal_deaths");
         }
 
         if (phase == GamePhase.SETUP) {
@@ -396,133 +409,78 @@ public class AssignRolesScreen extends Screen {
             int roleX = (int) Math.round(tokenCenterX) - ROLE_SIZE / 2;
             int roleY = (int) Math.round(tokenCenterY) - ROLE_SIZE / 2;
 
-            int top = roleY - REMINDER_SIZE - REMINDER_PADDING;
-            int bottom = roleY + ROLE_SIZE + REMINDER_PADDING;
-            int left = roleX - REMINDER_SIZE - REMINDER_PADDING;
-            int right = roleX + ROLE_SIZE + REMINDER_PADDING;
-            int nearLeft = roleX + ROLE_SIZE / 2 - REMINDER_SIZE - REMINDER_PADDING;
-            int nearRight = roleX + ROLE_SIZE / 2 + REMINDER_PADDING;
-            int nearTop = roleY + ROLE_SIZE / 2 - REMINDER_SIZE - REMINDER_PADDING;
-            int nearBottom = roleY + ROLE_SIZE / 2 + REMINDER_PADDING;
-
-            List<int[]> candidates = new ArrayList<>(List.of(
-                    new int[]{nearLeft, top},
-                    new int[]{nearRight, top},
-                    new int[]{right, nearTop},
-                    new int[]{right, nearBottom},
-                    new int[]{nearRight, bottom},
-                    new int[]{nearLeft, bottom},
-                    new int[]{left, nearBottom},
-                    new int[]{left, nearTop}
-            ));
-
-            int headX = (int) Math.round(centerX + layout.headRadiusX() * Math.cos(angle)) - HEAD_SIZE / 2;
-            int headY = (int) Math.round(centerY + innerRadius * Math.sin(angle)) - HEAD_SIZE / 2;
-            final double roleCenterX = tokenCenterX;
-            final double roleCenterY = tokenCenterY;
-            final double outwardX = Math.cos(angle);
-            final double outwardY = Math.sin(angle);
-
-            candidates.sort(Comparator.comparingDouble((int[] p) ->
-                    reminderPlacementScore(
-                            p,
-                            roleCenterX,
-                            roleCenterY,
-                            outwardX,
-                            outwardY,
-                            headX,
-                            headY
-                    )).reversed());
-
-            // Extra slots give true/believed pairs room without covering either token.
-            for (int step=-2; step<=2; step++) {
-                candidates.add(new int[]{roleX + step*16,roleY-32});
-                candidates.add(new int[]{roleX + step*16,roleY+ROLE_SIZE+18});
-                candidates.add(new int[]{roleX-32,roleY+step*16});
-                candidates.add(new int[]{roleX+ROLE_SIZE+18,roleY+step*16});
-            }
-            candidates.sort(Comparator.comparingDouble((int[] p) ->
-                    reminderPlacementScore(p,roleCenterX,roleCenterY,outwardX,outwardY,headX,headY)
-                    - 0.08*(Math.pow(p[0]+REMINDER_SIZE/2.0-roleCenterX,2)+Math.pow(p[1]+REMINDER_SIZE/2.0-roleCenterY,2))).reversed());
-            List<Reminder> allReminders = ClientGrimoireEdits.remindersFor(uuid);
-            // Labelled chips first; only if no chip column fits do the
-            // reminders fall back to the small icon squares below.
-            int represented = placeReminderChips(uuid, seat, allReminders, roleX, roleY, outwardX);
-            List<Reminder> reminders = allReminders.subList(represented, allReminders.size());
-            int index=0;
-            for (int[] position:candidates) {
-                if (index>=Math.min(8,reminders.size())) break;
-                int[] area={position[0]-1,position[1]-1,REMINDER_SIZE+2,REMINDER_SIZE+2};
-                if (area[0]<120 || area[0]+area[2]>layoutWidth()-110 || area[1]<44 || area[1]+area[3]>layoutHeight()-44) continue;
-                boolean collision=false;
-                for (var child:this.children()) {
-                    if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
-                            && overlaps(area,new int[]{widget.getX()-1,widget.getY()-1,widget.getWidth()+2,widget.getHeight()+2})) {collision=true;break;}
-                }
-                if (collision) continue;
-                this.addRenderableWidget(new GrimoireReminderWidget(position[0],position[1],REMINDER_SIZE,uuid,seat,reminders.get(index++)));
-            }
-
+            placeReminderTokens(uuid, seat, ClientGrimoireEdits.remindersFor(uuid), tokenCenterX, tokenCenterY, angle, roleX, roleY);
         }
     }
 
     /**
-     * Stacks reminder chips in a column beside the role token, on the side away
-     * from the circle's centre (left-hand seats to the left, the rest to the
-     * right), then the other side, then above the token, then below its name. Up to three rows
-     * fit beside the token above its name label; with more reminders the last
-     * row becomes a "+N" chip that opens the editor. Where three rows do
-     * not fit, two or one are tried before falling back to icon squares.
-     *
-     * @return how many reminders the chips represent (0 when none fit)
+     * Mini tokens on the rim: small round icons tucked against the role token's
+     * edge, starting on the side away from the circle's centre and fanning out
+     * either way, like reminder tokens in the real grimoire. The inward side
+     * stays clear of the player's head and the bottom clear of the role name.
+     * With more reminders than spots, the last spot becomes "+N".
      */
-    private int placeReminderChips(UUID uuid, int seat, List<Reminder> reminders, int roleX, int roleY, double outwardX) {
-        if (reminders.isEmpty()) return 0;
-        boolean preferLeft = outwardX < -0.25;
-        // Three rows if they fit, else fewer with the rest behind "+N".
-        for (int maxRows = 3; maxRows >= 1; maxRows--) {
-        int shown = reminders.size() <= maxRows ? reminders.size() : maxRows - 1;
-        int hidden = reminders.size() - shown;
-        // 0 = left of the token, 1 = right, 2 = stacked above it, 3 = below its name label.
-        int[] sides = preferLeft ? new int[]{0, 1, 2, 3} : new int[]{1, 0, 2, 3};
-        int rowStep = GrimoireReminderWidget.CHIP_HEIGHT + 1;
-        for (int side : sides) {
-            List<GrimoireReminderWidget> column = new ArrayList<>();
-            int rows = shown + (hidden > 0 ? 1 : 0);
-            int y = switch (side) {
-                case 2 -> roleY - 6 - rows * rowStep + 1;
-                case 3 -> roleY + ROLE_SIZE + 16;
-                default -> roleY + ROLE_SIZE / 2 - (rows * rowStep - 1) / 2;
-            };
-            boolean fits = true;
-            for (int i = 0; i < rows; i++) {
-                int w = i < shown ? GrimoireReminderWidget.chipWidth(reminders.get(i))
-                        : GrimoireReminderWidget.overflowWidth(hidden);
-                int x = switch (side) {
-                    case 0 -> roleX - 7 - w;
-                    case 1 -> roleX + ROLE_SIZE + 7;
-                    default -> roleX + ROLE_SIZE / 2 - w / 2;
-                };
-                int[] area = {x - 1, y - 1, w + 2, GrimoireReminderWidget.CHIP_HEIGHT + 2};
-                // Side panels and bluff slots are widgets, so the overlap check keeps
-                // chips off them; the margins only keep clear of the screen edge,
-                // the phase banner at the top and the hover hint at the bottom.
-                if (area[0] < 4 || area[0] + area[2] > layoutWidth() - 4
-                        || area[1] < 16 || area[1] + area[3] > layoutHeight() - 30 || collidesWithWidget(area)) {
-                    fits = false;
-                    break;
-                }
-                column.add(i < shown ? GrimoireReminderWidget.chip(x, y, uuid, seat, reminders.get(i))
-                        : GrimoireReminderWidget.overflow(x, y, uuid, seat, hidden));
-                y += rowStep;
+    private void placeReminderTokens(UUID uuid, int seat, List<Reminder> reminders,
+                                     double cx, double cy, double outward, int roleX, int roleY) {
+        if (reminders.isEmpty()) return;
+        int size = REMINDER_SIZE;
+        double ringRadius = ROLE_SIZE / 2.0 + size / 2.0 + 1;
+        double step = 2 * Math.asin((size + 3) / 2.0 / ringRadius);
+        List<Double> angles = new ArrayList<>();
+        angles.add(outward);
+        for (int k = 1; k <= 4; k++) {
+            angles.add(outward + k * step);
+            angles.add(outward - k * step);
+        }
+        boolean labels = com.sharktower.bloodonthesharktower.client.config.ClientSettings.grimoireLabels;
+        boolean badge = com.sharktower.bloodonthesharktower.client.config.ClientSettings.alignmentLetters
+                && ClientGrimoireEdits.visibleAlignmentFor(uuid) != com.sharktower.bloodonthesharktower.core.AlignmentOverride.DEFAULT;
+        List<int[]> spots = new ArrayList<>();
+        for (double a : angles) {
+            if (Math.abs(angleDiff(a, outward + Math.PI)) < Math.toRadians(45)) continue;
+            if (labels && Math.abs(angleDiff(a, Math.PI / 2)) < Math.toRadians(40)) continue;
+            if (badge && Math.abs(angleDiff(a, Math.PI / 4)) < Math.toRadians(35)) continue;
+            int x = (int) Math.round(cx + ringRadius * Math.cos(a)) - size / 2;
+            int y = (int) Math.round(cy + ringRadius * Math.sin(a)) - size / 2;
+            int[] area = {x - 1, y - 1, size + 2, size + 2};
+            if (area[0] < 4 || area[0] + area[2] > layoutWidth() - 4
+                    || area[1] < 16 || area[1] + area[3] > layoutHeight() - 30) continue;
+            if (collidesWithWidget(area, roleX, roleY)) continue;
+            boolean onAnother = false;
+            for (int[] spot : spots) {
+                if (overlaps(new int[]{x, y, size, size}, new int[]{spot[0], spot[1], size, size})) { onAnother = true; break; }
             }
-            if (fits) {
-                column.forEach(this::addRenderableWidget);
-                return reminders.size();
+            if (onAnother) continue;
+            spots.add(new int[]{x, y});
+        }
+        if (spots.isEmpty()) return;
+        int shown = reminders.size() <= spots.size() ? reminders.size() : spots.size() - 1;
+        for (int i = 0; i < shown; i++) {
+            this.addRenderableWidget(GrimoireReminderWidget.rim(spots.get(i)[0], spots.get(i)[1], size, uuid, seat, reminders.get(i)));
+        }
+        if (shown < reminders.size()) {
+            this.addRenderableWidget(GrimoireReminderWidget.overflow(spots.get(shown)[0], spots.get(shown)[1], size,
+                    uuid, seat, reminders.size() - shown));
+        }
+    }
+
+    private static double angleDiff(double a, double b) {
+        double d = (a - b) % (Math.PI * 2);
+        if (d > Math.PI) d -= Math.PI * 2;
+        if (d < -Math.PI) d += Math.PI * 2;
+        return d;
+    }
+
+    /** Overlap check that ignores this seat's own role token, which the rim tokens hug on purpose. */
+    private boolean collidesWithWidget(int[] area, int ownX, int ownY) {
+        for (var child : this.children()) {
+            if (!(child instanceof net.minecraft.client.gui.components.AbstractWidget widget)) continue;
+            if (widget.getX() == ownX && widget.getY() == ownY && widget.getWidth() == ROLE_SIZE) continue;
+            if (overlaps(area, new int[]{widget.getX() - 1, widget.getY() - 1, widget.getWidth() + 2, widget.getHeight() + 2})) {
+                return true;
             }
         }
-        }
-        return 0;
+        return false;
     }
 
     private boolean collidesWithWidget(int[] area) {
@@ -533,27 +491,6 @@ public class AssignRolesScreen extends Screen {
             }
         }
         return false;
-    }
-
-    private static double reminderPlacementScore(
-            int[] position,
-            double roleCenterX,
-            double roleCenterY,
-            double outwardX,
-            double outwardY,
-            int headX,
-            int headY
-    ) {
-        double reminderCenterX = position[0] + REMINDER_SIZE / 2.0;
-        double reminderCenterY = position[1] + REMINDER_SIZE / 2.0;
-        double score = (reminderCenterX - roleCenterX) * outwardX
-                + (reminderCenterY - roleCenterY) * outwardY;
-
-        boolean overlapsHead = position[0] < headX + HEAD_SIZE
-                && position[0] + REMINDER_SIZE > headX
-                && position[1] < headY + HEAD_SIZE
-                && position[1] + REMINDER_SIZE > headY;
-        return overlapsHead ? score - 1000.0 : score;
     }
 
     private void buildStorytellerWidgets() {
@@ -910,18 +847,142 @@ public class AssignRolesScreen extends Screen {
         }
     }
 
+    /** Bottom edge of the right-hand button rail (Resolve buttons excluded). */
+    private int railBottom() {
+        int x = layoutWidth() - CONTROL_W - MARGIN;
+        int railBottom = 10;
+        for (var child : this.children()) {
+            if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
+                    && !resolveButtons.contains(widget)
+                    && widget.getX() >= x && widget.getY() < layoutHeight() - 40)
+                railBottom = Math.max(railBottom, widget.getY() + widget.getHeight());
+        }
+        return railBottom;
+    }
+
+    private int votePanelTop() {
+        int h = ClientState.voteInProgress ? 70 : 48;
+        return Math.max(railBottom() + 10, Math.min(225, layoutHeight() - h - 40));
+    }
+
+    /**
+     * Decisions waiting on the Storyteller (Virgin, Witch, Slayer, star-pass),
+     * stacked in a panel at the lower right with a button per choice. Each
+     * button runs the same command the chat buttons do, so the server decides.
+     */
+    private void buildResolveWidgets() {
+        resolveEntries.clear();
+        resolveButtons.clear();
+        resolvePanelH = 0;
+        lastPromptsRevision = ClientState.storytellerPromptsRevision;
+        List<com.sharktower.bloodonthesharktower.automation.StorytellerPrompt> prompts = ClientState.storytellerPrompts;
+        if (prompts.isEmpty() || !ClientGrimoireEdits.isLocalStoryteller()) return;
+        if (resolveIndex >= prompts.size()) resolveIndex = 0;
+        var prompt = prompts.get(resolveIndex);
+        int w = RESOLVE_W;
+        int x = layoutWidth() - w - MARGIN;
+        int innerW = w - 8;
+        List<net.minecraft.util.FormattedCharSequence> body = this.font.split(Component.literal(prompt.body()), innerW);
+        if (body.size() > 5) body = body.subList(0, 5);
+        var actions = prompt.actions();
+        int halfW = (innerW - 4) / 2;
+        boolean wide = actions.stream().anyMatch(action -> this.font.width(action.label()) + 10 > halfW);
+        int perRow = wide ? 1 : 2;
+        int rows = (actions.size() + perRow - 1) / perRow;
+        int height = 18 + 10 + body.size() * 9 + 3 + rows * 22 + 4;
+
+        int top = railBottom() + 6;
+        int bottom = layoutHeight() - 36;
+        int y;
+        if (ClientState.nominationsOpen || ClientState.voteInProgress) {
+            int voteTop = votePanelTop();
+            int voteBottom = voteTop + (ClientState.voteInProgress ? 70 : 48);
+            if (voteBottom + 6 + height <= bottom) y = bottom - height;
+            else if (top + height <= voteTop - 6) y = voteTop - 6 - height;
+            else y = Math.max(voteBottom + 6, layoutHeight() - 4 - height);
+        } else {
+            y = Math.max(top, bottom - height);
+        }
+        resolvePanelX = x;
+        resolvePanelY = y;
+        resolvePanelH = height;
+        this.addRenderableWidget(new ResolvePanelWidget(x, y, w, height));
+        if (prompts.size() > 1) {
+            String page = (resolveIndex + 1) + "/" + prompts.size();
+            resolvePage = page;
+            SharktowerButton next = SharktowerButton.builder(Component.literal(">"), b -> {
+                resolveIndex = (resolveIndex + 1) % ClientState.storytellerPrompts.size();
+                lastPromptsRevision = -1;
+            }).bounds(x + w - 4 - 14, y + 3, 14, 12).build();
+            resolveButtons.add(next);
+            this.addRenderableWidget(next);
+        } else {
+            resolvePage = "";
+        }
+        int cursor = y + 18;
+        resolveEntries.add(new ResolveEntry(x + 4, cursor, prompt.title(), body));
+        cursor += 10 + body.size() * 9 + 3;
+        for (int i = 0; i < actions.size(); i += perRow) {
+            int inRow = Math.min(perRow, actions.size() - i);
+            int bw = (innerW - (inRow - 1) * 4) / inRow;
+            for (int j = 0; j < inRow; j++) {
+                var action = actions.get(i + j);
+                ChatFormatting colour = switch (action.tone()) {
+                    case "danger" -> ChatFormatting.RED;
+                    case "ok" -> ChatFormatting.GREEN;
+                    default -> ChatFormatting.WHITE;
+                };
+                SharktowerButton button = SharktowerButton.builder(Component.literal(action.label()).withStyle(colour),
+                        b -> runCommand(action.command())).bounds(x + 4 + j * (bw + 4), cursor, bw, 20).build();
+                resolveButtons.add(button);
+                this.addRenderableWidget(button);
+            }
+            cursor += 22;
+        }
+    }
+
+    private void runCommand(String command) {
+        if (this.minecraft == null || this.minecraft.player == null) return;
+        String cmd = command.startsWith("/") ? command.substring(1) : command;
+        this.minecraft.player.connection.sendCommand(cmd);
+    }
+
+    /** The Resolve panel's frame and text; inactive so clicks fall through to the buttons on it. */
+    private final class ResolvePanelWidget extends net.minecraft.client.gui.components.AbstractWidget {
+        ResolvePanelWidget(int x, int y, int w, int h) {
+            super(x, y, w, h, Component.literal("Resolve"));
+            this.active = false;
+        }
+
+        @Override
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+            UiDrawing.panel(graphics, getX(), getY(), getWidth(), getHeight());
+            UiTheme.drawSectionLabel(graphics, AssignRolesScreen.this.font, "Resolve", getX() + 4, getY() + 5);
+            if (!resolvePage.isEmpty()) {
+                graphics.text(AssignRolesScreen.this.font, resolvePage,
+                        getX() + getWidth() - 20 - AssignRolesScreen.this.font.width(resolvePage), getY() + 5, UiDrawing.MUTED, false);
+            }
+            for (ResolveEntry entry : resolveEntries) {
+                graphics.text(AssignRolesScreen.this.font, entry.title(), entry.x(), entry.y(), UiDrawing.GOLD, UiTheme.dark());
+                int ly = entry.y() + 10;
+                for (net.minecraft.util.FormattedCharSequence line : entry.body()) {
+                    graphics.text(AssignRolesScreen.this.font, line, entry.x(), ly, UiDrawing.TEXT, false);
+                    ly += 9;
+                }
+            }
+        }
+
+        @Override
+        protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput output) {
+        }
+    }
+
     private void renderHandVotingPanel(GuiGraphicsExtractor graphics) {
         if (!ClientState.nominationsOpen && !ClientState.voteInProgress) return;
 
         int x = layoutWidth() - CONTROL_W - MARGIN;
         int h = ClientState.voteInProgress ? 70 : 48;
-        int railBottom=10;
-        for (var child:this.children()) {
-            if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
-                    && widget.getX()>=x && widget.getY()<layoutHeight()-40)
-                railBottom=Math.max(railBottom,widget.getY()+widget.getHeight());
-        }
-        int y=Math.max(railBottom+10,Math.min(225,layoutHeight()-h-40));
+        int y = votePanelTop();
         UiDrawing.panel(graphics, x, y, CONTROL_W, h);
         drawCenteredAt(graphics, ClientState.voteClockComplete ? "VOTE READY" : "VOTING",
                 x + CONTROL_W / 2, y + 6, UiDrawing.GOLD, UiTheme.dark());

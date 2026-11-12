@@ -18,80 +18,49 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * A reminder in the Grimoire.
- *
- * Normally drawn as a labelled chip: the source character's icon followed by
- * the reminder text ("Poisoned", "Drunk 3"), with a coloured edge for the kind
- * of effect. The text is what tells two reminders from the same character
- * apart, so it is always visible. When there is no room for a chip the widget
- * falls back to the small icon-only square, and an overflow chip ("+2") stands
- * in for reminders that did not fit. Every form opens the reminder editor.
+ * A reminder in the Grimoire, drawn as a mini token on the rim of the role
+ * token: a small parchment disc with the source character's icon and a ring
+ * in the effect colour (red harmful, green protective, gold otherwise).
+ * Hovering names it ("Poisoner: Poisoned"); clicking opens the reminder
+ * editor. A "+N" token stands in for reminders that did not fit.
  */
 public final class GrimoireReminderWidget extends AbstractWidget {
-    public static final int CHIP_HEIGHT = 11;
-    public static final int CHIP_MAX_WIDTH = 86;
-    private static final int ICON = 9;
-
-    private static final int HARMFUL = UiTheme.CHIP_HARMFUL;
-    private static final int PROTECTIVE = UiTheme.CHIP_PROTECTIVE;
-    private static final int NEUTRAL = UiTheme.CHIP_NEUTRAL;
-
     private final UUID playerId;
     private final int seat;
     private final Reminder reminder;
-    private final boolean chip;
     private final int overflow;
 
-    /** Icon-only square (the fallback when no chip fits). */
-    public GrimoireReminderWidget(int x, int y, int size, UUID playerId, int seat, Reminder reminder) {
-        this(x, y, size, size, playerId, seat, reminder, false, 0);
+    public static GrimoireReminderWidget rim(int x, int y, int size, UUID playerId, int seat, Reminder reminder) {
+        return new GrimoireReminderWidget(x, y, size, playerId, seat, reminder, 0);
     }
 
-    /** Labelled chip. */
-    public static GrimoireReminderWidget chip(int x, int y, UUID playerId, int seat, Reminder reminder) {
-        return new GrimoireReminderWidget(x, y, chipWidth(reminder), CHIP_HEIGHT, playerId, seat, reminder, true, 0);
+    public static GrimoireReminderWidget overflow(int x, int y, int size, UUID playerId, int seat, int hidden) {
+        return new GrimoireReminderWidget(x, y, size, playerId, seat, null, hidden);
     }
 
-    /** "+N" chip for reminders that did not fit. */
-    public static GrimoireReminderWidget overflow(int x, int y, UUID playerId, int seat, int hidden) {
-        return new GrimoireReminderWidget(x, y, overflowWidth(hidden), CHIP_HEIGHT, playerId, seat, null, true, hidden);
-    }
-
-    private GrimoireReminderWidget(int x, int y, int width, int height, UUID playerId, int seat,
-                                   Reminder reminder, boolean chip, int overflow) {
-        super(x, y, width, height, Component.literal(
+    private GrimoireReminderWidget(int x, int y, int size, UUID playerId, int seat, Reminder reminder, int overflow) {
+        super(x, y, size, size, Component.literal(
                 overflow > 0 ? overflow + " more reminders"
                         : reminder == null || reminder.text().isBlank() ? "Reminder" : reminder.text()));
         this.playerId = playerId;
         this.seat = seat;
         this.reminder = reminder == null ? new Reminder("", java.util.Optional.empty()) : reminder;
-        this.chip = chip;
         this.overflow = overflow;
     }
 
-    public static int chipWidth(Reminder reminder) {
-        Font font = Minecraft.getInstance().font;
-        String text = reminder == null ? "" : reminder.text();
-        return Math.min(CHIP_MAX_WIDTH, 9 + ICON + 3 + font.width(text) + 4);
-    }
-
-    public static int overflowWidth(int hidden) {
-        return Minecraft.getInstance().font.width("+" + hidden) + 6;
-    }
-
-    /** Harmful (red), protective (green) or other (parchment). The words say it too. */
+    /** Harmful (red), protective (green) or other (gold). */
     static int effectColour(String text) {
         String key = text == null ? "" : text.toLowerCase(Locale.ROOT).replaceAll("[^a-z]", "");
         if (key.startsWith("poison") || key.startsWith("drunk") || key.equals("dead") || key.equals("cursed")
                 || key.equals("everyoneisdrunk") || key.equals("noability") || key.equals("mad")
                 || key.equals("diedtoday") || key.equals("evil")) {
-            return HARMFUL;
+            return UiTheme.CHIP_HARMFUL;
         }
         if (key.equals("safe") || key.equals("cannotdie") || key.equals("survivesexecution")
                 || key.equals("protected") || key.equals("good")) {
-            return PROTECTIVE;
+            return UiTheme.CHIP_PROTECTIVE;
         }
-        return NEUTRAL;
+        return UiTheme.GOLD_DIM;
     }
 
     @Override
@@ -100,12 +69,22 @@ public final class GrimoireReminderWidget extends AbstractWidget {
         if (!GrimoireRevealAnimation.beginElement(
                 graphics, getX(), getY(), this.width, this.height, reveal)) return;
         try {
-            if (overflow > 0) drawOverflow(graphics);
-            else if (chip) drawChip(graphics);
-            else drawSquare(graphics);
+            int x = getX();
+            int y = getY();
+            int size = this.width;
+            // Ink shadow, parchment face, effect ring.
+            UiTheme.disc(graphics, x, y + 1, size, UiTheme.dark() ? 0xA0000000 : 0x50000000);
+            UiTheme.disc(graphics, x, y, size, UiTheme.dark() ? 0xFFE6D9BB : 0xFFF7EFDC);
+            if (overflow > 0) {
+                UiTheme.ring(graphics, x, y, size, UiTheme.GOLD_DIM);
+                drawMark(graphics, x, y, size, "+" + overflow, UiTheme.PARCHMENT_INK);
+            } else {
+                UiTheme.ring(graphics, x, y, size, effectColour(reminder.text()));
+                drawIcon(graphics, x + 2, y + 2, size - 4);
+            }
 
             if (isHovered()) {
-                graphics.outline(getX() - 1, getY() - 1, width + 2, height + 2, UiDrawing.GOLD);
+                UiTheme.ring(graphics, x - 2, y - 2, size + 4, UiTheme.GOLD);
                 GrimoireHoverHints.set(overflow > 0 ? overflow + " more reminders — click to see and edit"
                         : reminder.text().isBlank() ? "Reminder slot — click to edit"
                         : hoverText() + " — click to edit reminders");
@@ -120,58 +99,28 @@ public final class GrimoireReminderWidget extends AbstractWidget {
         return source == null ? reminder.text() : source.getDisplayName() + ": " + reminder.text();
     }
 
-    private void drawChip(GuiGraphicsExtractor graphics) {
-        Font font = Minecraft.getInstance().font;
-        int x = getX();
-        int y = getY();
-        int edge = effectColour(reminder.text());
-        // Parchment chip (ink chip in light mode), rounded ends, a wax-seal dot in the effect colour.
-        graphics.fill(x + 1, y, x + width - 1, y + height, UiTheme.chipBackground());
-        graphics.fill(x, y + 1, x + width, y + height - 1, UiTheme.chipBackground());
-        graphics.fill(x + 1, y, x + width - 1, y + 1, UiTheme.chipBorder());
-        graphics.fill(x + 1, y + height - 1, x + width - 1, y + height, UiTheme.chipBorder());
-        graphics.fill(x, y + 1, x + 1, y + height - 1, UiTheme.chipBorder());
-        graphics.fill(x + width - 1, y + 1, x + width, y + height - 1, UiTheme.chipBorder());
-        graphics.fill(x + 3, y + 3, x + 7, y + 8, edge);
-        graphics.fill(x + 4, y + 2, x + 6, y + 9, edge);
-        drawIcon(graphics, x + 9, y + 1, ICON);
-        String text = reminder.text();
-        int room = width - (9 + ICON + 3) - 2;
-        if (font.width(text) > room) text = font.plainSubstrByWidth(text, room - font.width(".")) + ".";
-        graphics.text(font, text, x + 9 + ICON + 3, y + 2, UiTheme.chipText(), false);
-    }
-
-    private void drawOverflow(GuiGraphicsExtractor graphics) {
-        Font font = Minecraft.getInstance().font;
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, UiTheme.chipBackground());
-        graphics.outline(getX(), getY(), width, height, UiTheme.chipBorder());
-        graphics.text(font, "+" + overflow, getX() + 3, getY() + 2, UiTheme.dark() ? 0xFF8A5A10 : UiTheme.AMBER, false);
-    }
-
-    private void drawSquare(GuiGraphicsExtractor graphics) {
-        if (reminder.text().isBlank()) {
-            UiDrawing.emptyReminderSlot(graphics, getX(), getY(), width);
-            return;
-        }
-        drawIcon(graphics, getX(), getY(), width);
-        graphics.outline(getX(), getY(), width, height, effectColour(reminder.text()));
-    }
-
-    /** Source character icon; Good/Evil get a coloured G/E; other text its first letter on parchment. */
+    /** Source character icon; Good/Evil get a coloured G/E; other text its first letter. */
     private void drawIcon(GuiGraphicsExtractor graphics, int x, int y, int size) {
-        Font font = Minecraft.getInstance().font;
         ScriptRole source = sourceRole();
         if (source != null) {
             UiDrawing.roleIcon(graphics, source, x, y, size);
             return;
         }
         String text = reminder.text();
-        int background = text.equalsIgnoreCase("Good") ? UiDrawing.GOOD
-                : text.equalsIgnoreCase("Evil") ? UiDrawing.EVIL : 0xFFE6D6A8;
-        int ink = background == 0xFFE6D6A8 ? 0xFF111111 : 0xFFFFFFFF;
-        String mark = text.isEmpty() ? "?" : text.substring(0, 1).toUpperCase(Locale.ROOT);
-        graphics.fill(x, y, x + size, y + size, background | 0xFF000000);
-        graphics.text(font, mark, x + (size - font.width(mark) + 1) / 2, y + (size - 8) / 2 + 1, ink, false);
+        int ink = text.equalsIgnoreCase("Good") ? UiTheme.GOOD_BADGE
+                : text.equalsIgnoreCase("Evil") ? UiTheme.EVIL_BADGE : UiTheme.PARCHMENT_INK;
+        String mark = text.isEmpty() ? "·" : text.substring(0, 1).toUpperCase(Locale.ROOT);
+        drawMark(graphics, x, y, size, mark, ink);
+    }
+
+    /** Small centred text (75%) inside a disc. */
+    private static void drawMark(GuiGraphicsExtractor graphics, int x, int y, int size, String mark, int colour) {
+        Font font = Minecraft.getInstance().font;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x + size / 2.0F, y + size / 2.0F);
+        graphics.pose().scale(0.75F, 0.75F);
+        graphics.text(font, mark, -font.width(mark) / 2, -4, colour, false);
+        graphics.pose().popMatrix();
     }
 
     private ScriptRole sourceRole() {
