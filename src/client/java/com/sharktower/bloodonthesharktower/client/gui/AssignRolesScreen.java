@@ -59,6 +59,8 @@ public class AssignRolesScreen extends Screen {
     private static final int HEAD_SIZE = 24;
     private static final int CONTROL_W = 90;
     private static final int RESOLVE_W = 170;
+    /** Height kept free at the bottom edge for the one-line hover hint. */
+    private static final int HINT_BAND = 14;
     private static final int CONTROL_H = 20;
     private static final int MARGIN = 10;
     private static final int GAP = 5;
@@ -90,7 +92,8 @@ public class AssignRolesScreen extends Screen {
      */
     private GrimLayout grimoireLayout(int playerCount) {
         int centerX = layoutWidth() / 2;
-        int baseCenterY = layoutHeight() / 2;
+        // The ring is centred in the space above the hover-hint band, so the lowest seat's role name never meets the hint.
+        int baseCenterY = (layoutHeight() - HINT_BAND) / 2;
         int edgeMargin = playerCount <= 6 ? 42 : playerCount <= 9 ? 45 : 50;
         int baseRoleRadius = Math.max(54, Math.min(centerX, baseCenterY) - edgeMargin);
 
@@ -801,19 +804,30 @@ public class AssignRolesScreen extends Screen {
         }
 
         if (hint == null || hint.isBlank()) return;
-        // Bottom edge, clear of the lowest seat's role name; a soft backing keeps it readable over the world.
-        int hintWidth = Math.max(80, layoutWidth() - 320);
-        var lines = this.font.split(Component.literal(hint), hintWidth);
-        int count = Math.min(2, lines.size());
-        int widest = 0;
-        for (int i = 0; i < count; i++) widest = Math.max(widest, this.font.width(lines.get(i)));
-        int top = layoutHeight() - 4 - count * 10;
-        int left = (layoutWidth() - widest) / 2;
-        graphics.fill(left - 4, top - 2, left + widest + 4, top + count * 10, UiDrawing.PANEL_SOFT);
-        for (int i = 0; i < count; i++) {
-            int lineWidth = this.font.width(lines.get(i));
-            graphics.text(this.font, lines.get(i), (layoutWidth() - lineWidth) / 2, top + i * 10, UiDrawing.MUTED, false);
+        // One line in the band at the bottom edge, between the bottom-left and bottom-right buttons.
+        int bandTop = layoutHeight() - HINT_BAND;
+        int leftLimit = MARGIN, rightLimit = layoutWidth() - MARGIN;
+        for (var child : this.children()) {
+            if (!(child instanceof net.minecraft.client.gui.components.AbstractWidget widget) || !widget.visible) continue;
+            if (widget.getY() + widget.getHeight() <= bandTop - 4) continue;
+            if (widget.getX() + widget.getWidth() / 2 < layoutWidth() / 2) leftLimit = Math.max(leftLimit, widget.getX() + widget.getWidth() + 6);
+            else rightLimit = Math.min(rightLimit, widget.getX() - 6);
         }
+        int available = Math.max(60, rightLimit - leftLimit - 8);
+        float scale = this.font.width(hint) <= available ? 1.0F : 0.75F;
+        String text = hint;
+        int maxUnscaled = Math.round(available / scale);
+        if (this.font.width(text) > maxUnscaled) text = this.font.plainSubstrByWidth(text, maxUnscaled - this.font.width("…")) + "…";
+        int textWidth = Math.round(this.font.width(text) * scale);
+        int mid = (leftLimit + rightLimit) / 2;
+        int left = mid - textWidth / 2;
+        int top = bandTop + 3;
+        graphics.fill(left - 4, top - 2, left + textWidth + 4, top + Math.round(9 * scale) + 1, UiDrawing.PANEL_SOFT);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(left, top + (scale < 1 ? 1 : 0));
+        graphics.pose().scale(scale, scale);
+        graphics.text(this.font, text, 0, 0, UiDrawing.MUTED, false);
+        graphics.pose().popMatrix();
     }
 
     private void renderPhaseIndicator(GuiGraphicsExtractor graphics) {

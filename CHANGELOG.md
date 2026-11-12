@@ -3,6 +3,14 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.25 — Grimoire hint gets its own band (unreleased)
+
+- The Grimoire ring is centred in the space above a strip kept free at the
+  bottom edge for the hover hint, so the lowest seat's role name can no
+  longer touch the hint at any window size. The hint stays on one line,
+  centred between the Bluffs and Tools buttons; a long hint shrinks to
+  three-quarter size, then shortens with "…", instead of wrapping.
+
 ## 1.0.2-alpha.24 — Reminder icons, lower Grimoire hint (unreleased)
 
 - Rim reminder tokens always show a picture, never a letter. A reminder
