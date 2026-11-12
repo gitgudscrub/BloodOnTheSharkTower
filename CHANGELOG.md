@@ -3,6 +3,14 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.29 — Slayer shots until one lands (unreleased)
+
+- A player can `/slay` as often as they like until a bolt hits a living
+  seated player. That hit (or `/slay <player>`) is their one Slayer shot for
+  the game; after it, `/slay` is refused. Misses, bolts that expire, and
+  hits on someone who cannot be targeted (a dead player, the Storyteller)
+  are free and say "Use /slay to try again."
+
 ## 1.0.2-alpha.28 — One Slayer shot per game, readable seat list (unreleased)
 
 - Each player gets one Slayer shot per game. Firing the crossbow uses it,

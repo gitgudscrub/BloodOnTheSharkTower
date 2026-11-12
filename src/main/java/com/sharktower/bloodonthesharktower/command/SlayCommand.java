@@ -28,7 +28,7 @@ import java.util.UUID;
  *
  * Any living seated player may use it during the day, because claiming to be
  * the Slayer is a bluff everyone is allowed to make, but only once per game:
- * the shot is used up when it is fired, hit or miss. The server works out
+ * misses are free, and the first shot that hits a valid target is their last. The server works out
  * whether anything should happen ({@link RoleAutomation#slayerShot}) and the
  * Storyteller confirms the kill or rules that nothing happens.
  */
