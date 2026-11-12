@@ -3,6 +3,23 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.21 — Readable reminder tokens (unreleased)
+
+- Grimoire reminders are now labelled chips: the source character's icon
+  followed by the reminder text ("Poisoned", "Red Herring", "Drunk 3").
+  Two reminders from the same character, such as the Washerwoman's
+  "Townsfolk" and "Wrong", no longer look the same.
+- A coloured edge shows the kind of effect: red for harmful (Poisoned,
+  Drunk, Dead, Cursed), green for protective (Safe, Cannot Die) and
+  parchment for everything else. The words say it too.
+- Chips stack beside the role token on the side away from the centre. If
+  that side is blocked they try the other side, then above the token, then
+  below its name. Three rows fit; with more reminders the last row becomes
+  "+N", which opens the editor. Icon squares are only used when nothing
+  else fits.
+- Hovering a chip shows the character and the reminder, for example
+  "Poisoner: Poisoned".
+
 ## 1.0.2-alpha.20 — Easier to read, easier to run (unreleased)
 
 - New Keys & Help screen (H, or the button in Settings and Storyteller

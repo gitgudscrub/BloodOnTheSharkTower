@@ -93,6 +93,8 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Keys & Help screen (H) with live key bindings and phase hints.
 - Role names under Grimoire tokens and G/E alignment letters (both in
   Settings), and a role count strip that names each team.
+- Reminders show as labelled chips (icon + text, coloured by effect) beside
+  each token, so they can be read without hovering.
 
 ### Night and voice chat
 
