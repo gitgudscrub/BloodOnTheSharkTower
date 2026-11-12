@@ -444,7 +444,11 @@ public class AssignRolesScreen extends Screen {
             candidates.sort(Comparator.comparingDouble((int[] p) ->
                     reminderPlacementScore(p,roleCenterX,roleCenterY,outwardX,outwardY,headX,headY)
                     - 0.08*(Math.pow(p[0]+REMINDER_SIZE/2.0-roleCenterX,2)+Math.pow(p[1]+REMINDER_SIZE/2.0-roleCenterY,2))).reversed());
-            List<Reminder> reminders = ClientGrimoireEdits.remindersFor(uuid);
+            List<Reminder> allReminders = ClientGrimoireEdits.remindersFor(uuid);
+            // Labelled chips first; only if no chip column fits do the
+            // reminders fall back to the small icon squares below.
+            int represented = placeReminderChips(uuid, seat, allReminders, roleX, roleY, outwardX);
+            List<Reminder> reminders = allReminders.subList(represented, allReminders.size());
             int index=0;
             for (int[] position:candidates) {
                 if (index>=Math.min(8,reminders.size())) break;
@@ -460,6 +464,75 @@ public class AssignRolesScreen extends Screen {
             }
 
         }
+    }
+
+    /**
+     * Stacks reminder chips in a column beside the role token, on the side away
+     * from the circle's centre (left-hand seats to the left, the rest to the
+     * right), then the other side, then above the token, then below its name. Up to three rows
+     * fit beside the token above its name label; with more reminders the last
+     * row becomes a "+N" chip that opens the editor. Where three rows do
+     * not fit, two or one are tried before falling back to icon squares.
+     *
+     * @return how many reminders the chips represent (0 when none fit)
+     */
+    private int placeReminderChips(UUID uuid, int seat, List<Reminder> reminders, int roleX, int roleY, double outwardX) {
+        if (reminders.isEmpty()) return 0;
+        boolean preferLeft = outwardX < -0.25;
+        // Three rows if they fit, else fewer with the rest behind "+N".
+        for (int maxRows = 3; maxRows >= 1; maxRows--) {
+        int shown = reminders.size() <= maxRows ? reminders.size() : maxRows - 1;
+        int hidden = reminders.size() - shown;
+        // 0 = left of the token, 1 = right, 2 = stacked above it, 3 = below its name label.
+        int[] sides = preferLeft ? new int[]{0, 1, 2, 3} : new int[]{1, 0, 2, 3};
+        int rowStep = GrimoireReminderWidget.CHIP_HEIGHT + 1;
+        for (int side : sides) {
+            List<GrimoireReminderWidget> column = new ArrayList<>();
+            int rows = shown + (hidden > 0 ? 1 : 0);
+            int y = switch (side) {
+                case 2 -> roleY - 4 - rows * rowStep + 1;
+                case 3 -> roleY + ROLE_SIZE + 14;
+                default -> roleY - 2;
+            };
+            boolean fits = true;
+            for (int i = 0; i < rows; i++) {
+                int w = i < shown ? GrimoireReminderWidget.chipWidth(reminders.get(i))
+                        : GrimoireReminderWidget.overflowWidth(hidden);
+                int x = switch (side) {
+                    case 0 -> roleX - 3 - w;
+                    case 1 -> roleX + ROLE_SIZE + 3;
+                    default -> roleX + ROLE_SIZE / 2 - w / 2;
+                };
+                int[] area = {x - 1, y - 1, w + 2, GrimoireReminderWidget.CHIP_HEIGHT + 2};
+                // Side panels and bluff slots are widgets, so the overlap check keeps
+                // chips off them; the margins only keep clear of the screen edge,
+                // the phase banner at the top and the hover hint at the bottom.
+                if (area[0] < 4 || area[0] + area[2] > layoutWidth() - 4
+                        || area[1] < 16 || area[1] + area[3] > layoutHeight() - 30 || collidesWithWidget(area)) {
+                    fits = false;
+                    break;
+                }
+                column.add(i < shown ? GrimoireReminderWidget.chip(x, y, uuid, seat, reminders.get(i))
+                        : GrimoireReminderWidget.overflow(x, y, uuid, seat, hidden));
+                y += rowStep;
+            }
+            if (fits) {
+                column.forEach(this::addRenderableWidget);
+                return reminders.size();
+            }
+        }
+        }
+        return 0;
+    }
+
+    private boolean collidesWithWidget(int[] area) {
+        for (var child : this.children()) {
+            if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
+                    && overlaps(area, new int[]{widget.getX() - 1, widget.getY() - 1, widget.getWidth() + 2, widget.getHeight() + 2})) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static double reminderPlacementScore(
