@@ -59,6 +59,17 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         };
         graphics.outline(getX() - 2, getY() - 2, this.width + 4, this.height + 4, border);
         graphics.outline(getX() - 1, getY() - 1, this.width + 2, this.height + 2, border);
+        if (com.sharktower.bloodonthesharktower.client.config.ClientSettings.alignmentLetters
+                && alignment != AlignmentOverride.DEFAULT) {
+            String letter = alignment == AlignmentOverride.FORCE_GOOD ? "G" : "E";
+            int bx = getX() + this.width - 6;
+            int by = getY() + this.height - 7;
+            graphics.fill(bx - 1, by - 1, bx + 7, by + 9, 0xE0101014);
+            graphics.text(Minecraft.getInstance().font, letter, bx + 1, by, border | 0xFF000000, false);
+        }
+        if (com.sharktower.bloodonthesharktower.client.config.ClientSettings.grimoireLabels && role != null) {
+            drawRoleLabel(graphics, role);
+        }
 
         if (ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
             drawPendingDeathQuestionMark(graphics, getX() + 1, getY() + 1);
@@ -89,6 +100,25 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         } finally {
             GrimoireRevealAnimation.endElement(graphics);
         }
+    }
+
+    /** Role name under the token at 3/4 size, cut short so neighbouring labels do not collide. */
+    private void drawRoleLabel(GuiGraphicsExtractor graphics, ScriptRole role) {
+        net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+        String name = role.getDisplayName();
+        if (name == null || name.isEmpty()) return;
+        float scale = 0.75F;
+        int maxWidth = Math.round((this.width + 18) / scale);
+        if (font.width(name) > maxWidth) name = font.plainSubstrByWidth(name, maxWidth - font.width(".")) + ".";
+        int textWidth = font.width(name);
+        float cx = getX() + this.width / 2.0F;
+        float top = getY() + this.height + 3;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(cx, top);
+        graphics.pose().scale(scale, scale);
+        graphics.fill(-textWidth / 2 - 2, -1, textWidth / 2 + 2, 9, 0xC0101014);
+        graphics.text(font, name, -textWidth / 2, 0, UiDrawing.opaque(UiDrawing.teamColor(role.getTeam())), false);
+        graphics.pose().popMatrix();
     }
 
     /**

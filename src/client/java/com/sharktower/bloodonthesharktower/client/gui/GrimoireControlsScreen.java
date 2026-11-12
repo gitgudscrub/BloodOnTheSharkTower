@@ -23,35 +23,30 @@ public final class GrimoireControlsScreen extends Screen {
 
         int cx = this.width / 2;
         int y = 28;
+        int wrap = Math.max(160, this.width - 32);
 
-        drawCentered(graphics, "GRIMOIRE CONTROLS", cx, y, UiDrawing.GOLD, true);
-        y += 26;
-        drawCentered(graphics, "Left-click portrait/token — Edit role, alignment and reminders",
-                cx, y, UiDrawing.TEXT, false);
-        y += 18;
-        drawCentered(graphics, "Storyteller right-click portrait/token — Open Player Actions",
-                cx, y, UiDrawing.TEXT, false);
-        y += 18;
-        drawCentered(graphics, "Shift + Left-click — Select / clear nominator",
-                cx, y, UiDrawing.YES, false);
-        y += 18;
-        drawCentered(graphics, "Shift + Right-click — Nominate that player",
-                cx, y, UiDrawing.YES, false);
-        y += 26;
-        drawCentered(graphics, "Left Shift and Right Shift are both accepted.",
-                cx, y, UiDrawing.MUTED, false);
-        y += 15;
-        drawCentered(graphics, "The same actions are available as normal buttons via Right-click > Player Actions.",
-                cx, y, UiDrawing.MUTED, false);
+        drawCentered(graphics, "GRIMOIRE CONTROLS", cx, y, UiDrawing.GOLD, true, wrap);
         y += 22;
-        drawCentered(graphics, "Blue = Good, red = Evil, grey = no alignment read.",
-                cx, y, UiDrawing.MUTED, false);
-        y += 15;
+        y = drawCentered(graphics, "Left-click portrait/token — Edit role, alignment and reminders", cx, y, UiDrawing.TEXT, false, wrap) + 6;
+        y = drawCentered(graphics, "Storyteller right-click portrait/token — Open Player Actions", cx, y, UiDrawing.TEXT, false, wrap) + 6;
+        y = drawCentered(graphics, "Shift + Left-click — Select / clear nominator", cx, y, UiDrawing.YES, false, wrap) + 6;
+        y = drawCentered(graphics, "Shift + Right-click — Nominate that player", cx, y, UiDrawing.YES, false, wrap) + 12;
+        y = drawCentered(graphics, "Left Shift and Right Shift are both accepted.", cx, y, UiDrawing.MUTED, false, wrap) + 3;
+        y = drawCentered(graphics, "The same actions are available as normal buttons via Right-click > Player Actions.",
+                cx, y, UiDrawing.MUTED, false, wrap) + 10;
+        y = drawCentered(graphics, "Blue = Good (G), red = Evil (E), grey = no alignment read.",
+                cx, y, UiDrawing.MUTED, false, wrap) + 3;
         drawCentered(graphics, "Player borders follow personal Good/Evil reminders; Storyteller borders show actual alignment.",
-                cx, y, UiDrawing.MUTED, false);
+                cx, y, UiDrawing.MUTED, false, wrap);
     }
 
-    private void drawCentered(GuiGraphicsExtractor graphics, String text, int centerX, int y, int colour, boolean shadow) {
-        graphics.text(this.font, text, centerX - this.font.width(text) / 2, y, colour, shadow);
+    /** Draws centred text wrapped to {@code wrap} pixels and returns the y below it. */
+    private int drawCentered(GuiGraphicsExtractor graphics, String text, int centerX, int y, int colour, boolean shadow, int wrap) {
+        for (net.minecraft.util.FormattedCharSequence line : this.font.split(Component.literal(text), wrap)) {
+            graphics.text(this.font, line, centerX - this.font.width(line) / 2, y, colour, shadow);
+            y += 10;
+        }
+        return y;
     }
+
 }

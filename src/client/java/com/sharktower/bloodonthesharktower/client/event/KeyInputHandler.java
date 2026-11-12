@@ -41,6 +41,7 @@ public final class KeyInputHandler {
     public static KeyMapping toggleVoteHandKey;
     public static KeyMapping leavePrivateChatKey;
     public static KeyMapping openSettingsKey;
+    public static KeyMapping openHelpKey;
     public static KeyMapping toggleNightHudKey;
     public static KeyMapping nightHudNextKey;
     public static KeyMapping nightHudPrevKey;
@@ -91,6 +92,7 @@ public final class KeyInputHandler {
         toggleVoteHandKey = bind("key.blood_on_the_sharktower.toggle_vote_hand", InputConstants.KEY_U);
         leavePrivateChatKey = bind("key.blood_on_the_sharktower.leave_private_chat", InputConstants.KEY_J);
         openSettingsKey = bind("key.blood_on_the_sharktower.open_settings", InputConstants.KEY_O);
+        openHelpKey = bind("key.blood_on_the_sharktower.open_help", InputConstants.KEY_H);
         toggleNightHudKey = bind("key.blood_on_the_sharktower.toggle_night_hud", InputConstants.KEY_N);
         nightHudNextKey = bind("key.blood_on_the_sharktower.night_hud_next", InputConstants.KEY_RIGHT); // Right Arrow
         nightHudPrevKey = bind("key.blood_on_the_sharktower.night_hud_prev", InputConstants.KEY_LEFT); // Left Arrow
@@ -126,6 +128,7 @@ public final class KeyInputHandler {
             while (openTimerKey.consumeClick()) client.gui.setScreen(new TimerScreen());
             while (openStorytellerToolsKey.consumeClick()) client.gui.setScreen(new StorytellerToolsScreen());
             while (openSettingsKey.consumeClick()) client.gui.setScreen(new SharktowerSettingsScreen(null));
+            while (openHelpKey.consumeClick()) client.gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.KeysHelpScreen(null));
             while (openNotebookKey.consumeClick()) client.gui.setScreen(new com.sharktower.bloodonthesharktower.client.gui.PersonalNotebookScreen(null));
             while (toggleVoteHandKey.consumeClick()) {
                 if (ClientState.handRaiseMode() != com.sharktower.bloodonthesharktower.core.HandRaiseMode.OFF)

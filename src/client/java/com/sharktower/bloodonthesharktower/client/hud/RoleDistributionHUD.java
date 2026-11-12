@@ -15,7 +15,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  * actual assigned bag, so setup-changing characters do not leak information.
  */
 public final class RoleDistributionHUD {
-    private static final String SEPARATOR = " : ";
+    private static final String SEPARATOR = "  ·  ";
 
     private RoleDistributionHUD() {}
 
@@ -29,32 +29,42 @@ public final class RoleDistributionHUD {
         if (counts == null) return;
 
         Font font = minecraft.font;
-        String townsfolk = Integer.toString(counts.townsfolk());
-        String outsiders = Integer.toString(counts.outsiders());
-        String minions = Integer.toString(counts.minions());
-        String demons = Integer.toString(counts.demons());
-        String travelers = ClientState.travelerCount > 0 ? Integer.toString(ClientState.travelerCount) : null;
-
-        int width = font.width(townsfolk)
-                + font.width(SEPARATOR) + font.width(outsiders)
-                + font.width(SEPARATOR) + font.width(minions)
-                + font.width(SEPARATOR) + font.width(demons);
-        if (travelers != null) width += font.width(SEPARATOR) + font.width(travelers);
-
-        int x = (minecraft.getWindow().getGuiScaledWidth() - width) / 2;
+        // Numbers with words, so the strip reads without telling the team colours apart.
+        String[][] parts = {
+                {counts.townsfolk() + " Townsfolk", counts.townsfolk() + " TF"},
+                {counts.outsiders() + (counts.outsiders() == 1 ? " Outsider" : " Outsiders"), counts.outsiders() + " Out"},
+                {counts.minions() + (counts.minions() == 1 ? " Minion" : " Minions"), counts.minions() + " Min"},
+                {counts.demons() + (counts.demons() == 1 ? " Demon" : " Demons"), counts.demons() + " Dem"},
+                ClientState.travelerCount > 0
+                        ? new String[]{ClientState.travelerCount + (ClientState.travelerCount == 1 ? " Traveller" : " Travellers"),
+                                ClientState.travelerCount + " Trav"}
+                        : null
+        };
+        int[] colours = {RoleType.TOWNSFOLK.getColor(), RoleType.OUTSIDER.getColor(), RoleType.MINION.getColor(),
+                RoleType.DEMON.getColor(), RoleType.TRAVELER.getColor()};
+        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int form = width(font, parts, 0) <= screenWidth - 40 ? 0 : 1;
+        int x = (screenWidth - width(font, parts, form)) / 2;
         int y = 8;
-
-        x = draw(graphics, font, townsfolk, x, y, RoleType.TOWNSFOLK.getColor());
-        x = draw(graphics, font, SEPARATOR, x, y, 0xFFD0D0D0);
-        x = draw(graphics, font, outsiders, x, y, RoleType.OUTSIDER.getColor());
-        x = draw(graphics, font, SEPARATOR, x, y, 0xFFD0D0D0);
-        x = draw(graphics, font, minions, x, y, RoleType.MINION.getColor());
-        x = draw(graphics, font, SEPARATOR, x, y, 0xFFD0D0D0);
-        x = draw(graphics, font, demons, x, y, RoleType.DEMON.getColor());
-        if (travelers != null) {
-            x = draw(graphics, font, SEPARATOR, x, y, 0xFFD0D0D0);
-            draw(graphics, font, travelers, x, y, RoleType.TRAVELER.getColor());
+        boolean first = true;
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i] == null) continue;
+            if (!first) x = draw(graphics, font, SEPARATOR, x, y, 0xFFD0D0D0);
+            x = draw(graphics, font, parts[i][form], x, y, colours[i]);
+            first = false;
         }
+    }
+
+    private static int width(Font font, String[][] parts, int form) {
+        int width = 0;
+        boolean first = true;
+        for (String[] part : parts) {
+            if (part == null) continue;
+            if (!first) width += font.width(SEPARATOR);
+            width += font.width(part[form]);
+            first = false;
+        }
+        return width;
     }
 
     private static int draw(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int colour) {
