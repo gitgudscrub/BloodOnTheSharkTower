@@ -118,12 +118,12 @@ public final class DemonBluffSelectionScreen extends Screen {
 
         String heading = "Choose 3 out-of-play good roles";
         graphics.text(this.font, heading,
-                (this.width - this.font.width(heading)) / 2, 16, UiDrawing.GOLD, true);
+                (this.width - this.font.width(heading)) / 2, 16, UiDrawing.GOLD, UiTheme.dark());
 
         String count = selected.size() + "/3 selected";
         graphics.text(this.font, count,
                 (this.width - this.font.width(count)) / 2, 29,
-                selected.size() == 3 ? UiDrawing.YES : UiDrawing.MUTED, false);
+                selected.size() == 3 ? UiTheme.yes() : UiDrawing.MUTED, false);
 
         String names = selectedNames();
         if (!names.isBlank()) {

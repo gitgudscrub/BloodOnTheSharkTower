@@ -27,6 +27,11 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
   card on narrow GUIs (to the right if it fits, otherwise below).
 - Bundled font: Cinzel Bold (SIL Open Font License, see
   `docs/licenses/Cinzel-OFL.txt`).
+- Parchment pass: no screen text keeps a drop shadow in Parchment mode
+  (titles, headings, seat numbers, names, counters), and the bright
+  "counted", "yes", warning and Traveller colours darken on parchment so
+  they stay readable. Tools, Keys & Help and Role Catalog titles sit clear
+  of the top edge; the Role Catalog uses the display title.
 
 ## 1.0.2-alpha.21 — Readable reminder tokens (unreleased)
 

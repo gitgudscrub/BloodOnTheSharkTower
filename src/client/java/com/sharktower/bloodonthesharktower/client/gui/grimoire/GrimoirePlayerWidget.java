@@ -77,7 +77,7 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         }
 
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
-            UiTheme.ring(graphics, getX() - 5, getY() - 5, this.width + 10, UiDrawing.YES);
+            UiTheme.ring(graphics, getX() - 5, getY() - 5, this.width + 10, UiTheme.yes());
             UiTheme.badge(graphics, getX() + this.width - 8, getY() - 4, 11, 0xFF2E8B3A, "N", 0xFFFFFFFF);
         } else if (playerId.equals(ClientState.currentNominee)) {
             UiTheme.ring(graphics, getX() - 5, getY() - 5, this.width + 10, UiTheme.AMBER);

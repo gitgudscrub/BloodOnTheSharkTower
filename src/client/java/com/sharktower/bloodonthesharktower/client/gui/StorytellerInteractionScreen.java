@@ -70,21 +70,21 @@ public final class StorytellerInteractionScreen extends Screen {
                 && PlayerFaceCompat.draw(graphics, storytellerId, headX, headY, headSize);
         if (!drewFace) {
             graphics.fill(headX, headY, headX + headSize, headY + headSize, com.sharktower.bloodonthesharktower.client.gui.UiTheme.dark() ? 0xDD251A2D : 0xDDE6D9BB);
-            graphics.text(this.font, "ST", centerX - this.font.width("ST") / 2, headY + 11, UiDrawing.GOLD, true);
+            graphics.text(this.font, "ST", centerX - this.font.width("ST") / 2, headY + 11, UiDrawing.GOLD, UiTheme.dark());
         }
         graphics.outline(headX - 1, headY - 1, headSize + 2, headSize + 2, UiDrawing.GOLD);
 
         String name = ClientState.playerName(storytellerId, 0);
-        graphics.text(this.font, name, centerX - this.font.width(name) / 2, headY + 37, UiDrawing.TEXT, true);
+        graphics.text(this.font, name, centerX - this.font.width(name) / 2, headY + 37, UiDrawing.TEXT, UiTheme.dark());
         String title = "STORYTELLER";
-        graphics.text(this.font, title, centerX - this.font.width(title) / 2, headY + 48, UiDrawing.MUTED, true);
+        graphics.text(this.font, title, centerX - this.font.width(title) / 2, headY + 48, UiDrawing.MUTED, UiTheme.dark());
 
         if (atheistOnScript()) {
             String hint = ClientState.nominationsOpen
                     ? "Atheist is on the script — Storyteller nomination is available."
                     : "Atheist is on the script — nominations must be open first.";
             graphics.text(this.font, hint, centerX - this.font.width(hint) / 2,
-                    this.height / 2 + 2, UiDrawing.MUTED, true);
+                    this.height / 2 + 2, UiDrawing.MUTED, UiTheme.dark());
         }
     }
 

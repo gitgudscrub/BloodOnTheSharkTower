@@ -86,11 +86,11 @@ public final class EndGameControlScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        drawCentered(graphics, "End Game", 18, UiDrawing.GOLD, true);
+        drawCentered(graphics, "End Game", 18, UiDrawing.GOLD, UiTheme.dark());
 
         if (ClientState.gameEnding) {
             int colour = "GOOD".equals(ClientState.winningTeam) ? UiDrawing.GOOD : UiDrawing.EVIL;
-            drawCentered(graphics, "GAME OVER — " + ClientState.winningTeam + " WINS", 40, colour, true);
+            drawCentered(graphics, "GAME OVER — " + ClientState.winningTeam + " WINS", 40, colour, UiTheme.dark());
             drawCentered(graphics, "Final roles are revealed. The world is not restored until Reset for Next Game.",
                     54, UiDrawing.MUTED, false);
         } else {

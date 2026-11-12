@@ -126,7 +126,7 @@ public final class TeamInfoPreviewScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor g, int x, int y, float delta) {
         super.extractRenderState(g, x, y, delta);
         String title = "Share Team Info — ST preview";
-        g.text(this.font, title, (this.width - this.font.width(title)) / 2, 12, UiDrawing.GOLD, true);
+        g.text(this.font, title, (this.width - this.font.width(title)) / 2, 12, UiDrawing.GOLD, UiTheme.dark());
         int start = page * pageSize();
         for (int i = start; i < Math.min(lines.size(), start + pageSize()); i++) {
             g.text(this.font, lines.get(i), 16, 32 + (i - start) * 12, UiDrawing.TEXT, false);

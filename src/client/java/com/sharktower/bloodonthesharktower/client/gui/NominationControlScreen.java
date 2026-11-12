@@ -126,25 +126,25 @@ public final class NominationControlScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         int cx = this.width / 2;
-        drawCentered(graphics, "NOMINATION & EXECUTION", 12, UiDrawing.GOLD, true);
+        drawCentered(graphics, "NOMINATION & EXECUTION", 12, UiDrawing.GOLD, UiTheme.dark());
         drawCentered(graphics,
                 "Selection: " + (selectingNominator ? "NOMINATOR" : "NOMINEE")
                         + "   |   Required: " + ClientState.voteThreshold,
                 25, UiDrawing.MUTED, false);
 
         String selected = "Nominator: " + label(selectedNominator) + "   →   Nominee: " + label(selectedNominee);
-        drawCentered(graphics, selected, 63, UiDrawing.TEXT, true);
+        drawCentered(graphics, selected, 63, UiDrawing.TEXT, UiTheme.dark());
 
         int statusY = Math.min(this.height - 154, 204);
         if (ClientState.currentNominee != null) {
             drawCentered(graphics,
                     "ACTIVE: " + label(ClientState.currentNominator) + " → " + label(ClientState.currentNominee),
-                    statusY, UiDrawing.GOLD, true);
+                    statusY, UiDrawing.GOLD, UiTheme.dark());
         } else if (!"NONE".equals(ClientState.lastVoteResult) && ClientState.lastVoteNominee != null) {
             drawCentered(graphics,
                     "LAST: " + label(ClientState.lastVoteNominee) + " — " + prettyResult(ClientState.lastVoteResult)
                             + " (" + ClientState.lastVoteCount + ")",
-                    statusY, UiDrawing.TEXT, true);
+                    statusY, UiDrawing.TEXT, UiTheme.dark());
         } else {
             drawCentered(graphics, ClientState.nominationsOpen ? "Nominations open" : "Nominations closed",
                     statusY, UiDrawing.MUTED, false);
@@ -157,12 +157,12 @@ public final class NominationControlScreen extends Screen {
                     + "/" + ClientState.voteClockTotal + " — " + label(ClientState.currentVoteClockPlayer);
             if (ClientState.voteCountOverrideActive) clock += "   OVERRIDE=" + ClientState.voteCountOverride;
             drawCentered(graphics, clock, statusY + 12,
-                    ClientState.voteClockComplete ? 0xFF55CC66 : UiDrawing.TEXT, true);
+                    ClientState.voteClockComplete ? UiTheme.ok() : UiDrawing.TEXT, UiTheme.dark());
         } else if (ClientState.markedForExecution != null) {
             drawCentered(graphics,
                     "ON THE BLOCK: " + label(ClientState.markedForExecution)
                             + " with " + ClientState.votesForMarkedPlayer + " vote(s)",
-                    statusY + 12, 0xFFFFB347, true);
+                    statusY + 12, UiTheme.warn(), UiTheme.dark());
         }
     }
 

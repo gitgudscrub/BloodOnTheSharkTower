@@ -56,7 +56,7 @@ final class RoleBagRoleWidget extends AbstractWidget {
 
         if (selected.getAsBoolean()) {
             graphics.outline(tokenX - 2, tokenY - 2, tokenSize + 4, tokenSize + 4, UiDrawing.GOLD);
-            graphics.text(Minecraft.getInstance().font, "✓", tokenX + tokenSize - 6, tokenY - 2, UiDrawing.GOLD, true);
+            graphics.text(Minecraft.getInstance().font, "✓", tokenX + tokenSize - 6, tokenY - 2, UiDrawing.GOLD, UiTheme.dark());
         } else if (isHovered()) {
             graphics.outline(tokenX - 1, tokenY - 1, tokenSize + 2, tokenSize + 2, UiDrawing.TEXT);
         }

@@ -68,7 +68,7 @@ public final class FinalGrimoireScreen extends Screen {
 
         List<Map.Entry<UUID, Integer>> seats = sortedSeats();
         if (seats.isEmpty()) {
-            drawCentered(graphics, "FINAL GRIMOIRE", this.height / 2 - 12, UiDrawing.GOLD, true);
+            drawCentered(graphics, "FINAL GRIMOIRE", this.height / 2 - 12, UiDrawing.GOLD, UiTheme.dark());
             drawCentered(graphics, "No seated players to reveal.", this.height / 2 + 4, UiDrawing.MUTED, false);
             return;
         }
@@ -117,7 +117,7 @@ public final class FinalGrimoireScreen extends Screen {
                 else {
                     UiDrawing.panel(graphics, rx, ry, 12, 12);
                     String text=reminder.text();
-                    graphics.text(this.font, text.isEmpty()?"?":text.substring(0,1), rx+3, ry+2, UiDrawing.GOLD, true);
+                    graphics.text(this.font, text.isEmpty()?"?":text.substring(0,1), rx+3, ry+2, UiDrawing.GOLD, UiTheme.dark());
                 }
                 if (contains(mouseX,mouseY,rx,ry,12,12))
                     hovered=new HoveredPlayer(id,seat,assignment,good,dead,exiled);
@@ -152,10 +152,10 @@ public final class FinalGrimoireScreen extends Screen {
         graphics.outline(x - 2, y - 2, ROLE_SIZE + 4, ROLE_SIZE + 4, alignmentColour);
 
         if (assignment == null) {
-            graphics.text(this.font, "?", x + ROLE_SIZE / 2 - 2, y + ROLE_SIZE / 2 - 4, UiDrawing.TEXT, true);
+            graphics.text(this.font, "?", x + ROLE_SIZE / 2 - 2, y + ROLE_SIZE / 2 - 4, UiDrawing.TEXT, UiTheme.dark());
         }
         if (exiled) {
-            graphics.text(this.font, "E", x + ROLE_SIZE - 5, y - 6, UiDrawing.TEXT, true);
+            graphics.text(this.font, "E", x + ROLE_SIZE - 5, y - 6, UiDrawing.TEXT, UiTheme.dark());
         }
     }
 
@@ -172,14 +172,14 @@ public final class FinalGrimoireScreen extends Screen {
         if (!drewFace) {
             graphics.fill(x, y, x + HEAD_SIZE, y + HEAD_SIZE, 0xCC15151A);
             drawCenteredAt(graphics, Integer.toString(seat), x + HEAD_SIZE / 2, y + 7,
-                    dead ? UiDrawing.DEAD : UiDrawing.TEXT, true);
+                    dead ? UiDrawing.DEAD : UiDrawing.TEXT, UiTheme.dark());
         }
 
         graphics.outline(x, y, HEAD_SIZE, HEAD_SIZE, dead ? UiDrawing.DEAD : UiDrawing.TEXT);
         if (dead) UiDrawing.deathShroud(graphics, x, y, HEAD_SIZE);
         String name = ClientState.playerName(id, seat);
         drawCenteredAt(graphics, name, x + HEAD_SIZE / 2, y + HEAD_SIZE + 2,
-                UiDrawing.roleOf(ClientState.grimoireRoles.get(id)) == null ? UiDrawing.TEXT : UiDrawing.teamColor(UiDrawing.roleOf(ClientState.grimoireRoles.get(id)).getTeam()), true);
+                UiDrawing.roleOf(ClientState.grimoireRoles.get(id)) == null ? UiDrawing.TEXT : UiDrawing.teamColor(UiDrawing.roleOf(ClientState.grimoireRoles.get(id)).getTeam()), UiTheme.dark());
     }
 
     private void renderSeatNumber(
@@ -193,15 +193,15 @@ public final class FinalGrimoireScreen extends Screen {
         int seatRadius = radius + 18;
         int sx = (int) Math.round(centerX + seatRadius * Math.cos(angle));
         int sy = (int) Math.round(centerY + seatRadius * Math.sin(angle));
-        drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, true);
+        drawCenteredAt(graphics, Integer.toString(seat), sx, sy - 4, UiDrawing.TEXT, UiTheme.dark());
     }
 
     private void renderCentre(GuiGraphicsExtractor graphics, HoveredPlayer hovered, int playerCount) {
         int winnerColour = "GOOD".equals(ClientState.winningTeam) ? UiDrawing.GOOD : UiDrawing.EVIL;
         int cy = this.height / 2;
 
-        drawCentered(graphics, "FINAL GRIMOIRE", cy - 26, UiDrawing.GOLD, true);
-        drawCentered(graphics, ClientState.winningTeam + " WINS", cy - 13, winnerColour, true);
+        drawCentered(graphics, "FINAL GRIMOIRE", cy - 26, UiDrawing.GOLD, UiTheme.dark());
+        drawCentered(graphics, ClientState.winningTeam + " WINS", cy - 13, winnerColour, UiTheme.dark());
 
         if (hovered == null) {
             drawCentered(graphics, "Players: " + playerCount, cy + 5, UiDrawing.MUTED, false);
@@ -214,11 +214,11 @@ public final class FinalGrimoireScreen extends Screen {
         String alignment = hovered.good ? "GOOD" : "EVIL";
         String status = hovered.exiled ? "EXILED" : (hovered.dead ? "DEAD" : "ALIVE");
 
-        drawCentered(graphics, name, cy + 4, UiDrawing.TEXT, true);
+        drawCentered(graphics, name, cy + 4, UiDrawing.TEXT, UiTheme.dark());
         drawCentered(graphics, roleName, cy + 17,
-                hovered.assignment == null ? UiDrawing.MUTED : UiDrawing.teamColor(hovered.assignment.getRoleType()), true);
+                hovered.assignment == null ? UiDrawing.MUTED : UiDrawing.teamColor(hovered.assignment.getRoleType()), UiTheme.dark());
         drawCentered(graphics, alignment + "  •  " + status, cy + 30,
-                hovered.good ? UiDrawing.GOOD : UiDrawing.EVIL, true);
+                hovered.good ? UiDrawing.GOOD : UiDrawing.EVIL, UiTheme.dark());
         var reminders = ClientState.grimoireReminders.getOrDefault(hovered.id, List.of());
         for (int i=0; i<reminders.size(); i++) {
             String text=reminders.get(i).text();

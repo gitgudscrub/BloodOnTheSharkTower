@@ -16,7 +16,7 @@ public final class ScriptImportConflictScreen extends Screen {
     public void onClose() { ClientStorytellerActions.send("custom_script_confirm",token+"|cancel");this.minecraft.gui.setScreen(new CustomScriptsScreen()); }
     public void extractRenderState(GuiGraphicsExtractor g,int x,int y,float delta) {
         super.extractRenderState(g,x,y,delta);String title="Script Already Exists";
-        g.text(this.font,title,(this.width-this.font.width(title))/2,18,UiDrawing.GOLD,true);
+        g.text(this.font,title,(this.width-this.font.width(title))/2,18,UiDrawing.GOLD, UiTheme.dark());
         String name=this.font.plainSubstrByWidth(filename,this.width-24);g.text(this.font,name,(this.width-this.font.width(name))/2,38,UiDrawing.TEXT,false);
     }
 }

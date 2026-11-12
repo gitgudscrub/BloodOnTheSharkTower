@@ -85,15 +85,15 @@ public class KeysHelpScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         boolean st = storyteller();
         int cx = this.width / 2;
-        UiTheme.drawTitle(graphics, this.font, "Keys & Help", cx, 6);
+        UiTheme.drawTitle(graphics, this.font, "Keys & Help", cx, 9);
 
         int columnWidth = Math.min(190, (this.width - 36) / 2);
         int leftX = cx - columnWidth - 6;
         int rightX = cx + 6;
-        int y = 28;
+        int y = 31;
 
         // Right now.
-        graphics.text(this.font, "Right now (" + phaseName(ClientState.phase()) + ")", leftX, y, UiDrawing.GOLD, true);
+        graphics.text(this.font, "Right now (" + phaseName(ClientState.phase()) + ")", leftX, y, UiDrawing.GOLD, UiTheme.dark());
         y += 12;
         for (String hint : nowHints(ClientState.phase(), st, ClientState.handRaiseMode() != HandRaiseMode.OFF)) {
             for (FormattedCharSequence line : this.font.split(Component.literal("- " + hint), columnWidth * 2 + 12)) {
@@ -118,7 +118,7 @@ public class KeysHelpScreen extends Screen {
                     KeyInputHandler.nightHudPrevKey, KeyInputHandler.nightHudNextKey,
                     KeyInputHandler.nightHudActivateKey));
             rightY += 6;
-            graphics.text(this.font, "Grimoire mouse", rightX, rightY, UiDrawing.GOLD, true);
+            graphics.text(this.font, "Grimoire mouse", rightX, rightY, UiDrawing.GOLD, UiTheme.dark());
             rightY += 12;
             for (String line : List.of("Left-click: edit role", "Right-click: player actions",
                     "Shift+Left: pick nominator", "Shift+Right: nominate")) {
@@ -126,7 +126,7 @@ public class KeysHelpScreen extends Screen {
                 rightY += 10;
             }
         } else {
-            graphics.text(this.font, "Good to know", rightX, rightY, UiDrawing.GOLD, true);
+            graphics.text(this.font, "Good to know", rightX, rightY, UiDrawing.GOLD, UiTheme.dark());
             rightY += 12;
             for (String line : List.of("Tab shows seats and pronouns.", "/nick sets your display name.",
                     "/pronouns sets your pronouns.", "Settings can hide any HUD.")) {
@@ -141,7 +141,7 @@ public class KeysHelpScreen extends Screen {
     }
 
     private int keySection(GuiGraphicsExtractor graphics, String title, int x, int y, int width, List<KeyMapping> keys) {
-        graphics.text(this.font, title, x, y, UiDrawing.GOLD, true);
+        graphics.text(this.font, title, x, y, UiDrawing.GOLD, UiTheme.dark());
         y += 12;
         for (KeyMapping key : keys) {
             if (key == null) continue;
@@ -172,6 +172,6 @@ public class KeysHelpScreen extends Screen {
     }
 
     private void drawCentered(GuiGraphicsExtractor graphics, String text, int y, int colour) {
-        graphics.text(this.font, text, (this.width - this.font.width(text)) / 2, y, colour, true);
+        graphics.text(this.font, text, (this.width - this.font.width(text)) / 2, y, colour, UiTheme.dark());
     }
 }

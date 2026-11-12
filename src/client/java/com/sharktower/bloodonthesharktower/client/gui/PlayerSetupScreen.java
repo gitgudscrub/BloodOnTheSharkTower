@@ -124,7 +124,7 @@ public final class PlayerSetupScreen extends Screen {
                 ? "Unassigned"
                 : current.getDisplayName();
         graphics.text(this.font, "Seat " + seat + " — " + role,
-                (this.width - this.font.width("Seat " + seat + " — " + role)) / 2, 24, UiDrawing.GOLD, true);
+                (this.width - this.font.width("Seat " + seat + " — " + role)) / 2, 24, UiDrawing.GOLD, UiTheme.dark());
         String playerName = ClientState.playerName(playerId, seat);
         graphics.text(this.font, playerName,
                 (this.width - this.font.width(playerName)) / 2, 38, UiDrawing.MUTED, false);

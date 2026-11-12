@@ -62,7 +62,7 @@ public class RoleCatalogScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String title = this.title.getString();
         if (!searchQuery.isBlank()) title += "  ·  " + grid.shownCount() + " match";
-        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 8, UiDrawing.TEXT, true);
+        UiTheme.drawTitle(graphics, this.font, title, this.width / 2, 7);
         grid.draw(graphics, mouseX, mouseY);
         grid.drawHoverCard(graphics, this.width, this.height, mouseX, mouseY);
     }

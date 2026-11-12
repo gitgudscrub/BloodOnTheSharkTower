@@ -37,6 +37,6 @@ public final class PersonalNotebookScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float delta) {
         super.extractRenderState(g,mx,my,delta);
         String title="My Notebook — only you can read this";
-        g.text(this.font,title,(this.width-this.font.width(title))/2,15,UiDrawing.GOLD,true);
+        g.text(this.font,title,(this.width-this.font.width(title))/2,15,UiDrawing.GOLD, UiTheme.dark());
     }
 }

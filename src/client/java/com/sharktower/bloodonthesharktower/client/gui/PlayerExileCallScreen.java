@@ -51,7 +51,7 @@ public final class PlayerExileCallScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String title = "CALL FOR TRAVELLER EXILE";
-        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, 0xFFFF55FF, true);
+        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiTheme.traveller(), UiTheme.dark());
         String hint = "Exile is separate from nominations and does not use ghost votes.";
         graphics.text(this.font, hint, (this.width - this.font.width(hint)) / 2, 34, UiDrawing.MUTED, false);
     }

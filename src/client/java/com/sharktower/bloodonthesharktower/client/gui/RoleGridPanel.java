@@ -133,7 +133,7 @@ final class RoleGridPanel {
             int rows = (roles.size() + columns - 1) / columns;
             if (cursor + HEADER_H > y && cursor < y + height) {
                 String header = group.team().getDisplayName() + " (" + roles.size() + ")";
-                graphics.text(font, header, left + 2, cursor + 3, UiDrawing.teamColor(group.team()), true);
+                graphics.text(font, header, left + 2, cursor + 3, UiDrawing.teamColor(group.team()), UiTheme.dark());
             }
             cursor += HEADER_H;
             for (int row = 0; row < rows; row++) {
@@ -176,7 +176,7 @@ final class RoleGridPanel {
         boolean chosen = selected != null && selected.test(role);
         if (chosen) {
             graphics.outline(tokenX - 2, tokenY - 2, TOKEN + 4, TOKEN + 4, UiDrawing.GOLD);
-            graphics.text(font, "✓", tokenX + TOKEN - 6, tokenY - 3, UiDrawing.GOLD, true);
+            graphics.text(font, "✓", tokenX + TOKEN - 6, tokenY - 3, UiDrawing.GOLD, UiTheme.dark());
         }
         int colour = chosen ? UiDrawing.GOLD : (selected != null ? UiDrawing.MUTED : UiDrawing.TEXT);
         int maxWidth = CELL_W - 4;
@@ -202,7 +202,7 @@ final class RoleGridPanel {
         int cardX = Math.max(6, Math.min(mouseX + 12, screenWidth - cardWidth - 6));
         int cardY = Math.max(6, Math.min(mouseY + 10, screenHeight - cardHeight - 6));
         UiDrawing.panel(graphics, cardX, cardY, cardWidth, cardHeight);
-        graphics.text(font, hovered.getDisplayName(), cardX + 6, cardY + 6, UiDrawing.teamColor(hovered.getTeam()), true);
+        graphics.text(font, hovered.getDisplayName(), cardX + 6, cardY + 6, UiDrawing.teamColor(hovered.getTeam()), UiTheme.dark());
         graphics.text(font, hovered.getTeam().getDisplayName(), cardX + 6, cardY + 16, UiDrawing.MUTED, false);
         int lineY = cardY + 30;
         for (FormattedCharSequence line : lines) {

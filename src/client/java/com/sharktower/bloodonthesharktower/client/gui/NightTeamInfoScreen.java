@@ -214,7 +214,7 @@ public final class NightTeamInfoScreen extends Screen {
         String title = manualLunaticInfo
                 ? (demon ? "Demon Info — Manual" : "Minion Info — Manual")
                 : (demon ? "Demon Info" : "Minion Info");
-        g.text(this.font, title, (this.width - this.font.width(title)) / 2, 15, UiDrawing.GOLD, true);
+        g.text(this.font, title, (this.width - this.font.width(title)) / 2, 15, UiDrawing.GOLD, UiTheme.dark());
         if (manualLunaticInfo) {
             String line = "Lunatic on script: starting team information is manual.";
             g.text(this.font, line, (this.width - this.font.width(line)) / 2, 30, UiDrawing.MUTED, false);

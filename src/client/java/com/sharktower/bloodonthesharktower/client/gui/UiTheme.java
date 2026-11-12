@@ -225,6 +225,28 @@ public final class UiTheme {
         graphics.text(font, letter, x + (size - w) / 2 + (size % 2 == 0 ? 1 : 0), y + (size - 8) / 2 + 1, textColour, false);
     }
 
+    // -------------------------------------------------------------- accents
+
+    /** "Done / counted" green, darkened on parchment so it still reads. */
+    public static int ok() {
+        return dark() ? 0xFF55CC66 : 0xFF2F7A3C;
+    }
+
+    /** "Yes" vote green. */
+    public static int yes() {
+        return dark() ? 0xFF55FF55 : 0xFF2F7A3C;
+    }
+
+    /** Warning orange. */
+    public static int warn() {
+        return dark() ? 0xFFFFB347 : 0xFF9A5A00;
+    }
+
+    /** Traveller / exile magenta. */
+    public static int traveller() {
+        return dark() ? 0xFFFF55FF : 0xFF8A2E8A;
+    }
+
     // ---------------------------------------------------------------- chips
 
     /** Reminder chip background: parchment on dark mode, ink on light mode, so it always contrasts. */

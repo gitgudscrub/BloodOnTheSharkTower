@@ -29,8 +29,8 @@ public final class GrimoireControlsScreen extends Screen {
         y += 22;
         y = drawCentered(graphics, "Left-click portrait/token — Edit role, alignment and reminders", cx, y, UiDrawing.TEXT, false, wrap) + 6;
         y = drawCentered(graphics, "Storyteller right-click portrait/token — Open Player Actions", cx, y, UiDrawing.TEXT, false, wrap) + 6;
-        y = drawCentered(graphics, "Shift + Left-click — Select / clear nominator", cx, y, UiDrawing.YES, false, wrap) + 6;
-        y = drawCentered(graphics, "Shift + Right-click — Nominate that player", cx, y, UiDrawing.YES, false, wrap) + 12;
+        y = drawCentered(graphics, "Shift + Left-click — Select / clear nominator", cx, y, UiTheme.yes(), false, wrap) + 6;
+        y = drawCentered(graphics, "Shift + Right-click — Nominate that player", cx, y, UiTheme.yes(), false, wrap) + 12;
         y = drawCentered(graphics, "Left Shift and Right Shift are both accepted.", cx, y, UiDrawing.MUTED, false, wrap) + 3;
         y = drawCentered(graphics, "The same actions are available as normal buttons via Right-click > Player Actions.",
                 cx, y, UiDrawing.MUTED, false, wrap) + 10;
