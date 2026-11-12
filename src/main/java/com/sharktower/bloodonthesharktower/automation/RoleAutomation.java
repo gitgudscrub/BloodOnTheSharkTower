@@ -89,6 +89,8 @@ public final class RoleAutomation {
     private static UUID pendingSlayerShooter;
     private static UUID pendingSlayerTarget;
     private static int pendingSlayerDay = -1;
+    /** Players who have taken their one Slayer shot this game (hit or miss). */
+    private static final java.util.Set<UUID> SLAYER_SHOT_TAKEN = new java.util.HashSet<>();
 
     /** Decisions waiting on the Storyteller, by id; shown in the Grimoire's Resolve panel. */
     private static final Map<String, StorytellerPrompt> PROMPTS = new java.util.LinkedHashMap<>();
@@ -125,6 +127,7 @@ public final class RoleAutomation {
         pendingWitchVictim = null;
         pendingWitchDay = -1;
         clearPendingSlayer();
+        SLAYER_SHOT_TAKEN.clear();
         PROMPTS.clear();
     }
 
@@ -354,10 +357,21 @@ public final class RoleAutomation {
         }
         if (!ServerState.PLAYER_SEAT_NUMBERS.containsKey(shooter)) return "You are not seated in this game.";
         if (!isAlive(shooter)) return "Dead players cannot use the Slayer ability.";
+        if (SLAYER_SHOT_TAKEN.contains(shooter)) return "You have already taken your one Slayer shot this game.";
         return null;
     }
 
-    public static String slayerShot(MinecraftServer server, UUID shooter, UUID target) {
+    /** Uses up {@code shooter}'s one Slayer shot for this game. */
+    public static void takeSlayerShot(UUID shooter) {
+        if (shooter != null) SLAYER_SHOT_TAKEN.add(shooter);
+    }
+
+    /**
+     * The Slayer shot at {@code target}. {@code announceClaim} posts
+     * "X claims Slayer!" first, for {@code /slay <target>}; the crossbow
+     * announced the claim when it was handed out.
+     */
+    public static String slayerShot(MinecraftServer server, UUID shooter, UUID target, boolean announceClaim) {
         if (server == null || shooter == null || target == null) return "Choose a player to shoot.";
         String refusal = slayerShooterRefusal(shooter);
         if (refusal != null) return refusal;
@@ -367,6 +381,7 @@ public final class RoleAutomation {
 
         String who = label(server, shooter);
         String whom = label(server, target);
+        takeSlayerShot(shooter);
         boolean realSlayer = is(shooter, Role.SLAYER);
         boolean spent = realSlayer && abilitySpent(shooter);
         if (realSlayer && !spent) spendAbility(shooter, Role.SLAYER);
@@ -375,7 +390,8 @@ public final class RoleAutomation {
         boolean demon = targetRole != null && targetRole.getRoleType() == RoleType.DEMON;
         boolean kills = realSlayer && !spent && !droisoned(shooter) && demon;
 
-        announce(server, who + " claims to be the Slayer and shoots " + whom + "!", ChatFormatting.GOLD);
+        if (announceClaim) announce(server, who + " claims Slayer!", ChatFormatting.GOLD);
+        announce(server, who + " shoots " + whom + "!", ChatFormatting.GOLD);
         String why;
         if (kills) why = who + " is the real Slayer and " + whom + " is the " + targetRole.getDisplayName() + ": " + whom + " should die.";
         else if (!realSlayer) why = who + " is not the Slayer (" + roleName(shooter) + "), so nothing should happen.";

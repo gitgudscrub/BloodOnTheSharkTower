@@ -27,7 +27,8 @@ import java.util.UUID;
  * {@code /slay <player|seat>} shoots straight away, without aiming.
  *
  * Any living seated player may use it during the day, because claiming to be
- * the Slayer is a bluff everyone is allowed to make. The server works out
+ * the Slayer is a bluff everyone is allowed to make, but only once per game:
+ * the shot is used up when it is fired, hit or miss. The server works out
  * whether anything should happen ({@link RoleAutomation#slayerShot}) and the
  * Storyteller confirms the kill or rules that nothing happens.
  */
@@ -71,7 +72,7 @@ public final class SlayCommand {
                     .withStyle(ChatFormatting.RED));
             return 0;
         }
-        String refusal = RoleAutomation.slayerShot(server, shooter.getUUID(), target);
+        String refusal = RoleAutomation.slayerShot(server, shooter.getUUID(), target, true);
         if (refusal != null) {
             shooter.sendSystemMessage(Component.literal(refusal).withStyle(ChatFormatting.RED));
             return 0;
