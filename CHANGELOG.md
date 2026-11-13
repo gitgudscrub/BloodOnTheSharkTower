@@ -17,6 +17,9 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
   survive (sober Sailor, Tea Lady, unspent Fool).
 - The axe is taken away when nominations open, at dusk, or when its holder
   dies or stops being the Psychopath, and it can't be kept for another day.
+- Test seats (`/bots testseats`) now have names (Ada, Bram, Cosima...) so a
+  filled test Grimoire reads like a real game, and `/bots testseats dead
+  <seat> <true|false>` marks one dead.
 
 ## 1.0.2-alpha.38 — Compact cards (unreleased)
 

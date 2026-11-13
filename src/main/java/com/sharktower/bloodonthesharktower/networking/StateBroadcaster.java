@@ -239,6 +239,7 @@ public final class StateBroadcaster {
             names.put(online.getUUID(), com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(online));
             connected.add(online.getUUID());
         }
+        com.sharktower.bloodonthesharktower.command.BotsCommands.syntheticTestNames().forEach(names::putIfAbsent);
         ServerPlayNetworking.send(player, new PlayerDirectoryS2CPayload(
                 names, connected, new java.util.ArrayList<>(StorytellerState.STORYTELLERS)
         ));

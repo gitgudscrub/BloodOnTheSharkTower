@@ -934,6 +934,8 @@ public final class RoleAutomation {
         if (id == null) return "Unknown";
         ServerPlayer online = server.getPlayerList().getPlayer(id);
         if (online != null) return com.sharktower.bloodonthesharktower.profile.PlayerProfiles.displayName(online);
+        String test = com.sharktower.bloodonthesharktower.command.BotsCommands.syntheticTestNames().get(id);
+        if (test != null) return test;
         Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(id);
         return seat == null ? "Player" : "Seat " + seat;
     }
