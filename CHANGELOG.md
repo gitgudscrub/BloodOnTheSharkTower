@@ -3,6 +3,11 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.40 — Shroud on top (unreleased)
+
+- Grimoire: a dead player's shroud now sits on top of the role token's
+  rings (gold rim, alignment, hover and nominee rings) instead of under them.
+
 ## 1.0.2-alpha.39 — Psychopath's axe (unreleased)
 
 - From dawn until nominations open, the living Psychopath carries the
