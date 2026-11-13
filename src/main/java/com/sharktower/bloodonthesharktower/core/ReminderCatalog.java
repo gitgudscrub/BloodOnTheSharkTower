@@ -46,6 +46,7 @@ public final class ReminderCatalog {
         if (Set.of("flowergirl", "towncrier", "hermit", "golem", "poppygrower", "plaguedoctor", "barber", "hatter", "xaan", "summoner", "riot").contains(role)) return true;
         if (role.equals("banshee") && label.equals("has ability")) return true;
         if (role.equals("pixie") && Set.of("has ability", "mad").contains(label)) return true;
+        if (role.equals("alchemist") && label.equals("psychopath")) return true;
         if (role.equals("cannibal") && label.equals("poisoned")) return true;
         if (role.equals("snakecharmer") && label.equals("poisoned")) return true;
         if (role.equals("organgrinder") && label.equals("drunk")) return true;

@@ -64,6 +64,19 @@ public final class BotsCommands {
 
     /** Synthetic UUIDs created only by /bots testseats for Grimoire layout testing. */
     private static final Set<UUID> SYNTHETIC_TEST_PLAYERS = new HashSet<>();
+    private static final List<String> TEST_SEAT_NAMES = List.of(
+            "Ada", "Bram", "Cosima", "Dorian", "Elspeth", "Fitz", "Greta", "Hollis", "Ivo", "Juniper",
+            "Kit", "Lucan", "Mirela", "Nell", "Osric", "Pim", "Quill", "Rowan", "Sable", "Tamsin");
+
+    /** Display names for synthetic test seats, so a filled test Grimoire reads like a real game. */
+    public static java.util.Map<UUID, String> syntheticTestNames() {
+        java.util.Map<UUID, String> names = new java.util.LinkedHashMap<>();
+        for (UUID uuid : SYNTHETIC_TEST_PLAYERS) {
+            Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(uuid);
+            if (seat != null && seat > 0) names.put(uuid, TEST_SEAT_NAMES.get((seat - 1) % TEST_SEAT_NAMES.size()));
+        }
+        return names;
+    }
 
     /**
      * Deliberately varied Trouble Brewing palette so a populated test Grimoire
@@ -153,6 +166,10 @@ public final class BotsCommands {
                                         .executes(BotsCommands::executeClearTestSeats))
                                 .then(Commands.literal("addEmpty")
                                         .executes(BotsCommands::executeAddEmptyTestSeat))
+                                .then(Commands.literal("dead")
+                                        .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                .then(Commands.argument("dead", BoolArgumentType.bool())
+                                                        .executes(BotsCommands::executeTestSeatDead))))
                                 .then(Commands.literal("empty")
                                         .then(Commands.argument("count", IntegerArgumentType.integer(1, 20))
                                                 .executes(BotsCommands::executeEmptyTestSeats)))
@@ -298,6 +315,11 @@ public final class BotsCommands {
                                 .then(Commands.literal("starpass")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationStarPass)))
+                                .then(Commands.literal("psychopath")
+                                        .then(Commands.literal("kill")
+                                                .executes(BotsCommands::executeAutomationPsychopathKill))
+                                        .then(Commands.literal("dismiss")
+                                                .executes(BotsCommands::executeAutomationPsychopathDismiss)))
                                 .then(Commands.literal("poisoner")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationPoisonerDismiss))
@@ -588,6 +610,18 @@ public final class BotsCommands {
         int sequence = StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         send(context, "Generated " + count + " Grimoire test seats. Sequence: " + sequence);
         send(context, "Open the Grimoire with R. Use /bots testseats clear to remove synthetic seats.");
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int executeTestSeatDead(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        UUID target = SetupOperations.playerBySeat(IntegerArgumentType.getInteger(context, "seat"));
+        if (target == null) {
+            send(context, "Nobody is in that seat.");
+            return 0;
+        }
+        ServerState.PLAYER_DEATH_STATUS.put(target, BoolArgumentType.getBool(context, "dead"));
+        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         return Command.SINGLE_SUCCESS;
     }
 
@@ -1536,6 +1570,20 @@ public final class BotsCommands {
         if (!requireStoryteller(context)) return 0;
         String refusal = com.sharktower.bloodonthesharktower.automation.RoleAutomation
                 .slayerDismiss(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationPsychopathKill(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathAxe.kill(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationPsychopathDismiss(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathAxe.dismiss(context.getSource().getServer());
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }

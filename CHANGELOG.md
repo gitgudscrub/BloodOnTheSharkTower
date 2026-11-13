@@ -3,6 +3,24 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.39 — Psychopath's axe (unreleased)
+
+- From dawn until nominations open, the living Psychopath carries the
+  **Psychopath's Axe** (kept out of their hand so nobody sees it). So does
+  an Alchemist with the new "Alchemist: Psychopath" reminder.
+- Hitting a living player with it, anywhere, during discussion too, is the
+  public kill: everyone is told "X attacks Y with the Psychopath's axe!"
+  straight away and the axe is taken. The axe itself does no damage, and
+  hits on non-players or dead players cost nothing.
+- The Storyteller decides in a Resolve prompt (**Y dies** / **No effect**),
+  with a note when the Psychopath is drunk or poisoned or the target should
+  survive (sober Sailor, Tea Lady, unspent Fool).
+- The axe is taken away when nominations open, at dusk, or when its holder
+  dies or stops being the Psychopath, and it can't be kept for another day.
+- Test seats (`/bots testseats`) now have names (Ada, Bram, Cosima...) so a
+  filled test Grimoire reads like a real game, and `/bots testseats dead
+  <seat> <true|false>` marks one dead.
+
 ## 1.0.2-alpha.38 — Compact cards (unreleased)
 
 - New **Compact Cards** setting (Sharktower Settings, on by default) so
