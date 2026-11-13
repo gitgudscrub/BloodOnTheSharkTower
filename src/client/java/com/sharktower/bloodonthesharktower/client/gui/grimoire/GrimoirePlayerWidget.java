@@ -53,9 +53,8 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         }
         UiDrawing.roleToken(graphics, role, getX(), getY(), this.width);
         if (currentDead) {
-            // Dim the art and hang the shroud at the top-left, like a BotC token.
+            // Dim the art; the shroud is hung at the top-left last, above the rings.
             UiTheme.disc(graphics, getX(), getY(), this.width, UiTheme.dark() ? 0x80120D14 : 0x60EBDFC3);
-            UiTheme.shroud(graphics, getX() - 4, getY() - 4, this.width / 2);
         }
         if (ClientState.isExiledTraveler(playerId)) {
             UiTheme.ring(graphics, getX() - 3, getY() - 3, this.width + 6, UiDrawing.DEAD);
@@ -71,7 +70,6 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         if (!currentDead && ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId)) {
             // Marked dead but not yet revealed: a lighter dim and the shroud, Storyteller-only.
             UiTheme.disc(graphics, getX(), getY(), this.width, UiTheme.dark() ? 0x50120D14 : 0x38EBDFC3);
-            UiTheme.shroud(graphics, getX() - 4, getY() - 4, this.width / 2);
         }
 
         if (GrimoireInteractionState.isSelectedNominator(playerId)) {
@@ -83,7 +81,10 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
             UiTheme.ring(graphics, getX() - 3, getY() - 3, this.width + 6, UiTheme.GOLD);
         }
 
-        // The G/E badge and the name go on last, so no ring covers them.
+        // The shroud, the G/E badge and the name go on last, so no ring covers them.
+        if (currentDead || (ClientGrimoireEdits.isLocalStoryteller() && ClientState.pendingDeaths.contains(playerId))) {
+            UiTheme.shroud(graphics, getX() - 4, getY() - 4, this.width / 2);
+        }
         if (alignment != AlignmentOverride.DEFAULT
                 && com.sharktower.bloodonthesharktower.client.config.ClientSettings.alignmentLetters) {
             String letter = alignment == AlignmentOverride.FORCE_GOOD ? "G" : "E";
