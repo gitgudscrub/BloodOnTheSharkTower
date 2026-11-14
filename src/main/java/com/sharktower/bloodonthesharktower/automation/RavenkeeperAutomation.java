@@ -38,7 +38,11 @@ public final class RavenkeeperAutomation {
 
     private RavenkeeperAutomation() {}
 
+    /** Added to every night-choice message: the seat list in chat has a twin in the Grimoire. */
+    static final String GRIMOIRE_HINT = "Click a name below, or press R and click a player in your Grimoire.";
+
     public static void reset() {
+        SeatPicks.clear(raven);
         raven = null;
         chosen = null;
     }
@@ -56,16 +60,19 @@ public final class RavenkeeperAutomation {
         String who = RoleAutomation.label(server, dead);
         ServerPlayer player = server.getPlayerList().getPlayer(dead);
         if (player != null) {
-            player.sendSystemMessage(Component.literal("Ravenkeeper: you died tonight. Choose a player to learn their character:")
-                    .withStyle(ChatFormatting.GOLD));
+            player.sendSystemMessage(Component.literal("Ravenkeeper: you died tonight. Choose a player to learn their character. "
+                    + GRIMOIRE_HINT).withStyle(ChatFormatting.GOLD));
             player.sendSystemMessage(seatButtons(server, dead, "/raven "));
         }
+        SeatPicks.offer(server, dead, "Ravenkeeper: click a player to learn their character", "/raven ", null);
         RoleAutomation.tellStorytellers(server, Component.literal("Ravenkeeper: " + who + " died at night and "
-                + (player == null ? "is offline. Ask them in person, or choose with /bots automation ravenkeeper choose <seat>."
+                + (player == null ? "is offline. Ask them in person, then choose the seat for them in Resolve."
                         : "is choosing a player.")).withStyle(ChatFormatting.GOLD));
         RoleAutomation.offer(server, new StorytellerPrompt(PROMPT, "Ravenkeeper",
                 who + " died at night and is choosing a player to learn their character.",
-                List.of(StorytellerPrompt.Action.ok("I'll handle it", "/bots automation ravenkeeper dismiss"))));
+                List.of(StorytellerPrompt.Action.neutral("Choose seat",
+                                StorytellerPrompt.PICK + "/bots automation ravenkeeper choose "),
+                        StorytellerPrompt.Action.ok("I'll handle it", "/bots automation ravenkeeper dismiss"))));
     }
 
     /** Every seat as a clickable {@code [N Name]} that runs {@code command + seat}. */
@@ -95,6 +102,7 @@ public final class RavenkeeperAutomation {
         if (chosen != null) return "The Ravenkeeper has already chosen.";
         if (target == null || !ServerState.PLAYER_SEAT_NUMBERS.containsKey(target)) return "That player is not seated.";
         chosen = target;
+        SeatPicks.clear(raven);
         String who = RoleAutomation.label(server, raven);
         String whom = RoleAutomation.label(server, target);
         ServerPlayer player = server.getPlayerList().getPlayer(raven);

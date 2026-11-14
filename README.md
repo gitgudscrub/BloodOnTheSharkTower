@@ -111,6 +111,9 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Compact Cards (Settings, on by default): a slim role card, a narrower
   nomination card and a tighter hand box, so players can play with them open.
 - HUD Size (Settings): 75% to 150% for the whole Sharktower HUD at once.
+- Night choices (Poisoner, Monk, Imp, Ravenkeeper) can be made by clicking a
+  seat in your own Grimoire; the Storyteller's Resolve prompts have a
+  Choose seat button for players who are offline or answer out loud.
 - Reminders are mini tokens on the rim of each role token (the character's
   icon, coloured by effect); hover for the text, "+N" for extras.
 - Storyteller Resolve panel in the Grimoire: Virgin nominations, Witch

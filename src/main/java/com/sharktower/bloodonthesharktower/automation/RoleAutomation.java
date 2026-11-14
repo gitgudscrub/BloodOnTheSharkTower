@@ -135,6 +135,7 @@ public final class RoleAutomation {
         GunslingerGun.reset();
         GolemAutomation.reset();
         NightChoices.reset();
+        SeatPicks.clearAll();
         PROMPTS.clear();
     }
 

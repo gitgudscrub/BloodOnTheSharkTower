@@ -130,6 +130,7 @@ public class AssignRolesScreen extends Screen {
     private boolean resolveCoversVote;
     private String resolvePage = "";
     private int lastPromptsRevision = -1;
+    private int lastSeatPickRevision = -1;
 
     public AssignRolesScreen() {
         super(Component.literal("Blood on the Sharktower — Grimoire"));
@@ -167,7 +168,9 @@ public class AssignRolesScreen extends Screen {
         int lunaticRevision = ClientLunaticBluffs.revision();
         if ((!currentSignature.equals(lastSeatLayoutSignature)
                 || lunaticRevision != lastLunaticBluffRevision
-                || ClientState.storytellerPromptsRevision != lastPromptsRevision) && this.minecraft != null) {
+                || ClientState.storytellerPromptsRevision != lastPromptsRevision
+                || SeatPick.revision() != lastSeatPickRevision) && this.minecraft != null) {
+            lastSeatPickRevision = SeatPick.revision();
             clearWidgets();
             buildContextualControls();
             buildBluffVisibilityControl();
@@ -177,6 +180,7 @@ public class AssignRolesScreen extends Screen {
             buildUnseatedWidgets();
             buildBluffWidgets();
             buildResolveWidgets();
+            buildSeatPickWidgets();
             lastSeatLayoutSignature = currentSignature;
             lastLunaticBluffRevision = lunaticRevision;
         }
@@ -1021,12 +1025,77 @@ public class AssignRolesScreen extends Screen {
                     case "ok" -> ChatFormatting.GREEN;
                     default -> ChatFormatting.WHITE;
                 };
+                String title = prompt.title();
                 SharktowerButton button = SharktowerButton.builder(Component.literal(action.label()).withStyle(colour),
-                        b -> runCommand(action.command())).bounds(x + 4 + j * (bw + 4), cursor, bw, 20).build();
+                        b -> runAction(title, action.command())).bounds(x + 4 + j * (bw + 4), cursor, bw, 20).build();
                 resolveButtons.add(button);
                 this.addRenderableWidget(button);
             }
             cursor += 22;
+        }
+    }
+
+    /** A Resolve button: a command, or a "Choose seat" that waits for a seat click in the ring. */
+    private void runAction(String title, String command) {
+        if (command.startsWith(com.sharktower.bloodonthesharktower.automation.StorytellerPrompt.PICK)) {
+            SeatPick.startStoryteller(title,
+                    command.substring(com.sharktower.bloodonthesharktower.automation.StorytellerPrompt.PICK.length()));
+            return;
+        }
+        runCommand(command);
+    }
+
+    /**
+     * The open seat pick, in the empty middle of the ring under the
+     * Storyteller, so it never covers a seat. Cancel sits on it for the
+     * Storyteller's one-off pick.
+     */
+    private void buildSeatPickWidgets() {
+        if (!SeatPick.active()) return;
+        String title = SeatPick.title();
+        String detail = SeatPick.detail();
+        int cancelW = SeatPick.forStoryteller() ? 50 : 0;
+        int textW = Math.max(this.font.width(title), this.font.width(detail) + (cancelW > 0 ? cancelW + 6 : 0));
+        GrimLayout ring = grimoireLayout(sortedSeats().size());
+        int maxW = Math.max(140, 2 * (ring.headRadiusX() - HEAD_SIZE) - 8);
+        int w = Math.min(maxW, textW + 16);
+        int h = 32;
+        int x = ring.centerX() - w / 2;
+        int y = ring.centerY() + 36;
+        this.addRenderableWidget(new SeatPickBannerWidget(x, y, w, h, title, detail, cancelW));
+        if (cancelW > 0) {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel"), b -> SeatPick.cancel())
+                    .bounds(x + w - cancelW - 4, y + h - 15, cancelW, 12).build());
+        }
+    }
+
+    /** The banner frame and text; inactive so clicks fall through to Cancel. */
+    private final class SeatPickBannerWidget extends net.minecraft.client.gui.components.AbstractWidget {
+        private final String title;
+        private final String detail;
+        private final int cancelW;
+
+        SeatPickBannerWidget(int x, int y, int w, int h, String title, String detail, int cancelW) {
+            super(x, y, w, h, Component.literal(title));
+            this.title = title;
+            this.detail = detail;
+            this.cancelW = cancelW;
+            this.active = false;
+        }
+
+        @Override
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+            UiTheme.framedPanel(graphics, getX(), getY(), getWidth(), getHeight());
+            boolean dark = UiTheme.dark();
+            UiDrawing.textScaledToFit(graphics, AssignRolesScreen.this.font, Component.literal(title),
+                    getX() + 8, getY() + 5, getWidth() - 16, dark ? UiTheme.GOLD : 0xFF5C4315, dark);
+            UiDrawing.textScaledToFit(graphics, AssignRolesScreen.this.font, Component.literal(detail),
+                    getX() + 8, getY() + 18, getWidth() - 16 - (cancelW > 0 ? cancelW + 6 : 0), UiDrawing.MUTED, false);
+        }
+
+        @Override
+        protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput output) {
+            defaultButtonNarrationText(output);
         }
     }
 

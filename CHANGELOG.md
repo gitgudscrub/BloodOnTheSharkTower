@@ -3,6 +3,24 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.47 — Pick seats in the Grimoire (unreleased)
+
+- Night choices from the Grimoire: the Poisoner, Monk, Imp and Ravenkeeper
+  can press R and click a player's seat to make their choice, as well as
+  using the clickable list in chat. A banner in the middle of the ring says
+  what to pick and shows the current choice; they can change it until the
+  Storyteller acts. The Monk cannot pick themselves. An open choice comes
+  back if the player reconnects.
+- Resolve **Choose seat**: the Storyteller's prompts for these roles gain a
+  Choose seat button (and Other seat once a choice is in). Click it, then
+  click a seat in the Grimoire to choose for a player who is offline or
+  told you out loud. No typed commands needed; Cancel backs out.
+- Reminders, Script tab: this player's character comes first, then
+  characters in play, then the rest of the script. Characters in play that
+  are not on the script are listed too, so the tab works with no script.
+- The reminder list uses three columns and the buttons sit in two rows, so
+  a whole script's reminders usually fit on one page.
+
 ## 1.0.2-alpha.46 — HUD size setting (unreleased)
 
 - New **HUD Size** button in Sharktower Settings (75%, 100%, 125%, 150%)
