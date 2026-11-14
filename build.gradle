@@ -309,6 +309,14 @@ tasks.register('pronounsRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('pronounsRegression') }
 
+// Login version gate: who may join, and how Sharktower versions order.
+tasks.register('versionGateRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.networking.VersionGateRegression'
+}
+tasks.named('check') { dependsOn tasks.named('versionGateRegression') }
+
 tasks.register('nicknamesRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath

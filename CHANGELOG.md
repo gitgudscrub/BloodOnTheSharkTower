@@ -3,6 +3,21 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.49 — Auto-updating install (unreleased)
+
+- New install route that updates itself: a Prism Launcher instance (Windows
+  and Ubuntu) that checks for a new pack version every time you press
+  Launch and downloads only what changed. Install once from the
+  `Blood-on-the-Sharktower-Prism.zip` release download; see
+  `docs/AUTO_UPDATE.md`.
+- Version check at login: the server turns away a player whose Sharktower
+  version does not match, before they enter the world, with a message that
+  says whether to relaunch to update or wait for the server. Start the
+  server with `-Dsharktower.versionCheck=false` to turn it off.
+- The publish workflow gains a `publish_auto_update` option: it creates the
+  `pack-<version>` GitHub release (server JAR + Prism instance) and points
+  the auto-update pack at it.
+
 ## 1.0.2-alpha.48 — Storyteller setup checklist (unreleased)
 
 - Setup checklist: during setup the Grimoire's right-hand buttons are the
