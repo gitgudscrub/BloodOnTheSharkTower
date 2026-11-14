@@ -3,6 +3,20 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.53 — Spectators can ask to see the Grimoire (unreleased)
+
+- On the website's Watch live page a spectator can press **Ask to see the
+  Grimoire**. Every Storyteller online gets a chat message with clickable
+  **[Approve]** and **[Reject]**. An approved spectator sees each seat's
+  character and alignment, who thinks they are something else (Drunk,
+  Lunatic, Marionette), reminder tokens and the demon bluffs, live, until
+  that game ends. A new game means asking again.
+- `/bots watchlive revoke` (Storyteller) takes it away from every spectator.
+  The site owner can do the same from the spectator log page.
+- The Grimoire is only sent to the website while an approved spectator has
+  Watch live open, and the site only sends it to approved spectators.
+  Requests, answers and Grimoire viewing are in the owner's spectator log.
+
 ## 1.0.2-alpha.52 — Watch live on the Sharktower website (unreleased)
 
 - Watch live: the server feeds the Sharktower website's new Watch live page

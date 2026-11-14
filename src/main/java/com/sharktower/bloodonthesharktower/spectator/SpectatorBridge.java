@@ -89,7 +89,11 @@ public final class SpectatorBridge {
         if (!SiteLink.enabled() || ++ticks % SNAPSHOT_EVERY_TICKS != 0 || LIVE_IN_FLIGHT.get()) return;
         String body;
         try {
-            body = GSON.toJson(snapshot(server));
+            JsonObject snap = snapshot(server);
+            // Only while an approved spectator is watching; the site never
+            // shows this field to anyone else.
+            if (GrimoireShare.wanted()) snap.add("grimoire", GrimoireShare.snapshot(server));
+            body = GSON.toJson(snap);
         } catch (RuntimeException e) {
             BloodOnTheSharktower.LOGGER.debug("Spectator snapshot skipped", e);
             return;
@@ -145,9 +149,13 @@ public final class SpectatorBridge {
         }
     }
 
-    /** The site answers {"audio": true} while it has listeners and voice is on. */
+    /**
+     * The site answers {"audio": true} while it has listeners and voice is on;
+     * the live reply also carries Grimoire requests ({@link GrimoireShare}).
+     */
     private static void readReply(String reply) {
         JsonObject json = GSON.fromJson(reply, JsonObject.class);
+        if (json != null && json.has("requests")) GrimoireShare.readReply(json);
         boolean wanted = json != null && json.has("audio") && json.get("audio").getAsBoolean();
         if (wanted != audioWanted) {
             audioWanted = wanted;
