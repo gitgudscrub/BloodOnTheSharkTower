@@ -20,7 +20,7 @@ public final class EndGameHUD {
         String hint = "[" + key + "] Final Grimoire";
 
         int width = Math.max(190, Math.max(minecraft.font.width(title), minecraft.font.width(hint)) + 30);
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenWidth = HudScale.width(minecraft);
         int x = (screenWidth - width) / 2;
         int y = 8;
         int colour = "GOOD".equals(winner) ? UiDrawing.GOOD : UiDrawing.EVIL;

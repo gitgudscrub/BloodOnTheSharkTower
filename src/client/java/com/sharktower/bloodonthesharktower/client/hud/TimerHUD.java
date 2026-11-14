@@ -14,7 +14,7 @@ public final class TimerHUD {
 
     public static void render(GuiGraphicsExtractor graphics, Minecraft minecraft) {
         if (!ClientState.isHudEnabled || !ClientTimerState.isActive || minecraft.player == null) return;
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenWidth = HudScale.width(minecraft);
         String text = format(ClientTimerState.remainingSeconds) + (ClientTimerState.isPaused ? "  PAUSED" : "");
         int width = minecraft.font.width(text) + 18;
         int x = (screenWidth - width) / 2;

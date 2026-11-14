@@ -246,7 +246,7 @@ public final class NightOrderHUD {
         if (visits.isEmpty()) return;
         restoreSelection(visits);
 
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenWidth = HudScale.width(minecraft);
         int maxVisible = Math.max(3, Math.min(visits.size(), Math.max(3, (screenWidth - 24) / ICON_SPACING)));
         int first = 0;
         if (visits.size() > maxVisible) {

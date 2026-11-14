@@ -12,6 +12,8 @@ import java.util.Locale;
 /** Player presentation preferences plus a clearly separated Storyteller section. */
 public final class SharktowerSettingsScreen extends Screen {
     private static final int[] VOTE_SPEED_TICKS = {10, 15, 20, 25, 30, 40};
+    /** Between the last player row and the Storyteller row; set in init(). */
+    private int headingY = 54 + 28 * 5 + 2;
     private final Screen parent;
 
     public SharktowerSettingsScreen(Screen parent) {
@@ -26,7 +28,11 @@ public final class SharktowerSettingsScreen extends Screen {
         int mid = cx - 50;
         int right = cx + 55;
         int top = 54;
-        int row = 28;
+        // Rows close up in a short window so the Storyteller row stays clear of Done.
+        int row = Math.max(22, Math.min(28, (height - 36 - 20 - 16 - top) / 5));
+        // Below the last player row, with room for the Storyteller heading in between.
+        int storytellerTop = top + row * 5 + 16;
+        headingY = top + row * 5 + 2;
 
         addToggle(left, top, "Voice HUD", () -> ClientSettings.voiceHud, v -> ClientSettings.voiceHud = v);
         addToggle(mid, top, "Role HUD", () -> ClientSettings.roleHud, v -> ClientSettings.roleHud = v);
@@ -44,6 +50,18 @@ public final class SharktowerSettingsScreen extends Screen {
                 "Add G or E beside Good/Evil colours, for colour-blind players.");
         addToggle(left, top + row * 4, "Compact Cards", () -> ClientSettings.compactCards, v -> ClientSettings.compactCards = v,
                 "Smaller role, nomination and hand cards, so you can play with them open.");
+        SharktowerButton hudSize = SharktowerButton.builder(hudSizeLabel(), b -> {
+            float before = com.sharktower.bloodonthesharktower.client.hud.HudScale.scale();
+            ClientSettings.hudScale = com.sharktower.bloodonthesharktower.client.hud.HudScale.next();
+            ClientSettings.save();
+            com.sharktower.bloodonthesharktower.client.hud.VoiceGroupHud.followScale(before,
+                    com.sharktower.bloodonthesharktower.client.hud.HudScale.scale());
+            b.setMessage(hudSizeLabel());
+        }).bounds(mid, top + row * 4, 100, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "Make the whole Sharktower HUD bigger or smaller: role card, roles breakdown, player list, voting and timer.")))
+                .build();
+        this.addRenderableWidget(hudSize);
 
         if (isStoryteller()) {
             this.addRenderableWidget(SharktowerButton.builder(voteSpeedLabel(), b -> {
@@ -57,16 +75,16 @@ public final class SharktowerSettingsScreen extends Screen {
                 }
                 ClientStorytellerActions.send("set_vote_step_ticks", Integer.toString(next));
                 b.setMessage(Component.literal(String.format(Locale.ROOT, "Vote Speed: %.2fs / seat", next / 20.0D)));
-            }).bounds(left, top + row * 5, 150, 20).build());
+            }).bounds(left, storytellerTop, 150, 20).build());
 
             this.addRenderableWidget(SharktowerButton.builder(Component.literal("Hand Scale -"), b -> {
                 double next = Math.max(1.5D, ClientState.clockHandScale - 0.5D);
                 ClientStorytellerActions.send("set_clock_scale", String.format(Locale.ROOT, "%.2f", next));
-            }).bounds(mid + 55, top + row * 5, 76, 20).build());
+            }).bounds(mid + 55, storytellerTop, 76, 20).build());
             this.addRenderableWidget(SharktowerButton.builder(Component.literal("Hand Scale +"), b -> {
                 double next = Math.min(8.0D, ClientState.clockHandScale + 0.5D);
                 ClientStorytellerActions.send("set_clock_scale", String.format(Locale.ROOT, "%.2f", next));
-            }).bounds(right + 79, top + row * 5, 76, 20).build());
+            }).bounds(right + 79, storytellerTop, 76, 20).build());
         }
 
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Keys & Help"), b ->
@@ -107,6 +125,11 @@ public final class SharktowerSettingsScreen extends Screen {
         return Component.literal(label + ": " + (enabled ? "ON" : "OFF"));
     }
 
+    private Component hudSizeLabel() {
+        return Component.literal("HUD Size: " + com.sharktower.bloodonthesharktower.client.hud.HudScale.label(
+                com.sharktower.bloodonthesharktower.client.hud.HudScale.scale()));
+    }
+
     private Component voteSpeedLabel() {
         return Component.literal(String.format(Locale.ROOT, "Vote Speed: %.2fs / seat", ClientState.voteStepTicks / 20.0D));
     }
@@ -129,14 +152,14 @@ public final class SharktowerSettingsScreen extends Screen {
         drawCentered(graphics, "Player HUD", 39, UiDrawing.GOLD, UiTheme.dark());
         if (isStoryteller()) {
             drawCentered(graphics, String.format(Locale.ROOT, "Storyteller Vote Presentation  ·  clock hands x%.2f",
-                    ClientState.clockHandScale), 175, UiDrawing.GOLD, UiTheme.dark());
+                    ClientState.clockHandScale), headingY, UiDrawing.GOLD, UiTheme.dark());
         } else {
             drawCentered(graphics, "Storyteller-only vote settings appear when you are the active Storyteller.",
-                    175, UiDrawing.MUTED, false);
+                    headingY, UiDrawing.MUTED, false);
         }
         // The hint sits above Done only when the window is tall enough for it not to
         // collide with the Storyteller rows; small windows just lose the hint.
-        if (height - 47 >= 54 + 28 * 5 + 40) {
+        if (height - 47 >= headingY + 16 + 20 + 12) {
             drawCentered(graphics, "All controls can also be rebound in Minecraft Controls → Blood on the Sharktower.",
                     height - 47, UiDrawing.MUTED, false);
         }

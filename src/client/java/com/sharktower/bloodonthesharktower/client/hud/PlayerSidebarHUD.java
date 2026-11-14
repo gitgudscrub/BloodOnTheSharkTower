@@ -43,8 +43,8 @@ public final class PlayerSidebarHUD {
         boolean electionVisible = ClientState.handRaiseMode() == com.sharktower.bloodonthesharktower.core.HandRaiseMode.VOTING;
         int width = calculateWidth(font, players, electionVisible);
         int height = players.size() * ROW_HEIGHT + PADDING * 2;
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        int screenWidth = HudScale.width(minecraft);
+        int screenHeight = HudScale.height(minecraft);
         int x = screenWidth - width - 8;
         int y = Math.max(8, (screenHeight - height) / 2);
 

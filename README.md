@@ -110,6 +110,7 @@ Client and server builds are produced together by GitHub Actions so that both pa
   Settings), and a role count strip that names each team.
 - Compact Cards (Settings, on by default): a slim role card, a narrower
   nomination card and a tighter hand box, so players can play with them open.
+- HUD Size (Settings): 75% to 150% for the whole Sharktower HUD at once.
 - Reminders are mini tokens on the rim of each role token (the character's
   icon, coloured by effect); hover for the text, "+N" for extras.
 - Storyteller Resolve panel in the Grimoire: Virgin nominations, Witch

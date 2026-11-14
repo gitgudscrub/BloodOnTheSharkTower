@@ -36,7 +36,7 @@ public final class VoiceGroupHud {
             Object orientation = entry(config, "groupPlayerIconOrientation");
             if (get(posX) instanceof Integer x && get(posY) instanceof Integer y && x == DEFAULT_POS && y == DEFAULT_POS) {
                 set(posX, LEFT_X);
-                set(posY, TOP_Y);
+                set(posY, rowY(HudScale.scale()));
                 Class<?> orientations = Class.forName("de.maxhenkel.voicechat.voice.client.GroupPlayerIconOrientation");
                 for (Object value : orientations.getEnumConstants()) {
                     if (value.toString().equals("HORIZONTAL")) set(orientation, value);
@@ -49,6 +49,31 @@ public final class VoiceGroupHud {
         } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
             ClientSettings.voiceIconsMoved = true; // don't retry a layout we can't read
             ClientSettings.save();
+            BloodOnTheSharktower.LOGGER.debug("Could not move the voice group list: {}", ex.toString());
+        }
+    }
+
+    /** The row's top edge for a HUD size: below the roles breakdown, which grows with it. */
+    private static int rowY(float hudScale) {
+        return Math.round(TOP_Y * hudScale);
+    }
+
+    /**
+     * The HUD size changed: move the row along with the roles breakdown and
+     * the role card, but only if it is still where we put it.
+     */
+    public static void followScale(float before, float after) {
+        if (!ClientSettings.voiceIconsMoved || before == after) return;
+        try {
+            Object config = config();
+            if (config == null) return;
+            Object posX = entry(config, "groupPlayerIconPosX");
+            Object posY = entry(config, "groupPlayerIconPosY");
+            if (get(posX) instanceof Integer x && get(posY) instanceof Integer y && x == LEFT_X && y == rowY(before)) {
+                set(posY, rowY(after));
+                posY.getClass().getMethod("save").invoke(posY);
+            }
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
             BloodOnTheSharktower.LOGGER.debug("Could not move the voice group list: {}", ex.toString());
         }
     }

@@ -86,7 +86,7 @@ public final class NightVisitInfoHUD {
         boolean droisoned = drunk || poisoned;
         boolean vortoxInPlay = isVortoxInPlay();
 
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenWidth = HudScale.width(minecraft);
         int width = Math.min(390, Math.max(280, screenWidth - 24));
         int x = 12;
         int y = 56;

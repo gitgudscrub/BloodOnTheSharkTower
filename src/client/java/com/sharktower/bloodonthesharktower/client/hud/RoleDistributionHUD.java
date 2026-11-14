@@ -42,7 +42,7 @@ public final class RoleDistributionHUD {
         };
         int[] colours = {RoleType.TOWNSFOLK.getColor(), RoleType.OUTSIDER.getColor(), RoleType.MINION.getColor(),
                 RoleType.DEMON.getColor(), RoleType.TRAVELER.getColor()};
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenWidth = HudScale.width(minecraft);
         int form = width(font, parts, 0) <= screenWidth - 40 ? 0 : 1;
         int x = (screenWidth - width(font, parts, form)) / 2;
         int y = 8;

@@ -44,7 +44,7 @@ public final class ElectionHUD {
             return;
         }
 
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenWidth = HudScale.width(minecraft);
         boolean compact = com.sharktower.bloodonthesharktower.client.config.ClientSettings.compactCards;
         // Compact cards leave out the "[U] Raise / lower..." line: the hand box shows the key.
         boolean hint = !compact || !HandVoteHUD.visible(minecraft);
@@ -69,7 +69,7 @@ public final class ElectionHUD {
             }
         }
         // Never run down into the hand-vote box above the hotbar.
-        int handTop = minecraft.getWindow().getGuiScaledHeight() - 70 - 4;
+        int handTop = HudScale.height(minecraft) - 70 - 4;
         if (y + height > handTop) y = Math.max(8, handTop - height);
         UiDrawing.panel(graphics, x, y, width, height);
         lineWidth = width - 16;
@@ -193,8 +193,8 @@ public final class ElectionHUD {
     }
 
     private static void renderBottomStatus(GuiGraphicsExtractor graphics, Minecraft minecraft, String text) {
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        int screenWidth = HudScale.width(minecraft);
+        int screenHeight = HudScale.height(minecraft);
         int x = (screenWidth - minecraft.font.width(text)) / 2;
 
         // Shared status slot above the hotbar/compass. Before nominations it
