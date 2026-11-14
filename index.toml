@@ -1,0 +1,96 @@
+hash-format = "sha256"
+
+[[files]]
+file = "mods/badoptimizations.pw.toml"
+hash = "a273f8147c58c0e9c8c9e7ac2e08a887e1ab95ac120d2e0c35f734084c7d8d0b"
+metafile = true
+
+[[files]]
+file = "mods/blood-on-the-sharktower.pw.toml"
+hash = "e97519dfba0e753cecf3965a100efa3ca508a9ab00fcb79085561376fe665857"
+metafile = true
+
+[[files]]
+file = "mods/cloth-config-api.pw.toml"
+hash = "d6eb54601a3b2d1611010eea0c254e9d053a21329ba931b9975bd67ef688381a"
+metafile = true
+
+[[files]]
+file = "mods/dynamic-fps.pw.toml"
+hash = "423036d40f4fc8feb7af2c1e76e135e17d223b3b10f6aa0202fa8b8bf346aee6"
+metafile = true
+
+[[files]]
+file = "mods/entity-culling.pw.toml"
+hash = "bbd0427e473bda9502b52efbaac4a91b9a4f701db95b86d354390b21f7d56926"
+metafile = true
+
+[[files]]
+file = "mods/fabric-api.pw.toml"
+hash = "9c928c3403c3e16295bebdd1d3f43aea540849a93617cf57cfe7509417b97428"
+metafile = true
+
+[[files]]
+file = "mods/ferritecore.pw.toml"
+hash = "3f3720d8e319e24fdc572e4b40c48c9bd9dd0124f930befb493a611719adf32b"
+metafile = true
+
+[[files]]
+file = "mods/immediatelyfast.pw.toml"
+hash = "0f9ef287ae1a42f511cc674512518c896ae3106bf27cb4192c7636ba4035ec34"
+metafile = true
+
+[[files]]
+file = "mods/iris-shaders.pw.toml"
+hash = "c1dce73c816f7e903fc0cad224e7ab96dce71b4f443e7ef5812e9e27bcd5ab23"
+metafile = true
+
+[[files]]
+file = "mods/lithium.pw.toml"
+hash = "5db3554a1cf3f2acba5b623428861ab8a4fbd218343c107a670b2d3d13eca814"
+metafile = true
+
+[[files]]
+file = "mods/mod-menu.pw.toml"
+hash = "c642c4db3abc3599b03b41e840c1defcc3262733d09bc7ee88c69ee68a165108"
+metafile = true
+
+[[files]]
+file = "mods/no-chat-restrictions.pw.toml"
+hash = "cdf2fb00b320a763fd7099af4df6a166e7a62d895a36ce686248a6e38c6b8a32"
+metafile = true
+
+[[files]]
+file = "mods/simple-voice-chat.pw.toml"
+hash = "9a6ba1b474f2bbd5273fa98aa5add505e90b74ef7acec2b0774e57a2977d9050"
+metafile = true
+
+[[files]]
+file = "mods/sodium.pw.toml"
+hash = "d00b3a8ffc0f190fe7660fc2b0454ef310b1d776e5a9d130814f663476f0fe30"
+metafile = true
+
+[[files]]
+file = "mods/text-placeholder-api.pw.toml"
+hash = "e6f9735b477f0296a542050117903dbb013ff835ce538ffea679b355c1477953"
+metafile = true
+
+[[files]]
+file = "options.txt"
+hash = "382518d2bada1e22b5559a79f8ce56149941bb6ff2f769a345dc33485f14e97e"
+preserve = true
+
+[[files]]
+file = "servers.dat"
+hash = "7ae8ede8f84ba7f886d84938837543cb974e6f28d9137224784bd37997ebf989"
+preserve = true
+
+[[files]]
+file = "shaderpacks/complementary-reimagined.pw.toml"
+hash = "63cf639e3a68f56fd74350a9787a789d49c7702e9475efcd6dccb39dfc13b69c"
+metafile = true
+
+[[files]]
+file = "shaderpacks/makeup-ultra-fast.pw.toml"
+hash = "1c6a505ec42935c69aef2aeff6f63bbc31a079ae0d4e6f271d6145dc99bb100f"
+metafile = true
