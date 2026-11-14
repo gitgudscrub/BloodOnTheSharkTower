@@ -25,7 +25,7 @@ public final class VoteCountdownHUD {
         int y = Math.max(54, screenHeight / 2 - 72);
 
         UiDrawing.panel(graphics, x, y, panelWidth, panelHeight);
-        graphics.text(
+        UiDrawing.text(graphics, 
                 minecraft.font,
                 label,
                 x + (panelWidth - minecraft.font.width(label)) / 2,
@@ -41,7 +41,7 @@ public final class VoteCountdownHUD {
         graphics.pose().pushMatrix();
         graphics.pose().translate(screenWidth / 2.0F - scaledWidth / 2.0F, y + 28.0F);
         graphics.pose().scale(scale, scale);
-        graphics.text(minecraft.font, number, 0, 0, UiDrawing.TEXT, true);
+        UiDrawing.text(graphics, minecraft.font, number, 0, 0, UiDrawing.TEXT, true);
         graphics.pose().popMatrix();
     }
 }

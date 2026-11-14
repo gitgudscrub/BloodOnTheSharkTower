@@ -10,7 +10,12 @@ for players with stronger PCs.
 - Dynamic FPS lowers the frame rate when the game is in the background
   (for example while you're in Discord), so it uses less of your PC.
 - The Prism instance gives the game 3 GB of memory. That is plenty for
-  this pack and leaves room for Windows and Discord on an 8 GB PC.
+  this pack (a 16-seat game uses about 250-300 MB after clean-up) and leaves
+  room for Windows and Discord on an 8 GB PC.
+- It also turns on Java's compact object headers, which makes the game's
+  memory about 11% smaller. If your instance is older than this, add
+  `-XX:+UseCompactObjectHeaders` in Prism: right-click the instance > Edit >
+  Settings > Java > JVM arguments.
 - A new install starts with a render distance of 8, a simulation distance
   of 6 and fewer particles. Your own settings are never overwritten after that.
 

@@ -117,7 +117,7 @@ public final class FinalGrimoireScreen extends Screen {
                 else {
                     UiDrawing.panel(graphics, rx, ry, 12, 12);
                     String text=reminder.text();
-                    graphics.text(this.font, text.isEmpty()?"?":text.substring(0,1), rx+3, ry+2, UiDrawing.GOLD, UiTheme.dark());
+                    UiDrawing.text(graphics, this.font, text.isEmpty()?"?":text.substring(0,1), rx+3, ry+2, UiDrawing.GOLD, UiTheme.dark());
                 }
                 if (contains(mouseX,mouseY,rx,ry,12,12))
                     hovered=new HoveredPlayer(id,seat,assignment,good,dead,exiled);
@@ -152,10 +152,10 @@ public final class FinalGrimoireScreen extends Screen {
         graphics.outline(x - 2, y - 2, ROLE_SIZE + 4, ROLE_SIZE + 4, alignmentColour);
 
         if (assignment == null) {
-            graphics.text(this.font, "?", x + ROLE_SIZE / 2 - 2, y + ROLE_SIZE / 2 - 4, UiDrawing.TEXT, UiTheme.dark());
+            UiDrawing.text(graphics, this.font, "?", x + ROLE_SIZE / 2 - 2, y + ROLE_SIZE / 2 - 4, UiDrawing.TEXT, UiTheme.dark());
         }
         if (exiled) {
-            graphics.text(this.font, "E", x + ROLE_SIZE - 5, y - 6, UiDrawing.TEXT, UiTheme.dark());
+            UiDrawing.text(graphics, this.font, "E", x + ROLE_SIZE - 5, y - 6, UiDrawing.TEXT, UiTheme.dark());
         }
     }
 
@@ -244,7 +244,7 @@ public final class FinalGrimoireScreen extends Screen {
     }
 
     private void drawCenteredAt(GuiGraphicsExtractor graphics, String text, int centerX, int y, int colour, boolean shadow) {
-        graphics.text(this.font, text, centerX - this.font.width(text) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, this.font, text, centerX - this.font.width(text) / 2, y, colour, shadow);
     }
 
     private record HoveredPlayer(

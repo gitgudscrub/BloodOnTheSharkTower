@@ -104,15 +104,15 @@ public final class LunaticBluffSelectionScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String heading = "Choose 3 fake good roles for the Lunatic — in-play roles are allowed";
-        graphics.text(this.font, heading,
+        UiDrawing.text(graphics, this.font, heading,
                 (this.width - this.font.width(heading)) / 2, 16, UiDrawing.GOLD, UiTheme.dark());
         String count = selected.size() + "/3 selected";
-        graphics.text(this.font, count,
+        UiDrawing.text(graphics, this.font, count,
                 (this.width - this.font.width(count)) / 2, 29,
                 selected.size() == 3 ? UiTheme.yes() : UiDrawing.MUTED, false);
         String names = selectedNames();
         if (!names.isBlank()) {
-            graphics.text(this.font, names,
+            UiDrawing.text(graphics, this.font, names,
                     (this.width - this.font.width(names)) / 2, 39, UiDrawing.TEXT, false);
         }
     }

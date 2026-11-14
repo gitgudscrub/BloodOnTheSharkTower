@@ -128,7 +128,7 @@ public class ScriptReferenceScreen extends Screen {
 
 
             String header = type.getDisplayName() + " (" + roles.size() + ")";
-            graphics.text(this.font, header, x0 + 4, y, UiDrawing.teamColor(type), UiTheme.dark());
+            UiDrawing.text(graphics, this.font, header, x0 + 4, y, UiDrawing.teamColor(type), UiTheme.dark());
             y += 14;
 
             int cellWidth = 75;
@@ -148,7 +148,7 @@ public class ScriptReferenceScreen extends Screen {
                     int tokenX = cellX + (cellWidth - 40) / 2;
                     UiDrawing.roleToken(graphics, role, tokenX, tokenY, 40);
                     String name = role.getDisplayName();
-                    graphics.text(this.font, name, cellX + (cellWidth - this.font.width(name)) / 2,
+                    UiDrawing.text(graphics, this.font, name, cellX + (cellWidth - this.font.width(name)) / 2,
                             tokenY + 45, UiDrawing.teamColor(type), false);
                     if (mouseX >= cellX && mouseX < cellX + cellWidth
                             && mouseY >= tokenY && mouseY < tokenY + 62) {
@@ -192,9 +192,9 @@ public class ScriptReferenceScreen extends Screen {
         List<String> other = ScriptReferenceData.nightOrder(script, false);
         int top = 59;
         int half = this.width / 2;
-        graphics.text(this.font, "First Night", (half - this.font.width("First Night")) / 2,
+        UiDrawing.text(graphics, this.font, "First Night", (half - this.font.width("First Night")) / 2,
                 top, UiDrawing.GOLD, UiTheme.dark());
-        graphics.text(this.font, "Other Nights", half + (half - this.font.width("Other Nights")) / 2,
+        UiDrawing.text(graphics, this.font, "Other Nights", half + (half - this.font.width("Other Nights")) / 2,
                 top, UiDrawing.GOLD, UiTheme.dark());
         int start = referenceIndex * referenceRows();
         int availableWidth = Math.max(50, half - 26);
@@ -220,7 +220,7 @@ public class ScriptReferenceScreen extends Screen {
         if (this.font.width(line) > maxWidth) {
             line = this.font.plainSubstrByWidth(line, Math.max(1, maxWidth - 10)) + "...";
         }
-        graphics.text(this.font, line, x, y, UiDrawing.TEXT, false);
+        UiDrawing.text(graphics, this.font, line, x, y, UiDrawing.TEXT, false);
     }
 
     private record ReferenceLine(FormattedCharSequence sequence, int color) {}
@@ -272,7 +272,7 @@ public class ScriptReferenceScreen extends Screen {
         int x = Math.max(12, (this.width - 440) / 2);
         for (int i = start; i < end; i++) {
             ReferenceLine line = lines.get(i);
-            graphics.text(this.font, line.sequence(), x,
+            UiDrawing.text(graphics, this.font, line.sequence(), x,
                     76 + (i - start) * 12, line.color(), false);
         }
         drawPageCount(graphics, script);
@@ -291,7 +291,7 @@ public class ScriptReferenceScreen extends Screen {
         int x = Math.max(6, Math.min(mouseX + 12, this.width - width - 6));
         int y = Math.max(6, Math.min(mouseY + 10, this.height - 74));
         UiDrawing.panel(graphics, x, y, width, 66);
-        graphics.text(this.font, role.getDisplayName(), x + 6, y + 6, UiDrawing.teamColor(role.getTeam()), UiTheme.dark());
+        UiDrawing.text(graphics, this.font, role.getDisplayName(), x + 6, y + 6, UiDrawing.teamColor(role.getTeam()), UiTheme.dark());
         drawWrapped(graphics, ability, x + 6, y + 20, width - 12, 10, 4);
     }
 
@@ -301,7 +301,7 @@ public class ScriptReferenceScreen extends Screen {
         for (String word : text.split("\\s+")) {
             String candidate = line.isEmpty() ? word : line + " " + word;
             if (!line.isEmpty() && this.font.width(candidate) > width) {
-                graphics.text(this.font, line.toString(), x, y + count * lineHeight, UiDrawing.TEXT, false);
+                UiDrawing.text(graphics, this.font, line.toString(), x, y + count * lineHeight, UiDrawing.TEXT, false);
                 count++;
                 if (count >= maxLines) return y + count * lineHeight;
                 line.setLength(0);
@@ -312,13 +312,13 @@ public class ScriptReferenceScreen extends Screen {
             }
         }
         if (!line.isEmpty() && count < maxLines) {
-            graphics.text(this.font, line.toString(), x, y + count * lineHeight, UiDrawing.TEXT, false);
+            UiDrawing.text(graphics, this.font, line.toString(), x, y + count * lineHeight, UiDrawing.TEXT, false);
             count++;
         }
         return y + count * lineHeight;
     }
 
     private void drawCentered(GuiGraphicsExtractor graphics, String text, int y, int colour, boolean shadow) {
-        graphics.text(this.font, text, (this.width - this.font.width(text)) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, this.font, text, (this.width - this.font.width(text)) / 2, y, colour, shadow);
     }
 }

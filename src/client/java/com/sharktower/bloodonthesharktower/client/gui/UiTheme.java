@@ -139,7 +139,7 @@ public final class UiTheme {
     public static void drawTitle(GuiGraphicsExtractor graphics, Font font, String text, int centerX, int y) {
         Component title = title(text.toUpperCase(Locale.ROOT));
         int width = font.width(title);
-        graphics.text(font, title, centerX - width / 2, y, dark() ? GOLD : 0xFF5C4315, dark());
+        UiDrawing.text(graphics, font, title, centerX - width / 2, y, dark() ? GOLD : 0xFF5C4315, dark());
         int ruleY = y + 16;
         int half = Math.max(40, width / 2 + 16);
         graphics.fill(centerX - half, ruleY, centerX + half, ruleY + 1, GOLD_DIM);
@@ -147,7 +147,7 @@ public final class UiTheme {
 
     /** Small gold section label in the display face: "NIGHT CYCLE". */
     public static void drawSectionLabel(GuiGraphicsExtractor graphics, Font font, String text, int x, int y) {
-        graphics.text(font, display(text.toUpperCase(Locale.ROOT)), x, y, dark() ? GOLD : 0xFF7A5A1E, dark());
+        UiDrawing.text(graphics, font, display(text.toUpperCase(Locale.ROOT)), x, y, dark() ? GOLD : 0xFF7A5A1E, dark());
     }
 
     // --------------------------------------------------------------- panels
@@ -165,7 +165,7 @@ public final class UiTheme {
         graphics.fill(x + 1, y + 1, x + width - 1, y + 18, dark() ? 0xFF1E1822 : 0xFFE6D9BB);
         graphics.fill(x + 1, y + 18, x + width - 1, y + 19, GOLD_SHADOW);
         Component label = display(text.toUpperCase(Locale.ROOT));
-        graphics.text(font, label, x + 8, y + 5, dark() ? GOLD : 0xFF5C4315, dark());
+        UiDrawing.text(graphics, font, label, x + 8, y + 5, dark() ? GOLD : 0xFF5C4315, dark());
     }
 
     /** Whole-screen backdrop behind a Sharktower screen: vignette (dark) or a parchment sheet (light). */
@@ -227,7 +227,7 @@ public final class UiTheme {
         disc(graphics, x, y, size, fill);
         Font font = Minecraft.getInstance().font;
         int w = font.width(letter);
-        graphics.text(font, letter, x + (size - w) / 2 + (size % 2 == 0 ? 1 : 0), y + (size - 8) / 2 + 1, textColour, false);
+        UiDrawing.text(graphics, font, letter, x + (size - w) / 2 + (size % 2 == 0 ? 1 : 0), y + (size - 8) / 2 + 1, textColour, false);
     }
 
     // -------------------------------------------------------------- accents

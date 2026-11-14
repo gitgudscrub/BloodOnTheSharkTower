@@ -1,5 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.hud;
 
+import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+
 import com.sharktower.bloodonthesharktower.core.GamePhase;
 import com.sharktower.bloodonthesharktower.core.RoleCounts;
 import com.sharktower.bloodonthesharktower.core.RoleType;
@@ -68,7 +70,7 @@ public final class RoleDistributionHUD {
     }
 
     private static int draw(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int colour) {
-        graphics.text(font, text, x, y, colour, true);
+        UiDrawing.text(graphics, font, text, x, y, colour, true);
         return x + font.width(text);
     }
 }

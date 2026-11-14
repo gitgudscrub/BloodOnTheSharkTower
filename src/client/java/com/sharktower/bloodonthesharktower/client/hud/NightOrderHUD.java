@@ -1,5 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.hud;
 
+import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+
 import net.minecraft.client.renderer.RenderPipelines;
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
@@ -274,7 +276,7 @@ public final class NightOrderHUD {
 
             if (isDone(visit)) {
                 graphics.fill(x, Y, x + ICON_SIZE, Y + ICON_SIZE, 0x99000000);
-                graphics.text(minecraft.font, "✓", x + ICON_SIZE - 7, Y - 2, 0xFF55FF55, true);
+                UiDrawing.text(graphics, minecraft.font, "✓", x + ICON_SIZE - 7, Y - 2, 0xFF55FF55, true);
             }
 
             if (index == selectedIndex) {
@@ -284,11 +286,11 @@ public final class NightOrderHUD {
             if (visit.kind == Kind.ROLE && visit.seat > 0 && duplicateRoleCount(visits, visit) > 1) {
                 String seat = Integer.toString(visit.seat);
                 int sx = x + ICON_SIZE - minecraft.font.width(seat);
-                graphics.text(minecraft.font, seat, sx, Y + ICON_SIZE - 8, 0xFFFFFF55, true);
+                UiDrawing.text(graphics, minecraft.font, seat, sx, Y + ICON_SIZE - 8, 0xFFFFFF55, true);
             }
 
             if (visit.triggered) {
-                graphics.text(minecraft.font, "!", x - 1, Y - 3, 0xFFFFAA00, true);
+                UiDrawing.text(graphics, minecraft.font, "!", x - 1, Y - 3, 0xFFFFAA00, true);
             }
         }
 
@@ -297,10 +299,10 @@ public final class NightOrderHUD {
         // Small edge chevrons make it obvious when the visit row is wider than
         // the available screen width and the selected window has scrolled.
         if (first > 0) {
-            graphics.text(minecraft.font, "<", Math.max(2, startX - 10), Y + 8, 0xFFAAAAAA, true);
+            UiDrawing.text(graphics, minecraft.font, "<", Math.max(2, startX - 10), Y + 8, 0xFFAAAAAA, true);
         }
         if (first + visible < visits.size()) {
-            graphics.text(minecraft.font, ">", Math.min(screenWidth - 8, startX + totalWidth + 4), Y + 8,
+            UiDrawing.text(graphics, minecraft.font, ">", Math.min(screenWidth - 8, startX + totalWidth + 4), Y + 8,
                     0xFFAAAAAA, true);
         }
     }
@@ -329,8 +331,8 @@ public final class NightOrderHUD {
         int x = (screenWidth - total) / 2;
         int y = Y + ICON_SIZE + 4;
         graphics.fill(x - 4, y - 2, x + total + 4, y + 11, 0xA0101014);
-        graphics.text(minecraft.font, position, x, y, 0xFFAAAAAA, true);
-        graphics.text(minecraft.font, name, x + positionWidth + gap, y, colour, true);
+        UiDrawing.text(graphics, minecraft.font, position, x, y, 0xFFAAAAAA, true);
+        UiDrawing.text(graphics, minecraft.font, name, x + positionWidth + gap, y, colour, true);
     }
 
     private static String labelFor(Visit visit) {
@@ -511,7 +513,29 @@ public final class NightOrderHUD {
         return ClientState.storytellerPlayers.contains(minecraft.player.getUUID());
     }
 
+    // The bar and checklist ask for the visit list several times per frame;
+    // rebuilding it (sorting every seat's role) each time is wasted work.
+    // State changes show within 100 ms.
+    private static final long VISITS_TTL_NANOS = 100_000_000L;
+    private static List<Visit> cachedVisits;
+    private static long cachedVisitsAt;
+    // How many visits share each role id, counted once per rebuild.
+    private static java.util.Map<String, Integer> cachedRoleCounts = java.util.Map.of();
+
     private static List<Visit> buildVisits() {
+        long now = System.nanoTime();
+        if (cachedVisits != null && now - cachedVisitsAt < VISITS_TTL_NANOS) return cachedVisits;
+        cachedVisits = java.util.Collections.unmodifiableList(computeVisits());
+        cachedVisitsAt = now;
+        java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+        for (Visit visit : cachedVisits) {
+            if (visit.assignment != null) counts.merge(normalize(visit.assignment.getRoleId()), 1, Integer::sum);
+        }
+        cachedRoleCounts = counts;
+        return cachedVisits;
+    }
+
+    private static List<Visit> computeVisits() {
         List<Visit> visits = new ArrayList<>();
         visits.add(Visit.staticVisit(Kind.DUSK, DUSK_ICON, 0.0D));
 
@@ -668,6 +692,7 @@ public final class NightOrderHUD {
     private static int duplicateRoleCount(List<Visit> visits, Visit target) {
         if (target.assignment == null) return 0;
         String id = normalize(target.assignment.getRoleId());
+        if (visits == cachedVisits) return cachedRoleCounts.getOrDefault(id, 0);
         int count = 0;
         for (Visit visit : visits) {
             if (visit.assignment != null && normalize(visit.assignment.getRoleId()).equals(id)) count++;
@@ -691,9 +716,11 @@ public final class NightOrderHUD {
                 .withStyle(ChatFormatting.GRAY));
     }
 
+    private static final java.util.regex.Pattern NORMALIZE_STRIP = java.util.regex.Pattern.compile("[_\\s-]");
+
     private static String normalize(String id) {
         if (id == null) return "";
-        return id.toLowerCase(Locale.ROOT).replaceAll("[_\\s-]", "");
+        return NORMALIZE_STRIP.matcher(id.toLowerCase(Locale.ROOT)).replaceAll("");
     }
 
     private enum Kind {

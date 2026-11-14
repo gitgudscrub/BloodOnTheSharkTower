@@ -62,6 +62,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.command.RoshamboCommand.register();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();
         ServerTickEvents.END_SERVER_TICK.register(NightChatManager::serverTick);
+        ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.automation.HouseVisits::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.networking.SocialStateManager::tick);
         ServerTickEvents.END_SERVER_TICK.register(ElectionManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(PhasePresentation::serverTick);

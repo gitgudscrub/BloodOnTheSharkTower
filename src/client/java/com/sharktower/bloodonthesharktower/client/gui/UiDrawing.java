@@ -24,6 +24,110 @@ import net.minecraft.resources.Identifier;
  * </ul>
  */
 public final class UiDrawing {
+    // Drawing a Component makes Minecraft run its right-to-left text pass
+    // (ICU Bidi + Arabic shaping) on every frame, even for English. The HUD
+    // redraws the same few dozen labels every frame, so keep the result.
+    // Render thread only. Cleared when the language changes.
+    private static final int ORDERED_CACHE_SIZE = 512;
+    private static final java.util.Map<net.minecraft.network.chat.Component, net.minecraft.util.FormattedCharSequence> ORDERED =
+            new java.util.LinkedHashMap<>(256, 0.75F, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<net.minecraft.network.chat.Component, net.minecraft.util.FormattedCharSequence> eldest) {
+                    return size() > ORDERED_CACHE_SIZE;
+                }
+            };
+    // Plain strings take the same right-to-left pass in GuiGraphicsExtractor.
+    private static final java.util.Map<String, net.minecraft.util.FormattedCharSequence> ORDERED_STRINGS =
+            new java.util.LinkedHashMap<>(256, 0.75F, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<String, net.minecraft.util.FormattedCharSequence> eldest) {
+                    return size() > ORDERED_CACHE_SIZE;
+                }
+            };
+    private static net.minecraft.locale.Language orderedLanguage;
+
+    private static net.minecraft.locale.Language currentLanguage() {
+        net.minecraft.locale.Language language = net.minecraft.locale.Language.getInstance();
+        if (language != orderedLanguage) {
+            ORDERED.clear();
+            ORDERED_STRINGS.clear();
+            orderedLanguage = language;
+        }
+        return language;
+    }
+
+    /** The draw-ready form of a plain string, cached (see ORDERED_STRINGS). */
+    public static net.minecraft.util.FormattedCharSequence ordered(String text) {
+        net.minecraft.locale.Language language = currentLanguage();
+        net.minecraft.util.FormattedCharSequence cached = ORDERED_STRINGS.get(text);
+        if (cached == null) {
+            cached = language.getVisualOrder(net.minecraft.network.chat.FormattedText.of(text));
+            ORDERED_STRINGS.put(text, cached);
+        }
+        return cached;
+    }
+
+    /** The draw-ready form of a Component, cached (see ORDERED). */
+    public static net.minecraft.util.FormattedCharSequence ordered(net.minecraft.network.chat.Component text) {
+        currentLanguage();
+        net.minecraft.util.FormattedCharSequence cached = ORDERED.get(text);
+        if (cached == null) {
+            cached = text.getVisualOrderText();
+            // Key on a copy so a caller changing its Component later cannot corrupt the map.
+            ORDERED.put(text.copy(), cached);
+        }
+        return cached;
+    }
+
+    public static void text(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                            net.minecraft.network.chat.Component text, int x, int y, int colour, boolean shadow) {
+        graphics.text(font, ordered(text), x, y, colour, shadow);
+    }
+
+    public static void text(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                            net.minecraft.network.chat.Component text, int x, int y, int colour) {
+        graphics.text(font, ordered(text), x, y, colour);
+    }
+
+    public static void text(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                            String text, int x, int y, int colour, boolean shadow) {
+        graphics.text(font, ordered(text), x, y, colour, shadow);
+    }
+
+    public static void text(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                            String text, int x, int y, int colour) {
+        graphics.text(font, ordered(text), x, y, colour);
+    }
+
+    public static void text(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                            net.minecraft.util.FormattedCharSequence text, int x, int y, int colour, boolean shadow) {
+        graphics.text(font, text, x, y, colour, shadow);
+    }
+
+    public static void text(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                            net.minecraft.util.FormattedCharSequence text, int x, int y, int colour) {
+        graphics.text(font, text, x, y, colour);
+    }
+
+    public static void centeredText(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                                    net.minecraft.network.chat.Component text, int x, int y, int colour) {
+        graphics.centeredText(font, ordered(text), x, y, colour);
+    }
+
+    public static void centeredText(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                                    String text, int x, int y, int colour) {
+        graphics.centeredText(font, ordered(text), x, y, colour);
+    }
+
+    public static void centeredText(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
+                                    net.minecraft.util.FormattedCharSequence text, int x, int y, int colour) {
+        graphics.centeredText(font, text, x, y, colour);
+    }
+
+    /** Width of a Component using the cached draw-ready form. */
+    public static int width(net.minecraft.client.gui.Font font, net.minecraft.network.chat.Component text) {
+        return font.width(ordered(text));
+    }
     // Theme-dependent (set by UiTheme.apply(); read at draw time, so not final).
     public static int PANEL = 0xD0101014;
     public static int PANEL_SOFT = 0xB8202028;
@@ -114,9 +218,10 @@ public final class UiDrawing {
     public static void textScaledToFit(GuiGraphicsExtractor graphics, net.minecraft.client.gui.Font font,
                                        net.minecraft.network.chat.Component text, int x, int y, int maxWidth,
                                        int colour, boolean shadow) {
-        int natural = font.width(text);
+        net.minecraft.util.FormattedCharSequence ordered = ordered(text);
+        int natural = font.width(ordered);
         if (natural <= maxWidth) {
-            graphics.text(font, text, x, y, colour, shadow);
+            graphics.text(font, ordered, x, y, colour, shadow);
             return;
         }
         float scale = Math.max(0.6F, maxWidth / (float) natural);
@@ -128,7 +233,7 @@ public final class UiDrawing {
         graphics.pose().pushMatrix();
         graphics.pose().translate(x, y + (1 - scale) * font.lineHeight / 2);
         graphics.pose().scale(scale, scale);
-        graphics.text(font, plain, 0, 0, colour, shadow);
+        graphics.text(font, ordered(plain), 0, 0, colour, shadow);
         graphics.pose().popMatrix();
     }
 

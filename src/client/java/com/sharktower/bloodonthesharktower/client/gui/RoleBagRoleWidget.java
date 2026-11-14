@@ -57,7 +57,7 @@ final class RoleBagRoleWidget extends AbstractWidget {
 
         if (selected.getAsBoolean()) {
             graphics.outline(tokenX - 2, tokenY - 2, tokenSize + 4, tokenSize + 4, UiDrawing.GOLD);
-            graphics.text(Minecraft.getInstance().font, "✓", tokenX + tokenSize - 6, tokenY - 2, UiDrawing.GOLD, UiTheme.dark());
+            UiDrawing.text(graphics, Minecraft.getInstance().font, "✓", tokenX + tokenSize - 6, tokenY - 2, UiDrawing.GOLD, UiTheme.dark());
         } else if (isHovered()) {
             graphics.outline(tokenX - 1, tokenY - 1, tokenSize + 2, tokenSize + 2, UiDrawing.TEXT);
         }
@@ -70,7 +70,7 @@ final class RoleBagRoleWidget extends AbstractWidget {
         }
         int nameX = getX() + (this.width - Minecraft.getInstance().font.width(name)) / 2;
         int nameY = tokenY + tokenSize + 2;
-        graphics.text(Minecraft.getInstance().font, name, nameX, nameY,
+        UiDrawing.text(graphics, Minecraft.getInstance().font, name, nameX, nameY,
                 selected.getAsBoolean() ? UiDrawing.GOLD : UiDrawing.TEXT, false);
     }
 

@@ -132,6 +132,9 @@ Client and server builds are produced together by GitHub Actions so that both pa
 - Night choices (Poisoner, Monk, Imp, Ravenkeeper) can be made by clicking a
   seat in your own Grimoire; the Storyteller's Resolve prompts have a
   Choose seat button for players who are offline or answer out loud.
+- House visits (Storyteller's choice, on by default): night choosers sleep
+  until the Storyteller reaches their house, then wake and choose. Resolve
+  can still wake them or choose for them; switch it off in the Grimoire.
 - Reminders are mini tokens on the rim of each role token (the character's
   icon, coloured by effect); hover for the text, "+N" for extras.
 - Storyteller Resolve panel in the Grimoire: Virgin nominations, Witch

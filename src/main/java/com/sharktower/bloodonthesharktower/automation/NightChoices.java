@@ -72,7 +72,10 @@ public final class NightChoices {
 
     public static void reset() {
         for (Kind kind : Kind.values()) RoleAutomation.resolve(kind.id);
-        for (Choice choice : WAITING.values()) SeatPicks.clear(choice.chooser());
+        for (Choice choice : WAITING.values()) {
+            HouseVisits.cancel(choice.chooser());
+            SeatPicks.clear(choice.chooser());
+        }
         WAITING.clear();
     }
 
@@ -84,21 +87,29 @@ public final class NightChoices {
             UUID found = RoleAutomation.findAlive(kind.role);
             if (found == null) continue;
             WAITING.put(kind, new Choice(found, null, ServerState.currentDay));
-            String who = RoleAutomation.label(server, found);
-            ServerPlayer player = server.getPlayerList().getPlayer(found);
-            if (player != null) {
-                player.sendSystemMessage(Component.literal(kind.title + ": " + kind.ask + ". "
-                        + RavenkeeperAutomation.GRIMOIRE_HINT).withStyle(kind.colour));
-                player.sendSystemMessage(RavenkeeperAutomation.seatButtons(server, found, kind.command));
-            }
-            SeatPicks.offer(server, found, kind.title + ": " + kind.banner, kind.command, kind == Kind.MONK ? found : null);
-            RoleAutomation.offer(server, new StorytellerPrompt(kind.id, kind.title,
-                    who + " is " + kind.ask.replace("choose", "choosing")
-                            + (player == null ? " but is offline. Ask them, then choose the seat for them." : "."),
-                    List.of(StorytellerPrompt.Action.neutral("Choose seat",
-                                    StorytellerPrompt.PICK + "/bots automation " + kind.id + " choose "),
-                            StorytellerPrompt.Action.ok("I'll handle it", "/bots automation " + kind.id + " dismiss"))));
+            HouseVisits.wakeOnVisit(server, found, kind.id, kind.title, "/bots automation " + kind.id + " choose ",
+                    "/bots automation " + kind.id + " dismiss", () -> wake(server, kind, found));
         }
+    }
+
+    /** The Storyteller has visited (or visits are off): this chooser may choose. */
+    private static void wake(MinecraftServer server, Kind kind, UUID found) {
+        Choice waiting = WAITING.get(kind);
+        if (waiting == null || !waiting.chooser().equals(found)) return;
+        String who = RoleAutomation.label(server, found);
+        ServerPlayer player = server.getPlayerList().getPlayer(found);
+        if (player != null) {
+            player.sendSystemMessage(Component.literal(kind.title + ": " + kind.ask + ". "
+                    + RavenkeeperAutomation.GRIMOIRE_HINT).withStyle(kind.colour));
+            player.sendSystemMessage(RavenkeeperAutomation.seatButtons(server, found, kind.command));
+        }
+        SeatPicks.offer(server, found, kind.title + ": " + kind.banner, kind.command, kind == Kind.MONK ? found : null);
+        RoleAutomation.offer(server, new StorytellerPrompt(kind.id, kind.title,
+                who + " is " + kind.ask.replace("choose", "choosing")
+                        + (player == null ? " but is offline. Ask them, then choose the seat for them." : "."),
+                List.of(StorytellerPrompt.Action.neutral("Choose seat",
+                                StorytellerPrompt.PICK + "/bots automation " + kind.id + " choose "),
+                        StorytellerPrompt.Action.ok("I'll handle it", "/bots automation " + kind.id + " dismiss"))));
     }
 
     /** {@code chooser} (or the Storyteller for them) picked {@code target}. Returns why not, or null. */
@@ -109,9 +120,12 @@ public final class NightChoices {
         if (!byStoryteller && (!PhaseOperations.isNight() || ServerState.currentDay != waiting.night())) {
             return "The " + kind.title + " chooses at night.";
         }
+        String notYet = byStoryteller ? null : HouseVisits.refusal(chooser);
+        if (notYet != null) return notYet;
         if (target == null || !ServerState.PLAYER_SEAT_NUMBERS.containsKey(target)) return "That player is not seated.";
         if (kind == Kind.MONK && target.equals(waiting.chooser())) return "The Monk cannot protect themselves.";
         WAITING.put(kind, new Choice(waiting.chooser(), target, waiting.night()));
+        if (byStoryteller) HouseVisits.chosenForThem(waiting.chooser());
 
         UUID self = waiting.chooser();
         String who = RoleAutomation.label(server, self);
@@ -202,7 +216,10 @@ public final class NightChoices {
 
     private static void finish(Kind kind) {
         Choice done = WAITING.remove(kind);
-        if (done != null) SeatPicks.clear(done.chooser());
+        if (done != null) {
+            HouseVisits.cancel(done.chooser());
+            SeatPicks.clear(done.chooser());
+        }
         RoleAutomation.resolve(kind.id);
     }
 }

@@ -78,9 +78,9 @@ public final class HandVoteHUD {
         int top = compact ? 4 : 6;
 
         UiDrawing.panel(graphics, x, y, width, height);
-        graphics.text(minecraft.font, state,
+        UiDrawing.text(graphics, minecraft.font, state,
                 x + width / 2 - minecraft.font.width(state) / 2, y + top, colour, true);
-        graphics.text(minecraft.font, hint,
+        UiDrawing.text(graphics, minecraft.font, hint,
                 x + width / 2 - minecraft.font.width(hint) / 2, y + top + 11, UiDrawing.TEXT, false);
     }
 }

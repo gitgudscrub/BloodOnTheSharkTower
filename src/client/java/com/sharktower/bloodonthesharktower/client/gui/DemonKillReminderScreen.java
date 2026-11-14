@@ -94,14 +94,14 @@ public final class DemonKillReminderScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         String title = "Demon Kill Marker — " + ClientState.playerName(playerId, seat);
-        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
+        UiDrawing.text(graphics, this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
 
         String sub = "Choose which Demon selected this player. The reminder uses that Demon's token.";
-        graphics.text(this.font, sub, (this.width - this.font.width(sub)) / 2, 34, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, this.font, sub, (this.width - this.font.width(sub)) / 2, 34, UiDrawing.MUTED, false);
 
         if (demonsInStorytellerGrimoire().isEmpty()) {
             String none = "No Demon role is currently present in the Storyteller's Grimoire.";
-            graphics.text(this.font, none, (this.width - this.font.width(none)) / 2, 70, UiDrawing.MUTED, false);
+            UiDrawing.text(graphics, this.font, none, (this.width - this.font.width(none)) / 2, 70, UiDrawing.MUTED, false);
         }
     }
 

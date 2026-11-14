@@ -110,6 +110,6 @@ public final class LoadScriptScreen extends Screen {
 
     private void centred(GuiGraphicsExtractor graphics, String text, int y, int colour, boolean shadow) {
         String fitted = this.font.plainSubstrByWidth(text, this.width - 16);
-        graphics.text(this.font, fitted, (this.width - this.font.width(fitted)) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, this.font, fitted, (this.width - this.font.width(fitted)) / 2, y, colour, shadow);
     }
 }

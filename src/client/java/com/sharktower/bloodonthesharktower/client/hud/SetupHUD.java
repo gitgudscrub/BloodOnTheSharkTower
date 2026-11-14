@@ -1,5 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.hud;
 
+import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+
 import com.sharktower.bloodonthesharktower.core.GamePhase;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.Minecraft;
@@ -34,7 +36,7 @@ public final class SetupHUD {
 
         graphics.fill(x, y, x + contentWidth, y + 38, 0xBF000000);
         graphics.outline(x, y, contentWidth, 38, 0xFFE28A2B);
-        graphics.text(minecraft.font, line1, x + (contentWidth - minecraft.font.width(line1)) / 2, y + 8, 0xFFFFFFFF, true);
-        graphics.text(minecraft.font, line2, x + (contentWidth - minecraft.font.width(line2)) / 2, y + 22, 0xFFC8C8C8, false);
+        UiDrawing.text(graphics, minecraft.font, line1, x + (contentWidth - minecraft.font.width(line1)) / 2, y + 8, 0xFFFFFFFF, true);
+        UiDrawing.text(graphics, minecraft.font, line2, x + (contentWidth - minecraft.font.width(line2)) / 2, y + 22, 0xFFC8C8C8, false);
     }
 }

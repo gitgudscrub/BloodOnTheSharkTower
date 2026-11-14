@@ -107,6 +107,6 @@ public class CharacterDetailsScreen extends Screen {
     }
 
     private void drawCentered(GuiGraphicsExtractor graphics, String text, int y, int colour, boolean shadow) {
-        graphics.text(this.font, text, (this.width - this.font.width(text)) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, this.font, text, (this.width - this.font.width(text)) / 2, y, colour, shadow);
     }
 }

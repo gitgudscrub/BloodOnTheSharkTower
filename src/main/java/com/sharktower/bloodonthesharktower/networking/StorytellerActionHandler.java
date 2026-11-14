@@ -182,6 +182,11 @@ public final class StorytellerActionHandler {
                     int moved = SeatPositionManager.sendAllToTownSquare(server, SetupOperations.workingSeats());
                     yield SetupOperations.Result.ok("Sent " + moved + " connected player(s) to town-square seats.");
                 }
+                case "toggle_house_visits" -> {
+                    com.sharktower.bloodonthesharktower.automation.HouseVisits.setEnabled(server,
+                            !com.sharktower.bloodonthesharktower.automation.HouseVisits.enabled());
+                    yield SetupOperations.Result.ok(com.sharktower.bloodonthesharktower.automation.HouseVisits.describe());
+                }
                 case "send_home" -> {
                     int moved = SeatPositionManager.sendAllHome(server, SetupOperations.workingSeats());
                     yield SetupOperations.Result.ok("Sent " + moved + " connected player(s) home.");

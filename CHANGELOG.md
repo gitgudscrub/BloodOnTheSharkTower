@@ -3,7 +3,7 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
-## 1.0.2-alpha.53 — Spectators can ask to see the Grimoire (unreleased)
+## 1.0.2-alpha.56 — Spectators can ask to see the Grimoire, new icon (unreleased)
 
 - On the website's Watch live page a spectator can press **Ask to see the
   Grimoire**. Every Storyteller online gets a chat message with clickable
@@ -16,6 +16,44 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
 - The Grimoire is only sent to the website while an approved spectator has
   Watch live open, and the site only sends it to approved spectators.
   Requests, answers and Grimoire viewing are in the owner's spectator log.
+- New BotS icon for the mod, the Prism instance and the .mrpack (an original
+  block-letter logo replaces the one carried over from the port). Prism keeps
+  an instance's icon from import, so existing instances keep the old one until
+  re-imported or changed in Edit Instance.
+
+## 1.0.2-alpha.55 — House visits wake night choosers (unreleased)
+
+- House visits (on by default, the Storyteller's choice): at night the
+  Poisoner, Monk, Imp and a Ravenkeeper killed tonight stay asleep until the
+  Storyteller reaches their house (walking, flying, in Spectator or by
+  teleport). Then they get a title and chime that only they see and hear,
+  and can choose. Before that, a choice is refused with "You are asleep".
+- The Storyteller stays in charge: a sleeping player's Resolve card has
+  **Wake now**, **Choose seat** (choose for them; their choice then stands
+  and a later visit does not re-prompt) and **I'll handle it**.
+- Turn it off with **House visits: ON/OFF** under the night checklist in the
+  Grimoire or in More Setup (`/bots automation housevisits on|off`). Off,
+  choosers are woken at dusk as before; turning it off mid-night wakes anyone
+  still asleep. Seats without a house set always wake at dusk.
+- New Storyteller command: `/bots automation wake <seat>`.
+
+## 1.0.2-alpha.53 — Lighter HUD and smaller memory use (unreleased)
+
+Measured with Java Flight Recorder in a 16-seat test game.
+
+- HUD and Sharktower screens keep the draw-ready form of their text.
+  Minecraft runs its right-to-left text pass (ICU Bidi and Arabic shaping)
+  on every label every frame, even in English; the HUD now does it once
+  per label. The Storyteller's HUD went from about 19% to 11% of the
+  render thread's Java time, and makes about 30% less garbage.
+- Night bar: the wake order is rebuilt at most every 100 ms instead of
+  several times per frame, and duplicate-role counts are worked out once
+  per rebuild.
+- Prism instance: Java's compact object headers
+  (`-XX:+UseCompactObjectHeaders`, Java 25) are on, about 11% less live
+  memory. New imports only; existing instances can add it in Settings > Java.
+- Dev: `BOTST_DEV_JVM_ARGS` passes extra JVM options to the run tasks
+  (for example `-Xmx3G` to test at the pack's memory limit).
 
 ## 1.0.2-alpha.52 — Watch live on the Sharktower website (unreleased)
 

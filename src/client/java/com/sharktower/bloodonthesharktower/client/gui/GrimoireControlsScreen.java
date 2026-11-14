@@ -43,7 +43,7 @@ public final class GrimoireControlsScreen extends Screen {
     /** Draws centred text wrapped to {@code wrap} pixels and returns the y below it. */
     private int drawCentered(GuiGraphicsExtractor graphics, String text, int centerX, int y, int colour, boolean shadow, int wrap) {
         for (net.minecraft.util.FormattedCharSequence line : this.font.split(Component.literal(text), wrap)) {
-            graphics.text(this.font, line, centerX - this.font.width(line) / 2, y, colour, shadow);
+            UiDrawing.text(graphics, this.font, line, centerX - this.font.width(line) / 2, y, colour, shadow);
             y += 10;
         }
         return y;

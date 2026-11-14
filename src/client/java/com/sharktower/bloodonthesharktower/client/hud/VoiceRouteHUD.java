@@ -1,5 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.hud;
 
+import com.sharktower.bloodonthesharktower.client.gui.UiDrawing;
+
 import com.sharktower.bloodonthesharktower.client.event.KeyInputHandler;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.Minecraft;
@@ -32,7 +34,7 @@ public final class VoiceRouteHUD {
         int screenHeight = HudScale.height(minecraft);
         int x = (screenWidth - minecraft.font.width(label.text())) / 2;
         int y = screenHeight - 82;
-        graphics.text(minecraft.font, label.text(), x, y, label.colour(), true);
+        UiDrawing.text(graphics, minecraft.font, label.text(), x, y, label.colour(), true);
     }
 
     private static RouteLabel describe(String rawRoute) {

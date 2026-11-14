@@ -38,6 +38,7 @@ public final class PoisonerAutomation {
     private PoisonerAutomation() {}
 
     public static void reset() {
+        HouseVisits.cancel(poisoner);
         SeatPicks.clear(poisoner);
         poisoner = null;
         chosen = null;
@@ -53,6 +54,13 @@ public final class PoisonerAutomation {
         if (found == null) return;
         poisoner = found;
         night = ServerState.currentDay;
+        HouseVisits.wakeOnVisit(server, found, PROMPT, "Poisoner", "/bots automation poisoner choose ",
+                "/bots automation poisoner dismiss", () -> wake(server, found));
+    }
+
+    /** The Storyteller has visited (or visits are off): the Poisoner may choose. */
+    private static void wake(MinecraftServer server, UUID found) {
+        if (!found.equals(poisoner)) return;
         String who = RoleAutomation.label(server, found);
         ServerPlayer player = server.getPlayerList().getPlayer(found);
         if (player != null) {
@@ -75,8 +83,11 @@ public final class PoisonerAutomation {
         if (!byStoryteller && (!PhaseOperations.isNight() || ServerState.currentDay != night)) {
             return "The Poisoner chooses at night.";
         }
+        String notYet = byStoryteller ? null : HouseVisits.refusal(chooser);
+        if (notYet != null) return notYet;
         if (target == null || !ServerState.PLAYER_SEAT_NUMBERS.containsKey(target)) return "That player is not seated.";
         chosen = target;
+        if (byStoryteller) HouseVisits.chosenForThem(poisoner);
         String who = RoleAutomation.label(server, poisoner);
         String whom = RoleAutomation.label(server, target);
         ServerPlayer player = server.getPlayerList().getPlayer(poisoner);

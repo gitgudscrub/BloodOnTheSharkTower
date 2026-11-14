@@ -104,7 +104,7 @@ public final class PlayerSidebarHUD {
         String seatText = Integer.toString(player.seat());
         int textY = y + 4;
         int seatColour = dead ? UiDrawing.DEAD : UiDrawing.MUTED;
-        graphics.text(font, seatText, x, textY, seatColour, false);
+        UiDrawing.text(graphics, font, seatText, x, textY, seatColour, false);
 
         int seatArea = Math.max(12, font.width(seatText));
         int headX = x + width - HEAD_SIZE;
@@ -113,7 +113,7 @@ public final class PlayerSidebarHUD {
         if (!drewFace) {
             graphics.fill(headX, headY, headX + HEAD_SIZE, headY + HEAD_SIZE, 0xFF454550);
             String fallback = "?";
-            graphics.text(font, fallback,
+            UiDrawing.text(graphics, font, fallback,
                     headX + (HEAD_SIZE - font.width(fallback)) / 2,
                     headY + 2, UiDrawing.TEXT, true);
         }
@@ -146,7 +146,7 @@ public final class PlayerSidebarHUD {
             int nameWidth = font.width(shownName);
             int pronounGap = 4;
             if (nameWidth + pronounGap + font.width(pronouns) <= nameMaxWidth) {
-                graphics.text(font, pronouns, nameX + nameWidth + pronounGap, textY,
+                UiDrawing.text(graphics, font, pronouns, nameX + nameWidth + pronounGap, textY,
                         dead ? UiDrawing.DEAD : UiDrawing.MUTED, true);
             }
         }
@@ -156,7 +156,7 @@ public final class PlayerSidebarHUD {
             int handX = headX - 23;
             int handY = y + 3;
             drawHand(graphics, handX, handY, electionVisible ? UiDrawing.YES : UiDrawing.GOLD);
-            if (!electionVisible) graphics.text(font, Integer.toString(ClientState.attentionHands.get(id)), handX + 9, textY, UiDrawing.GOLD, true);
+            if (!electionVisible) UiDrawing.text(graphics, font, Integer.toString(ClientState.attentionHands.get(id)), handX + 9, textY, UiDrawing.GOLD, true);
         }
     }
 
@@ -214,7 +214,7 @@ public final class PlayerSidebarHUD {
         float scale = Math.min(1.0F, maxWidth / (float) naturalWidth);
 
         if (scale >= 0.999F) {
-            graphics.text(font, text, x, y, colour, true);
+            UiDrawing.text(graphics, font, text, x, y, colour, true);
             return;
         }
 
@@ -223,7 +223,7 @@ public final class PlayerSidebarHUD {
         graphics.pose().pushMatrix();
         graphics.pose().translate(x, y + verticalOffset);
         graphics.pose().scale(scale, scale);
-        graphics.text(font, text, 0, 0, colour, true);
+        UiDrawing.text(graphics, font, text, 0, 0, colour, true);
         graphics.pose().popMatrix();
     }
 

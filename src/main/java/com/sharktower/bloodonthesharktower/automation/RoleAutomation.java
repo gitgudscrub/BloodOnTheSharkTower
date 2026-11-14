@@ -135,6 +135,7 @@ public final class RoleAutomation {
         GunslingerGun.reset();
         GolemAutomation.reset();
         NightChoices.reset();
+        HouseVisits.reset();
         SeatPicks.clearAll();
         PROMPTS.clear();
     }
@@ -725,6 +726,7 @@ public final class RoleAutomation {
         pendingStarPassNight = -1;
         resolve("starpass");
         expireReminders(server, EXPIRE_AT_DAWN, "Dawn");
+        HouseVisits.reset();
     }
 
     static List<String> expireReminders(MinecraftServer server, Map<Role, Set<String>> rules, String when) {
