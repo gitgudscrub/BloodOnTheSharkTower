@@ -3,6 +3,27 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.51 — Performance options and optional shaders (unreleased)
+
+- Optional shaders: Iris Shaders and two shader packs (Complementary
+  Reimagined for strong PCs, MakeUp Ultra Fast for mid-range ones) are
+  offered as tick boxes when the pack is installed. Off by default.
+- Iris uses R, K and I by default, which clash with the Grimoire, catalog
+  and Storyteller tools keys (and R would reload shaders, freezing the game,
+  every time the Grimoire opened). The first launch with Iris moves its keys
+  to F6 (shaders on/off) and F7 (shader packs) and unbinds reload. Done once,
+  so players can rebind them afterwards.
+- BadOptimizations added to the client pack (small CPU savings).
+- The Prism instance now gives the game 3 GB of memory instead of 4 GB,
+  which leaves room for Windows and Discord on 8 GB PCs (existing
+  instances keep their own setting).
+- New installs start with render distance 8, simulation distance 6 and
+  fewer particles. Existing settings are never overwritten.
+- New guide: docs/PERFORMANCE.md (8 GB tips, raising memory on stronger PCs,
+  turning shaders on, server view distance).
+- Pack builder: optional client files (`"optional": true`) and shader packs
+  (`"type": "shaderpack"`).
+
 ## 1.0.2-alpha.50 — Tonight checklist, setup reminders, Undo, saved bags (unreleased)
 
 - Tonight checklist: during the night the Grimoire's right-hand side lists

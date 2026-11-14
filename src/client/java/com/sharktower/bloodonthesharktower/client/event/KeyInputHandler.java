@@ -79,6 +79,44 @@ public final class KeyInputHandler {
         });
     }
 
+    /**
+     * Iris (optional in the pack, for shaders) binds R (reload shaders), K
+     * (shaders on/off) and I (shader packs) by default: the Grimoire, catalog
+     * and Storyteller tools keys. Both would fire, and reloading shaders every
+     * time the Grimoire opens freezes the game. The first time the game starts
+     * with Iris, move its keys that are still on their defaults and clash with
+     * a Sharktower key: shaders on/off to F6, shader packs to F7, reload to
+     * nothing. Done once, so a player's own rebinding is left alone.
+     */
+    public static void moveIrisKeys() {
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            if (ClientSettings.irisKeysMoved || !net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("iris")) return;
+            java.util.Set<String> ours = new java.util.HashSet<>();
+            for (KeyMapping key : client.options.keyMappings) {
+                if (key.getName().startsWith("key.blood_on_the_sharktower.") && !key.isUnbound()) ours.add(key.saveString());
+            }
+            boolean changed = false;
+            for (KeyMapping key : client.options.keyMappings) {
+                if (!key.getName().startsWith("iris.keybind.") || !key.isDefault() || !ours.contains(key.saveString())) continue;
+                InputConstants.Key target = switch (key.getName()) {
+                    case "iris.keybind.toggleShaders" -> InputConstants.getKey("key.keyboard.f6");
+                    case "iris.keybind.shaderPackSelection" -> InputConstants.getKey("key.keyboard.f7");
+                    default -> InputConstants.UNKNOWN;
+                };
+                if (!target.equals(InputConstants.UNKNOWN) && ours.contains(target.getName())) target = InputConstants.UNKNOWN;
+                key.setKey(target);
+                changed = true;
+            }
+            if (changed) {
+                KeyMapping.resetMapping();
+                client.options.save();
+                BloodOnTheSharktower.LOGGER.info("Moved Iris shader keys off the Sharktower keys: F6 shaders on/off, F7 shader packs, reload unbound.");
+            }
+            ClientSettings.irisKeysMoved = true;
+            ClientSettings.save();
+        });
+    }
+
     public static void register() {
         toggleShowRole = bind("key.blood_on_the_sharktower.toggle_show_role", InputConstants.KEY_Z);
         openAssignGui = bind("key.blood_on_the_sharktower.open_assign_gui", InputConstants.KEY_R);

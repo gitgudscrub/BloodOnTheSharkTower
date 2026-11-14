@@ -20,6 +20,8 @@ Every dependency version below is pinned in `modrinth/pack-config.json`; edit th
 - Entity Culling 1.11.3 (`X1g3VhTx`, client-only)
 - ImmediatelyFast 1.17.1+26.3-fabric (`3MP9UR23`, client-only)
 - Dynamic FPS 3.11.10 (`Jwq069rR`, client-only)
+- BadOptimizations 2.4.1 (`Sp0ctspw`, client-only)
+- optional (a tick box at install, off by default): Iris Shaders 1.11.7 (`vTN4NRGW`, needs Sodium 0.9.2 exactly) and the shader packs Complementary Reimagined r5.9.3 (`Bqen1mJX`) and MakeUp Ultra Fast 9.6 (`t4YRxQug`), linked from Modrinth, never bundled
 - Mod Menu 21.0.0 (`kyy7dbrZ`, client-only) with Text Placeholder API 3.2.0+26.3 (`lXytLqWj`), so players can reach the Simple Voice Chat and Sodium settings screens
 - the Sharktower JAR built from the selected Git commit
 - a preconfigured Multiplayer entry named `Blood on the Sharktower` pointing at `88.97.251.50` on Minecraft's default port

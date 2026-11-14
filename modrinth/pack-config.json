@@ -79,6 +79,45 @@
       "validate_compatibility": true
     },
     {
+      "name": "BadOptimizations",
+      "version_id": "Sp0ctspw",
+      "client": "required",
+      "server": "unsupported",
+      "validate_compatibility": true
+    },
+    {
+      "name": "Iris Shaders",
+      "version_id": "vTN4NRGW",
+      "client": "optional",
+      "server": "unsupported",
+      "optional": true,
+      "default": false,
+      "description": "Lets you run shaders (Options > Video Settings > Shader Packs). Needed for the two shader packs below. Best with 16 GB RAM and a gaming graphics card.",
+      "validate_compatibility": true
+    },
+    {
+      "name": "Complementary Reimagined",
+      "type": "shaderpack",
+      "version_id": "Bqen1mJX",
+      "client": "optional",
+      "server": "unsupported",
+      "optional": true,
+      "default": false,
+      "description": "Good-looking shaders for strong PCs. Needs Iris Shaders.",
+      "validate_compatibility": true
+    },
+    {
+      "name": "MakeUp Ultra Fast",
+      "type": "shaderpack",
+      "version_id": "t4YRxQug",
+      "client": "optional",
+      "server": "unsupported",
+      "optional": true,
+      "default": false,
+      "description": "Light shaders for mid-range PCs. Needs Iris Shaders.",
+      "validate_compatibility": true
+    },
+    {
       "name": "Text Placeholder API",
       "version_id": "lXytLqWj",
       "client": "required",
