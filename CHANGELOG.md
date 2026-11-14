@@ -3,6 +3,19 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.43 — Grimoire tidy-up for 16 seats (unreleased)
+
+- Role names under Grimoire tokens no longer get cut short ("INVESTIGATO.").
+  A long name now wraps onto two lines at a space ("FORTUNE / TELLER"),
+  or shrinks a little, and is only shortened as a last resort.
+- The upper seats show the role name above the token instead of below it,
+  so it stays clear of the seat numbers and heads inside the ring (the
+  Scarlet Woman label no longer covers the next seat's number).
+- The name's width follows the space between neighbouring tokens, so small
+  tables get full names and a 16-seat table stays tidy. Rim reminders keep
+  clear of the name wherever it is.
+- The layout is now tuned up to 16 seats, the most the Sharktower map holds.
+
 ## 1.0.2-alpha.42 — Voice heads above the role card (unreleased)
 
 - Simple Voice Chat's list of the players in your voice group was a column

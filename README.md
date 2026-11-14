@@ -100,7 +100,8 @@ Client and server builds are produced together by GitHub Actions so that both pa
 ### Accessibility and help
 
 - Keys & Help screen (H) with live key bindings and phase hints.
-- Role names under Grimoire tokens and G/E alignment letters (both in
+- Role names under Grimoire tokens (long names wrap onto two lines; the
+  upper seats show them above the token) and G/E alignment letters (both in
   Settings), and a role count strip that names each team.
 - Compact Cards (Settings, on by default): a slim role card, a narrower
   nomination card and a tighter hand box, so players can play with them open.
