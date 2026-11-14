@@ -84,7 +84,8 @@ Client and server builds are produced together by GitHub Actions so that both pa
   Storyteller places the Poisoned reminder, which clears at the next dusk),
   the Psychopath's daytime kill (an axe from dawn until nominations; whoever
   it hits is publicly attacked and the Storyteller rules; also for an
-  Alchemist with the "Psychopath" reminder),
+  Alchemist with the "Psychopath" reminder) and its rock-paper-scissors when
+  executed (`/roshambo <pick>` against the nominator; the Storyteller rules),
   the Scarlet Woman becoming the
   Demon, the Imp star-pass choice, Demon Kill refusing protected targets
   (Soldier, Sailor, Monk/Innkeeper "Safe", Tea Lady, Fool) with a Mayor

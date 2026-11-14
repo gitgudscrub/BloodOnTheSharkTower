@@ -319,7 +319,12 @@ public final class BotsCommands {
                                         .then(Commands.literal("kill")
                                                 .executes(BotsCommands::executeAutomationPsychopathKill))
                                         .then(Commands.literal("dismiss")
-                                                .executes(BotsCommands::executeAutomationPsychopathDismiss)))
+                                                .executes(BotsCommands::executeAutomationPsychopathDismiss))
+                                        .then(Commands.literal("roshambo")
+                                                .then(Commands.literal("dies")
+                                                        .executes(ctx -> executeAutomationRoshambo(ctx, true)))
+                                                .then(Commands.literal("lives")
+                                                        .executes(ctx -> executeAutomationRoshambo(ctx, false)))))
                                 .then(Commands.literal("poisoner")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationPoisonerDismiss))
@@ -1577,6 +1582,14 @@ public final class BotsCommands {
     private static int executeAutomationPsychopathKill(CommandContext<CommandSourceStack> context) {
         if (!requireStoryteller(context)) return 0;
         String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathAxe.kill(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationRoshambo(CommandContext<CommandSourceStack> context, boolean dies) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathRoshambo
+                .rule(context.getSource().getServer(), dies);
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }

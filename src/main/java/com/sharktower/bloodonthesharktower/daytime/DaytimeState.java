@@ -96,11 +96,16 @@ public final class DaytimeState {
     public static void setMarkedForExecution(UUID id, int votes) {
         markedForExecution = id;
         votesForMarkedPlayer = Math.max(0, votes);
+        // Who nominated the player now on the block (the Psychopath's roshambo needs it).
+        markedNominator = id != null && id.equals(currentNominee) ? currentNominator : null;
     }
     public static void clearMarkedForExecution() {
         markedForExecution = null;
         votesForMarkedPlayer = 0;
+        markedNominator = null;
     }
+    private static UUID markedNominator;
+    public static UUID getMarkedNominator() { return markedNominator; }
     public static int getVotesForMarkedPlayer() { return votesForMarkedPlayer; }
 
     public static UUID getStorytellerMFE() { return storytellerMFE; }
