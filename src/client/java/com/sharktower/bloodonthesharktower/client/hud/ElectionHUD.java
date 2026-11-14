@@ -202,7 +202,7 @@ public final class ElectionHUD {
         // nominations open, private zones are disabled and this same slot shows
         // NOMINATIONS OPEN instead.
         int y = screenHeight - 82;
-        graphics.text(minecraft.font, text, x, y, 0xFF55FF55, true);
+        UiDrawing.text(graphics, minecraft.font, text, x, y, 0xFF55FF55, true);
     }
 
     private static String privateDayZone() {

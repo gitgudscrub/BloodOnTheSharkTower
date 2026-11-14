@@ -85,7 +85,7 @@ public class SharktowerButton extends AbstractWidget {
         graphics.pose().pushMatrix();
         graphics.pose().translate(textX, textY);
         graphics.pose().scale(scale, scale);
-        graphics.text(font, text, 0, 0, colour, dark);
+        UiDrawing.text(graphics, font, text, 0, 0, colour, dark);
         graphics.pose().popMatrix();
     }
 

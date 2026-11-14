@@ -123,15 +123,15 @@ public final class PlayerSetupScreen extends Screen {
         String role = current == null || "norole".equalsIgnoreCase(current.getRoleId())
                 ? "Unassigned"
                 : current.getDisplayName();
-        graphics.text(this.font, "Seat " + seat + " — " + role,
+        UiDrawing.text(graphics, this.font, "Seat " + seat + " — " + role,
                 (this.width - this.font.width("Seat " + seat + " — " + role)) / 2, 24, UiDrawing.GOLD, UiTheme.dark());
         String playerName = ClientState.playerName(playerId, seat);
-        graphics.text(this.font, playerName,
+        UiDrawing.text(graphics, this.font, playerName,
                 (this.width - this.font.width(playerName)) / 2, 38, UiDrawing.MUTED, false);
 
         List<Reminder> reminders = ClientGrimoireEdits.remindersFor(playerId);
         String reminderText = reminders.isEmpty() ? "No reminders" : "Reminders: " + reminders.stream().map(Reminder::text).toList();
-        graphics.text(this.font, reminderText,
+        UiDrawing.text(graphics, this.font, reminderText,
                 (this.width - this.font.width(reminderText)) / 2, 52, UiDrawing.MUTED, false);
     }
 }

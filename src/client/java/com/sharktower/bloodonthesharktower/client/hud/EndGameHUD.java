@@ -27,9 +27,9 @@ public final class EndGameHUD {
 
         graphics.fill(x, y, x + width, y + 39, 0xE0101014);
         graphics.outline(x, y, width, 39, colour);
-        graphics.text(minecraft.font, title,
+        UiDrawing.text(graphics, minecraft.font, title,
                 x + (width - minecraft.font.width(title)) / 2, y + 7, colour, true);
-        graphics.text(minecraft.font, hint,
+        UiDrawing.text(graphics, minecraft.font, hint,
                 x + (width - minecraft.font.width(hint)) / 2, y + 23, UiDrawing.TEXT, false);
     }
 }

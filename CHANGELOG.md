@@ -3,6 +3,24 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.53 — Lighter HUD and smaller memory use (unreleased)
+
+Measured with Java Flight Recorder in a 16-seat test game.
+
+- HUD and Sharktower screens keep the draw-ready form of their text.
+  Minecraft runs its right-to-left text pass (ICU Bidi and Arabic shaping)
+  on every label every frame, even in English; the HUD now does it once
+  per label. The Storyteller's HUD went from about 19% to 11% of the
+  render thread's Java time, and makes about 30% less garbage.
+- Night bar: the wake order is rebuilt at most every 100 ms instead of
+  several times per frame, and duplicate-role counts are worked out once
+  per rebuild.
+- Prism instance: Java's compact object headers
+  (`-XX:+UseCompactObjectHeaders`, Java 25) are on, about 11% less live
+  memory. New imports only; existing instances can add it in Settings > Java.
+- Dev: `BOTST_DEV_JVM_ARGS` passes extra JVM options to the run tasks
+  (for example `-Xmx3G` to test at the pack's memory limit).
+
 ## 1.0.2-alpha.52 — Watch live on the Sharktower website (unreleased)
 
 - Watch live: the server feeds the Sharktower website's new Watch live page

@@ -107,10 +107,10 @@ public final class ScriptBuilderScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        graphics.text(this.font, "Script Builder", 12, 14, UiDrawing.GOLD, UiTheme.dark());
+        UiDrawing.text(graphics, this.font, "Script Builder", 12, 14, UiDrawing.GOLD, UiTheme.dark());
         String count = "Selected: " + SELECTED.size();
         if (!searchQuery.isBlank()) count += "  ·  showing " + grid.shownCount();
-        graphics.text(this.font, count, 12, 32, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, this.font, count, 12, 32, UiDrawing.MUTED, false);
         grid.draw(graphics, mouseX, mouseY);
         grid.drawHoverCard(graphics, this.width, this.height, mouseX, mouseY);
     }

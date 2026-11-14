@@ -113,35 +113,35 @@ public final class NightVisitInfoHUD {
 
         int teamColour = UiDrawing.opaque(UiDrawing.teamColor(visitRole.getTeam()));
         String roleName = visitRole.getDisplayName();
-        graphics.text(minecraft.font, roleName, textX, y + 12, teamColour, true);
+        UiDrawing.text(graphics, minecraft.font, roleName, textX, y + 12, teamColour, true);
 
         int seat = ClientState.grimoireSeatNumbers.getOrDefault(visitedPlayer,
                 ClientState.playerSeatNumbers.getOrDefault(visitedPlayer, 0));
         String playerName = ClientState.playerName(visitedPlayer, seat);
-        graphics.text(minecraft.font, playerName, textX, y + 23, YELLOW, true);
+        UiDrawing.text(graphics, minecraft.font, playerName, textX, y + 23, YELLOW, true);
 
         int lineY = y + 36;
         for (String line : instructionLines) {
-            graphics.text(minecraft.font, line, textX, lineY, UiDrawing.TEXT, false);
+            UiDrawing.text(graphics, minecraft.font, line, textX, lineY, UiDrawing.TEXT, false);
             lineY += 11;
         }
 
         if (!infoLines.isEmpty()) {
             lineY += 2;
             for (String line : infoLines) {
-                graphics.text(minecraft.font, line, textX, lineY, yesNoColour(line, RED), true);
+                UiDrawing.text(graphics, minecraft.font, line, textX, lineY, yesNoColour(line, RED), true);
                 lineY += 11;
             }
         }
 
         lineY += 3;
         String status = "Droisoned: " + (droisoned ? "YES" : "NO");
-        graphics.text(minecraft.font, status, textX, lineY,
+        UiDrawing.text(graphics, minecraft.font, status, textX, lineY,
                 droisoned ? UiDrawing.YES : UiDrawing.NO, true);
 
         if (vortoxInPlay) {
             lineY += 11;
-            graphics.text(minecraft.font, "Vortox: YES", textX, lineY, UiDrawing.YES, true);
+            UiDrawing.text(graphics, minecraft.font, "Vortox: YES", textX, lineY, UiDrawing.YES, true);
         }
     }
 

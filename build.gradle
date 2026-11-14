@@ -242,6 +242,7 @@ enable-command-block=true
 // hook keeps this resilient if Gradle realizes those tasks later in configuration.
 tasks.matching { it.name in ["runDevServer", "runStoryteller", "runPlayer1", "runPlayer2", "runPlayer3", "runPlayer4", "runPlayer5"] }.configureEach {
     dependsOn tasks.named("prepareSharktowerDevHarness")
+    def extraJvm = System.getenv("BOTST_DEV_JVM_ARGS"); if (extraJvm) jvmArgs(extraJvm.split(" "))
 }
 
 // Exercises private/public death separation without bootstrapping a Minecraft client.

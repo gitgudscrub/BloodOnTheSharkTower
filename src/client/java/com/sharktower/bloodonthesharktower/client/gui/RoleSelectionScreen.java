@@ -226,9 +226,9 @@ public final class RoleSelectionScreen extends Screen {
             case PERCEIVED -> "Choose what seat " + seat + " believes they are";
             case BLUFF -> "Choose Demon bluff";
         };
-        graphics.text(this.font, heading, (this.width - this.font.width(heading)) / 2, 17, UiDrawing.GOLD, UiTheme.dark());
+        UiDrawing.text(graphics, this.font, heading, (this.width - this.font.width(heading)) / 2, 17, UiDrawing.GOLD, UiTheme.dark());
         String pageText = (page + 1) + "/" + (maxPage + 1) + "   " + roles.size() + " roles";
-        graphics.text(this.font, pageText, (this.width - this.font.width(pageText)) / 2, 30, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, this.font, pageText, (this.width - this.font.width(pageText)) / 2, 30, UiDrawing.MUTED, false);
     }
 
 }
