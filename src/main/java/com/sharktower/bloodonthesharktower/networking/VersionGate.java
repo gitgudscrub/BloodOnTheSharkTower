@@ -15,13 +15,16 @@ import java.util.List;
 public final class VersionGate {
     private VersionGate() {}
 
+    /** The website's "Get the pack" page (Prism instance, .mrpack, update steps). */
+    public static final String PACK_PAGE = "sharktower.themavryan.com/minecraft/pack";
+
     /** @return null if the client may join, otherwise the disconnect text. */
     public static String refusal(String serverVersion, String clientVersion) {
         if (clientVersion == null) {
             return "This server needs the Blood on the Sharktower pack, version " + serverVersion + ".\n\n"
                     + "Your pack is missing or too old to check.\n"
-                    + "Get the Sharktower Prism Launcher instance, which keeps itself up to date\n"
-                    + "(ask in the Sharktower Discord), or update the pack in your launcher.";
+                    + "Get the Sharktower Prism Launcher instance, which keeps itself up to date:\n"
+                    + PACK_PAGE;
         }
         if (clientVersion.equals(serverVersion)) {
             return null;
@@ -29,8 +32,8 @@ public final class VersionGate {
         if (compare(clientVersion, serverVersion) < 0) {
             return "Your Blood on the Sharktower pack is out of date.\n\n"
                     + "Server: " + serverVersion + "    You: " + clientVersion + "\n\n"
-                    + "Close Minecraft and press Launch again to update.\n"
-                    + "(Modrinth App: press Update on the pack first.)";
+                    + "Prism Launcher: close Minecraft and press Launch again to update.\n"
+                    + "Modrinth App: get the new .mrpack from " + PACK_PAGE;
         }
         return "The server has not updated yet.\n\n"
                 + "Server: " + serverVersion + "    You: " + clientVersion + "\n\n"

@@ -325,6 +325,14 @@ tasks.register('serverUpdateRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('serverUpdateRegression') }
 
+// Watch live: website voice room names.
+tasks.register('spectatorRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.spectator.SpectatorRegression'
+}
+tasks.named('check') { dependsOn tasks.named('spectatorRegression') }
+
 tasks.register('nicknamesRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath

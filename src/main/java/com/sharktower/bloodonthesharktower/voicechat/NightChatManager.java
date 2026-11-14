@@ -125,6 +125,25 @@ public final class NightChatManager {
         return dayRoute == null ? "PROXIMITY" : dayRoute;
     }
 
+    /**
+     * The room a speaker is heard in, for website spectators: {@code near}
+     * (proximity), {@code town}, {@code zone:<name>}, {@code house:<seat>} or
+     * {@code st:<player uuid>} (a Storyteller private chat). Null while a
+     * player waits alone on hold, where nobody can hear them.
+     */
+    public static synchronized String spectatorRoom(UUID participantId) {
+        if (participantId == null) return null;
+        PrivateSession session = SESSIONS_BY_PARTICIPANT.get(participantId);
+        if (session != null) {
+            return isStorytellerAttached(session) ? "st:" + session.playerId() : null;
+        }
+        Integer house = HOUSE_ROOMS.get(participantId);
+        if (house != null) return "house:" + house;
+        String day = DayChatZoneManager.routeCode(participantId);
+        if (day == null) return "near";
+        return day.startsWith("DAY_ZONE:") ? "zone:" + day.substring("DAY_ZONE:".length()) : "town";
+    }
+
     /** Send the current local route immediately, e.g. during initial login sync. */
     public static synchronized void sendRouteTo(ServerPlayer player) {
         if (player == null) return;

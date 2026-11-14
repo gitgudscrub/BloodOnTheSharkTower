@@ -14,6 +14,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
  * Server-only link to the Sharktower website, which shows this server's status
@@ -37,7 +41,7 @@ public final class SiteLink {
     private static String url;
     private static String key;
     private static String packUrl = DEFAULT_PACK_URL;
-    private static volatile boolean warned;
+    private static final Map<String, Boolean> WARNED = new ConcurrentHashMap<>();
 
     private SiteLink() {}
 
@@ -81,23 +85,38 @@ public final class SiteLink {
 
     /** Fire-and-forget POST of a status snapshot; never blocks the server thread. */
     public static void sendStatus(JsonObject status) {
-        if (!enabled()) return;
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url + "/internal/minecraft/status"))
+        post("/internal/minecraft/status", GSON.toJson(status), "status reports", null);
+    }
+
+    /**
+     * Async POST of a JSON body to a site path. {@code onReply} gets the reply
+     * body on success (on the HTTP thread). The future completes either way.
+     * One warning per failing path until it works again.
+     */
+    public static CompletableFuture<Void> post(String path, String json, String what, Consumer<String> onReply) {
+        if (!enabled()) return CompletableFuture.completedFuture(null);
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url + path))
                 .timeout(Duration.ofSeconds(10))
                 .header("Content-Type", "application/json")
                 .header("X-Sharktower-Minecraft-Key", key)
-                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(status)))
+                .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
-        HTTP.sendAsync(request, HttpResponse.BodyHandlers.discarding()).whenComplete((response, error) -> {
+        return HTTP.sendAsync(request, HttpResponse.BodyHandlers.ofString()).handle((response, error) -> {
             boolean failed = error != null || response.statusCode() >= 300;
-            if (failed && !warned) {
-                warned = true;
-                BloodOnTheSharktower.LOGGER.warn("Website link: status report failed ({}). Further failures are not logged.",
-                        error != null ? error.toString() : "HTTP " + response.statusCode());
-            } else if (!failed && warned) {
-                warned = false;
-                BloodOnTheSharktower.LOGGER.info("Website link: status reports are getting through again.");
+            if (failed && WARNED.putIfAbsent(path, true) == null) {
+                BloodOnTheSharktower.LOGGER.warn("Website link: {} failed ({}). Further failures are not logged.",
+                        what, error != null ? error.toString() : "HTTP " + response.statusCode());
+            } else if (!failed && WARNED.remove(path) != null) {
+                BloodOnTheSharktower.LOGGER.info("Website link: {} are getting through again.", what);
             }
+            if (!failed && onReply != null) {
+                try {
+                    onReply.accept(response.body());
+                } catch (RuntimeException e) {
+                    BloodOnTheSharktower.LOGGER.debug("Website link: bad reply to {}", path, e);
+                }
+            }
+            return null;
         });
     }
 }

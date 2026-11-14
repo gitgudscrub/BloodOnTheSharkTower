@@ -80,6 +80,8 @@ public final class SharktowerVoicechatPlugin implements VoicechatPlugin {
             if (event.getSenderConnection() == null) return;
             UUID sender = event.getSenderConnection().getPlayer().getUuid();
             WHISPERING.put(sender, event.getPacket().isWhispering());
+            com.sharktower.bloodonthesharktower.spectator.SpectatorBridge.capture(
+                    sender, event.getPacket().getOpusEncodedData(), event.getPacket().isWhispering());
             SocialStateManager.speaking(sender, event.getPacket().getOpusEncodedData().length > 0);
             // Ordinary proximity packets reach the ST independently of distance,
             // while respecting private rooms. Group routing already has no attenuation.

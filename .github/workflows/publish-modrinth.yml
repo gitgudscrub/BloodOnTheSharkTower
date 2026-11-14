@@ -176,6 +176,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_CHANGELOG: ${{ inputs.changelog }}
         run: |
+          # A fixed name so releases/latest/download/Blood-on-the-Sharktower.mrpack
+          # always gets the newest pack (linked from the website's Get the pack page).
+          cp "dist/blood-on-the-sharktower-${RELEASE_VERSION}.mrpack" dist/Blood-on-the-Sharktower.mrpack
           gh release create "pack-${RELEASE_VERSION}" \
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
@@ -183,7 +186,8 @@ jobs:
             --notes "$RELEASE_CHANGELOG" \
             --latest \
             "dist/server/blood-on-the-sharktower-${RELEASE_VERSION}.jar" \
-            dist/Blood-on-the-Sharktower-Prism.zip
+            dist/Blood-on-the-Sharktower-Prism.zip \
+            dist/Blood-on-the-Sharktower.mrpack
 
       - name: Point the auto-update pack at this version
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_auto_update }}
