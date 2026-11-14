@@ -26,11 +26,15 @@ While the Modrinth project is awaiting approval, client builds can be shared dir
 
 https://modrinth.com/modpack/blood-on-the-sharktower
 
+For an install that updates itself on every launch (Windows and Ubuntu), use the Prism Launcher instance instead: see [docs/AUTO_UPDATE.md](docs/AUTO_UPDATE.md).
+
 The client pack includes the required Fabric setup and dependencies, the current Blood on the Sharktower mod, Simple Voice Chat, No Chat Restrictions, Mod Menu, a set of client performance mods, and the Sharktower Minecraft server preconfigured in the Multiplayer menu.
 
 ### Server
 
 The server runs the same Blood on the Sharktower JAR as clients. The server also needs Fabric API and Simple Voice Chat at the versions pinned in `modrinth/pack-config.json` (Lithium and FerriteCore are optional on the server; Sodium and No Chat Restrictions are client-only).
+
+Clients must run the same Blood on the Sharktower version as the server; the server refuses mismatched versions at login (see [docs/AUTO_UPDATE.md](docs/AUTO_UPDATE.md)).
 
 ### Storyteller control
 
