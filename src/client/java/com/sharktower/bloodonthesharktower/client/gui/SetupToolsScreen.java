@@ -1,6 +1,7 @@
 package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
+import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -30,6 +31,12 @@ public final class SetupToolsScreen extends Screen {
                     AssignRolesScreen.toggleShowSelf();
                     rebuildWidgets();
                 });
+        this.addRenderableWidget(SharktowerButton.builder(AssignRolesScreen.houseVisitsLabel(), b -> {
+                    ClientState.houseVisits = !ClientState.houseVisits;
+                    action("toggle_house_visits");
+                    rebuildWidgets();
+                })
+                .bounds(cx - 153, y + 24, 150, 20).tooltip(Tooltip.create(Component.literal(AssignRolesScreen.HOUSE_VISITS_TIP))).build());
         add(cx + 3, y, "Unseated: " + (AssignRolesScreen.showUnseated() ? "SHOW" : "HIDE"),
                 "Show or hide the list of players without a seat.", () -> {
                     AssignRolesScreen.toggleShowUnseated();

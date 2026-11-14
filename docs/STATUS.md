@@ -140,6 +140,11 @@ after the alpha that introduced each change.
   warnings, Minstrel, Evil Twin and Mastermind by regression checks only);
 - Grimoire Resolve panel listing those decisions with a button per choice
   (verified live: Slayer and Virgin prompts, paging, execute and dismiss).
+- House visits: Poisoner, Monk, Imp and night-killed Ravenkeeper wake when
+  the Storyteller reaches their house; Wake now / Choose seat / I'll handle
+  it overrides and an ON/OFF toggle (verified live on the dev harness,
+  November 2026: refusal while asleep, wake on arrival, Wake now, choose for
+  a sleeper, OFF wakes at dusk).
 
 ### Night game and information
 
