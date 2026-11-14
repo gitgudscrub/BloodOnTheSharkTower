@@ -3,6 +3,21 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.45 — Monk and Imp night choices (unreleased)
+
+- Monk: at dusk the living Monk gets a private, clickable list of seats
+  (`/protect <seat>`, not themselves). The choice goes to Resolve with the
+  target's character; **Protect** places the Monk's "Safe" reminder, which
+  clears at dawn.
+- Imp: at dusk the living Imp gets the same list (`/attack <seat>`). Resolve
+  shows the target and what should happen (Safe, Soldier, Mayor, a
+  self-kill star pass, drunk or poisoned). **Kill** runs the Grimoire's
+  Demon kill, which still refuses protected players and offers the star
+  pass when the Imp kills themselves.
+- Both start at dusk, so never on the first night. Players can change their
+  mind until the Storyteller acts, and an offline player can be chosen for
+  with `/bots automation monk|imp choose <seat>`.
+
 ## 1.0.2-alpha.44 — Gunslinger and Golem (unreleased)
 
 - Gunslinger: when the day's first vote is tallied, the living Gunslinger
