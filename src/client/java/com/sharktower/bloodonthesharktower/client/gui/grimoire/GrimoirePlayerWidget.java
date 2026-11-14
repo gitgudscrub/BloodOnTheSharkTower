@@ -24,6 +24,8 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
     private final int seat;
     private final PendingRoleAssignment assignment;
     private final boolean dead;
+    private boolean labelAbove;
+    private int labelMaxWidth = DEFAULT_LABEL_WIDTH;
 
     public GrimoirePlayerWidget(int x, int y, int size, UUID playerId, int seat,
                                 PendingRoleAssignment assignment, boolean dead) {
@@ -32,6 +34,17 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
         this.seat = seat;
         this.assignment = assignment;
         this.dead = dead;
+    }
+
+    /**
+     * Where the role name goes: above the token for the upper seats, whose
+     * lower side faces the head ring and its seat numbers, and how wide it may
+     * be before it wraps or shrinks (the gap to the neighbouring tokens).
+     */
+    public GrimoirePlayerWidget label(boolean above, int maxWidth) {
+        this.labelAbove = above;
+        this.labelMaxWidth = maxWidth;
+        return this;
     }
 
     @Override
@@ -113,24 +126,86 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
 
     /** Gap between the token and its name: clears the 5px nominator/nominee ring. */
     public static final int LABEL_GAP = 6;
+    /** Label width when the layout gives none: the token plus a little either side. */
+    public static final int DEFAULT_LABEL_WIDTH = 50;
+    private static final float LABEL_SCALE = 0.75F;
+    private static final float LABEL_MIN_SCALE = 0.6F;
+    private static final int LINE_HEIGHT = 9;
 
-    /** Role name under the token at 3/4 size, cut short so neighbouring labels do not collide. */
-    private void drawRoleLabel(GuiGraphicsExtractor graphics, ScriptRole role) {
+    /** A role name fitted to a width: one or two lines at a scale, cut short only as a last resort. */
+    public record LabelFit(java.util.List<String> lines, float scale) {
+        public int width() {
+            net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+            int widest = 0;
+            for (String line : lines) widest = Math.max(widest, font.width(line));
+            return Math.round((widest + 4) * scale);
+        }
+
+        public int height() {
+            return Math.round((lines.size() * LINE_HEIGHT + 1) * scale);
+        }
+    }
+
+    /**
+     * Fits a role name into {@code maxWidth} GUI pixels: whole at 3/4 size if
+     * it fits, else split over two lines at a space ("FORTUNE / TELLER"), else
+     * shrunk down to 60%, and only then cut short with a dot.
+     */
+    public static LabelFit fitLabel(String displayName, int maxWidth) {
         net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+        String name = displayName.toUpperCase(java.util.Locale.ROOT);
+        float room = maxWidth - 4 * LABEL_SCALE;
+        if (font.width(name) * LABEL_SCALE <= room) return new LabelFit(java.util.List.of(name), LABEL_SCALE);
+        java.util.List<String> best = null;
+        int bestWidth = Integer.MAX_VALUE;
+        for (int i = name.indexOf(' '); i > 0; i = name.indexOf(' ', i + 1)) {
+            String a = name.substring(0, i).trim();
+            String b = name.substring(i + 1).trim();
+            int width = Math.max(font.width(a), font.width(b));
+            if (width < bestWidth) {
+                bestWidth = width;
+                best = java.util.List.of(a, b);
+            }
+        }
+        java.util.List<String> lines = best != null ? best : java.util.List.of(name);
+        int widest = best != null ? bestWidth : font.width(name);
+        float scale = Math.max(LABEL_MIN_SCALE, Math.min(LABEL_SCALE, (maxWidth - 4 * LABEL_MIN_SCALE) / widest));
+        int limit = (int) Math.floor((maxWidth - 4 * scale) / scale);
+        java.util.List<String> cut = new java.util.ArrayList<>();
+        for (String line : lines) {
+            cut.add(font.width(line) <= limit ? line : font.plainSubstrByWidth(line, limit - font.width(".")) + ".");
+        }
+        return new LabelFit(cut, scale);
+    }
+
+    /** The area the role name covers, as {x, y, width, height}, for keeping rim reminders off it. */
+    public static int[] labelArea(int tokenX, int tokenY, int size, boolean above, LabelFit fit) {
+        int width = fit.width();
+        int height = fit.height();
+        int top = above ? tokenY - LABEL_GAP - height : tokenY + size + LABEL_GAP - 1;
+        return new int[]{tokenX + size / 2 - width / 2, top, width, height + 1};
+    }
+
+    private void drawRoleLabel(GuiGraphicsExtractor graphics, ScriptRole role) {
         String name = role.getDisplayName();
         if (name == null || name.isEmpty()) return;
-        name = name.toUpperCase(java.util.Locale.ROOT);
-        float scale = 0.75F;
-        int maxWidth = Math.round((this.width + 18) / scale);
-        if (font.width(name) > maxWidth) name = font.plainSubstrByWidth(name, maxWidth - font.width(".")) + ".";
-        int textWidth = font.width(name);
+        net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+        LabelFit fit = fitLabel(name, labelMaxWidth);
+        float scale = fit.scale();
+        int[] area = labelArea(getX(), getY(), this.width, labelAbove, fit);
         float cx = getX() + this.width / 2.0F;
-        float top = getY() + this.height + LABEL_GAP;
+        int colour = UiDrawing.opaque(UiDrawing.teamColor(role.getTeam()));
         graphics.pose().pushMatrix();
-        graphics.pose().translate(cx, top);
+        graphics.pose().translate(cx, area[1] + scale);
         graphics.pose().scale(scale, scale);
-        graphics.fill(-textWidth / 2 - 2, -1, textWidth / 2 + 2, 9, UiTheme.dark() ? 0xC0101014 : 0xC0F5EDD9);
-        graphics.text(font, name, -textWidth / 2, 0, UiDrawing.opaque(UiDrawing.teamColor(role.getTeam())), false);
+        int widest = 0;
+        for (String line : fit.lines()) widest = Math.max(widest, font.width(line));
+        graphics.fill(-widest / 2 - 2, -1, widest / 2 + 2, fit.lines().size() * LINE_HEIGHT,
+                UiTheme.dark() ? 0xC0101014 : 0xC0F5EDD9);
+        for (int i = 0; i < fit.lines().size(); i++) {
+            String line = fit.lines().get(i);
+            graphics.text(font, line, -font.width(line) / 2, i * LINE_HEIGHT, colour, false);
+        }
         graphics.pose().popMatrix();
     }
 

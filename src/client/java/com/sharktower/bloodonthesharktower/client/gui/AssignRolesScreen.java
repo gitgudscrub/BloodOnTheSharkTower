@@ -57,6 +57,8 @@ public class AssignRolesScreen extends Screen {
     private static final int REMINDER_PADDING = 2;
     private static final int DECEIVED_ROLE_GAP = 4;
     private static final int HEAD_SIZE = 24;
+    /** The biggest table the Sharktower map seats; the layout is tuned up to here. */
+    private static final int MAX_SEATS = 16;
     private static final int CONTROL_W = 90;
     private static final int RESOLVE_W = 170;
     /** Height kept free at the bottom edge for the one-line hover hint. */
@@ -98,12 +100,14 @@ public class AssignRolesScreen extends Screen {
         int baseRoleRadius = Math.max(54, Math.min(centerX, baseCenterY) - edgeMargin);
 
         int inward = switch (playerCount) {
+            case 16 -> 10;
             case 15 -> 8;
             case 14 -> 6;
             case 13 -> 4;
             default -> 0;
         };
         int lift = switch (playerCount) {
+            case 16 -> 10;
             case 15 -> 8;
             case 14 -> 6;
             case 13 -> 4;
@@ -360,7 +364,7 @@ public class AssignRolesScreen extends Screen {
 
                 this.addRenderableWidget(new GrimoirePlayerWidget(
                         roleX, roleY, ROLE_SIZE, uuid, seat, assignment, dead
-                ));
+                ).label(labelAbove(angle), labelWidth(layout, count)));
                 this.addRenderableWidget(new GrimoirePerceivedRoleWidget(
                         perceivedX, perceivedY, PERCEIVED_ROLE_SIZE, uuid, seat
                 ));
@@ -369,9 +373,25 @@ public class AssignRolesScreen extends Screen {
                 int roleY = (int) Math.round(tokenCenterY) - ROLE_SIZE / 2;
                 this.addRenderableWidget(new GrimoirePlayerWidget(
                         roleX, roleY, ROLE_SIZE, uuid, seat, assignment, dead
-                ));
+                ).label(labelAbove(angle), labelWidth(layout, count)));
             }
         }
+    }
+
+    /**
+     * Upper seats put the role name above the token: below it would point at
+     * the head ring and the seat numbers.
+     */
+    private static boolean labelAbove(double angle) {
+        return Math.sin(angle) < -0.35;
+    }
+
+    /** Room for a role name: the gap between neighbouring tokens, within sensible limits. */
+    private static int labelWidth(GrimLayout layout, int count) {
+        if (count < 2) return ROLE_SIZE + 40;
+        int radius = Math.min(layout.roleRadius(), layout.roleRadiusX());
+        int chord = (int) Math.floor(2 * radius * Math.sin(Math.PI / count));
+        return Math.max(ROLE_SIZE + 10, Math.min(ROLE_SIZE + 40, chord - 8));
     }
 
     private static boolean isDeceivedCharacter(PendingRoleAssignment assignment) {
@@ -413,7 +433,8 @@ public class AssignRolesScreen extends Screen {
             int roleX = (int) Math.round(tokenCenterX) - ROLE_SIZE / 2;
             int roleY = (int) Math.round(tokenCenterY) - ROLE_SIZE / 2;
 
-            placeReminderTokens(uuid, seat, ClientGrimoireEdits.remindersFor(uuid), tokenCenterX, tokenCenterY, angle, roleX, roleY);
+            placeReminderTokens(uuid, seat, ClientGrimoireEdits.remindersFor(uuid), tokenCenterX, tokenCenterY, angle, roleX, roleY,
+                    labelAbove(angle), labelWidth(layout, count));
         }
     }
 
@@ -425,7 +446,8 @@ public class AssignRolesScreen extends Screen {
      * With more reminders than spots, the last spot becomes "+N".
      */
     private void placeReminderTokens(UUID uuid, int seat, List<Reminder> reminders,
-                                     double cx, double cy, double outward, int roleX, int roleY) {
+                                     double cx, double cy, double outward, int roleX, int roleY,
+                                     boolean labelAbove, int labelWidth) {
         if (reminders.isEmpty()) return;
         int size = REMINDER_SIZE;
         double ringRadius = ROLE_SIZE / 2.0 + size / 2.0 + 1;
@@ -437,6 +459,12 @@ public class AssignRolesScreen extends Screen {
             angles.add(outward - k * step);
         }
         boolean labels = com.sharktower.bloodonthesharktower.client.config.ClientSettings.grimoireLabels;
+        int[] labelArea = null;
+        var labelRole = UiDrawing.roleOf(ClientGrimoireEdits.roleFor(uuid));
+        if (labels && labelRole != null && labelRole.getDisplayName() != null && !labelRole.getDisplayName().isEmpty()) {
+            labelArea = GrimoirePlayerWidget.labelArea(roleX, roleY, ROLE_SIZE, labelAbove,
+                    GrimoirePlayerWidget.fitLabel(labelRole.getDisplayName(), labelWidth));
+        }
         boolean badge = com.sharktower.bloodonthesharktower.client.config.ClientSettings.alignmentLetters
                 && ClientGrimoireEdits.visibleAlignmentFor(uuid) != com.sharktower.bloodonthesharktower.core.AlignmentOverride.DEFAULT;
         List<int[]> spots = new ArrayList<>();
@@ -449,9 +477,7 @@ public class AssignRolesScreen extends Screen {
             if (area[0] < 4 || area[0] + area[2] > layoutWidth() - 4
                     || area[1] < 16 || area[1] + area[3] > layoutHeight() - 30) continue;
             if (collidesWithWidget(area, roleX, roleY)) continue;
-            // The role name under the token is up to ROLE_SIZE + 18 wide (GrimoirePlayerWidget.drawRoleLabel).
-            if (labels && overlaps(area, new int[]{roleX - 10, roleY + ROLE_SIZE
-                    + com.sharktower.bloodonthesharktower.client.gui.grimoire.GrimoirePlayerWidget.LABEL_GAP - 2, ROLE_SIZE + 20, 11})) continue;
+            if (labelArea != null && overlaps(area, labelArea)) continue;
             boolean onAnother = false;
             for (int[] spot : spots) {
                 if (overlaps(new int[]{x, y, size, size}, new int[]{spot[0], spot[1], size, size})) { onAnother = true; break; }
@@ -1094,8 +1120,8 @@ public class AssignRolesScreen extends Screen {
                 Math.min(GRIMOIRE_MAX_VIEWPORT_SCALE, viewportScale));
         float reference = (GRIMOIRE_REFERENCE_GUI_SCALE * viewportScale) / (float) activeGuiScale;
         int count=sortedSeats().size();
-        int minWidth=count<10?500:520+Math.min(15,count)*20;
-        int minHeight=count<10?288:300+Math.min(15,count)*12;
+        int minWidth=count<10?500:520+Math.min(MAX_SEATS,count)*20;
+        int minHeight=count<10?288:300+Math.min(MAX_SEATS,count)*12;
         return Math.min(reference,Math.min(this.width/(float)minWidth,this.height/(float)minHeight));
     }
 
