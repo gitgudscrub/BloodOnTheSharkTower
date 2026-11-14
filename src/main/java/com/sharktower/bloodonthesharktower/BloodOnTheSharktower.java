@@ -46,6 +46,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.networking.VersionCheck.registerServer();
         com.sharktower.bloodonthesharktower.serverupdate.ServerUpdater.register();
         com.sharktower.bloodonthesharktower.spectator.SpectatorBridge.register();
+        com.sharktower.bloodonthesharktower.spectator.GrimoireShare.register();
         com.sharktower.bloodonthesharktower.command.ServerUpdateCommand.register();
         com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.register();
         com.sharktower.bloodonthesharktower.profile.PlayerProfiles.register();
