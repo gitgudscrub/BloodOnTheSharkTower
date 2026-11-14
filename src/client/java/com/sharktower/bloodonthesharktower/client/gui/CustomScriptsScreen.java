@@ -109,7 +109,10 @@ public final class CustomScriptsScreen extends Screen {
             case "loaded" -> {
                 keepOpenTicks = 0;
                 ScriptBuilderScreen.invalidateSelectionCache();
-                client.gui.setScreen(new ScriptBuilderScreen());
+                // Loaded: back to the Grimoire, where the setup checklist shows the next step.
+                // The broadcast that follows re-sends the script; opening now would be undone
+                // by that state refresh, so open when it arrives (as the Base 3 buttons do).
+                BaseThreeScreen.openGrimoireOnNextScript();
             }
             case "conflict" -> {
                 keepOpenTicks = 0;

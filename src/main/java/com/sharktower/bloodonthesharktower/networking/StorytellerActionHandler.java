@@ -206,6 +206,11 @@ public final class StorytellerActionHandler {
                 case "custom_scripts_list" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.list(actor);
                 case "custom_script_load" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.load(actor,arg);
                 case "custom_script_import" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.start(server,actor,arg);
+                case "custom_script_paste" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.paste(actor,arg);
+                case "hide_role" -> {
+                    String[] parts = split(arg, 2);
+                    yield SetupOperations.hideRole(Integer.parseInt(parts[0]), parts[1]);
+                }
                 case "custom_script_confirm" -> com.sharktower.bloodonthesharktower.setup.CustomScripts.confirm(actor,arg);
                 case "load_script_selection" -> SetupOperations.loadScriptJson(com.sharktower.bloodonthesharktower.core.ScriptSelection.build(
                         ServerState.currentScript,new java.util.LinkedHashSet<>(java.util.Arrays.asList(arg.split("\\|")))));

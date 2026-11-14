@@ -56,12 +56,23 @@ public final class GameEndAnimationHUD {
     }
 
     public static void reset() {
+        reset(false);
+    }
+
+    /** {@code closeAnyScreen}: a full game reset also closes whatever screen is open. */
+    public static void reset(boolean closeAnyScreen) {
         animating = false;
         winner = "NONE";
         startedAt = 0L;
         completionReported = false;
+        // Every routine state sync calls this. Only close the end-game holding
+        // screen; closing whatever is open threw the Storyteller out of the
+        // Grimoire after each setup click.
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft != null && minecraft.gui != null) minecraft.gui.setScreen(null);
+        if (minecraft != null && minecraft.gui != null
+                && (closeAnyScreen || minecraft.gui.screen() instanceof GameEndHoldingScreen)) {
+            minecraft.gui.setScreen(null);
+        }
     }
 
     public static boolean isAnimating() {

@@ -22,7 +22,9 @@ public final class RoleCounts {
         if (playerCount == 12) return new RoleCountInfo(7, 2, 2, 1);
         if (playerCount == 13) return new RoleCountInfo(9, 0, 3, 1);
         if (playerCount == 14) return new RoleCountInfo(9, 1, 3, 1);
-        return new RoleCountInfo(9, 2, 3, 1);
+        // Past 15 the official table stops (extra players are Travellers);
+        // the 16-seat Grimoire adds a Townsfolk per extra seat.
+        return new RoleCountInfo(9 + Math.max(0, playerCount - 15), 2, 3, 1);
     }
 
     public record RoleCountInfo(int townsfolk, int outsiders, int minions, int demons) {}

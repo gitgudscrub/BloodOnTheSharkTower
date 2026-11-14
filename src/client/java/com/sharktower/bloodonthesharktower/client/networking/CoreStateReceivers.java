@@ -83,7 +83,7 @@ public final class CoreStateReceivers {
                 ClientState.storytellerPromptsRevision++;
                 com.sharktower.bloodonthesharktower.client.gui.SeatPick.reset();
                 ClientTriggeredNightOrder.update("");
-                GameEndAnimationHUD.reset();
+                GameEndAnimationHUD.reset(true);
                 com.sharktower.bloodonthesharktower.client.hud.NightVisitInfoHUD.clear();
             }
             ClientState.pendingDeaths = java.util.Set.copyOf(payload.pendingDeaths().keySet());
@@ -92,6 +92,8 @@ public final class CoreStateReceivers {
             ClientState.storytellerPrompts = payload.prompts();
             ClientState.storytellerPromptsRevision++;
         });
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.SetupStatusS2CPayload.TYPE,
+                (payload, context) -> ClientState.rolesSent = payload.rolesSent());
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.SeatPickS2CPayload.TYPE,
                 (payload, context) -> com.sharktower.bloodonthesharktower.client.gui.SeatPick.setNightChoice(
                         payload.title(), payload.command(), payload.excludeSeat()));

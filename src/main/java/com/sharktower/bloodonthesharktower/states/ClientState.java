@@ -114,6 +114,8 @@ public final class ClientState {
     public static Map<UUID, Integer> grimoireSeatNumbers = new HashMap<>();
     public static Map<UUID, List<Reminder>> grimoireReminders = new HashMap<>();
     public static List<String> demonBluffs = List.of();
+    /** Storyteller only: SEND ROLES has committed the setup and nothing is waiting to be sent. */
+    public static boolean rolesSent = false;
     /** Decisions waiting on the local Storyteller (empty for everyone else). */
     public static List<com.sharktower.bloodonthesharktower.automation.StorytellerPrompt> storytellerPrompts = List.of();
     public static int storytellerPromptsRevision;

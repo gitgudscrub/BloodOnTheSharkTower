@@ -91,25 +91,51 @@ public final class CustomScripts {
                 if (server.getPlayerList().getPlayer(id)!=actor || !StorytellerState.isStoryteller(id) || generation!=ServerState.resetGeneration) return;
                 try {
                     if (failure!=null) throw new IllegalArgumentException(failure);
-                    var script=BotcScriptImport.validate(downloaded);String name=BotcScriptImport.filename(script.name());Path path=file(name);
-                    if (!Files.exists(path,LinkOption.NOFOLLOW_LINKS)) {
-                        try (var candidates=Files.list(folder())) {
-                            for (Path candidate:candidates.filter(p -> Files.isRegularFile(p,LinkOption.NOFOLLOW_LINKS) && p.getFileName().toString().endsWith(".json")).sorted().toList()) {
-                                try {
-                                    var saved=com.sharktower.bloodonthesharktower.core.Script.fromJson(read(file(candidate.getFileName().toString())));
-                                    if (saved.isPresent() && saved.get().name().equalsIgnoreCase(script.name())) { path=candidate;name=candidate.getFileName().toString();break; }
-                                } catch (Exception ignored) { /* A malformed local file remains visible and reports its error on load. */ }
-                            }
-                        }
-                    }
-                    if (Files.exists(path,LinkOption.NOFOLLOW_LINKS)) {
-                        String token=UUID.randomUUID().toString();pending.put(id,new Pending(token,downloaded,name,read(path),System.currentTimeMillis()+300000));
-                        send(actor,"conflict",name,token);
-                    } else { Files.writeString(path,downloaded,StandardCharsets.UTF_8,StandardOpenOption.CREATE_NEW);list(actor);send(actor,"status","Saved " + name,""); }
+                    var result=store(actor,downloaded);
+                    actor.sendSystemMessage(Component.literal(result.message()));
+                    StateBroadcaster.broadcastCurrentState(server);
                 } catch (Exception e) { String message=e.getMessage()==null ? "Could not save the script." : e.getMessage();send(actor,"status",message,"");actor.sendSystemMessage(Component.literal(message)); }
             });
         });
         return SetupOperations.Result.ok("Downloading script from BotC Scripts…");
+    }
+
+    /** Script JSON pasted into the Load Script screen: saved to the library like an import, then loaded. */
+    public static SetupOperations.Result paste(ServerPlayer actor,String json) throws Exception {
+        if (json == null || json.isBlank()) return SetupOperations.Result.fail("Paste a script link or the script's JSON.");
+        if (json.length() > BotcScriptImport.MAX_BYTES) return SetupOperations.Result.fail("Script exceeds 1 MiB.");
+        pending.remove(actor.getUUID());
+        BotcScriptImport.validate(json);
+        return store(actor,json);
+    }
+
+    /**
+     * Saves a validated script to the library and loads it. A script with the
+     * same name already saved asks first (replace / keep both); identical
+     * content just loads the saved copy.
+     */
+    private static SetupOperations.Result store(ServerPlayer actor,String json) throws Exception {
+        var script=BotcScriptImport.validate(json);String name=BotcScriptImport.filename(script.name());Path path=file(name);
+        if (!Files.exists(path,LinkOption.NOFOLLOW_LINKS)) {
+            try (var candidates=Files.list(folder())) {
+                for (Path candidate:candidates.filter(p -> Files.isRegularFile(p,LinkOption.NOFOLLOW_LINKS) && p.getFileName().toString().endsWith(".json")).sorted().toList()) {
+                    try {
+                        var saved=com.sharktower.bloodonthesharktower.core.Script.fromJson(read(file(candidate.getFileName().toString())));
+                        if (saved.isPresent() && saved.get().name().equalsIgnoreCase(script.name())) { path=candidate;name=candidate.getFileName().toString();break; }
+                    } catch (Exception ignored) { /* A malformed local file remains visible and reports its error on load. */ }
+                }
+            }
+        }
+        if (Files.exists(path,LinkOption.NOFOLLOW_LINKS)) {
+            String previous=read(path);
+            if (previous.equals(json)) return load(actor,name);
+            String token=UUID.randomUUID().toString();pending.put(actor.getUUID(),new Pending(token,json,name,previous,System.currentTimeMillis()+300000));
+            send(actor,"conflict",name,token);
+            return SetupOperations.Result.ok("A script called " + script.name() + " is already saved. Replace it or keep both.");
+        }
+        Files.writeString(path,json,StandardCharsets.UTF_8,StandardOpenOption.CREATE_NEW);
+        send(actor,"status","Saved " + name,"");
+        return load(actor,name);
     }
     public static SetupOperations.Result confirm(ServerPlayer actor,String argument) throws Exception {
         String[] parts=argument.split("\\|",-1);Pending item=pending.get(actor.getUUID());
@@ -129,8 +155,8 @@ public final class CustomScripts {
                 catch (FileAlreadyExistsException ignored) { if(i>=10000) throw new IllegalArgumentException("Too many saved versions."); }
             }
         } else return SetupOperations.Result.fail("Invalid import decision.");
-        pending.remove(actor.getUUID());list(actor);send(actor,"status","Saved " + path.getFileName(),"");
-        return SetupOperations.Result.ok("Script saved.");
+        pending.remove(actor.getUUID());send(actor,"status","Saved " + path.getFileName(),"");
+        return load(actor,path.getFileName().toString());
     }
     public static void clearPending() { pending.clear(); }
 }

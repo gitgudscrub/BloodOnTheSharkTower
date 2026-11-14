@@ -293,6 +293,14 @@ tasks.register('storytellerClaimRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('storytellerClaimRegression') }
 
+// Setup flow: team counts to 16 seats, Lunatic belief, Drunk/Marionette chosen after the deal.
+tasks.register('setupFlowRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.setup.SetupFlowRegression'
+}
+tasks.named('check') { dependsOn tasks.named('setupFlowRegression') }
+
 // Pronoun text validation and normalisation for /pronouns.
 tasks.register('pronounsRegression', JavaExec) {
     dependsOn testClasses

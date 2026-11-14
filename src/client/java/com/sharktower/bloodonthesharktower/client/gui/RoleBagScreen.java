@@ -49,6 +49,8 @@ public final class RoleBagScreen extends Screen {
     private static boolean drunkReserved;
     private static boolean marionetteReserved;
     private static boolean openGrimoireAfterDistributionSync;
+    // Distribute was pressed once with the teams off target; the next press deals anyway.
+    private static boolean confirmOffTarget;
 
     private int page;
 
@@ -135,20 +137,110 @@ public final class RoleBagScreen extends Screen {
                 }).bounds(this.width / 2 - (narrow ? 120 : 54), navY + (narrow ? 24 : 0), 105, 20).build());
 
         boolean ready = seatedCount() > 0 && SELECTED.size() == seatedCount();
-        SharktowerButton distribute = SharktowerButton.builder(
-                        Component.literal(ready ? "Distribute Bag" : "Need " + seatedCount() + " roles")
-                                .withStyle(ready ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY),
-                        b -> distribute())
-                .bounds(this.width / 2 + (narrow ? -9 : 57), navY + (narrow ? 24 : 0), 128, 20).build();
+        boolean off = ready && offTarget();
+        String label = !ready ? "Need " + seatedCount() + " roles"
+                : off ? (confirmOffTarget ? "Distribute Anyway" : "Teams Off Target") : "Distribute Bag";
+        ChatFormatting colour = !ready ? ChatFormatting.GRAY : off ? ChatFormatting.RED : ChatFormatting.LIGHT_PURPLE;
+        SharktowerButton distribute = SharktowerButton.builder(Component.literal(label).withStyle(colour), b -> {
+                    if (offTarget() && !confirmOffTarget) {
+                        confirmOffTarget = true;
+                        this.minecraft.gui.setScreen(new RoleBagScreen(page));
+                        return;
+                    }
+                    distribute();
+                })
+                .bounds(this.width / 2 + (narrow ? -9 : 57), navY + (narrow ? 24 : 0), 128, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(off
+                        ? "The team counts above do not match the usual setup for " + seatedCount()
+                        + " players. Click again to deal anyway."
+                        : "Shuffle these tokens and deal one to each seat.")))
+                .build();
         distribute.active = ready;
         this.addRenderableWidget(distribute);
 
+        int remaining = seatedCount() - SELECTED.size();
+        SharktowerButton fill = SharktowerButton.builder(Component.literal("Fill the Rest"), b -> {
+                    fillRest();
+                    this.minecraft.gui.setScreen(new RoleBagScreen(page));
+                })
+                .bounds(this.width / 2 - 184, this.height - 31, 180, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "Keep your picks and add random tokens so each team has the right number,"
+                        + " counting Outsider changes such as the Baron's.")))
+                .build();
+        fill.active = remaining > 0 && RoleCounts.getCounts(seatedCount()) != null;
+        this.addRenderableWidget(fill);
+
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b ->
                         this.minecraft.gui.setScreen(new AssignRolesScreen()))
-                .bounds(this.width / 2 - 90, this.height - 31, 180, 20).build());
+                .bounds(this.width / 2 + 4, this.height - 31, 180, 20).build());
+    }
+
+    /** Whether the Storyteller ticked Drunk or Marionette in the bag, for the Grimoire's setup checklist. */
+    public static boolean hiddenPlanned(String id) {
+        return switch (id) {
+            case "drunk" -> drunkReserved;
+            case "marionette" -> marionetteReserved;
+            default -> false;
+        };
+    }
+
+    /**
+     * Adds random tokens, keeping every pick, until each team has its usual
+     * number: Demons, then Minions (their Outsider changes now known), then
+     * Outsiders, then Townsfolk. A ticked Drunk or Marionette counts in the
+     * real setup but takes a Townsfolk token in the bag.
+     */
+    private void fillRest() {
+        int seated = seatedCount();
+        RoleCounts.RoleCountInfo base = RoleCounts.getCounts(seated);
+        if (base == null || ClientState.currentScript == null) return;
+        int drunk = drunkReserved ? 1 : 0;
+        int marionette = marionetteReserved ? 1 : 0;
+        fillTeam(RoleType.DEMON, base.demons(), seated);
+        fillTeam(RoleType.MINION, base.minions() - marionette, seated);
+        int outsiders;
+        if (xaanSelected()) {
+            outsiders = (int) Math.max(actualCount(RoleType.OUTSIDER), base.outsiders());
+        } else {
+            OutsiderSetup modifiers = outsiderSetup();
+            Set<Integer> values = modifiers.unknown() ? Set.of(0) : modifiers.values();
+            int chosen = (int) actualCount(RoleType.OUTSIDER) - base.outsiders();
+            // The smallest allowed change we can still reach by adding tokens.
+            int mod = values.stream().filter(v -> v >= chosen).min(Integer::compareTo)
+                    .orElse(values.stream().max(Integer::compareTo).orElse(0));
+            outsiders = base.outsiders() + mod;
+        }
+        fillTeam(RoleType.OUTSIDER, outsiders - drunk, seated);
+        fillTeam(RoleType.TOWNSFOLK, Integer.MAX_VALUE, seated);
+        confirmOffTarget = false;
+    }
+
+    private void fillTeam(RoleType team, int target, int seated) {
+        List<ScriptRole> candidates = new ArrayList<>();
+        for (ScriptRole role : roles()) {
+            if (role.getTeam() == team && !isHiddenSetupRole(role) && !SELECTED.contains(role.getId())) candidates.add(role);
+        }
+        java.util.Collections.shuffle(candidates);
+        for (ScriptRole role : candidates) {
+            if (count(team) >= target || SELECTED.size() >= seated) return;
+            SELECTED.add(role.getId());
+        }
+    }
+
+    /** The bag is full but a team count is not the usual one for this many players. */
+    private boolean offTarget() {
+        RoleCounts.RoleCountInfo base = RoleCounts.getCounts(seatedCount());
+        if (base == null) return false;
+        if (actualCount(RoleType.MINION) != base.minions() || actualCount(RoleType.DEMON) != base.demons()) return true;
+        if (xaanSelected()) return false;
+        OutsiderSetup modifiers = outsiderSetup();
+        if (modifiers.unknown()) return false;
+        return !modifiers.values().contains((int) actualCount(RoleType.OUTSIDER) - base.outsiders());
     }
 
     private void toggleRole(ScriptRole role) {
+        confirmOffTarget = false;
         if (isDrunk(role)) {
             drunkReserved = !drunkReserved;
             return;
@@ -199,6 +291,7 @@ public final class RoleBagScreen extends Screen {
     }
 
     private void clearSelection() {
+        confirmOffTarget = false;
         SELECTED.clear();
         drunkReserved = false;
         marionetteReserved = false;

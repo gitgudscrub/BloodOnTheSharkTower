@@ -56,6 +56,17 @@ public final class BaseThreeScreen extends Screen {
         ScriptBuilderScreen.invalidateSelectionCache();
     }
 
+    /** Loads a base script from any screen; the Grimoire opens once it arrives. */
+    public static void loadBase(String id) {
+        openGrimoireAfterScriptSync = true;
+        ClientStorytellerActions.send("load_base3", id);
+        ScriptBuilderScreen.invalidateSelectionCache();
+    }
+
+    public static void openGrimoireOnNextScript() {
+        openGrimoireAfterScriptSync = true;
+    }
+
     public static boolean consumeOpenGrimoireAfterScriptSync() {
         if (!openGrimoireAfterScriptSync) return false;
         openGrimoireAfterScriptSync = false;
