@@ -206,35 +206,7 @@ public class AssignRolesScreen extends Screen {
         }
 
         if (phase == GamePhase.SETUP) {
-            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Script Builder"), b ->
-                            this.minecraft.gui.setScreen(new ScriptBuilderScreen()))
-                    .bounds(MARGIN, MARGIN, 100, CONTROL_H).build());
-
-            y = addRightAction(rightX, y, "Shuffle Roles", ChatFormatting.WHITE, "shuffle_roles");
-            y = addRightAction(rightX, y, "Shuffle Seats", ChatFormatting.WHITE, "shuffle_seats");
-            y = addRightAction(rightX, y, "Randomize Roles", ChatFormatting.WHITE, "randomize_roles");
-
-            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Role Bag"), b ->
-                            this.minecraft.gui.setScreen(new RoleBagScreen()))
-                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-            y += CONTROL_H + GAP;
-
-            this.addRenderableWidget(SharktowerButton.builder(
-                            Component.literal("Unseated: " + (showUnseated ? "SHOW" : "HIDE")), b -> {
-                        showUnseated = !showUnseated;
-                        this.minecraft.gui.setScreen(new AssignRolesScreen());
-                    }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-            y += CONTROL_H + GAP;
-
-            this.addRenderableWidget(SharktowerButton.builder(
-                            Component.literal("Self: " + (showSelf ? "SHOW" : "HIDE")), b -> {
-                        showSelf = !showSelf;
-                        this.minecraft.gui.setScreen(new AssignRolesScreen());
-                    }).bounds(rightX, y, CONTROL_W, CONTROL_H).build());
-            y += CONTROL_H + GAP + 10;
-
-            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.WHITE, "send_to_seats");
-            addRightAction(rightX, y, "Send to Home", ChatFormatting.WHITE, "send_home");
+            buildSetupChecklist(rightX, y);
         } else if (phase == GamePhase.NIGHT) {
             y = addRightScreen(rightX, y, "Minion Info", ChatFormatting.RED,
                     () -> this.minecraft.gui.setScreen(new NightTeamInfoScreen(false)));
@@ -302,16 +274,132 @@ public class AssignRolesScreen extends Screen {
                         this.minecraft.gui.setScreen(new StorytellerToolsScreen()))
                 .bounds(rightX - 60, layoutHeight - 30, 55, CONTROL_H).build());
 
-        if (phase == GamePhase.SETUP) {
-            this.addRenderableWidget(SharktowerButton.builder(Component.literal("SEND ROLES").withStyle(ChatFormatting.GOLD), b ->
+        if (phase == GamePhase.SETUP && ClientState.rolesSent) {
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal("START NIGHT").withStyle(ChatFormatting.GOLD), b ->
+                            action("phase_night"))
+                    .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H)
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                            "Roles are sent. Dusk: players go home and the first night starts."))).build());
+        } else if (phase == GamePhase.SETUP) {
+            SetupStep next = nextSetupStep();
+            this.addRenderableWidget(SharktowerButton.builder(Component.literal(next == SetupStep.SEND ? "> SEND ROLES" : "SEND ROLES")
+                            .withStyle(next == SetupStep.SEND ? ChatFormatting.GOLD : ChatFormatting.WHITE), b ->
                             action("send_roles"))
-                    .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
+                    .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H)
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                            "Show every player their character. You can still edit and send again before the night."))).build());
         } else {
             this.addRenderableWidget(SharktowerButton.builder(Component.literal("CONTROLS"), b ->
                             this.minecraft.gui.setScreen(new GrimoireControlsScreen()))
                     .bounds(rightX, layoutHeight - 30, CONTROL_W, CONTROL_H).build());
         }
     }
+
+    private enum SetupStep { SCRIPT, SEATS, BAG, DRUNK, MARIONETTE, BLUFFS, SEND, DONE }
+
+    /** The first setup step not done yet; its checklist button is gold. */
+    private SetupStep nextSetupStep() {
+        if (ClientState.currentScript == null) return SetupStep.SCRIPT;
+        int seated = sortedSeats().size();
+        if (seated < 5) return SetupStep.SEATS;
+        if (dealtCount() < seated) return SetupStep.BAG;
+        if (RoleBagScreen.hiddenPlanned("drunk") && hiddenSeat(Role.DRUNK) == 0) return SetupStep.DRUNK;
+        if (RoleBagScreen.hiddenPlanned("marionette") && hiddenSeat(Role.MARIONETTE) == 0) return SetupStep.MARIONETTE;
+        if (bluffCount() < 3) return SetupStep.BLUFFS;
+        return ClientState.rolesSent ? SetupStep.DONE : SetupStep.SEND;
+    }
+
+    private int dealtCount() {
+        int dealt = 0;
+        for (var entry : sortedSeats()) {
+            PendingRoleAssignment role = ClientGrimoireEdits.roleFor(entry.getKey());
+            if (role != null && (role.isCustomRole() || role.role() != Role.NO_ROLE)) dealt++;
+        }
+        return dealt;
+    }
+
+    private int bluffCount() {
+        int count = 0;
+        for (String id : ClientGrimoireEdits.visibleDemonBluffs()) if (id != null && !id.isBlank()) count++;
+        return count;
+    }
+
+    /** Seat of the player who is secretly {@code role}, or 0. */
+    private int hiddenSeat(Role role) {
+        for (var entry : sortedSeats()) {
+            PendingRoleAssignment assigned = ClientGrimoireEdits.roleFor(entry.getKey());
+            if (assigned != null && !assigned.isCustomRole() && assigned.role() == role) return entry.getValue();
+        }
+        return 0;
+    }
+
+    /**
+     * Setup as a checklist down the right: each step is a button, the next
+     * one is gold, finished ones are green. Rarer setup actions sit behind
+     * More Setup.
+     */
+    private void buildSetupChecklist(int x, int y) {
+        SetupStep next = nextSetupStep();
+        int seated = sortedSeats().size();
+        var script = ClientState.currentScript;
+        y = setupStep(x, y, "Script", script == null ? "choose" : ClientState.displayScriptName(),
+                next == SetupStep.SCRIPT, script != null,
+                "Choose the script: a base script, a saved one, or paste a link or JSON.",
+                () -> this.minecraft.gui.setScreen(new LoadScriptScreen()));
+        y = setupStep(x, y, "Seats", seated + " seated", next == SetupStep.SEATS, seated >= 5,
+                "Seat 5 to 16 players. Click the names on the left to seat them. Click here to show or hide that list.",
+                () -> { showUnseated = !showUnseated; this.minecraft.gui.setScreen(new AssignRolesScreen()); });
+        y = setupStep(x, y, "Bag", dealtCount() + "/" + seated, next == SetupStep.BAG, seated > 0 && dealtCount() == seated,
+                "Choose the tokens for the bag and deal them to the seats.",
+                () -> this.minecraft.gui.setScreen(new RoleBagScreen()));
+        if (script != null && script.hasRole("drunk")) {
+            int seat = hiddenSeat(Role.DRUNK);
+            y = setupStep(x, y, "Drunk", seat == 0 ? "none" : "seat " + seat, next == SetupStep.DRUNK, seat != 0,
+                    "After the deal, click a player holding a Townsfolk token to make them secretly the Drunk."
+                            + " They keep that token as what they believe. Optional.",
+                    () -> SeatPick.startStorytellerLocal("Drunk: click the Townsfolk who is secretly the Drunk",
+                            "They keep their token as their belief. Click the Drunk again to undo.",
+                            seat2 -> ClientStorytellerActions.send("hide_role", seat2 + "|drunk")));
+        }
+        if (script != null && script.hasRole("marionette")) {
+            int seat = hiddenSeat(Role.MARIONETTE);
+            y = setupStep(x, y, "Marionette", seat == 0 ? "none" : "seat " + seat, next == SetupStep.MARIONETTE, seat != 0,
+                    "After the deal, click a good player next to the Demon to make them secretly the Marionette."
+                            + " They keep their token as what they believe. Optional.",
+                    () -> SeatPick.startStorytellerLocal("Marionette: click a good player next to the Demon",
+                            "They keep their token as their belief. Click them again to undo.",
+                            seat2 -> ClientStorytellerActions.send("hide_role", seat2 + "|marionette")));
+        }
+        int bluffs = bluffCount();
+        y = setupStep(x, y, "Bluffs", bluffs + "/3", next == SetupStep.BLUFFS, bluffs >= 3,
+                bluffs < 3 ? "Pick 3 random not-in-play characters for the Demon. Click a bluff slot on the left to change one."
+                        : "Show or hide the bluff slots.",
+                () -> {
+                    if (bluffCount() < 3) action("randomize_bluffs");
+                    else { showBluffs = !showBluffs; this.minecraft.gui.setScreen(new AssignRolesScreen()); }
+                });
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("More Setup"), b ->
+                        this.minecraft.gui.setScreen(new SetupToolsScreen()))
+                .bounds(x, y, CONTROL_W, CONTROL_H)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "Shuffle seats or roles, random setup, Script Builder, teleports."))).build());
+    }
+
+    private int setupStep(int x, int y, String name, String value, boolean next, boolean done, String tip, Runnable run) {
+        ChatFormatting colour = next ? ChatFormatting.GOLD : done ? ChatFormatting.GREEN : ChatFormatting.WHITE;
+        String label = (next ? "> " : "") + name + ": " + value;
+        label = this.font.plainSubstrByWidth(label, CONTROL_W - 8);
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal(label).withStyle(colour), b -> run.run())
+                .bounds(x, y, CONTROL_W, CONTROL_H)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        name + ": " + value + ". " + tip))).build());
+        return y + CONTROL_H + GAP;
+    }
+
+    public static boolean showSelf() { return showSelf; }
+    public static void toggleShowSelf() { showSelf = !showSelf; }
+    public static boolean showUnseated() { return showUnseated; }
+    public static void toggleShowUnseated() { showUnseated = !showUnseated; }
 
     private int addRightAction(int x, int y, String label, ChatFormatting colour, String op) {
         this.addRenderableWidget(SharktowerButton.builder(Component.literal(label).withStyle(colour), b -> action(op))
@@ -828,6 +916,7 @@ public class AssignRolesScreen extends Screen {
     }
 
     private void renderHoverHint(GuiGraphicsExtractor graphics) {
+        if (SeatPick.active()) return; // the pick banner uses this band
         String hint = GrimoireHoverHints.current();
         UUID selected = GrimoireInteractionState.selectedNominator();
         if ((hint == null || hint.isBlank()) && selected != null && ClientState.nominationsOpen) {
@@ -1046,8 +1135,9 @@ public class AssignRolesScreen extends Screen {
     }
 
     /**
-     * The open seat pick, in the empty middle of the ring under the
-     * Storyteller, so it never covers a seat. Cancel sits on it for the
+     * The open seat pick, in the bottom band between the bottom-left and
+     * bottom-right buttons (where hover hints usually go), so it never covers
+     * a seat whatever the player count. Cancel sits on it for the
      * Storyteller's one-off pick.
      */
     private void buildSeatPickWidgets() {
@@ -1056,12 +1146,12 @@ public class AssignRolesScreen extends Screen {
         String detail = SeatPick.detail();
         int cancelW = SeatPick.forStoryteller() ? 50 : 0;
         int textW = Math.max(this.font.width(title), this.font.width(detail) + (cancelW > 0 ? cancelW + 6 : 0));
-        GrimLayout ring = grimoireLayout(sortedSeats().size());
-        int maxW = Math.max(140, 2 * (ring.headRadiusX() - HEAD_SIZE) - 8);
-        int w = Math.min(maxW, textW + 16);
-        int h = 32;
-        int x = ring.centerX() - w / 2;
-        int y = ring.centerY() + 36;
+        int left = MARGIN + CONTROL_W + 6;
+        int right = layoutWidth() - CONTROL_W - MARGIN - 66;
+        int w = Math.max(120, Math.min(right - left, textW + 16));
+        int h = 30;
+        int x = Math.max(left, Math.min(right - w, layoutWidth() / 2 - w / 2));
+        int y = layoutHeight() - h - 2;
         this.addRenderableWidget(new SeatPickBannerWidget(x, y, w, h, title, detail, cancelW));
         if (cancelW > 0) {
             this.addRenderableWidget(SharktowerButton.builder(Component.literal("Cancel"), b -> SeatPick.cancel())
@@ -1356,6 +1446,8 @@ public class AssignRolesScreen extends Screen {
     private String seatLayoutSignature() {
         StringBuilder signature = new StringBuilder();
         signature.append(ClientState.phase()).append('|')
+                .append(ClientState.displayScriptName()).append('|')
+                .append(ClientState.rolesSent).append('|')
                 .append(new java.util.TreeSet<>(ClientState.storytellerPlayers)).append('|')
                 .append(new java.util.TreeSet<>(ClientState.pendingDeaths)).append('|')
                 .append(ClientGrimoireEdits.visibleDemonBluffs()).append('|')

@@ -56,7 +56,14 @@ Client and server builds are produced together by GitHub Actions so that both pa
   - Bad Moon Rising
   - Sects & Violets
 - Script Builder and Role Catalog on a shared team-grouped token grid with search and ability text on hover.
-- Role Bag with current/expected team distribution.
+- Setup checklist in the Grimoire (Script, Seats, Bag, Drunk/Marionette,
+  Bluffs, Send Roles, Start Night) with the next step highlighted.
+- Choose a Script screen: Base 3, saved scripts, or paste a botcscripts.com
+  link or script JSON.
+- Role Bag with current/expected team distribution, Fill the Rest, and a
+  warning when teams are off target.
+- Drunk and Marionette chosen by clicking a player after the deal; the
+  Lunatic is shown the Demon in play automatically.
 - Random role and seat distribution tools.
 - Circular Storyteller Grimoire with player heads, role tokens, reminders and Demon bluffs.
 - Direct Grimoire actions for role editing, reminders, nominations and player actions.

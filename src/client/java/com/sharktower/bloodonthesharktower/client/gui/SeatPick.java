@@ -24,6 +24,9 @@ public final class SeatPick {
     private static boolean storyteller;
     private static int chosenSeat;
     private static int revision;
+    // The Storyteller's local pick (Drunk / Marionette in setup): runs code instead of a command.
+    private static java.util.function.IntConsumer localAction;
+    private static String localDetail = "";
 
     // The player's own night choice, kept while the Storyteller's one-off pick is open.
     private static String nightTitle = "";
@@ -51,6 +54,18 @@ public final class SeatPick {
         revision++;
     }
 
+    /** A Storyteller pick handled on this client, such as choosing the Drunk after the deal. */
+    public static void startStorytellerLocal(String banner, String detail, java.util.function.IntConsumer action) {
+        title = banner;
+        command = "local";
+        excludeSeat = 0;
+        storyteller = true;
+        chosenSeat = 0;
+        localAction = action;
+        localDetail = detail;
+        revision++;
+    }
+
     public static void cancel() {
         if (storyteller) restoreNight();
     }
@@ -68,6 +83,7 @@ public final class SeatPick {
         excludeSeat = nightExclude;
         storyteller = false;
         chosenSeat = 0;
+        localAction = null;
         revision++;
     }
 
@@ -100,6 +116,7 @@ public final class SeatPick {
     /** The banner's second line: the current choice, or how to back out. */
     public static String detail() {
         if (!active()) return "";
+        if (storyteller && localAction != null) return localDetail;
         if (storyteller) return "Their choice goes to Resolve for you to confirm.";
         return chosenSeat > 0 ? "You chose seat " + chosenSeat + ". Click another player to change."
                 : "Or click a name in chat.";
@@ -109,6 +126,12 @@ public final class SeatPick {
     public static boolean tryPick(int seat) {
         if (!active()) return false;
         if (seat == excludeSeat) return true; // swallow it: the Monk cannot pick themselves
+        if (localAction != null) {
+            java.util.function.IntConsumer action = localAction;
+            restoreNight();
+            action.accept(seat);
+            return true;
+        }
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return false;
         String cmd = command + seat;

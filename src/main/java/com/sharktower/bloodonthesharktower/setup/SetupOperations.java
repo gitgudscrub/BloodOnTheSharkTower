@@ -133,6 +133,7 @@ public final class SetupOperations {
         PendingRoleAssignment assigned = assignment(role, AlignmentOverride.DEFAULT);
         PendingRoleAssignment previous = StorytellerState.PENDING_ROLES.get(player);
         StorytellerState.PENDING_ROLES.put(player, assigned);
+        autoLunaticBeliefs();
         PendingRoleAssignment perceived = StorytellerState.PENDING_PERCEIVED_ROLES.get(player);
         if (!requiresPerceivedRole(assigned) || (isAssigned(perceived) && !perceivedRoleAllowed(assigned, perceived))) {
             StorytellerState.PENDING_PERCEIVED_ROLES.remove(player);
@@ -279,7 +280,7 @@ public final class SetupOperations {
         int playerCount = players.size();
         Counts counts = countsFor(playerCount);
         if (counts == null) {
-            return Result.fail("Standard random role setup supports 5-15 seated players; found " + playerCount + ".");
+            return Result.fail("Standard random role setup supports 5-16 seated players; found " + playerCount + ".");
         }
 
         List<ScriptRole> selected = new ArrayList<>();
@@ -352,6 +353,7 @@ public final class SetupOperations {
             StorytellerState.PENDING_ROLES.put(players.get(i),
                     assignment(bag.get(i), AlignmentOverride.DEFAULT));
         }
+        autoLunaticBeliefs();
 
         long townsfolk = bag.stream().filter(role -> role.getTeam() == RoleType.TOWNSFOLK).count();
         long outsiders = bag.stream().filter(role -> role.getTeam() == RoleType.OUTSIDER).count();
@@ -360,6 +362,100 @@ public final class SetupOperations {
         return Result.ok("Distributed role bag to " + players.size() + " pending seats ("
                 + townsfolk + "T/" + outsiders + "O/" + minions + "M/" + demons + "D). "
                 + "Use SEND ROLES when ready.");
+    }
+
+    /**
+     * A Lunatic without a believed role is shown the Demon in play (or the
+     * script's first Demon if none is dealt yet), so the Storyteller never has
+     * to swap tokens. They can still choose a different Demon in the Grimoire.
+     */
+    static void autoLunaticBeliefs() {
+        Script script = ServerState.currentScript;
+        if (script == null) return;
+        PendingRoleAssignment demon = null;
+        for (PendingRoleAssignment role : StorytellerState.PENDING_ROLES.values()) {
+            if (isAssigned(role) && role.getRoleType() == RoleType.DEMON) { demon = role; break; }
+        }
+        if (demon == null) {
+            for (ScriptRole role : script.allRoles()) {
+                if (role.getTeam() == RoleType.DEMON) { demon = assignment(role, AlignmentOverride.DEFAULT); break; }
+            }
+        }
+        if (demon == null) return;
+        for (var entry : StorytellerState.PENDING_ROLES.entrySet()) {
+            PendingRoleAssignment actual = entry.getValue();
+            if (actual == null || actual.isCustomRole() || actual.role() != Role.LUNATIC) continue;
+            PendingRoleAssignment believed = StorytellerState.PENDING_PERCEIVED_ROLES.get(entry.getKey());
+            if (perceivedRoleAllowed(actual, believed)) continue;
+            StorytellerState.PENDING_PERCEIVED_ROLES.put(entry.getKey(),
+                    new PendingRoleAssignment(demon.role(), demon.customRole(), AlignmentOverride.DEFAULT));
+        }
+    }
+
+    /**
+     * Makes the player in {@code seat} secretly the Drunk or Marionette after
+     * the deal: they keep the token they were dealt as their believed role.
+     * Only one of each: choosing a new seat gives the previous one back their
+     * token, and choosing the same seat again undoes it.
+     */
+    public static Result hideRole(int seat, String roleId) {
+        Role hidden = Role.findById(roleId);
+        if (hidden != Role.DRUNK && hidden != Role.MARIONETTE) return Result.fail("Only the Drunk or Marionette can be hidden.");
+        String name = hidden == Role.DRUNK ? "Drunk" : "Marionette";
+        UUID player = playerBySeat(seat);
+        if (player == null) return Result.fail("No player is assigned to seat " + seat + ".");
+        beginEditingFromLiveState();
+        PendingRoleAssignment current = StorytellerState.PENDING_ROLES.get(player);
+        if (current != null && !current.isCustomRole() && current.role() == hidden) {
+            restoreCover(player);
+            return Result.ok("Seat " + seat + " is no longer the " + name + ".");
+        }
+        if (!isAssigned(current)) return Result.fail("Seat " + seat + " has no token yet. Deal the bag first.");
+        PendingRoleAssignment cover = new PendingRoleAssignment(current.role(), current.customRole(), AlignmentOverride.DEFAULT);
+        RoleType team = cover.getRoleType();
+        boolean deceived = !current.isCustomRole() && (current.role() == Role.DRUNK
+                || current.role() == Role.MARIONETTE || current.role() == Role.LUNATIC);
+        if (deceived || (hidden == Role.DRUNK ? team != RoleType.TOWNSFOLK
+                : team != RoleType.TOWNSFOLK && team != RoleType.OUTSIDER)) {
+            return Result.fail("Seat " + seat + " holds " + current.getDisplayName() + ". The " + name
+                    + (hidden == Role.DRUNK ? " must be a player holding a Townsfolk token."
+                    : " must be a player holding a Townsfolk or Outsider token."));
+        }
+        for (var entry : new ArrayList<>(StorytellerState.PENDING_ROLES.entrySet())) {
+            PendingRoleAssignment other = entry.getValue();
+            if (!entry.getKey().equals(player) && other != null && !other.isCustomRole() && other.role() == hidden) {
+                restoreCover(entry.getKey());
+            }
+        }
+        StorytellerState.PENDING_ROLES.put(player, new PendingRoleAssignment(hidden, AlignmentOverride.DEFAULT));
+        StorytellerState.PENDING_PERCEIVED_ROLES.put(player, cover);
+        String note = "";
+        if (hidden == Role.MARIONETTE && !nextToDemon(seat)) note = " Note: the Marionette should sit next to the Demon.";
+        return Result.ok("Seat " + seat + " is now the " + name + " and believes they are the "
+                + cover.getDisplayName() + "." + note);
+    }
+
+    /** Gives a hidden Drunk or Marionette back the token they believe they hold. */
+    private static void restoreCover(UUID player) {
+        PendingRoleAssignment believed = StorytellerState.PENDING_PERCEIVED_ROLES.remove(player);
+        if (isAssigned(believed)) {
+            StorytellerState.PENDING_ROLES.put(player,
+                    new PendingRoleAssignment(believed.role(), believed.customRole(), AlignmentOverride.DEFAULT));
+        }
+    }
+
+    private static boolean nextToDemon(int seat) {
+        List<UUID> order = seatedPlayersInOrder();
+        int n = order.size();
+        for (int i = 0; i < n; i++) {
+            Integer s = workingSeats().get(order.get(i));
+            if (s == null || s != seat) continue;
+            for (UUID neighbour : List.of(order.get((i + 1) % n), order.get((i + n - 1) % n))) {
+                PendingRoleAssignment role = StorytellerState.PENDING_ROLES.get(neighbour);
+                if (isAssigned(role) && role.getRoleType() == RoleType.DEMON) return true;
+            }
+        }
+        return false;
     }
 
     public static Result randomizeBluffs() {
@@ -896,19 +992,8 @@ public final class SetupOperations {
     }
 
     private static Counts countsFor(int players) {
-        return switch (players) {
-            case 5 -> new Counts(3, 0, 1, 1);
-            case 6 -> new Counts(3, 1, 1, 1);
-            case 7 -> new Counts(5, 0, 1, 1);
-            case 8 -> new Counts(5, 1, 1, 1);
-            case 9 -> new Counts(5, 2, 1, 1);
-            case 10 -> new Counts(7, 0, 2, 1);
-            case 11 -> new Counts(7, 1, 2, 1);
-            case 12 -> new Counts(7, 2, 2, 1);
-            case 13 -> new Counts(9, 0, 3, 1);
-            case 14 -> new Counts(9, 1, 3, 1);
-            case 15 -> new Counts(9, 2, 3, 1);
-            default -> null;
-        };
+        if (players < 5 || players > 16) return null;
+        var info = com.sharktower.bloodonthesharktower.core.RoleCounts.getCounts(players);
+        return new Counts(info.townsfolk(), info.outsiders(), info.minions(), info.demons());
     }
 }

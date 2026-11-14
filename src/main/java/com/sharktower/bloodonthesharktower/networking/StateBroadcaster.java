@@ -204,6 +204,13 @@ public final class StateBroadcaster {
                 bluffs,
                 targeted
         ));
+        if (storyteller) {
+            boolean sent = !ServerState.PLAYER_ROLES.isEmpty()
+                    && StorytellerState.PENDING_ROLES.isEmpty()
+                    && StorytellerState.PENDING_PERCEIVED_ROLES.isEmpty()
+                    && StorytellerState.PENDING_SEAT_NUMBERS.isEmpty();
+            ServerPlayNetworking.send(player, new SetupStatusS2CPayload(sent));
+        }
     }
 
     private static PendingRoleAssignment playerFacingAssignment(

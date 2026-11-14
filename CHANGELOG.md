@@ -3,6 +3,38 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.48 — Storyteller setup checklist (unreleased)
+
+- Setup checklist: during setup the Grimoire's right-hand buttons are the
+  steps in order (Script, Seats, Bag, Drunk, Marionette, Bluffs). The next
+  step is gold, finished steps are green. SEND ROLES turns gold when
+  everything is ready and becomes START NIGHT once roles are sent. Less-used
+  setup buttons (shuffles, random setup, Script Builder, teleports, Self /
+  Unseated) moved to **More Setup**.
+- Choose a Script: one screen with the three base scripts, Saved Scripts,
+  Build Your Own, and a box to paste a botcscripts.com link or the script's
+  JSON. Pasted or imported scripts are saved to the server and loaded
+  straight away, then the Grimoire opens.
+- Drunk and Marionette after the deal: deal normal tokens, then click
+  **Drunk** (or **Marionette**) in the checklist and click a player. They
+  become secretly the Drunk and keep the token they were dealt as their
+  belief. Clicking another player moves it; clicking them again undoes it.
+  The Marionette warns if they are not next to the Demon.
+- Lunatic: goes in the bag as a normal token. Whoever draws it is shown the
+  Demon in play automatically, so no token swapping. You can still change
+  which Demon they believe in the Grimoire.
+- Role Bag: **Fill the Rest** keeps your picks and adds random tokens so each
+  team has the usual number, counting Outsider changes such as the Baron's.
+  Distribute warns once ("Teams Off Target") when the team counts are not
+  the usual ones, and deals on the second press.
+- 16 players: team counts now add up (10 Townsfolk, 2 Outsiders, 3 Minions,
+  1 Demon) and Randomize Roles works with 16 seats.
+- Fixed: the Grimoire (and other screens) closed after almost every
+  Storyteller setup click, because a routine state update closed whatever
+  screen was open.
+- The seat-pick banner now sits in the bottom band, so it never covers a
+  seat at small player counts.
+
 ## 1.0.2-alpha.47 — Pick seats in the Grimoire (unreleased)
 
 - Night choices from the Grimoire: the Poisoner, Monk, Imp and Ravenkeeper
