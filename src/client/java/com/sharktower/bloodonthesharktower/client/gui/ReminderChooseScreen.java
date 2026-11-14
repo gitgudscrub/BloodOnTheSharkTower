@@ -31,11 +31,15 @@ public final class ReminderChooseScreen extends Screen {
         addTab(cx - 154, "Generic", 0, tabWidth);
         if (storyteller) addTab(cx - 50, "Script", 1, tabWidth);
         addTab(storyteller ? cx + 54 : cx - 50, "Placed", 2, tabWidth);
-        int rows = Math.max(1, (this.height - 185) / 24);
-        int perPage = rows * 2;
-        int w = Math.min(210, Math.max(100, (this.width - 30) / 2));
+        // Three columns when the screen is wide enough, and rows 22px apart, so
+        // a whole script's reminders usually fit on one page.
+        int columns = this.width >= 3 * 140 + 30 ? 3 : 2;
+        int rows = Math.max(1, (this.height - 78 - 58) / 22);
+        int perPage = rows * columns;
+        int w = Math.min(210, Math.max(100, (this.width - 30 - (columns - 1) * 6) / columns));
+        int left = cx - (columns * w + (columns - 1) * 6) / 2;
         List<ReminderCatalog.Option> choices = tab == 1
-                ? ReminderCatalog.forScript(ClientState.currentScript, ClientGrimoireEdits.roleFor(playerId))
+                ? ReminderCatalog.forScript(ClientState.currentScript, ClientGrimoireEdits.roleFor(playerId), rolesInPlay())
                 : ReminderCatalog.generic();
         List<Reminder> existing = ClientGrimoireEdits.remindersFor(playerId);
         int count = tab == 2 ? existing.size() : choices.size();
@@ -43,7 +47,7 @@ public final class ReminderChooseScreen extends Screen {
         page = Math.min(page, pages - 1);
         for (int i = page * perPage; i < Math.min(count, (page + 1) * perPage); i++) {
             int index = i, slot = i % perPage;
-            int x = cx - w - 3 + (slot % 2) * (w + 6), y = 78 + (slot / 2) * 24;
+            int x = left + (slot % columns) * (w + 6), y = 78 + (slot / columns) * 22;
             if (tab == 2) {
                 Reminder reminder = existing.get(i);
                 String source = reminder.role().map(Role::getDisplayName).orElseGet(() ->
@@ -72,21 +76,27 @@ public final class ReminderChooseScreen extends Screen {
                 }).bounds(x, y, w, 20).build());
             }
         }
+        // Two rows of controls: paging and the Storyteller's shortcuts, then Clear and Back.
+        int rowW = storyteller ? 360 : 168;
+        int x0 = cx - rowW / 2, y1 = this.height - 50, y2 = this.height - 26;
         SharktowerButton previous = SharktowerButton.builder(Component.literal("Previous"), b -> { page--; this.rebuildWidgets(); })
-                .bounds(cx - 115, this.height - 103, 90, 20).build();
+                .bounds(x0, y1, 60, 20).build();
         previous.active = page > 0; this.addRenderableWidget(previous);
+        pageTextX = x0 + 84;
+        pageTextY = y1 + 6;
         SharktowerButton next = SharktowerButton.builder(Component.literal("Next"), b -> { page++; this.rebuildWidgets(); })
-                .bounds(cx + 25, this.height - 103, 90, 20).build();
+                .bounds(x0 + 108, y1, 60, 20).build();
         next.active = page + 1 < pages; this.addRenderableWidget(next);
         if (storyteller) {
             this.addRenderableWidget(SharktowerButton.builder(Component.literal("Night Info"), b ->
                     this.minecraft.gui.setScreen(new NightInfoReminderScreen(playerId, seat)))
-                    .bounds(cx - 115, this.height - 77, 112, 20).build());
+                    .bounds(x0 + 176, y1, 90, 20).build());
             SharktowerButton demonKill = SharktowerButton.builder(Component.literal("Demon Kill"), b -> DemonKillReminderScreen.openOrApply(playerId, seat))
-                    .bounds(cx + 3, this.height - 77, 112, 20).build();
+                    .bounds(x0 + 270, y1, 90, 20).build();
             demonKill.active = !DemonKillReminderScreen.demonsInStorytellerGrimoire().isEmpty();
             this.addRenderableWidget(demonKill);
         }
+        int halfW = 176;
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear All Reminders"), b -> {
             if (storyteller) {
                 GrimoireReturnState.requestAfterNextGrimoireSync();
@@ -94,10 +104,22 @@ public final class ReminderChooseScreen extends Screen {
             } else {
                 ClientGrimoireEdits.clearReminders(playerId); returnToGrimoire();
             }
-        }).bounds(cx - 115, this.height - 52, 230, 20).build());
+        }).bounds(cx - halfW - 4, y2, halfW, 20).build());
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b -> returnToGrimoire())
-                .bounds(cx - 115, this.height - 27, 230, 20).build());
+                .bounds(cx + 4, y2, halfW, 20).build());
     }
+    private int pageTextX, pageTextY;
+
+    /** Role ids of every seated player, so their reminders come before the rest of the script. */
+    private static java.util.Set<String> rolesInPlay() {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (UUID seated : ClientState.playerSeatNumbers.keySet()) {
+            var role = ClientGrimoireEdits.roleFor(seated);
+            if (role != null && role.getRoleId() != null) ids.add(role.getRoleId());
+        }
+        return ids;
+    }
+
     private void addTab(int x, String text, int selected, int width) {
         SharktowerButton button = SharktowerButton.builder(Component.literal(text), b -> { tab = selected; page = 0; this.rebuildWidgets(); })
                 .bounds(x, 48, width, 20).build();
@@ -112,9 +134,9 @@ public final class ReminderChooseScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         String title = "Seat " + seat + " — " + ClientState.playerName(playerId, seat);
         graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
-        String sub = tab == 1 ? "Script reminders for this player" : tab == 2 ? "Remove placed reminders" : "Generic reminders";
+        String sub = tab == 1 ? "This player's character first, then characters in play, then the rest" : tab == 2 ? "Remove placed reminders" : "Generic reminders";
         graphics.text(this.font, sub, (this.width - this.font.width(sub)) / 2, 32, UiDrawing.MUTED, false);
         String number = (page + 1) + "/" + pages;
-        graphics.text(this.font, number, (this.width - this.font.width(number)) / 2, this.height - 97, UiDrawing.TEXT, UiTheme.dark());
+        graphics.text(this.font, number, pageTextX - this.font.width(number) / 2, pageTextY, UiDrawing.TEXT, UiTheme.dark());
     }
 }

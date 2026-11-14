@@ -38,6 +38,7 @@ public final class PoisonerAutomation {
     private PoisonerAutomation() {}
 
     public static void reset() {
+        SeatPicks.clear(poisoner);
         poisoner = null;
         chosen = null;
         night = -1;
@@ -55,14 +56,16 @@ public final class PoisonerAutomation {
         String who = RoleAutomation.label(server, found);
         ServerPlayer player = server.getPlayerList().getPlayer(found);
         if (player != null) {
-            player.sendSystemMessage(Component.literal("Poisoner: choose a player to poison tonight:")
+            player.sendSystemMessage(Component.literal("Poisoner: choose a player to poison tonight. " + RavenkeeperAutomation.GRIMOIRE_HINT)
                     .withStyle(ChatFormatting.DARK_GREEN));
             player.sendSystemMessage(RavenkeeperAutomation.seatButtons(server, found, "/poison "));
         }
+        SeatPicks.offer(server, found, "Poisoner: click a player to poison tonight", "/poison ", null);
         RoleAutomation.offer(server, new StorytellerPrompt(PROMPT, "Poisoner",
                 who + " is choosing a player to poison"
-                        + (player == null ? " but is offline. Ask them, then use /bots automation poisoner choose <seat>." : "."),
-                List.of(StorytellerPrompt.Action.ok("I'll handle it", "/bots automation poisoner dismiss"))));
+                        + (player == null ? " but is offline. Ask them, then choose the seat for them." : "."),
+                List.of(StorytellerPrompt.Action.neutral("Choose seat", StorytellerPrompt.PICK + "/bots automation poisoner choose "),
+                        StorytellerPrompt.Action.ok("I'll handle it", "/bots automation poisoner dismiss"))));
     }
 
     /** The Poisoner (or the Storyteller for them) chose {@code target}. Returns why not, or null. */
@@ -89,7 +92,8 @@ public final class PoisonerAutomation {
         else body += " They are poisoned tonight and tomorrow day.";
         RoleAutomation.offer(server, new StorytellerPrompt(PROMPT, "Poisoner", body, List.of(
                 StorytellerPrompt.Action.ok("Poison", "/bots automation poisoner poison"),
-                StorytellerPrompt.Action.neutral("No poison", "/bots automation poisoner dismiss"))));
+                StorytellerPrompt.Action.neutral("No poison", "/bots automation poisoner dismiss"),
+                StorytellerPrompt.Action.neutral("Other seat", StorytellerPrompt.PICK + "/bots automation poisoner choose "))));
         RoleAutomation.tellStorytellers(server, Component.literal("Poisoner: " + body + " ").withStyle(ChatFormatting.DARK_GREEN)
                 .append(RoleAutomation.button("[Poison]", "/bots automation poisoner poison",
                         "Place the Poisoner's Poisoned reminder on " + whom)));

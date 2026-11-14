@@ -21,6 +21,12 @@ import java.util.List;
  * @param actions what the Storyteller can choose
  */
 public record StorytellerPrompt(String id, String title, String body, List<Action> actions) {
+    /**
+     * An action command starting with this lets the Storyteller click a seat
+     * in the Grimoire instead: the rest is the command the seat number is
+     * appended to ("pick:/bots automation monk choose ").
+     */
+    public static final String PICK = "pick:";
 
     /** One button. {@code tone} is "danger" (kills), "ok" (nothing happens) or "neutral". */
     public record Action(String label, String command, String tone) {

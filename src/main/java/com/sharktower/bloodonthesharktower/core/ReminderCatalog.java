@@ -18,9 +18,30 @@ public final class ReminderCatalog {
                 .map(text -> new Option(text, "", "")).toList();
     }
     public static List<Option> forScript(Script script, PendingRoleAssignment target) {
-        if (script == null) return List.of();
+        return forScript(script, target, Set.of());
+    }
+
+    /**
+     * Reminders for the script's characters, grouped by character: the
+     * target's own character first, then characters in play ({@code inPlay},
+     * role ids), then the rest of the script, each group A-Z. Official
+     * characters in play that are not on the script (or with no script
+     * loaded) are included too.
+     */
+    public static List<Option> forScript(Script script, PendingRoleAssignment target, Set<String> inPlay) {
+        Set<String> playing = new HashSet<>();
+        for (String id : inPlay) playing.add(normalize(id));
+        String own = target == null ? "" : normalize(target.getRoleId());
+        List<ScriptRole> sources = new ArrayList<>(script == null ? List.of() : script.allRoles());
+        Set<String> listed = new HashSet<>();
+        for (ScriptRole source : sources) listed.add(normalize(source.getId()));
+        for (String id : inPlay) {
+            Role official = Role.findById(id);
+            if (official != null && listed.add(normalize(id))) sources.add(new ScriptRole.Official(official));
+        }
+        if (sources.isEmpty()) return List.of();
         List<Option> options = new ArrayList<>();
-        for (ScriptRole source : script.allRoles()) {
+        for (ScriptRole source : sources) {
             List<String> labels = source instanceof ScriptRole.Custom custom
                     ? new ArrayList<>(custom.customRole().reminders())
                     : new ArrayList<>(OFFICIAL.getOrDefault(normalize(source.getId()), List.of()));
@@ -33,7 +54,12 @@ public final class ReminderCatalog {
                 options.add(new Option(text, source.getId(), source.getDisplayName()));
             }
         }
-        options.sort(Comparator.comparing(Option::label, String.CASE_INSENSITIVE_ORDER));
+        options.sort(Comparator.<Option>comparingInt(option -> {
+                    String id = normalize(option.sourceId());
+                    return id.equals(own) ? 0 : playing.contains(id) ? 1 : 2;
+                })
+                .thenComparing(Option::sourceName, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(Option::text, String.CASE_INSENSITIVE_ORDER));
         return List.copyOf(options);
     }
     public static boolean selfOnly(String roleId, String text) {

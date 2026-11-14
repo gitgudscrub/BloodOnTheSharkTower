@@ -119,6 +119,12 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
                         + (ClientGrimoireEdits.isLocalStoryteller() ? " | RMB actions" : ""));
             }
         }
+        if (isHovered() && com.sharktower.bloodonthesharktower.client.gui.SeatPick.active()) {
+            GrimoireHoverHints.set(com.sharktower.bloodonthesharktower.client.gui.SeatPick.excluded(seat)
+                    ? "You cannot choose yourself"
+                    : "Click to choose " + com.sharktower.bloodonthesharktower.states.ClientState.playerName(playerId, seat)
+                    + " (seat " + seat + ")");
+        }
         } finally {
             GrimoireRevealAnimation.endElement(graphics);
         }
@@ -211,6 +217,7 @@ public final class GrimoirePlayerWidget extends AbstractWidget {
 
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        if (com.sharktower.bloodonthesharktower.client.gui.SeatPick.tryPick(seat)) return;
         GrimoirePlayerClicks.handleRoleLeft(
                 playerId,
                 seat,

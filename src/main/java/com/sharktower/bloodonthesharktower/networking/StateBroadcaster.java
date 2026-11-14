@@ -49,6 +49,7 @@ public final class StateBroadcaster {
         PlayerNotebooks.send(player);
         sendVisibilityTo(player);
         sendPromptsTo(player);
+        com.sharktower.bloodonthesharktower.automation.SeatPicks.sendTo(player);
         ServerPlayNetworking.send(player, new SyncDayNightS2CPayload(
                 ServerState.currentNight,
                 ServerState.currentDay,

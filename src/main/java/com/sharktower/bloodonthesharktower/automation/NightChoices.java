@@ -41,23 +41,25 @@ import java.util.UUID;
 public final class NightChoices {
     public enum Kind {
         MONK(Role.MONK, "monk", "Monk", "/protect ", "choose a player to protect from the Demon tonight (not yourself)",
-                ChatFormatting.AQUA),
+                "click a player to protect tonight", ChatFormatting.AQUA),
         IMP(Role.IMP, "imp", "Imp", "/attack ", "choose a player to kill tonight",
-                ChatFormatting.DARK_RED);
+                "click a player to kill tonight", ChatFormatting.DARK_RED);
 
         final Role role;
         final String id;
         final String title;
         final String command;
         final String ask;
+        final String banner;
         final ChatFormatting colour;
 
-        Kind(Role role, String id, String title, String command, String ask, ChatFormatting colour) {
+        Kind(Role role, String id, String title, String command, String ask, String banner, ChatFormatting colour) {
             this.role = role;
             this.id = id;
             this.title = title;
             this.command = command;
             this.ask = ask;
+            this.banner = banner;
             this.colour = colour;
         }
     }
@@ -70,6 +72,7 @@ public final class NightChoices {
 
     public static void reset() {
         for (Kind kind : Kind.values()) RoleAutomation.resolve(kind.id);
+        for (Choice choice : WAITING.values()) SeatPicks.clear(choice.chooser());
         WAITING.clear();
     }
 
@@ -84,14 +87,17 @@ public final class NightChoices {
             String who = RoleAutomation.label(server, found);
             ServerPlayer player = server.getPlayerList().getPlayer(found);
             if (player != null) {
-                player.sendSystemMessage(Component.literal(kind.title + ": " + kind.ask + ":").withStyle(kind.colour));
+                player.sendSystemMessage(Component.literal(kind.title + ": " + kind.ask + ". "
+                        + RavenkeeperAutomation.GRIMOIRE_HINT).withStyle(kind.colour));
                 player.sendSystemMessage(RavenkeeperAutomation.seatButtons(server, found, kind.command));
             }
+            SeatPicks.offer(server, found, kind.title + ": " + kind.banner, kind.command, kind == Kind.MONK ? found : null);
             RoleAutomation.offer(server, new StorytellerPrompt(kind.id, kind.title,
                     who + " is " + kind.ask.replace("choose", "choosing")
-                            + (player == null ? " but is offline. Ask them, then use /bots automation "
-                            + kind.id + " choose <seat>." : "."),
-                    List.of(StorytellerPrompt.Action.ok("I'll handle it", "/bots automation " + kind.id + " dismiss"))));
+                            + (player == null ? " but is offline. Ask them, then choose the seat for them." : "."),
+                    List.of(StorytellerPrompt.Action.neutral("Choose seat",
+                                    StorytellerPrompt.PICK + "/bots automation " + kind.id + " choose "),
+                            StorytellerPrompt.Action.ok("I'll handle it", "/bots automation " + kind.id + " dismiss"))));
         }
     }
 
@@ -132,7 +138,9 @@ public final class NightChoices {
                 kind == Kind.IMP ? StorytellerPrompt.Action.danger(action, "/bots automation imp confirm")
                         : StorytellerPrompt.Action.ok(action, "/bots automation monk confirm"),
                 StorytellerPrompt.Action.neutral(kind == Kind.IMP ? "No kill" : "No protection",
-                        "/bots automation " + kind.id + " dismiss"));
+                        "/bots automation " + kind.id + " dismiss"),
+                StorytellerPrompt.Action.neutral("Other seat",
+                        StorytellerPrompt.PICK + "/bots automation " + kind.id + " choose "));
         RoleAutomation.offer(server, new StorytellerPrompt(kind.id, kind.title, body, actions));
         RoleAutomation.tellStorytellers(server, Component.literal(kind.title + ": " + body + " ").withStyle(kind.colour)
                 .append(RoleAutomation.button("[" + action + "]", "/bots automation " + kind.id + " confirm",
@@ -193,7 +201,8 @@ public final class NightChoices {
     }
 
     private static void finish(Kind kind) {
-        WAITING.remove(kind);
+        Choice done = WAITING.remove(kind);
+        if (done != null) SeatPicks.clear(done.chooser());
         RoleAutomation.resolve(kind.id);
     }
 }

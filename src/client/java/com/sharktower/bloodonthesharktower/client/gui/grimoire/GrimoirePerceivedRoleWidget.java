@@ -57,6 +57,7 @@ public final class GrimoirePerceivedRoleWidget extends AbstractWidget {
 
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        if (com.sharktower.bloodonthesharktower.client.gui.SeatPick.tryPick(seat)) return;
         Minecraft.getInstance().gui.setScreen(
                 RoleSelectionScreen.forPerceivedRole(seat, new AssignRolesScreen()));
     }
