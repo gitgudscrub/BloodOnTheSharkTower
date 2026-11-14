@@ -34,6 +34,7 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
         TeamInfoPreviewScreen.register();
         KeyInputHandler.register();
         KeyInputHandler.releaseFriendsListKey();
+        KeyInputHandler.moveIrisKeys();
         SharktowerHudRenderer.register();
         ClockHandsRenderer.register();
         RoleIconRenderer.register();

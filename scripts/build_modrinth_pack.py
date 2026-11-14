@@ -74,6 +74,21 @@ def resolve_version(spec: dict, game_version: str, loader: str) -> dict:
     return version
 
 
+def is_shaderpack(spec: dict) -> bool:
+    return spec.get("type") == "shaderpack"
+
+
+def folder(spec: dict) -> str:
+    return "shaderpacks" if is_shaderpack(spec) else "mods"
+
+
+def client_env(spec: dict) -> str:
+    """Optional client files are offered as a tick box when the pack is installed."""
+    if spec.get("optional"):
+        return "optional"
+    return spec.get("client", "required")
+
+
 def validate_compatibility(spec: dict, version: dict, game_version: str, loader: str, packed_projects: set) -> None:
     """Fail the build if a pinned mod does not fit the pack.
 
@@ -83,6 +98,9 @@ def validate_compatibility(spec: dict, version: dict, game_version: str, loader:
     """
     if not spec.get("validate_compatibility"):
         return
+    if is_shaderpack(spec):
+        # Shader packs load through Iris, not Fabric, and have no mod dependencies.
+        loader = "iris"
     if game_version not in version.get("game_versions", []) or loader not in version.get("loaders", []):
         raise RuntimeError(f"{spec['name']} {version.get('version_number')} does not support {loader} {game_version}")
     missing = [
@@ -104,13 +122,13 @@ def dependency_entry(spec: dict, version: dict) -> dict:
         raise RuntimeError(f"Missing required hashes for {spec['name']}")
 
     return {
-        "path": f"mods/{file['filename']}",
+        "path": f"{folder(spec)}/{file['filename']}",
         "hashes": {
             "sha1": hashes["sha1"],
             "sha512": hashes["sha512"],
         },
         "env": {
-            "client": spec.get("client", "required"),
+            "client": client_env(spec),
             "server": spec.get("server", "required"),
         },
         "downloads": [file["url"]],
@@ -199,6 +217,7 @@ def write_packwiz(
     jar: Path,
     jar_url: str,
     overrides: Path,
+    defaults: Path | None = None,
 ) -> None:
     """Write pack.toml + index.toml + one .pw.toml per mod.
 
@@ -225,8 +244,18 @@ def write_packwiz(
 
     for spec, mod in zip(specs, versions):
         file = primary_file(mod)
+        option = ""
+        if spec.get("optional"):
+            # packwiz-installer asks about these on first install (and from
+            # its "Optional mods..." button); the choice is remembered.
+            option = (
+                "\n[option]\n"
+                "optional = true\n"
+                f"default = {'true' if spec.get('default') else 'false'}\n"
+                f"description = {toml_str(spec.get('description', ''))}\n"
+            )
         add(
-            f"mods/{slug(spec['name'])}.pw.toml",
+            f"{folder(spec)}/{slug(spec['name'])}.pw.toml",
             text=(
                 f"name = {toml_str(spec['name'])}\n"
                 f"filename = {toml_str(file['filename'])}\n"
@@ -238,6 +267,7 @@ def write_packwiz(
                 "[update.modrinth]\n"
                 f"mod-id = {toml_str(mod['project_id'])}\n"
                 f"version = {toml_str(mod['id'])}\n"
+                + option
             ),
             metafile=True,
         )
@@ -260,6 +290,13 @@ def write_packwiz(
         rel = item.relative_to(overrides).as_posix()
         if item.is_file() and not rel.startswith("mods/"):
             add(rel, src=item)
+    # First-install defaults (options.txt). Only packwiz gets these: it creates
+    # a preserved file just once, while a .mrpack update would overwrite the
+    # player's own settings every time.
+    if defaults is not None and defaults.is_dir():
+        for item in sorted(defaults.rglob("*")):
+            if item.is_file():
+                add(item.relative_to(defaults).as_posix(), src=item)
 
     index = 'hash-format = "sha256"\n\n' + "\n".join(entry for _, entry in sorted(entries))
     (out / "index.toml").write_text(index, encoding="utf-8", newline="\n")
@@ -303,7 +340,10 @@ def write_prism_instance(out: Path, config: dict, pack_url: str, bootstrap: Path
         f"PreLaunchCommand={command_ini}\n"
         "OverrideMemory=true\n"
         "MinMemAlloc=1024\n"
-        "MaxMemAlloc=4096\n"
+        # 3 GB is plenty for this pack and leaves room on 8 GB PCs for
+        # Windows, Discord and the game's own off-heap memory. Players with
+        # more RAM can raise it (README: Performance).
+        "MaxMemAlloc=3072\n"
     )
     mmc_pack = {
         "formatVersion": 1,
@@ -331,6 +371,8 @@ def main() -> None:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--config", default="modrinth/pack-config.json", type=Path)
     parser.add_argument("--overrides", default="modrinth/overrides", type=Path)
+    parser.add_argument("--defaults", default="modrinth/defaults", type=Path,
+                        help="first-install files for the packwiz pack (never overwrite)")
     parser.add_argument("--packwiz-out", type=Path, help="also write a packwiz pack to this folder")
     parser.add_argument("--jar-url", help="download URL of the Sharktower JAR (with --packwiz-out)")
     parser.add_argument("--prism-out", type=Path, help="also write a Prism instance zip here")
@@ -419,7 +461,8 @@ def main() -> None:
     if args.packwiz_out:
         # Same override folder the .mrpack got (servers.dat, config); the
         # Sharktower JAR itself is a download metafile, not a copied file.
-        write_packwiz(args.packwiz_out, config, args.version, specs, versions, args.jar, args.jar_url, overrides)
+        write_packwiz(args.packwiz_out, config, args.version, specs, versions, args.jar, args.jar_url, overrides,
+                      args.defaults)
     if args.prism_out:
         write_prism_instance(args.prism_out, config, args.pack_url, args.bootstrap, args.icon)
 
