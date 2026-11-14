@@ -131,6 +131,7 @@ public final class RoleAutomation {
         RavenkeeperAutomation.reset();
         PoisonerAutomation.reset();
         PsychopathAxe.reset();
+        PsychopathRoshambo.reset();
         PROMPTS.clear();
     }
 
@@ -304,6 +305,8 @@ public final class RoleAutomation {
      */
     public static String executionWarning(MinecraftServer server, UUID target) {
         if (target == null) return null;
+        String roshambo = PsychopathRoshambo.intercept(server, target);
+        if (roshambo != null) return roshambo;
         String reason = executionSurvivalReason(target);
         if (reason == null) return null;
         String key = target + "@" + ServerState.currentDay;
@@ -672,6 +675,7 @@ public final class RoleAutomation {
         expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
         PoisonerAutomation.onDusk(server);
         PsychopathAxe.onDusk();
+        PsychopathRoshambo.onDusk();
         if (minstrelDrunkDay >= 0 && ServerState.currentDay > minstrelDrunkDay) {
             minstrelDrunkDay = -1;
             expireReminders(server, Map.of(Role.MINSTREL, Set.of("everyoneisdrunk")), "Dusk");

@@ -3,6 +3,19 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.41 — Psychopath rock-paper-scissors (unreleased)
+
+- Executing a sober Psychopath (or an Alchemist with the Psychopath
+  ability) now starts rock-paper-scissors with the player who nominated
+  them, instead of killing them straight away. Everyone is told, and both
+  players get Rock / Paper / Scissors buttons in chat (`/roshambo <pick>`).
+- Picks stay secret until both are in, then everyone sees them and who won.
+- The Storyteller rules in Resolve: **Dies** runs the execution, **Lives**
+  is an execution they survive. Both work at any time, so an offline player
+  never holds up the day.
+- A drunk or poisoned Psychopath, or one babysitting Lil' Monsta ("Is The
+  Demon"), is executed normally.
+
 ## 1.0.2-alpha.40 — Shroud on top (unreleased)
 
 - Grimoire: a dead player's shroud now sits on top of the role token's
