@@ -38,8 +38,12 @@ you have edited are not overwritten by updates.
 Launch again. **"The server has not updated yet"?** You are ahead of the
 server; try again in a few minutes.
 
-Players who prefer the Modrinth App can keep using the `.mrpack`; they just
-need to press its update button when a new version comes out.
+Players who prefer the Modrinth App can keep using the `.mrpack`. Until the
+pack is approved on Modrinth, they update by downloading the newest one
+(https://github.com/gitgudscrub/BloodOnTheSharkTower/releases/latest/download/Blood-on-the-Sharktower.mrpack)
+and choosing it under the instance's **Instance settings > Installation >
+Change version**; settings and worlds are kept. The website's **Get the pack**
+page (sharktower.themavryan.com/minecraft/pack) has these steps for players.
 
 ## For the server admin
 
@@ -52,7 +56,8 @@ Run the **Build / Publish Modrinth Pack** workflow (Actions tab) with:
 - `publish_to_modrinth`: ticked as well if Modrinth should get it too
 
 The workflow builds the JAR, creates the `pack-<version>` GitHub release
-(server JAR + Prism instance zip) and then points the `pack` branch at it.
+(server JAR, Prism instance zip, and the `.mrpack` under the fixed name
+`Blood-on-the-Sharktower.mrpack`) and then points the `pack` branch at it.
 Leaving `publish_auto_update` off is a dry run: everything is built and
 uploaded as workflow artifacts, nothing is published.
 

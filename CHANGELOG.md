@@ -3,6 +3,23 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.52 — Watch live on the Sharktower website (unreleased)
+
+- Watch live: the server feeds the Sharktower website's new Watch live page
+  (Discord members only), so people without Minecraft can follow a game:
+  seats, names, who is dead (as players see it), day or night, and who is in
+  which voice room. Roles and the Grimoire are never sent.
+- Spectators can listen to any voice room, day and night: Town Square,
+  private chats, houses, Storyteller chats, and open proximity voice.
+  Audio is only sent while someone is listening and the site owner has
+  spectator voice switched on. Spectators can't speak to players; they have
+  their own text chat on the website.
+- The "out of date" message at login now points Modrinth App players to the
+  website's Get the pack page (sharktower.themavryan.com/minecraft/pack).
+- Each auto-update release now also carries the pack as
+  `Blood-on-the-Sharktower.mrpack`, so one link always gets the newest.
+- Needs the same `site-link.json` as server updates; see docs/WATCH_LIVE.md.
+
 ## 1.0.2-alpha.51 — Performance options and optional shaders (unreleased)
 
 - Optional shaders: Iris Shaders and two shader packs (Complementary
