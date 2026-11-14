@@ -351,6 +351,21 @@ public class AssignRolesScreen extends Screen {
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("To Home"), b -> action("send_home"))
                 .bounds(x + half + 4, y, half, NIGHT_ROW_H)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Teleport players to their houses."))).build());
+        y += NIGHT_ROW_H + NIGHT_ROW_GAP;
+        this.addRenderableWidget(SharktowerButton.builder(houseVisitsLabel(), b -> {
+                    ClientState.houseVisits = !ClientState.houseVisits;
+                    action("toggle_house_visits");
+                    rebuildWidgets();
+                })
+                .bounds(x, y, CONTROL_W, NIGHT_ROW_H)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(HOUSE_VISITS_TIP))).build());
+    }
+
+    static final String HOUSE_VISITS_TIP = "ON: night choosers (Poisoner, Monk, Imp, Ravenkeeper) sleep until you reach their house, then use their ability. OFF: they choose at dusk. Resolve can always wake or choose for them.";
+
+    static Component houseVisitsLabel() {
+        return Component.literal("House visits: " + (ClientState.houseVisits ? "ON" : "OFF"))
+                .withStyle(ClientState.houseVisits ? ChatFormatting.GREEN : ChatFormatting.WHITE);
     }
 
     private int nightHeaderY = -1;

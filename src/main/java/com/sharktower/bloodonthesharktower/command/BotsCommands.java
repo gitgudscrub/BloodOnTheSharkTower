@@ -307,6 +307,12 @@ public final class BotsCommands {
                                         .then(Commands.argument("nominee", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeNominatePair))))
                         .then(Commands.literal("automation")
+                                .then(Commands.literal("wake")
+                                        .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                .executes(BotsCommands::executeAutomationWake)))
+                                .then(Commands.literal("housevisits")
+                                        .then(Commands.literal("on").executes(ctx -> executeHouseVisits(ctx, true)))
+                                        .then(Commands.literal("off").executes(ctx -> executeHouseVisits(ctx, false))))
                                 .then(Commands.literal("witch")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationWitchDismiss))
@@ -1656,6 +1662,21 @@ public final class BotsCommands {
         String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathAxe.dismiss(context.getSource().getServer());
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
+    }
+
+    private static int executeAutomationWake(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = com.sharktower.bloodonthesharktower.automation.HouseVisits.wakeNow(
+                context.getSource().getServer(), IntegerArgumentType.getInteger(context, "seat"));
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeHouseVisits(CommandContext<CommandSourceStack> context, boolean on) {
+        if (!requireStoryteller(context)) return 0;
+        com.sharktower.bloodonthesharktower.automation.HouseVisits.setEnabled(context.getSource().getServer(), on);
+        send(context, com.sharktower.bloodonthesharktower.automation.HouseVisits.describe());
+        return 1;
     }
 
     private static int executeAutomationPoisonerDismiss(CommandContext<CommandSourceStack> context) {

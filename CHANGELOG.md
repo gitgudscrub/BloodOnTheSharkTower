@@ -3,6 +3,22 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.55 — House visits wake night choosers (unreleased)
+
+- House visits (on by default, the Storyteller's choice): at night the
+  Poisoner, Monk, Imp and a Ravenkeeper killed tonight stay asleep until the
+  Storyteller reaches their house (walking, flying, in Spectator or by
+  teleport). Then they get a title and chime that only they see and hear,
+  and can choose. Before that, a choice is refused with "You are asleep".
+- The Storyteller stays in charge: a sleeping player's Resolve card has
+  **Wake now**, **Choose seat** (choose for them; their choice then stands
+  and a later visit does not re-prompt) and **I'll handle it**.
+- Turn it off with **House visits: ON/OFF** under the night checklist in the
+  Grimoire or in More Setup (`/bots automation housevisits on|off`). Off,
+  choosers are woken at dusk as before; turning it off mid-night wakes anyone
+  still asleep. Seats without a house set always wake at dusk.
+- New Storyteller command: `/bots automation wake <seat>`.
+
 ## 1.0.2-alpha.53 — Lighter HUD and smaller memory use (unreleased)
 
 Measured with Java Flight Recorder in a 16-seat test game.

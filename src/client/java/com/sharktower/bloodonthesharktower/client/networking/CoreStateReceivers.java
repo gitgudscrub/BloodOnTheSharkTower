@@ -90,6 +90,7 @@ public final class CoreStateReceivers {
         });
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.StorytellerPromptsS2CPayload.TYPE, (payload, context) -> {
             ClientState.storytellerPrompts = payload.prompts();
+            ClientState.houseVisits = payload.houseVisits();
             ClientState.storytellerPromptsRevision++;
         });
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.SetupStatusS2CPayload.TYPE,

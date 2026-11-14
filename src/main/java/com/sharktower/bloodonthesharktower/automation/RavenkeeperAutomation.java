@@ -42,6 +42,7 @@ public final class RavenkeeperAutomation {
     static final String GRIMOIRE_HINT = "Click a name below, or press R and click a player in your Grimoire.";
 
     public static void reset() {
+        HouseVisits.cancel(raven);
         SeatPicks.clear(raven);
         raven = null;
         chosen = null;
@@ -57,6 +58,13 @@ public final class RavenkeeperAutomation {
         if (execution || !night || !RoleAutomation.is(dead, Role.RAVENKEEPER)) return;
         raven = dead;
         chosen = null;
+        HouseVisits.wakeOnVisit(server, dead, PROMPT, "Ravenkeeper", "/bots automation ravenkeeper choose ",
+                "/bots automation ravenkeeper dismiss", () -> wake(server, dead));
+    }
+
+    /** The Storyteller has visited (or visits are off): the dead Ravenkeeper may choose. */
+    private static void wake(MinecraftServer server, UUID dead) {
+        if (!dead.equals(raven) || chosen != null) return;
         String who = RoleAutomation.label(server, dead);
         ServerPlayer player = server.getPlayerList().getPlayer(dead);
         if (player != null) {
@@ -100,8 +108,11 @@ public final class RavenkeeperAutomation {
         if (raven == null) return "No Ravenkeeper is waiting to choose.";
         if (!byStoryteller && !raven.equals(chooser)) return "Only the Ravenkeeper who died tonight can choose.";
         if (chosen != null) return "The Ravenkeeper has already chosen.";
+        String notYet = byStoryteller ? null : HouseVisits.refusal(chooser);
+        if (notYet != null) return notYet;
         if (target == null || !ServerState.PLAYER_SEAT_NUMBERS.containsKey(target)) return "That player is not seated.";
         chosen = target;
+        if (byStoryteller) HouseVisits.chosenForThem(raven);
         SeatPicks.clear(raven);
         String who = RoleAutomation.label(server, raven);
         String whom = RoleAutomation.label(server, target);

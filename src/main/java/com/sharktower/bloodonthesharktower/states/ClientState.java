@@ -118,6 +118,8 @@ public final class ClientState {
     public static boolean rolesSent = false;
     /** Decisions waiting on the local Storyteller (empty for everyone else). */
     public static List<com.sharktower.bloodonthesharktower.automation.StorytellerPrompt> storytellerPrompts = List.of();
+    /** The Storyteller's House visits choice: night choosers wake when the Storyteller reaches their house. */
+    public static boolean houseVisits = true;
     public static int storytellerPromptsRevision;
     public static long notebookGeneration;
     public static String notebookText = "";
