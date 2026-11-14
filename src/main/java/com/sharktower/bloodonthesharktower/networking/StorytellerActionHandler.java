@@ -74,6 +74,15 @@ public final class StorytellerActionHandler {
 
     private static SetupOperations.Result dispatch(MinecraftServer server, ServerPlayer actor, String action, String argument) {
         String op = action == null ? "" : action.trim().toLowerCase();
+        if (!com.sharktower.bloodonthesharktower.setup.SetupUndo.tracks(op)) return dispatchOp(server, actor, action, argument);
+        com.sharktower.bloodonthesharktower.setup.SetupUndo.save(op);
+        SetupOperations.Result result = dispatchOp(server, actor, action, argument);
+        if (result == null || !result.ok()) com.sharktower.bloodonthesharktower.setup.SetupUndo.discardLast();
+        return result;
+    }
+
+    private static SetupOperations.Result dispatchOp(MinecraftServer server, ServerPlayer actor, String action, String argument) {
+        String op = action == null ? "" : action.trim().toLowerCase();
         String arg = argument == null ? "" : argument.trim();
 
         if (ServerState.gameEnded
@@ -90,6 +99,7 @@ public final class StorytellerActionHandler {
 
         try {
             return switch (op) {
+                case "undo_setup" -> com.sharktower.bloodonthesharktower.setup.SetupUndo.undo();
                 case "shuffle_roles" -> SetupOperations.shuffleRoles();
                 case "shuffle_seats" -> SetupOperations.shuffleSeats();
                 case "randomize_roles" -> SetupOperations.randomizeRoles();

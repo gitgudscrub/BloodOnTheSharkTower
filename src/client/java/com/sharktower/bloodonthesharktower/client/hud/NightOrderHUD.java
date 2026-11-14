@@ -235,6 +235,10 @@ public final class NightOrderHUD {
     );
 
     private static int selectedIndex = 0;
+    // Visits the Storyteller has already done tonight (bar and Grimoire checklist).
+    private static final Set<String> DONE = new java.util.HashSet<>();
+    private static int doneNight = -1;
+    private static GamePhase donePhase = null;
     private static String selectedKey = "static:dusk";
 
     private NightOrderHUD() {}
@@ -266,6 +270,11 @@ public final class NightOrderHUD {
             if (icon != null) {
                 graphics.blit(RenderPipelines.GUI_TEXTURED, icon, x, Y, 0, 0,
                         ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            }
+
+            if (isDone(visit)) {
+                graphics.fill(x, Y, x + ICON_SIZE, Y + ICON_SIZE, 0x99000000);
+                graphics.text(minecraft.font, "✓", x + ICON_SIZE - 7, Y - 2, 0xFF55FF55, true);
             }
 
             if (index == selectedIndex) {
@@ -304,7 +313,28 @@ public final class NightOrderHUD {
                                           List<Visit> visits, int screenWidth) {
         Visit visit = visits.get(selectedIndex);
         String position = (selectedIndex + 1) + "/" + visits.size();
-        String name = switch (visit.kind) {
+        String name = (isDone(visit) ? "✓ " : "") + labelFor(visit);
+        int colour = switch (visit.kind) {
+            case ROLE -> visit.triggered ? 0xFFFFAA00 : 0xFFFFFFFF;
+            default -> 0xFFFFD166;
+        };
+        if (isDone(visit)) colour = 0xFF55FF55;
+        int maxWidth = Math.max(80, screenWidth - 16);
+        if (minecraft.font.width(name) > maxWidth) {
+            name = minecraft.font.plainSubstrByWidth(name, maxWidth - 8) + "…";
+        }
+        int positionWidth = minecraft.font.width(position);
+        int gap = 6;
+        int total = positionWidth + gap + minecraft.font.width(name);
+        int x = (screenWidth - total) / 2;
+        int y = Y + ICON_SIZE + 4;
+        graphics.fill(x - 4, y - 2, x + total + 4, y + 11, 0xA0101014);
+        graphics.text(minecraft.font, position, x, y, 0xFFAAAAAA, true);
+        graphics.text(minecraft.font, name, x + positionWidth + gap, y, colour, true);
+    }
+
+    private static String labelFor(Visit visit) {
+        return switch (visit.kind) {
             case DUSK -> "Dusk · start the night";
             case DAWN -> "Dawn · start the day";
             case NOMINATIONS -> "Open nominations";
@@ -319,22 +349,69 @@ public final class NightOrderHUD {
                 yield (visit.triggered ? "! " : "") + role + " · " + who;
             }
         };
-        int colour = switch (visit.kind) {
-            case ROLE -> visit.triggered ? 0xFFFFAA00 : 0xFFFFFFFF;
-            default -> 0xFFFFD166;
-        };
-        int maxWidth = Math.max(80, screenWidth - 16);
-        if (minecraft.font.width(name) > maxWidth) {
-            name = minecraft.font.plainSubstrByWidth(name, maxWidth - 8) + "…";
+    }
+
+    private static boolean isDone(Visit visit) {
+        if (doneNight != ClientState.currentNight || donePhase != ClientState.phase()) {
+            DONE.clear();
+            doneNight = ClientState.currentNight;
+            donePhase = ClientState.phase();
         }
-        int positionWidth = minecraft.font.width(position);
-        int gap = 6;
-        int total = positionWidth + gap + minecraft.font.width(name);
-        int x = (screenWidth - total) / 2;
-        int y = Y + ICON_SIZE + 4;
-        graphics.fill(x - 4, y - 2, x + total + 4, y + 11, 0xA0101014);
-        graphics.text(minecraft.font, position, x, y, 0xFFAAAAAA, true);
-        graphics.text(minecraft.font, name, x + positionWidth + gap, y, colour, true);
+        return DONE.contains(visit.key());
+    }
+
+    private static void markDone(Visit visit) {
+        isDone(visit);
+        DONE.add(visit.key());
+    }
+
+    /** One wake-order entry for the Grimoire's night checklist. */
+    public record Entry(String key, String label, String shortLabel, int seat, boolean done,
+                        boolean triggered, boolean dawn) {}
+
+    /**
+     * Tonight's visits in wake order, ending with Dawn: Minion and Demon info
+     * on the first night, then each character who wakes. Empty outside Night.
+     */
+    public static List<Entry> tonight() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!isAvailable(minecraft) || ClientState.phase() != GamePhase.NIGHT) return List.of();
+        List<Entry> entries = new ArrayList<>();
+        for (Visit visit : buildVisits()) {
+            if (visit.kind == Kind.DUSK || visit.kind == Kind.NOMINATIONS) continue;
+            String shortLabel = switch (visit.kind) {
+                case MINION_INFO -> "Minion Info";
+                case DEMON_INFO -> "Demon Info";
+                case DAWN -> "Start Day";
+                default -> (visit.triggered ? "! " : "")
+                        + (visit.assignment == null ? "Role" : visit.assignment.getDisplayName())
+                        + (visit.seat > 0 ? " · " + visit.seat : "");
+            };
+            entries.add(new Entry(visit.key(), labelFor(visit), shortLabel, visit.seat, isDone(visit),
+                    visit.triggered, visit.kind == Kind.DAWN));
+        }
+        return entries;
+    }
+
+    /** Runs a visit from the Grimoire checklist, as Up does on the bar. */
+    public static void activate(String key) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!isAvailable(minecraft) || minecraft.player == null) return;
+        List<Visit> visits = buildVisits();
+        for (int i = 0; i < visits.size(); i++) {
+            if (visits.get(i).key().equals(key)) {
+                selectedIndex = i;
+                selectedKey = key;
+                activateVisit(minecraft, visits.get(i));
+                return;
+            }
+        }
+    }
+
+    /** Marks a visit done or not done without running it. */
+    public static void toggleDone(String key) {
+        if (DONE.contains(key)) DONE.remove(key);
+        else for (Visit visit : buildVisits()) if (visit.key().equals(key)) markDone(visit);
     }
 
     public static void advance(int delta) {
@@ -355,8 +432,10 @@ public final class NightOrderHUD {
         List<Visit> visits = buildVisits();
         if (visits.isEmpty()) return;
         restoreSelection(visits);
-        Visit visit = visits.get(selectedIndex);
+        activateVisit(minecraft, visits.get(selectedIndex));
+    }
 
+    private static void activateVisit(Minecraft minecraft, Visit visit) {
         switch (visit.kind) {
             case DUSK -> {
                 NightVisitInfoHUD.clear();
@@ -389,6 +468,7 @@ public final class NightOrderHUD {
                 }
             }
             case MINION_INFO, DEMON_INFO -> {
+                if (ClientState.phase() == GamePhase.NIGHT) markDone(visit);
                 if (ClientState.phase() == GamePhase.NIGHT) minecraft.gui.setScreen(
                         new com.sharktower.bloodonthesharktower.client.gui.NightTeamInfoScreen(visit.kind == Kind.DEMON_INFO));
             }
@@ -397,6 +477,7 @@ public final class NightOrderHUD {
                     minecraft.player.sendSystemMessage(Component.literal("Night role visits are only available during Night.")
                             .withStyle(ChatFormatting.RED));
                 } else if (visit.playerId != null) {
+                    markDone(visit);
                     NightVisitInfoHUD.showVisit(
                             visit.playerId,
                             visit.assignment,

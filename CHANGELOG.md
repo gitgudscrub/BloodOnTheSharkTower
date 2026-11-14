@@ -3,6 +3,31 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.50 — Tonight checklist, setup reminders, Undo, saved bags (unreleased)
+
+- Tonight checklist: during the night the Grimoire's right-hand side lists
+  tonight's wake order (Minion and Demon info on the first night, then each
+  character who wakes, then Start Day). The next visit is gold, done ones are
+  green with a tick, and the header counts them ("Tonight 2/5"). Click a
+  character to go to that player (the Grimoire closes); right-click to tick
+  it off without going. The night bar at the top dims finished visits too.
+  Send to Seats / Send to Home are now two small buttons under the list.
+- Setup reminders: a Reminders step in the setup checklist when a character
+  in play (or believed in play) needs one placed before the first night:
+  Fortune Teller's Red Herring, the players the Washerwoman, Librarian and
+  Investigator will see, and the Grandmother's Grandchild. Click it and
+  click seats in turn. Optional.
+- Undo: undoes the last setup change (seats, dealt tokens, Drunk/Marionette,
+  believed roles, alignments, reminders, bluffs). Up to 20 steps; cleared
+  when roles are sent.
+- Saved bags: Save Bag / Load Bag in the Role Bag remember a bag per script
+  and player count, in the Storyteller's config folder.
+- Role Bag fits the whole script on one page: tiles shrink, long names are
+  shortened with "…", and on small screens tiles show the token only (name
+  and ability on hover).
+- Setup checklist labels shorten themselves instead of cutting off the
+  value (for example "Marionette: #4").
+
 ## 1.0.2-alpha.49 — Auto-updating install (unreleased)
 
 - New install route that updates itself: a Prism Launcher instance (Windows

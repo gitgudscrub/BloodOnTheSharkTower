@@ -112,6 +112,21 @@ public final class SetupFlowRegression {
             check(away.ok() && away.message().contains("next to the Demon"), "Marionette away from the Demon warns");
         }
 
+        // Undo: puts back the state saved before an action.
+        seat(8);
+        SetupOperations.distributeRoleBag(List.of("washerwoman", "librarian", "investigator", "chef",
+                "empath", "monk", "poisoner", "imp"));
+        SetupUndo.clear();
+        int chefNow = seatOf(Role.CHEF);
+        SetupUndo.save("hide_role");
+        check(SetupOperations.hideRole(chefNow, "drunk").ok() && roleAt(chefNow).role() == Role.DRUNK, "Chef made the Drunk");
+        check(SetupUndo.undo().ok() && roleAt(chefNow).role() == Role.CHEF && believedAt(chefNow) == null,
+                "undo gives the Chef back");
+        check(!SetupUndo.undo().ok(), "nothing left to undo");
+        for (int i = 0; i < 25; i++) SetupUndo.save("shuffle_seats");
+        check(SetupUndo.size() == 20, "undo keeps at most 20 steps");
+        SetupUndo.clear();
+
         // Random setup works for a full 16-seat Grimoire.
         seat(16);
         var random = SetupOperations.randomizeRoles();

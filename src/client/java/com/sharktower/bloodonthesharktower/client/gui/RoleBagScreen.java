@@ -37,6 +37,9 @@ public final class RoleBagScreen extends Screen {
     private static final int CELL_H = 61;
     private static final int GAP_X = 5;
     private static final int GAP_Y = 4;
+    private static final int MIN_CELL_W = 64;
+    private static final int MIN_CELL_H = 37;
+    private static final int ICON_CELL = 28;
 
     private static final Pattern OUTSIDER_BRACKET = Pattern.compile("\\[([^\\]]*outsider[^\\]]*)]", Pattern.CASE_INSENSITIVE);
     private static final Pattern OUTSIDER_RANGE = Pattern.compile("([+-]?\\d+)\\s*(?:or|to)\\s*([+-]?\\d+)\\s+outsiders?", Pattern.CASE_INSENSITIVE);
@@ -90,13 +93,27 @@ public final class RoleBagScreen extends Screen {
 
         int top = searchY + 26;
         int bottomReserve = narrow ? 100 : 78;
-        int rows = Math.max(1, (this.height - top - bottomReserve) / (CELL_H + GAP_Y));
-        int columns = Math.max(1, (this.width - 24 + GAP_X) / (CELL_W + GAP_X));
+        // Use the biggest tiles that fit the whole script on one page; shrink
+        // towards compact tiles (smaller token, shorter name) before paging.
+        int cellW = MIN_CELL_W, cellH = MIN_CELL_H;
+        for (int h = CELL_H, w = CELL_W; h >= MIN_CELL_H; h -= 3, w = Math.max(MIN_CELL_W, w - 2)) {
+            int r = Math.max(1, (this.height - top - bottomReserve) / (h + GAP_Y));
+            int c = Math.max(1, (this.width - 24 + GAP_X) / (w + GAP_X));
+            if (r * c >= roles.size()) { cellW = w; cellH = h; break; }
+        }
+        // Still too many: token-only tiles (name and ability on hover).
+        if (cellH == MIN_CELL_H) {
+            int r = Math.max(1, (this.height - top - bottomReserve) / (MIN_CELL_H + GAP_Y));
+            int c = Math.max(1, (this.width - 24 + GAP_X) / (MIN_CELL_W + GAP_X));
+            if (r * c < roles.size()) { cellW = ICON_CELL; cellH = ICON_CELL; }
+        }
+        int rows = Math.max(1, (this.height - top - bottomReserve) / (cellH + GAP_Y));
+        int columns = Math.max(1, (this.width - 24 + GAP_X) / (cellW + GAP_X));
         int perPage = rows * columns;
         int maxPage = Math.max(0, (roles.size() - 1) / perPage);
         if (page > maxPage) page = maxPage;
 
-        int gridWidth = columns * CELL_W + (columns - 1) * GAP_X;
+        int gridWidth = columns * cellW + (columns - 1) * GAP_X;
         int left = (this.width - gridWidth) / 2;
         int start = page * perPage;
         int end = Math.min(roles.size(), start + perPage);
@@ -106,10 +123,10 @@ public final class RoleBagScreen extends Screen {
             int local = i - start;
             int col = local % columns;
             int row = local / columns;
-            int x = left + col * (CELL_W + GAP_X);
-            int y = top + row * (CELL_H + GAP_Y);
+            int x = left + col * (cellW + GAP_X);
+            int y = top + row * (cellH + GAP_Y);
             this.addRenderableWidget(new RoleBagRoleWidget(
-                    x, y, CELL_W, CELL_H, role,
+                    x, y, cellW, cellH, role,
                     () -> isHiddenSetupRole(role) ? isHiddenReserved(role) : SELECTED.contains(role.getId()),
                     () -> {
                         toggleRole(role);
@@ -163,7 +180,7 @@ public final class RoleBagScreen extends Screen {
                     fillRest();
                     this.minecraft.gui.setScreen(new RoleBagScreen(page));
                 })
-                .bounds(this.width / 2 - 184, this.height - 31, 180, 20)
+                .bounds(this.width / 2 - 182, this.height - 31, 88, 20)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
                         "Keep your picks and add random tokens so each team has the right number,"
                         + " counting Outsider changes such as the Baron's.")))
@@ -171,9 +188,36 @@ public final class RoleBagScreen extends Screen {
         fill.active = remaining > 0 && RoleCounts.getCounts(seatedCount()) != null;
         this.addRenderableWidget(fill);
 
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back to Grimoire"), b ->
+        String script = ClientState.displayScriptName();
+        SharktowerButton save = SharktowerButton.builder(Component.literal("Save Bag"), b -> {
+                    boolean ok = SavedBags.save(script, seatedCount(), bagIds());
+                    bagMessage = ok ? "Saved this bag for " + seatedCount() + " players." : "Could not save the bag.";
+                    this.minecraft.gui.setScreen(new RoleBagScreen(page));
+                })
+                .bounds(this.width / 2 - 90, this.height - 31, 88, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "Remember these tokens for " + script + " with " + seatedCount() + " players.")))
+                .build();
+        save.active = !bagIds().isEmpty();
+        this.addRenderableWidget(save);
+
+        SharktowerButton load = SharktowerButton.builder(Component.literal("Load Bag"), b -> {
+                    loadSaved(SavedBags.load(script, seatedCount()));
+                    this.minecraft.gui.setScreen(new RoleBagScreen(page));
+                })
+                .bounds(this.width / 2 + 2, this.height - 31, 88, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        SavedBags.has(script, seatedCount())
+                                ? "Put back the bag you saved for " + script + " with " + seatedCount() + " players."
+                                : "No bag saved yet for " + script + " with " + seatedCount() + " players.")))
+                .build();
+        load.active = SavedBags.has(script, seatedCount());
+        this.addRenderableWidget(load);
+
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b ->
                         this.minecraft.gui.setScreen(new AssignRolesScreen()))
-                .bounds(this.width / 2 + 4, this.height - 31, 180, 20).build());
+                .bounds(this.width / 2 + 94, this.height - 31, 88, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Back to the Grimoire."))).build());
     }
 
     /** Whether the Storyteller ticked Drunk or Marionette in the bag, for the Grimoire's setup checklist. */
@@ -214,6 +258,7 @@ public final class RoleBagScreen extends Screen {
         fillTeam(RoleType.OUTSIDER, outsiders - drunk, seated);
         fillTeam(RoleType.TOWNSFOLK, Integer.MAX_VALUE, seated);
         confirmOffTarget = false;
+        bagMessage = null;
     }
 
     private void fillTeam(RoleType team, int target, int seated) {
@@ -241,6 +286,7 @@ public final class RoleBagScreen extends Screen {
 
     private void toggleRole(ScriptRole role) {
         confirmOffTarget = false;
+        bagMessage = null;
         if (isDrunk(role)) {
             drunkReserved = !drunkReserved;
             return;
@@ -290,8 +336,32 @@ public final class RoleBagScreen extends Screen {
         }
     }
 
+    private static String bagMessage = null;
+
+    /** The bag as token ids, with a ticked Drunk or Marionette included. */
+    private static List<String> bagIds() {
+        List<String> ids = new ArrayList<>(SELECTED);
+        if (drunkReserved) ids.add("drunk");
+        if (marionetteReserved) ids.add("marionette");
+        return ids;
+    }
+
+    private void loadSaved(List<String> ids) {
+        clearSelection();
+        if (ClientState.currentScript == null) return;
+        int missing = 0;
+        for (String id : ids) {
+            if (id.equals("drunk") && scriptHasRole("drunk")) { drunkReserved = true; continue; }
+            if (id.equals("marionette") && scriptHasRole("marionette")) { marionetteReserved = true; continue; }
+            if (ClientState.currentScript.getScriptRole(id).isPresent()) SELECTED.add(id);
+            else missing++;
+        }
+        bagMessage = missing == 0 ? "Loaded your saved bag." : "Loaded your saved bag; " + missing + " token(s) are not on this script.";
+    }
+
     private void clearSelection() {
         confirmOffTarget = false;
+        bagMessage = null;
         SELECTED.clear();
         drunkReserved = false;
         marionetteReserved = false;
@@ -434,6 +504,7 @@ public final class RoleBagScreen extends Screen {
         int selected = SELECTED.size();
         String status = selected + "/" + seated + " bag tokens selected";
         drawCentered(graphics, status, 21, selected == seated && seated > 0 ? UiDrawing.GOLD : UiDrawing.TEXT, false);
+        if (bagMessage != null) drawCentered(graphics, bagMessage, this.height - 43, UiDrawing.MUTED, false);
 
         RoleCounts.RoleCountInfo base = RoleCounts.getCounts(seated);
         long townsfolk = actualCount(RoleType.TOWNSFOLK);
