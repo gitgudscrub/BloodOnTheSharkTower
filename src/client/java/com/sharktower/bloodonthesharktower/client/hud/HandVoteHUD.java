@@ -73,8 +73,8 @@ public final class HandVoteHUD {
         int pad = compact ? 12 : 18;
         int width = Math.max(compact ? 100 : 138, Math.max(minecraft.font.width(state), minecraft.font.width(hint)) + pad);
         int height = compact ? 26 : 30;
-        int x = (minecraft.getWindow().getGuiScaledWidth() - width) / 2;
-        int y = minecraft.getWindow().getGuiScaledHeight() - 70 + (30 - height);
+        int x = (HudScale.width(minecraft) - width) / 2;
+        int y = HudScale.height(minecraft) - 70 + (30 - height);
         int top = compact ? 4 : 6;
 
         UiDrawing.panel(graphics, x, y, width, height);

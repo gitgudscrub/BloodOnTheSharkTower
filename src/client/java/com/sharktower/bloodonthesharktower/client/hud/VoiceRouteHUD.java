@@ -28,8 +28,8 @@ public final class VoiceRouteHUD {
         RouteLabel label = describe(ClientState.voiceRoute);
         if (label == null || label.text().isBlank()) return;
 
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        int screenWidth = HudScale.width(minecraft);
+        int screenHeight = HudScale.height(minecraft);
         int x = (screenWidth - minecraft.font.width(label.text())) / 2;
         int y = screenHeight - 82;
         graphics.text(minecraft.font, label.text(), x, y, label.colour(), true);

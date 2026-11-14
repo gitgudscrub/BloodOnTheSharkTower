@@ -25,6 +25,17 @@ public final class SharktowerHudRenderer {
     private static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
+        float scale = HudScale.scale();
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(scale, scale);
+        try {
+            renderScaled(graphics, minecraft);
+        } finally {
+            graphics.pose().popMatrix();
+        }
+    }
+
+    private static void renderScaled(GuiGraphicsExtractor graphics, Minecraft minecraft) {
         EndGameHUD.render(graphics, minecraft);
         // Every Sharktower screen (Grimoire, Role Bag, tools...) is a full-screen
         // panel. The role card, setup banner, sidebar and election panel drawn

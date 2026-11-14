@@ -3,6 +3,19 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.46 — HUD size setting (unreleased)
+
+- New **HUD Size** button in Sharktower Settings (75%, 100%, 125%, 150%)
+  makes the whole Sharktower HUD bigger or smaller together: role card,
+  roles breakdown, player list, voting panels, hand box, timer and night
+  info. Everything stays anchored to its edge of the screen.
+- The voice heads row moves with it, so it stays between the roles
+  breakdown and the role card (unless you have moved it yourself in Simple
+  Voice Chat's settings).
+- Settings screen: the Storyteller heading no longer runs through the
+  bottom row of buttons, and the rows close up in a short window so the
+  Storyteller row stays clear of Done.
+
 ## 1.0.2-alpha.45 — Monk and Imp night choices (unreleased)
 
 - Monk: at dusk the living Monk gets a private, clickable list of seats

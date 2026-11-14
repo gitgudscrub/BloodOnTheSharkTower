@@ -28,7 +28,7 @@ public final class SetupHUD {
         String line1 = "Setup — " + ClientState.displayScriptName();
         String line2 = ClientState.seatedPlayerCount() + " seated player" + (ClientState.seatedPlayerCount() == 1 ? "" : "s");
         int contentWidth = Math.max(150, Math.max(minecraft.font.width(line1), minecraft.font.width(line2)) + 24);
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenWidth = HudScale.width(minecraft);
         int x = (screenWidth - contentWidth) / 2;
         int y = 10;
 

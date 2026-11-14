@@ -15,8 +15,8 @@ public final class VoteCountdownHUD {
         int countdown = ClientState.voteCountdownNumber();
         if (countdown <= 0) return;
 
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        int screenWidth = HudScale.width(minecraft);
+        int screenHeight = HudScale.height(minecraft);
         String label = ClientState.exileSupportVote ? "EXILE VOTE STARTS IN" : "VOTE STARTS IN";
 
         int panelWidth = Math.max(132, minecraft.font.width(label) + 24);
