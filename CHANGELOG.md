@@ -3,6 +3,24 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.56 — Spectators can ask to see the Grimoire, new icon (unreleased)
+
+- On the website's Watch live page a spectator can press **Ask to see the
+  Grimoire**. Every Storyteller online gets a chat message with clickable
+  **[Approve]** and **[Reject]**. An approved spectator sees each seat's
+  character and alignment, who thinks they are something else (Drunk,
+  Lunatic, Marionette), reminder tokens and the demon bluffs, live, until
+  that game ends. A new game means asking again.
+- `/bots watchlive revoke` (Storyteller) takes it away from every spectator.
+  The site owner can do the same from the spectator log page.
+- The Grimoire is only sent to the website while an approved spectator has
+  Watch live open, and the site only sends it to approved spectators.
+  Requests, answers and Grimoire viewing are in the owner's spectator log.
+- New BotS icon for the mod, the Prism instance and the .mrpack (an original
+  block-letter logo replaces the one carried over from the port). Prism keeps
+  an instance's icon from import, so existing instances keep the old one until
+  re-imported or changed in Edit Instance.
+
 ## 1.0.2-alpha.55 — House visits wake night choosers (unreleased)
 
 - House visits (on by default, the Storyteller's choice): at night the

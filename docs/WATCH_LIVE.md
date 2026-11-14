@@ -28,6 +28,24 @@ A player waiting alone on hold is in no room. Whispers are included.
 Nothing comes back into the game: spectators can listen and talk among
 themselves on the website only.
 
+## Grimoire on request
+
+`spectator/GrimoireShare.java`. A spectator asks on the website; the site
+lists open requests (`{"id", "name"}`, id = 16 hex characters) in its reply to
+the live state post. The mod shows each new one to every online Storyteller
+with clickable `/bots watchlive approve <id>` and `reject <id>`, and posts the
+answer to `POST /internal/minecraft/grimoire`. `/bots watchlive revoke` posts
+`{"revokeAll": true}`. Only Storytellers can run these.
+
+While the site's reply says `"grimoire": true` (an approved spectator is
+watching), the live post carries an extra `grimoire` field: script, setup
+flag, each seat's character, alignment, believed character, reminders, and
+the demon bluffs. The site keeps it out of the public state and sends it only
+to spectators approved for the current game (`gameId`).
+
+The request name is the spectator's Discord name: shown as plain text only,
+with control and formatting characters removed.
+
 ## Website side
 
 Sharktower repo, `sharktower-bot/events/app/spectate.py` and

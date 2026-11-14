@@ -26,6 +26,8 @@ public final class SpectatorRegression {
         same(SpectatorBridge.roomName("house:9", names, seats), "House 9");
         same(SpectatorBridge.roomName("st:" + ada, names, seats), "Storyteller with Ada");
         same(SpectatorBridge.roomName("st:22222222-2222-2222-2222-222222222222", names, seats), "Storyteller chat");
+        same(GrimoireShare.cleanName("  Ada§cRed\n "), "AdacRed");
+        same(GrimoireShare.cleanName("x".repeat(40)), "x".repeat(32));
         System.out.println("SpectatorRegression passed (" + checks + " checks).");
     }
 }
