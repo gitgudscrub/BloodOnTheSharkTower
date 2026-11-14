@@ -150,7 +150,7 @@ public final class AbilityGrimoireScreen extends Screen {
         graphics.fill(x, y, x + REMINDER_SIZE, y + REMINDER_SIZE, 0xFFE6D6A8);
         graphics.outline(x, y, REMINDER_SIZE, REMINDER_SIZE, UiDrawing.BLACK);
         String mark = text.isBlank() ? "•" : text.substring(0, 1).toUpperCase();
-        graphics.text(this.font, mark,
+        UiDrawing.text(graphics, this.font, mark,
                 x + (REMINDER_SIZE - this.font.width(mark)) / 2,
                 y + 4, 0xFF111111, false);
     }
@@ -160,7 +160,7 @@ public final class AbilityGrimoireScreen extends Screen {
     }
 
     private void drawCenteredAt(GuiGraphicsExtractor graphics, String text, int centerX, int y, int colour, boolean shadow) {
-        graphics.text(this.font, text, centerX - this.font.width(text) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, this.font, text, centerX - this.font.width(text) / 2, y, colour, shadow);
     }
 
     private static String pretty(String raw) {

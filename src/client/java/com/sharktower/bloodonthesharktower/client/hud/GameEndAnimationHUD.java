@@ -304,7 +304,7 @@ public final class GameEndAnimationHUD {
             int colour,
             boolean shadow
     ) {
-        graphics.text(minecraft.font, text, centerX - minecraft.font.width(text) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, minecraft.font, text, centerX - minecraft.font.width(text) / 2, y, colour, shadow);
     }
 
     private static String normalizeWinner(String value) {

@@ -158,13 +158,13 @@ public final class GrimoirePlayerActionScreen extends Screen {
 
         String name = ClientState.playerName(playerId, seat);
         String heading = "Seat " + seat + " — " + name;
-        graphics.text(this.font, heading,
+        UiDrawing.text(graphics, this.font, heading,
                 (this.width - this.font.width(heading)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
 
         String status = ClientState.playerDeathStatus.getOrDefault(playerId, false) ? "DEAD" : "ALIVE";
         if (playerId.equals(ClientState.markedForExecution)) status += "   •   ON THE BLOCK";
         if (playerId.equals(ClientState.currentNominee)) status += "   •   CURRENT NOMINEE";
-        graphics.text(this.font, status,
+        UiDrawing.text(graphics, this.font, status,
                 (this.width - this.font.width(status)) / 2, 33,
                 ClientState.playerDeathStatus.getOrDefault(playerId, false) ? UiDrawing.DEAD : UiDrawing.TEXT, false);
 
@@ -173,7 +173,7 @@ public final class GrimoirePlayerActionScreen extends Screen {
                 ? "No nominator selected"
                 : "Selected nominator: " + ClientState.playerName(
                         nominator, ClientState.playerSeatNumbers.getOrDefault(nominator, 0));
-        graphics.text(this.font, nominatorText,
+        UiDrawing.text(graphics, this.font, nominatorText,
                 (this.width - this.font.width(nominatorText)) / 2, 46, UiDrawing.MUTED, false);
     }
 

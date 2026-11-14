@@ -78,13 +78,13 @@ public final class BaseThreeScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         String title = "Base 3 Scripts";
-        graphics.text(this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
+        UiDrawing.text(graphics, this.font, title, (this.width - this.font.width(title)) / 2, 18, UiDrawing.GOLD, UiTheme.dark());
 
         String subtitle = "Bundled separately from custom scripts — one click loads the full official script";
-        graphics.text(this.font, subtitle, (this.width - this.font.width(subtitle)) / 2, 34, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, this.font, subtitle, (this.width - this.font.width(subtitle)) / 2, 34, UiDrawing.MUTED, false);
 
         int infoY = Math.max(58, this.height / 2 - 72) + 3 * 38 + 10;
         String info = "Trouble Brewing: 22 roles   •   Bad Moon Rising: 25   •   Sects & Violets: 25";
-        graphics.text(this.font, info, (this.width - this.font.width(info)) / 2, infoY, UiDrawing.TEXT, false);
+        UiDrawing.text(graphics, this.font, info, (this.width - this.font.width(info)) / 2, infoY, UiDrawing.TEXT, false);
     }
 }

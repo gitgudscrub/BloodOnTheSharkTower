@@ -58,9 +58,9 @@ public final class RoleHUD {
 
         int tx = x + 68;
         boolean dark = UiTheme.dark();
-        graphics.text(minecraft.font, UiTheme.display(ClientState.displayRoleName().toUpperCase(java.util.Locale.ROOT)), tx, y + 10,
+        UiDrawing.text(graphics, minecraft.font, UiTheme.display(ClientState.displayRoleName().toUpperCase(java.util.Locale.ROOT)), tx, y + 10,
                 dark ? UiTheme.GOLD : 0xFF5C4315, dark);
-        graphics.text(minecraft.font, ClientState.myAssignment.getRoleType().getDisplayName().toUpperCase(java.util.Locale.ROOT)
+        UiDrawing.text(graphics, minecraft.font, ClientState.myAssignment.getRoleType().getDisplayName().toUpperCase(java.util.Locale.ROOT)
                 + "  ·  " + (ClientState.isGood() ? "GOOD" : "EVIL"), tx, y + 26,
                 ClientState.isGood() ? UiDrawing.GOOD : UiDrawing.EVIL, dark);
         graphics.fill(tx, y + 38, x + width - 10, y + 39, UiTheme.GOLD_SHADOW);
@@ -68,7 +68,7 @@ public final class RoleHUD {
                 : KeyInputHandler.openMyRoleDetailsKey.getTranslatedKeyMessage().getString();
         String hideKey = KeyInputHandler.toggleShowRole == null ? "Z"
                 : KeyInputHandler.toggleShowRole.getTranslatedKeyMessage().getString();
-        graphics.text(minecraft.font, detailsKey + ": details   " + hideKey + ": hide", tx, y + 54, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, minecraft.font, detailsKey + ": details   " + hideKey + ": hide", tx, y + 54, UiDrawing.MUTED, false);
     }
 
     /** A slim card: small token, role name, team and alignment. Keys are in Keys & Help. */

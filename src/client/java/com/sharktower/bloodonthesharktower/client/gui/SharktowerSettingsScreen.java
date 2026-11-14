@@ -166,7 +166,7 @@ public final class SharktowerSettingsScreen extends Screen {
     }
 
     private void drawCentered(GuiGraphicsExtractor graphics, String text, int y, int colour, boolean shadow) {
-        graphics.text(font, text, (width - font.width(text)) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, font, text, (width - font.width(text)) / 2, y, colour, shadow);
     }
 
     private interface BoolGetter { boolean get(); }

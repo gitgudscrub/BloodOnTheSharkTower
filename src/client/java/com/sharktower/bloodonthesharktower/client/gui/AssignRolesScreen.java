@@ -929,11 +929,11 @@ public class AssignRolesScreen extends Screen {
     private void renderBluffLabels(GuiGraphicsExtractor graphics) {
         if (!shouldShowBluffs() || !ClientGrimoireEdits.isLocalStoryteller()) return;
         if (!lunaticAssignedInGrim()) {
-            graphics.text(this.font,"Bluffs",MARGIN,bluffStartY()-11,UiDrawing.MUTED,false);return;
+            UiDrawing.text(graphics, this.font,"Bluffs",MARGIN,bluffStartY()-11,UiDrawing.MUTED,false);return;
         }
         int y = bluffStartY() - 11;
-        graphics.text(this.font, "Demon", MARGIN, y, UiDrawing.MUTED, false);
-        graphics.text(this.font, "Lunatic", MARGIN + 44, y, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, this.font, "Demon", MARGIN, y, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, this.font, "Lunatic", MARGIN + 44, y, UiDrawing.MUTED, false);
     }
 
     private void renderPlayerHeadRing(GuiGraphicsExtractor graphics, List<Map.Entry<UUID, Integer>> seats,
@@ -998,7 +998,7 @@ public class AssignRolesScreen extends Screen {
                 if (area == null) continue;
                 labelAreas.add(area);
                 graphics.fill(area[0],area[1],area[0]+area[2],area[1]+area[3],UiTheme.dark() ? 0xB015151A : 0xC0F5EDD9);
-                graphics.text(this.font,label,area[0]+3,area[1]+2,
+                UiDrawing.text(graphics, this.font,label,area[0]+3,area[1]+2,
                         notedRole == null ? UiDrawing.TEXT : UiDrawing.teamColor(notedRole.getTeam()),UiTheme.dark());
                 break;
             }
@@ -1009,7 +1009,7 @@ public class AssignRolesScreen extends Screen {
             if (speaking && ClientState.attentionHands.containsKey(uuid) || voting && ClientState.isHandRaised(uuid)) {
                 drawRaisedHand(graphics, headX + HEAD_SIZE + 3, headY - 16);
                 if (speaking)
-                    graphics.text(this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
+                    UiDrawing.text(graphics, this.font, Integer.toString(ClientState.attentionHands.getOrDefault(uuid, 0)),
                             headX + HEAD_SIZE + 14, headY - 16, UiDrawing.GOLD, UiTheme.dark());
             }
             } finally {
@@ -1074,7 +1074,7 @@ public class AssignRolesScreen extends Screen {
         String storytellers = "Storytellers: " + ClientState.storytellerPlayers.size();
         int baseY = layoutHeight() / 2 + 16;
         Component label = UiTheme.display(players);
-        graphics.text(this.font, label, (layoutWidth() - this.font.width(label)) / 2, baseY,
+        UiDrawing.text(graphics, this.font, label, (layoutWidth() - this.font.width(label)) / 2, baseY,
                 UiTheme.dark() ? UiTheme.GOLD : 0xFF5C4315, UiTheme.dark());
         drawCentered(graphics, storytellers, baseY + 13, UiDrawing.MUTED, UiTheme.dark());
     }
@@ -1111,15 +1111,15 @@ public class AssignRolesScreen extends Screen {
         graphics.pose().pushMatrix();
         graphics.pose().translate(left, top + (scale < 1 ? 1 : 0));
         graphics.pose().scale(scale, scale);
-        graphics.text(this.font, text, 0, 0, UiDrawing.MUTED, false);
+        UiDrawing.text(graphics, this.font, text, 0, 0, UiDrawing.MUTED, false);
         graphics.pose().popMatrix();
     }
 
     private void renderNightChecklistText(GuiGraphicsExtractor graphics) {
         if (ClientState.phase() != GamePhase.NIGHT || !ClientGrimoireEdits.isLocalStoryteller()) return;
         int x = layoutWidth() - CONTROL_W - MARGIN;
-        if (nightHeader != null) graphics.text(this.font, nightHeader, x + 2, nightHeaderY + 1, UiDrawing.GOLD, UiTheme.dark());
-        if (nightMore != null) graphics.text(this.font, nightMore, x + 2, nightMoreY, UiDrawing.MUTED, false);
+        if (nightHeader != null) UiDrawing.text(graphics, this.font, nightHeader, x + 2, nightHeaderY + 1, UiDrawing.GOLD, UiTheme.dark());
+        if (nightMore != null) UiDrawing.text(graphics, this.font, nightMore, x + 2, nightMoreY, UiDrawing.MUTED, false);
     }
 
     private void renderPhaseIndicator(GuiGraphicsExtractor graphics) {
@@ -1155,9 +1155,9 @@ public class AssignRolesScreen extends Screen {
         if (icon != null) {
             graphics.blit(RenderPipelines.GUI_TEXTURED, icon,
                     x + 2, y + 2, 0, 0, iconSize, iconSize, iconSize, iconSize);
-            graphics.text(this.font, label, x + 35, y + 12, UiDrawing.GOLD, UiTheme.dark());
+            UiDrawing.text(graphics, this.font, label, x + 35, y + 12, UiDrawing.GOLD, UiTheme.dark());
         } else {
-            graphics.text(this.font, label,
+            UiDrawing.text(graphics, this.font, label,
                     x + (panelWidth - this.font.width(label)) / 2, y + 12, UiDrawing.GOLD, UiTheme.dark());
         }
     }
@@ -1378,7 +1378,7 @@ public class AssignRolesScreen extends Screen {
             UiDrawing.panel(graphics, getX(), getY(), getWidth(), getHeight());
             UiTheme.drawSectionLabel(graphics, AssignRolesScreen.this.font, "Resolve", getX() + 4, getY() + 5);
             if (!resolvePage.isEmpty()) {
-                graphics.text(AssignRolesScreen.this.font, resolvePage,
+                UiDrawing.text(graphics, AssignRolesScreen.this.font, resolvePage,
                         getX() + getWidth() - 20 - AssignRolesScreen.this.font.width(resolvePage), getY() + 5, UiDrawing.MUTED, false);
             }
             var font = AssignRolesScreen.this.font;
@@ -1391,7 +1391,7 @@ public class AssignRolesScreen extends Screen {
                 graphics.pose().scale(scale, scale);
                 int ly = 0;
                 for (net.minecraft.util.FormattedCharSequence line : entry.body()) {
-                    graphics.text(font, line, 0, ly, UiDrawing.TEXT, false);
+                    UiDrawing.text(graphics, font, line, 0, ly, UiDrawing.TEXT, false);
                     ly += 9;
                 }
                 graphics.pose().popMatrix();
@@ -1639,6 +1639,6 @@ public class AssignRolesScreen extends Screen {
     }
 
     private void drawCenteredAt(GuiGraphicsExtractor graphics, String text, int centerX, int y, int colour, boolean shadow) {
-        graphics.text(this.font, text, centerX - this.font.width(text) / 2, y, colour, shadow);
+        UiDrawing.text(graphics, this.font, text, centerX - this.font.width(text) / 2, y, colour, shadow);
     }
 }
