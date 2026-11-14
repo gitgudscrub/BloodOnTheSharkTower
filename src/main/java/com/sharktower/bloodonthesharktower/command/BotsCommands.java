@@ -325,6 +325,16 @@ public final class BotsCommands {
                                                         .executes(ctx -> executeAutomationRoshambo(ctx, true)))
                                                 .then(Commands.literal("lives")
                                                         .executes(ctx -> executeAutomationRoshambo(ctx, false)))))
+                                .then(Commands.literal("gunslinger")
+                                        .then(Commands.literal("kill").executes(ctx -> automationRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.GunslingerGun::kill)))
+                                        .then(Commands.literal("dismiss").executes(ctx -> automationRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.GunslingerGun::dismiss))))
+                                .then(Commands.literal("golem")
+                                        .then(Commands.literal("kill").executes(ctx -> automationRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.GolemAutomation::kill)))
+                                        .then(Commands.literal("dismiss").executes(ctx -> automationRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.GolemAutomation::dismiss))))
                                 .then(Commands.literal("poisoner")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationPoisonerDismiss))
@@ -1590,6 +1600,15 @@ public final class BotsCommands {
         if (!requireStoryteller(context)) return 0;
         String refusal = com.sharktower.bloodonthesharktower.automation.PsychopathRoshambo
                 .rule(context.getSource().getServer(), dies);
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    /** A Storyteller ruling that returns why it could not be applied, or null. */
+    private static int automationRuling(CommandContext<CommandSourceStack> context,
+                                        java.util.function.Function<net.minecraft.server.MinecraftServer, String> ruling) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = ruling.apply(context.getSource().getServer());
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }

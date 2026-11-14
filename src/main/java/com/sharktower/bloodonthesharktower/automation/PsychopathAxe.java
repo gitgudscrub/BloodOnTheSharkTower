@@ -155,7 +155,7 @@ public final class PsychopathAxe {
     }
 
     /** Why a sober Psychopath's kill should not land on {@code target}, or null. */
-    private static String survivalReason(UUID target) {
+    static String survivalReason(UUID target) {
         if (RoleAutomation.is(target, Role.SAILOR) && !RoleAutomation.droisoned(target)) return "the sober Sailor cannot die";
         if (RoleAutomation.hasReminder(target, "Cannot Die") && !RoleAutomation.protectorDroisoned(Role.TEA_LADY)) {
             return "the Tea Lady says they cannot die";

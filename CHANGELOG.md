@@ -3,6 +3,21 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.44 — Gunslinger and Golem (unreleased)
+
+- Gunslinger: when the day's first vote is tallied, the living Gunslinger
+  is handed a loaded crossbow until the next vote starts (or dusk). A bolt
+  that hits a living player who voted is announced to everyone ("X the
+  Gunslinger shoots Y!"), and the Storyteller rules in Resolve whether they
+  die. Misses and hits on players who did not vote are free, and the
+  crossbow comes back for another try. Bolts never hurt anyone.
+- Golem: when the Golem nominates, they get the "May Not Nominate" reminder
+  and the Storyteller gets a ruling in Resolve before the vote. **Dies**
+  kills the nominee and ends the nomination; **No effect** lets the vote
+  go ahead. The advice covers the Demon, a Recluse who may register as one,
+  custom roles and a drunk or poisoned Golem. A second Golem nomination on
+  a later day is flagged for the Storyteller to cancel.
+
 ## 1.0.2-alpha.43 — Grimoire tidy-up for 16 seats (unreleased)
 
 - Role names under Grimoire tokens no longer get cut short ("INVESTIGATO.").
