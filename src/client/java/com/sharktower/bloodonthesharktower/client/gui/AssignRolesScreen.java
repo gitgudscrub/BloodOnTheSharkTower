@@ -208,15 +208,7 @@ public class AssignRolesScreen extends Screen {
         if (phase == GamePhase.SETUP) {
             buildSetupChecklist(rightX, y);
         } else if (phase == GamePhase.NIGHT) {
-            y = addRightScreen(rightX, y, "Minion Info", ChatFormatting.RED,
-                    () -> this.minecraft.gui.setScreen(new NightTeamInfoScreen(false)));
-            y = addRightScreen(rightX, y, "Demon Info", ChatFormatting.RED,
-                    () -> this.minecraft.gui.setScreen(new NightTeamInfoScreen(true)));
-            y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.WHITE, "send_to_seats");
-            y = addRightAction(rightX, y, "Send to Home", ChatFormatting.WHITE, "send_home");
-            this.addRenderableWidget(SharktowerButton.builder(Component.literal("Start Day").withStyle(ChatFormatting.GOLD), b ->
-                            action("phase_day"))
-                    .bounds(rightX, y, CONTROL_W, CONTROL_H).build());
+            buildNightChecklist(rightX, y);
         } else if (phase == GamePhase.DAY) {
             y = addRightAction(rightX, y, "Send to Seats", ChatFormatting.WHITE, "send_to_seats");
             y = addRightScreen(rightX, y, "Timer", ChatFormatting.WHITE,
@@ -295,7 +287,154 @@ public class AssignRolesScreen extends Screen {
         }
     }
 
-    private enum SetupStep { SCRIPT, SEATS, BAG, DRUNK, MARIONETTE, BLUFFS, SEND, DONE }
+    private static final int NIGHT_ROW_H = 16;
+    private static final int NIGHT_ROW_GAP = 2;
+
+    /**
+     * Tonight's wake order down the right, like the setup checklist: the next
+     * visit is gold, done ones are green. Clicking a character goes to that
+     * player (as Up does on the night bar) and closes the Grimoire;
+     * right-click ticks it off without going. Long nights show a window
+     * around the next visit.
+     */
+    private void buildNightChecklist(int x, int y) {
+        List<com.sharktower.bloodonthesharktower.client.hud.NightOrderHUD.Entry> entries =
+                com.sharktower.bloodonthesharktower.client.hud.NightOrderHUD.tonight();
+        int next = entries.size() - 1;
+        for (int i = 0; i < entries.size(); i++) if (!entries.get(i).done() && !entries.get(i).dawn()) { next = i; break; }
+        int done = 0, wakes = 0;
+        for (var e : entries) if (!e.dawn()) { wakes++; if (e.done()) done++; }
+        nightHeaderY = y;
+        nightHeader = "Tonight " + done + "/" + wakes;
+        y += 11;
+
+        // Keep the list clear of the Resolve panel (lower right).
+        int bottom = Math.max(y + 3 * (NIGHT_ROW_H + NIGHT_ROW_GAP), layoutHeight() - 40 - 2 * (CONTROL_H + GAP) - 80);
+        int fit = Math.max(3, (bottom - y) / (NIGHT_ROW_H + NIGHT_ROW_GAP));
+        int first = 0;
+        if (entries.size() > fit) first = Math.max(0, Math.min(next - 1, entries.size() - fit));
+        int last = Math.min(entries.size(), first + fit);
+        for (int i = first; i < last; i++) {
+            var entry = entries.get(i);
+            boolean isNext = i == next;
+            ChatFormatting colour = entry.dawn() ? (isNext ? ChatFormatting.GOLD : ChatFormatting.YELLOW)
+                    : isNext ? ChatFormatting.GOLD : entry.done() ? ChatFormatting.GREEN
+                    : entry.triggered() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.WHITE;
+            String prefix = entry.done() ? "✓ " : isNext ? "> " : "";
+            String label = this.font.plainSubstrByWidth(prefix + entry.shortLabel(), CONTROL_W - 8);
+            String tip = entry.dawn() ? "End the night and start the day."
+                    : entry.label() + ". Click to go to them (closes the Grimoire). Right-click to tick off without going.";
+            String key = entry.key();
+            boolean dawn = entry.dawn();
+            this.addRenderableWidget(new NightRowButton(x, y, CONTROL_W, NIGHT_ROW_H,
+                    Component.literal(label).withStyle(colour), tip,
+                    () -> {
+                        boolean player = !dawn && !key.startsWith("static:");
+                        com.sharktower.bloodonthesharktower.client.hud.NightOrderHUD.activate(key);
+                        if (player) this.minecraft.gui.setScreen(null);
+                    },
+                    () -> {
+                        if (dawn) return;
+                        com.sharktower.bloodonthesharktower.client.hud.NightOrderHUD.toggleDone(key);
+                        this.minecraft.gui.setScreen(new AssignRolesScreen());
+                    }));
+            y += NIGHT_ROW_H + NIGHT_ROW_GAP;
+        }
+        if (last < entries.size()) nightMore = "+" + (entries.size() - last) + " more";
+        else nightMore = null;
+        nightMoreY = y;
+        y += nightMore == null ? 3 : 12;
+        int half = (CONTROL_W - 4) / 2;
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("To Seats"), b -> action("send_to_seats"))
+                .bounds(x, y, half, NIGHT_ROW_H)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Teleport seated players to their seats."))).build());
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("To Home"), b -> action("send_home"))
+                .bounds(x + half + 4, y, half, NIGHT_ROW_H)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Teleport players to their houses."))).build());
+    }
+
+    private int nightHeaderY = -1;
+    private String nightHeader = null;
+    private int nightMoreY = -1;
+    private String nightMore = null;
+
+    /** A checklist row: left click runs it, right click ticks it off. */
+    private static final class NightRowButton extends SharktowerButton {
+        private final Runnable secondary;
+
+        NightRowButton(int x, int y, int w, int h, Component label, String tip, Runnable primary, Runnable secondary) {
+            super(x, y, w, h, label, b -> primary.run());
+            this.secondary = secondary;
+            setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(tip)));
+        }
+
+        @Override
+        public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+            if (event.buttonInfo().button() == SDLMouse.SDL_BUTTON_RIGHT && this.active && this.visible && isMouseOver(event.x(), event.y())) {
+                secondary.run();
+                return true;
+            }
+            return super.mouseClicked(event, doubleClick);
+        }
+    }
+
+    private enum SetupStep { SCRIPT, SEATS, BAG, DRUNK, MARIONETTE, BLUFFS, REMINDERS, SEND, DONE }
+
+    /** A reminder the Storyteller places before the first night, for a character in play. */
+    private record SetupReminder(Role role, String roleId, String text, String who) {}
+
+    private static final List<SetupReminder> SETUP_REMINDERS = List.of(
+            new SetupReminder(Role.FORTUNE_TELLER, "fortuneteller", "Red Herring",
+                    "a good player who registers as the Demon (can be the Fortune Teller)"),
+            new SetupReminder(Role.WASHERWOMAN, "washerwoman", "Townsfolk", "the Townsfolk they will be shown"),
+            new SetupReminder(Role.WASHERWOMAN, "washerwoman", "Wrong", "the other player they will be shown"),
+            new SetupReminder(Role.LIBRARIAN, "librarian", "Outsider", "the Outsider they will be shown"),
+            new SetupReminder(Role.LIBRARIAN, "librarian", "Wrong", "the other player they will be shown"),
+            new SetupReminder(Role.INVESTIGATOR, "investigator", "Minion", "the Minion they will be shown"),
+            new SetupReminder(Role.INVESTIGATOR, "investigator", "Wrong", "the other player they will be shown"),
+            new SetupReminder(Role.GRANDMOTHER, "grandmother", "Grandchild", "the good player who is their grandchild"));
+
+    /** Setup reminders whose character is in play (real or believed), and which of them are still missing. */
+    private List<SetupReminder> setupReminders(boolean missingOnly) {
+        java.util.Set<Role> inPlay = java.util.EnumSet.noneOf(Role.class);
+        for (var entry : sortedSeats()) {
+            PendingRoleAssignment real = ClientGrimoireEdits.roleFor(entry.getKey());
+            PendingRoleAssignment believed = ClientGrimoireEdits.perceivedRoleFor(entry.getKey());
+            if (real != null && !real.isCustomRole()) inPlay.add(real.role());
+            if (believed != null && !believed.isCustomRole()) inPlay.add(believed.role());
+        }
+        List<SetupReminder> result = new ArrayList<>();
+        for (SetupReminder reminder : SETUP_REMINDERS) {
+            if (!inPlay.contains(reminder.role())) continue;
+            if (missingOnly && reminderPlaced(reminder)) continue;
+            result.add(reminder);
+        }
+        return result;
+    }
+
+    private boolean reminderPlaced(SetupReminder reminder) {
+        for (var entry : sortedSeats()) {
+            for (var placed : ClientGrimoireEdits.remindersFor(entry.getKey())) {
+                if (placed.text().equalsIgnoreCase(reminder.text())
+                        && placed.role().map(role -> role == reminder.role()).orElse(true)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** Asks for each missing setup reminder in turn: click the seat it goes on. */
+    private static void pickSetupReminders(List<SetupReminder> queue) {
+        if (queue.isEmpty()) return;
+        SetupReminder reminder = queue.get(0);
+        List<SetupReminder> rest = queue.subList(1, queue.size());
+        String name = reminder.role().getDisplayName();
+        SeatPick.startStorytellerLocal(name + ": click " + reminder.who(),
+                "Places \"" + reminder.text() + "\"" + (rest.isEmpty() ? "." : ". " + rest.size() + " more after this."),
+                seat -> {
+                    ClientStorytellerActions.send("add_role_reminder", seat + "|" + reminder.roleId() + "|" + reminder.text());
+                    pickSetupReminders(new ArrayList<>(rest));
+                });
+    }
 
     /** The first setup step not done yet; its checklist button is gold. */
     private SetupStep nextSetupStep() {
@@ -306,6 +445,7 @@ public class AssignRolesScreen extends Screen {
         if (RoleBagScreen.hiddenPlanned("drunk") && hiddenSeat(Role.DRUNK) == 0) return SetupStep.DRUNK;
         if (RoleBagScreen.hiddenPlanned("marionette") && hiddenSeat(Role.MARIONETTE) == 0) return SetupStep.MARIONETTE;
         if (bluffCount() < 3) return SetupStep.BLUFFS;
+        if (!setupReminders(true).isEmpty() && !ClientState.rolesSent) return SetupStep.REMINDERS;
         return ClientState.rolesSent ? SetupStep.DONE : SetupStep.SEND;
     }
 
@@ -378,6 +518,21 @@ public class AssignRolesScreen extends Screen {
                     if (bluffCount() < 3) action("randomize_bluffs");
                     else { showBluffs = !showBluffs; this.minecraft.gui.setScreen(new AssignRolesScreen()); }
                 });
+        List<SetupReminder> reminders = setupReminders(false);
+        if (!reminders.isEmpty()) {
+            List<SetupReminder> missing = setupReminders(true);
+            int placed = reminders.size() - missing.size();
+            y = setupStep(x, y, "Reminders", placed + "/" + reminders.size(), next == SetupStep.REMINDERS, missing.isEmpty(),
+                    missing.isEmpty() ? "Every first-night reminder is placed."
+                            : "Place the reminders that must be chosen before the first night (Red Herring,"
+                            + " the players the Washerwoman, Librarian and Investigator see). Click seats in turn. Optional.",
+                    () -> pickSetupReminders(setupReminders(true)));
+        }
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Undo"), b -> action("undo_setup"))
+                .bounds(x, y, CONTROL_W, CONTROL_H)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "Undo the last setup change (seats, tokens, Drunk/Marionette, reminders, bluffs). Up to 20 steps, until roles are sent."))).build());
+        y += CONTROL_H + GAP;
         this.addRenderableWidget(SharktowerButton.builder(Component.literal("More Setup"), b ->
                         this.minecraft.gui.setScreen(new SetupToolsScreen()))
                 .bounds(x, y, CONTROL_W, CONTROL_H)
@@ -387,7 +542,15 @@ public class AssignRolesScreen extends Screen {
 
     private int setupStep(int x, int y, String name, String value, boolean next, boolean done, String tip, Runnable run) {
         ChatFormatting colour = next ? ChatFormatting.GOLD : done ? ChatFormatting.GREEN : ChatFormatting.WHITE;
-        String label = (next ? "> " : "") + name + ": " + value;
+        String arrow = next ? "> " : "";
+        String label = arrow + name + ": " + value;
+        // Too wide: try shorter forms that keep the whole value, else cut.
+        for (String shorter : List.of(arrow + name + " " + value,
+                arrow.trim() + name + " " + value,
+                arrow.trim() + name + ": " + value.replace("seat ", "#"))) {
+            if (this.font.width(label) <= CONTROL_W - 8) break;
+            if (this.font.width(shorter) <= CONTROL_W - 8) label = shorter;
+        }
         label = this.font.plainSubstrByWidth(label, CONTROL_W - 8);
         this.addRenderableWidget(SharktowerButton.builder(Component.literal(label).withStyle(colour), b -> run.run())
                 .bounds(x, y, CONTROL_W, CONTROL_H)
@@ -755,6 +918,7 @@ public class AssignRolesScreen extends Screen {
             renderCenterStatus(graphics, seats.size());
             renderBluffLabels(graphics);
             renderPhaseIndicator(graphics);
+            renderNightChecklistText(graphics);
             renderHoverHint(graphics);
             renderHandVotingPanel(graphics);
         } finally {
@@ -949,6 +1113,13 @@ public class AssignRolesScreen extends Screen {
         graphics.pose().scale(scale, scale);
         graphics.text(this.font, text, 0, 0, UiDrawing.MUTED, false);
         graphics.pose().popMatrix();
+    }
+
+    private void renderNightChecklistText(GuiGraphicsExtractor graphics) {
+        if (ClientState.phase() != GamePhase.NIGHT || !ClientGrimoireEdits.isLocalStoryteller()) return;
+        int x = layoutWidth() - CONTROL_W - MARGIN;
+        if (nightHeader != null) graphics.text(this.font, nightHeader, x + 2, nightHeaderY + 1, UiDrawing.GOLD, UiTheme.dark());
+        if (nightMore != null) graphics.text(this.font, nightMore, x + 2, nightMoreY, UiDrawing.MUTED, false);
     }
 
     private void renderPhaseIndicator(GuiGraphicsExtractor graphics) {

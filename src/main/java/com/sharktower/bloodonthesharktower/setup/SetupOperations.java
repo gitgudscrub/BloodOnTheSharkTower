@@ -696,7 +696,7 @@ public final class SetupOperations {
         return Result.ok("Cleared " + count + " reminder(s).");
     }
 
-    public static Result commitSetup(MinecraftServer server) {
+    public static Result commitSetup(MinecraftServer server) { SetupUndo.clear();
         Map<UUID, Integer> seats = new HashMap<>(workingSeats());
         Map<UUID, PendingRoleAssignment> roles = new HashMap<>(workingRoles());
         Map<UUID, PendingRoleAssignment> perceivedRoles = new HashMap<>(workingPerceivedRoles());
@@ -889,7 +889,7 @@ public final class SetupOperations {
         return Result.ok(restored.message() + " Runtime deaths, ghost votes, nominations, hands, voice rooms and vote state were discarded.");
     }
 
-    public static void clearRolesForFreshSetup() {
+    public static void clearRolesForFreshSetup() { SetupUndo.clear();
         ServerState.PLAYER_ROLES.clear();
         ServerState.PLAYER_PERCEIVED_ROLES.clear();
         ServerState.PLAYER_DEATH_STATUS.clear();

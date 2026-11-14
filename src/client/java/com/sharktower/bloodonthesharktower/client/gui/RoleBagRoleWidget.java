@@ -49,9 +49,10 @@ final class RoleBagRoleWidget extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        int tokenSize = Math.min(38, Math.max(24, this.height - 18));
+        boolean iconOnly = this.height < 34;
+        int tokenSize = iconOnly ? Math.min(this.width, this.height) - 4 : Math.min(38, Math.max(20, this.height - 15));
         int tokenX = getX() + (this.width - tokenSize) / 2;
-        int tokenY = getY();
+        int tokenY = getY() + (iconOnly ? 2 : 0);
         UiDrawing.roleToken(graphics, role, tokenX, tokenY, tokenSize);
 
         if (selected.getAsBoolean()) {
@@ -61,9 +62,14 @@ final class RoleBagRoleWidget extends AbstractWidget {
             graphics.outline(tokenX - 1, tokenY - 1, tokenSize + 2, tokenSize + 2, UiDrawing.TEXT);
         }
 
+        if (iconOnly) return;
+        var font = Minecraft.getInstance().font;
         String name = role.getDisplayName();
+        if (font.width(name) > this.width) {
+            name = font.plainSubstrByWidth(name, this.width - font.width("…")) + "…";
+        }
         int nameX = getX() + (this.width - Minecraft.getInstance().font.width(name)) / 2;
-        int nameY = tokenY + tokenSize + 3;
+        int nameY = tokenY + tokenSize + 2;
         graphics.text(Minecraft.getInstance().font, name, nameX, nameY,
                 selected.getAsBoolean() ? UiDrawing.GOLD : UiDrawing.TEXT, false);
     }

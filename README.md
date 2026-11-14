@@ -64,8 +64,13 @@ Client and server builds are produced together by GitHub Actions so that both pa
   Bluffs, Send Roles, Start Night) with the next step highlighted.
 - Choose a Script screen: Base 3, saved scripts, or paste a botcscripts.com
   link or script JSON.
-- Role Bag with current/expected team distribution, Fill the Rest, and a
-  warning when teams are off target.
+- Role Bag with current/expected team distribution, Fill the Rest, a
+  warning when teams are off target, and saved bags per script and player
+  count. The whole script fits on one page.
+- First-night reminders step (Red Herring, Washerwoman/Librarian/
+  Investigator picks, Grandchild) and Undo for setup changes.
+- Tonight checklist in the Grimoire: the night's wake order with the next
+  visit highlighted; click to go to a player, right-click to tick off.
 - Drunk and Marionette chosen by clicking a player after the deal; the
   Lunatic is shown the Demon in play automatically.
 - Random role and seat distribution tools.
