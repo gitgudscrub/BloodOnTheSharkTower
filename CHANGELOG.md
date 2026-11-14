@@ -3,6 +3,15 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.42 — Voice heads above the role card (unreleased)
+
+- Simple Voice Chat's list of the players in your voice group was a column
+  of heads at the top-left, running down over the role card. It is now a
+  row between the roles breakdown and the role card, so nothing overlaps.
+- This is applied once, and only if the list was still in SVC's default
+  spot. Players can move it again in Simple Voice Chat's own settings and
+  it stays where they put it.
+
 ## 1.0.2-alpha.41 — Psychopath rock-paper-scissors (unreleased)
 
 - Executing a sober Psychopath (or an Alchemist with the Psychopath

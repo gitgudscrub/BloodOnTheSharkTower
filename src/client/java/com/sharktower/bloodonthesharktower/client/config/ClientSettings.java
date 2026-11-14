@@ -34,6 +34,8 @@ public final class ClientSettings {
     public static String theme = "candlelit";
     /** Smaller role, nomination and hand cards, so players can play with them open. */
     public static boolean compactCards = true;
+    /** Set once the voice group list has been moved to the top-right (see VoiceGroupHud). */
+    public static boolean voiceIconsMoved = false;
 
     private ClientSettings() {}
 
@@ -59,6 +61,7 @@ public final class ClientSettings {
         alignmentLetters = read(p, "alignmentLetters", true);
         theme = p.getProperty("theme", "candlelit");
         compactCards = read(p, "compactCards", true);
+        voiceIconsMoved = read(p, "voiceIconsMoved", false);
         com.sharktower.bloodonthesharktower.client.gui.UiTheme.apply();
     }
 
@@ -79,6 +82,7 @@ public final class ClientSettings {
         p.setProperty("alignmentLetters", Boolean.toString(alignmentLetters));
         p.setProperty("theme", theme);
         p.setProperty("compactCards", Boolean.toString(compactCards));
+        p.setProperty("voiceIconsMoved", Boolean.toString(voiceIconsMoved));
         try {
             Files.createDirectories(FILE.getParent());
             try (OutputStream out = Files.newOutputStream(FILE)) {

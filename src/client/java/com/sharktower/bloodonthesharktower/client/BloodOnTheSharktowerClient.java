@@ -21,6 +21,8 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
         ClientSettings.load();
         CoreStateReceivers.register();
         ClientLunaticBluffs.register();
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
+                client.execute(com.sharktower.bloodonthesharktower.client.hud.VoiceGroupHud::moveOnce));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientGrimoireEdits.clearSession();
             ClientLunaticBluffs.clear();
