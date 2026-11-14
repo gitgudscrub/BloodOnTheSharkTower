@@ -86,6 +86,9 @@ Client and server builds are produced together by GitHub Actions so that both pa
   it hits is publicly attacked and the Storyteller rules; also for an
   Alchemist with the "Psychopath" reminder) and its rock-paper-scissors when
   executed (`/roshambo <pick>` against the nominator; the Storyteller rules),
+  the Gunslinger's shot after the day's first vote (a one-bolt crossbow;
+  hitting a player who voted is announced and the Storyteller rules), the
+  Golem's one nomination (the Storyteller rules whether the nominee dies),
   the Scarlet Woman becoming the
   Demon, the Imp star-pass choice, Demon Kill refusing protected targets
   (Soldier, Sailor, Monk/Innkeeper "Safe", Tea Lady, Fool) with a Mayor

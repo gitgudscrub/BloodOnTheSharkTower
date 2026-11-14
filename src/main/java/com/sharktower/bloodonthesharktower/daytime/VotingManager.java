@@ -163,6 +163,7 @@ public final class VotingManager {
         );
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastVoteState(server);
+        com.sharktower.bloodonthesharktower.automation.GunslingerGun.onVoteTallied(server, voters);
         return lastResult;
     }
 

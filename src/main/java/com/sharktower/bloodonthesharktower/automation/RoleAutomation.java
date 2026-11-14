@@ -132,6 +132,8 @@ public final class RoleAutomation {
         PoisonerAutomation.reset();
         PsychopathAxe.reset();
         PsychopathRoshambo.reset();
+        GunslingerGun.reset();
+        GolemAutomation.reset();
         PROMPTS.clear();
     }
 
@@ -148,6 +150,7 @@ public final class RoleAutomation {
     public static void onNomination(MinecraftServer server, UUID nominator, UUID nominee) {
         if (server == null || nominator == null || nominee == null) return;
         offerWitchCurse(server, nominator);
+        GolemAutomation.onNomination(server, nominator, nominee);
         if (!is(nominee, Role.VIRGIN) || !isAlive(nominee) || abilitySpent(nominee)) return;
         spendAbility(nominee, Role.VIRGIN);
         StateBroadcaster.broadcastGrimoire(server);
@@ -676,6 +679,8 @@ public final class RoleAutomation {
         PoisonerAutomation.onDusk(server);
         PsychopathAxe.onDusk();
         PsychopathRoshambo.onDusk();
+        GunslingerGun.onDusk();
+        GolemAutomation.onDusk();
         if (minstrelDrunkDay >= 0 && ServerState.currentDay > minstrelDrunkDay) {
             minstrelDrunkDay = -1;
             expireReminders(server, Map.of(Role.MINSTREL, Set.of("everyoneisdrunk")), "Dusk");

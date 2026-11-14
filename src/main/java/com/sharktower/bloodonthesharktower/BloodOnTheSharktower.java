@@ -63,6 +63,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(TeamInfoBookManager::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.automation.SlayerCrossbow::serverTick);
         ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.automation.PsychopathAxe::serverTick);
+        ServerTickEvents.END_SERVER_TICK.register(com.sharktower.bloodonthesharktower.automation.GunslingerGun::serverTick);
         LOGGER.info("Night-chat automation, world clock-hand voting, enforced vote seating, dusk Home Compass routing and temporary info books registered.");
     }
 }
