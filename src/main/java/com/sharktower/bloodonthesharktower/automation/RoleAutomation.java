@@ -134,6 +134,7 @@ public final class RoleAutomation {
         PsychopathRoshambo.reset();
         GunslingerGun.reset();
         GolemAutomation.reset();
+        NightChoices.reset();
         PROMPTS.clear();
     }
 
@@ -677,6 +678,7 @@ public final class RoleAutomation {
         clearPendingSlayer();
         expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
         PoisonerAutomation.onDusk(server);
+        NightChoices.onDusk(server);
         PsychopathAxe.onDusk();
         PsychopathRoshambo.onDusk();
         GunslingerGun.onDusk();

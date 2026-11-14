@@ -335,6 +335,24 @@ public final class BotsCommands {
                                                 com.sharktower.bloodonthesharktower.automation.GolemAutomation::kill)))
                                         .then(Commands.literal("dismiss").executes(ctx -> automationRuling(ctx,
                                                 com.sharktower.bloodonthesharktower.automation.GolemAutomation::dismiss))))
+                                .then(Commands.literal("monk")
+                                        .then(Commands.literal("confirm").executes(ctx -> nightChoiceRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.NightChoices.Kind.MONK, true)))
+                                        .then(Commands.literal("dismiss").executes(ctx -> nightChoiceRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.NightChoices.Kind.MONK, false)))
+                                        .then(Commands.literal("choose")
+                                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                        .executes(ctx -> nightChoiceFor(ctx,
+                                                                com.sharktower.bloodonthesharktower.automation.NightChoices.Kind.MONK)))))
+                                .then(Commands.literal("imp")
+                                        .then(Commands.literal("confirm").executes(ctx -> nightChoiceRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.NightChoices.Kind.IMP, true)))
+                                        .then(Commands.literal("dismiss").executes(ctx -> nightChoiceRuling(ctx,
+                                                com.sharktower.bloodonthesharktower.automation.NightChoices.Kind.IMP, false)))
+                                        .then(Commands.literal("choose")
+                                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                        .executes(ctx -> nightChoiceFor(ctx,
+                                                                com.sharktower.bloodonthesharktower.automation.NightChoices.Kind.IMP)))))
                                 .then(Commands.literal("poisoner")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationPoisonerDismiss))
@@ -1609,6 +1627,26 @@ public final class BotsCommands {
                                         java.util.function.Function<net.minecraft.server.MinecraftServer, String> ruling) {
         if (!requireStoryteller(context)) return 0;
         String refusal = ruling.apply(context.getSource().getServer());
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int nightChoiceRuling(CommandContext<CommandSourceStack> context,
+                                         com.sharktower.bloodonthesharktower.automation.NightChoices.Kind kind, boolean confirm) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = confirm
+                ? com.sharktower.bloodonthesharktower.automation.NightChoices.confirm(context.getSource().getServer(), kind)
+                : com.sharktower.bloodonthesharktower.automation.NightChoices.dismiss(kind);
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int nightChoiceFor(CommandContext<CommandSourceStack> context,
+                                      com.sharktower.bloodonthesharktower.automation.NightChoices.Kind kind) {
+        if (!requireStoryteller(context)) return 0;
+        UUID target = SetupOperations.playerBySeat(IntegerArgumentType.getInteger(context, "seat"));
+        String refusal = com.sharktower.bloodonthesharktower.automation.NightChoices
+                .choose(context.getSource().getServer(), kind, null, target, true);
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
     }
