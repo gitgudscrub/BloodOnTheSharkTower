@@ -47,7 +47,7 @@ need to press its update button when a new version comes out.
 
 Run the **Build / Publish Modrinth Pack** workflow (Actions tab) with:
 
-- `version`: the new version (for example `1.0.2-alpha.48`)
+- `version`: the new version (for example `1.0.2-alpha.49`)
 - `publish_auto_update`: ticked
 - `publish_to_modrinth`: ticked as well if Modrinth should get it too
 
@@ -56,19 +56,53 @@ The workflow builds the JAR, creates the `pack-<version>` GitHub release
 Leaving `publish_auto_update` off is a dry run: everything is built and
 uploaded as workflow artifacts, nothing is published.
 
-Then **put the same JAR on the server** (download it from the release) and
-restart it. Players are only let in when their version matches the server's,
-so update the server straight after publishing.
+Then **update the server** from the website: **Minecraft server** page
+(owner only) > **Update after this game** or **Update now**. Players are only
+let in when their version matches the server's, so update it straight after
+publishing.
 
 GitHub can cache `pack.toml` for up to about five minutes, so a player who
 launches within minutes of the publish may get the update on the next launch.
+
+### Updating the server from the website
+
+The Sharktower website's **Minecraft server** page (only the site owner can
+see it) shows the server's version, players and whether a game is running,
+and pushes updates. Pressing Update sends `serverupdate now` (or
+`serverupdate aftergame`) to the server console through AMP. The mod then:
+
+1. waits for the current game to end (`aftergame` only);
+2. runs packwiz-installer in server mode on the server folder (client-only
+   mods are skipped) and moves any old duplicate JAR to
+   `.sharktower-update/old-mods/`;
+3. warns players for 60 seconds (skipped when nobody is online);
+4. reports "ready", and the website restarts the server through AMP.
+
+The same commands work typed into the AMP console by hand:
+`serverupdate now | aftergame | cancel | status`. Players cannot run them,
+not even operators.
+
+A pack that needs a different Minecraft version is refused: change the
+Minecraft version in AMP first, then press Update. Updating in place needs a
+Linux host (Windows will not let the running server's JAR be replaced).
+
+Server setup, once:
+
+- Create `config/blood_on_the_sharktower/site-link.json` in the AMP
+  instance's server folder (it is never part of the pack):
+
+  ```json
+  {"url": "http://127.0.0.1:18080", "key": "<same as MINECRAFT_LINK_KEY on the website>"}
+  ```
+
+- Website settings: see the website's `UPGRADE-v13.31.md` (Sharktower repo).
 
 ### Version check at login
 
 The server refuses a player whose Sharktower version differs from its own,
 with a message telling them what to do. It runs before the player enters the
 world, so a refused player never takes a seat. Clients from before the check
-(1.0.2-alpha.47 and older) or without the mod are refused with the "missing"
+(1.0.2-alpha.48 and older) or without the mod are refused with the "missing"
 message.
 
 To turn it off (for example while testing mixed builds), start the server
@@ -77,8 +111,8 @@ with `-Dsharktower.versionCheck=false`.
 ### Building the pack locally
 
 ```sh
-python scripts/build_modrinth_pack.py --version 1.0.2-alpha.48 \
-  --jar build/libs/blood-on-the-sharktower-1.0.2-alpha.48.jar \
+python scripts/build_modrinth_pack.py --version 1.0.2-alpha.49 \
+  --jar build/libs/blood-on-the-sharktower-1.0.2-alpha.49.jar \
   --output dist/pack.mrpack \
   --packwiz-out dist/packwiz --jar-url <JAR download URL> \
   --prism-out dist/Blood-on-the-Sharktower-Prism.zip \

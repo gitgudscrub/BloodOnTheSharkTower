@@ -317,6 +317,14 @@ tasks.register('versionGateRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('versionGateRegression') }
 
+// Server updater: pack.toml parsing and duplicate-mod clean-up.
+tasks.register('serverUpdateRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.serverupdate.ServerUpdateRegression'
+}
+tasks.named('check') { dependsOn tasks.named('serverUpdateRegression') }
+
 tasks.register('nicknamesRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath

@@ -17,6 +17,12 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
 - The publish workflow gains a `publish_auto_update` option: it creates the
   `pack-<version>` GitHub release (server JAR + Prism instance) and points
   the auto-update pack at it.
+- Server updates from the website: `/serverupdate now|aftergame|cancel|status`
+  (console only; the Sharktower website sends it through AMP) downloads the
+  latest pack in server mode, moves old duplicate JARs aside, warns players
+  for 60 seconds (not when the server is empty), then reports "ready" so the
+  website restarts the server. The server reports its version, players and
+  game state to the website via `config/blood_on_the_sharktower/site-link.json`.
 
 ## 1.0.2-alpha.48 — Storyteller setup checklist (unreleased)
 
