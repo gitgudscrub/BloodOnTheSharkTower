@@ -45,6 +45,16 @@ and choosing it under the instance's **Instance settings > Installation >
 Change version**; settings and worlds are kept. The website's **Get the pack**
 page (sharktower.themavryan.com/minecraft/pack) has these steps for players.
 
+## Releasing
+
+Releases start by themselves: when a merge to `main` raises `version` in
+`gradle.properties` and there is no `pack-<version>` release yet, the
+"Auto-release on version bump" workflow runs "Build / Publish Modrinth Pack"
+with the auto-update switched on (Modrinth stays off, alpha/beta channel from
+the version). The release notes are the CHANGELOG sections since the last
+release. Put `[no release]` in the merge commit message to skip one; the
+manual "Run workflow" button still works as before.
+
 ## For the server admin
 
 ### Publishing a release
