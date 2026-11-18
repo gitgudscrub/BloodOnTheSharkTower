@@ -3,6 +3,19 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.61 — Wraith: doors to listen, walls to watch (unreleased)
+
+- The Wraith hears a house only if they come in through its door (a door
+  block within a few blocks of the seat home). Coming in through a wall they
+  can watch but not hear, and are told to use the door. Leaving the house
+  stops the listening. Being brought by the Storyteller or to a waking evil
+  player still lets them hear.
+- Spirit Lantern: a lit lantern now warns its owner as soon as a Wraith is
+  in the house (any way in), and names the Wraith only once they come in by
+  the door and join the house's voice. The Storyteller is told which.
+- Houses are still "within 8 blocks of the seat home". Exact house areas and
+  doors can be marked once the map is finished.
+
 ## 1.0.2-alpha.60 — Minecraft games count in Sharktower stats (unreleased)
 
 - When the Storyteller ends a game (Good or Evil wins), the server sends it to
