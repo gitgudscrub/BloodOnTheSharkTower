@@ -3,6 +3,12 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.57 — Idle spectator voice costs nothing (unreleased)
+
+- Watch live: the 100 ms spectator voice timer now runs only while the site
+  says someone is listening. Before, it ran for the whole life of the server,
+  even with the site link off (about 2% of a server core in profiling).
+
 ## 1.0.2-alpha.56 — Spectators can ask to see the Grimoire, new icon (unreleased)
 
 - On the website's Watch live page a spectator can press **Ask to see the

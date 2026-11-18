@@ -56,23 +56,20 @@ public final class SpectatorBridge {
     private static volatile long lastSentMs;
     private static int ticks;
     private static ScheduledExecutorService audioClock;
+    // Runs only while the site says someone is listening (see setAudioWanted).
+    private static java.util.concurrent.ScheduledFuture<?> audioFlush;
 
     private SpectatorBridge() {}
 
     private record Frame(String room, String speaker, boolean whisper, String opus) {}
 
     public static void register() {
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            audioClock = Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "Sharktower spectator voice");
-                t.setDaemon(true);
-                return t;
-            });
-            audioClock.scheduleAtFixedRate(SpectatorBridge::flushAudio, 100, 100, TimeUnit.MILLISECONDS);
-        });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-            audioWanted = false;
-            if (audioClock != null) audioClock.shutdownNow();
+            setAudioWanted(false);
+            synchronized (SpectatorBridge.class) {
+                if (audioClock != null) audioClock.shutdownNow();
+                audioClock = null;
+            }
             synchronized (FRAMES) {
                 FRAMES.clear();
             }
@@ -158,14 +155,40 @@ public final class SpectatorBridge {
         if (json != null && json.has("requests")) GrimoireShare.readReply(json);
         boolean wanted = json != null && json.has("audio") && json.get("audio").getAsBoolean();
         if (wanted != audioWanted) {
-            audioWanted = wanted;
-            if (!wanted) {
-                synchronized (FRAMES) {
-                    FRAMES.clear();
-                }
-            }
+            setAudioWanted(wanted);
             BloodOnTheSharktower.LOGGER.info("Spectator voice {}.", wanted ? "on (someone is listening)" : "off");
         }
+    }
+
+    /**
+     * Starts the 100 ms voice batch timer when someone is listening and stops it
+     * when nobody is, so an idle server (or one without the site link) spends
+     * nothing on spectator voice.
+     */
+    static synchronized void setAudioWanted(boolean wanted) {
+        audioWanted = wanted;
+        if (wanted) {
+            if (audioFlush != null && !audioFlush.isDone()) return;
+            if (audioClock == null) {
+                audioClock = Executors.newSingleThreadScheduledExecutor(r -> {
+                    Thread t = new Thread(r, "Sharktower spectator voice");
+                    t.setDaemon(true);
+                    return t;
+                });
+            }
+            audioFlush = audioClock.scheduleAtFixedRate(SpectatorBridge::flushAudio, 100, 100, TimeUnit.MILLISECONDS);
+        } else {
+            if (audioFlush != null) audioFlush.cancel(false);
+            audioFlush = null;
+            synchronized (FRAMES) {
+                FRAMES.clear();
+            }
+        }
+    }
+
+    /** For tests: whether the voice batch timer is running. */
+    static synchronized boolean audioTimerRunning() {
+        return audioFlush != null && !audioFlush.isDone();
     }
 
     /** Public table state only. Must stay free of roles and Grimoire data. */

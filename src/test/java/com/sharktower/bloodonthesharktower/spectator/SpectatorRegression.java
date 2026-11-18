@@ -28,6 +28,17 @@ public final class SpectatorRegression {
         same(SpectatorBridge.roomName("st:22222222-2222-2222-2222-222222222222", names, seats), "Storyteller chat");
         same(GrimoireShare.cleanName("  Ada§cRed\n "), "AdacRed");
         same(GrimoireShare.cleanName("x".repeat(40)), "x".repeat(32));
+        // Voice batch timer only runs while someone listens.
+        check(!SpectatorBridge.audioTimerRunning(), "voice timer should be idle at start");
+        SpectatorBridge.setAudioWanted(true);
+        check(SpectatorBridge.audioTimerRunning(), "voice timer should start when a listener joins");
+        SpectatorBridge.setAudioWanted(true);
+        check(SpectatorBridge.audioTimerRunning(), "a second 'wanted' keeps one timer running");
+        SpectatorBridge.setAudioWanted(false);
+        check(!SpectatorBridge.audioTimerRunning(), "voice timer should stop when nobody listens");
+        SpectatorBridge.setAudioWanted(true);
+        check(SpectatorBridge.audioTimerRunning(), "voice timer should restart for a new listener");
+        SpectatorBridge.setAudioWanted(false);
         System.out.println("SpectatorRegression passed (" + checks + " checks).");
     }
 }
