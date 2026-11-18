@@ -59,6 +59,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.command.PoisonCommand.register();
         com.sharktower.bloodonthesharktower.command.NightChoiceCommand.register();
         com.sharktower.bloodonthesharktower.automation.PsychopathAxe.register();
+        com.sharktower.bloodonthesharktower.automation.WraithNight.register();
         com.sharktower.bloodonthesharktower.command.RoshamboCommand.register();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();
         ServerTickEvents.END_SERVER_TICK.register(NightChatManager::serverTick);

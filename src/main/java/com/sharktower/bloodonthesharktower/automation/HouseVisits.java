@@ -151,6 +151,7 @@ public final class HouseVisits {
                     online.getX(), online.getY(), online.getZ(), 1.0F, 1.0F, 0L));
         }
         sleeper.wake().run();
+        WraithNight.onWake(server, player);
     }
 
     /** Wakes each sleeper whose house a Storyteller has reached (walking, flying, Spectator or teleport). */

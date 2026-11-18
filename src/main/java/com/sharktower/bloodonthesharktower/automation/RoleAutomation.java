@@ -137,6 +137,7 @@ public final class RoleAutomation {
         GolemAutomation.reset();
         NightChoices.reset();
         HouseVisits.reset();
+        WraithNight.reset();
         SeatPicks.clearAll();
         PROMPTS.clear();
     }
@@ -523,6 +524,7 @@ public final class RoleAutomation {
      *                  dying this way killed themselves (the Imp's star-pass).
      */
     public static void onDeath(MinecraftServer server, UUID dead, boolean execution, boolean demonKill) {
+        WraithNight.onDeath(dead);
         if (server == null || dead == null || ServerState.gameEnded) return;
         PendingRoleAssignment deadRole = actualRole(dead);
         RavenkeeperAutomation.onDeath(server, dead, execution, demonKill || PhaseOperations.isNight());
@@ -682,6 +684,7 @@ public final class RoleAutomation {
         expireReminders(server, EXPIRE_AT_DUSK, "Dusk");
         PoisonerAutomation.onDusk(server);
         NightChoices.onDusk(server);
+        WraithNight.onDusk(server);
         PsychopathAxe.onDusk();
         PsychopathRoshambo.onDusk();
         GunslingerGun.onDusk();
@@ -728,6 +731,7 @@ public final class RoleAutomation {
         resolve("starpass");
         expireReminders(server, EXPIRE_AT_DAWN, "Dawn");
         HouseVisits.reset();
+        WraithNight.onDawn(server);
     }
 
     static List<String> expireReminders(MinecraftServer server, Map<Role, Set<String>> rules, String when) {
