@@ -828,6 +828,7 @@ public final class SetupOperations {
         if (firstReveal) {
             ServerState.finalGrimoireSent = false;
             ModSounds.playGameEnd(server);
+            com.sharktower.bloodonthesharktower.serverupdate.SiteGameStats.onGameEnd(server, winner);
         }
         StateBroadcaster.broadcastGameState(server);
         return Result.ok(winner + " wins. Final Grimoire reveal is now active.");
@@ -835,6 +836,7 @@ public final class SetupOperations {
 
     public static Result cancelEndGame(MinecraftServer server) {
         if (!ServerState.gameEnded) return Result.fail("The game is not currently in end-game reveal mode.");
+        com.sharktower.bloodonthesharktower.serverupdate.SiteGameStats.onEndCancelled();
         ServerState.gameEnded = false;
         ServerState.winningTeam = "NONE";
         ServerState.rolesRevealed = false;

@@ -306,6 +306,9 @@ public final class BotsCommands {
                                 .then(Commands.argument("nominator", IntegerArgumentType.integer(1))
                                         .then(Commands.argument("nominee", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeNominatePair))))
+                        .then(Commands.literal("stats")
+                                .then(Commands.literal("on").executes(ctx -> executeStats(ctx, true)))
+                                .then(Commands.literal("off").executes(ctx -> executeStats(ctx, false))))
                         .then(Commands.literal("automation")
                                 .then(Commands.literal("wake")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
@@ -1681,6 +1684,12 @@ public final class BotsCommands {
                 context.getSource().getServer(), IntegerArgumentType.getInteger(context, "seat"));
         if (refusal != null) send(context, refusal);
         return refusal == null ? 1 : 0;
+    }
+
+    private static int executeStats(CommandContext<CommandSourceStack> context, boolean on) {
+        if (!requireStoryteller(context)) return 0;
+        send(context, com.sharktower.bloodonthesharktower.serverupdate.SiteGameStats.setEnabled(on));
+        return 1;
     }
 
     private static int executeWraith(CommandContext<CommandSourceStack> context, String action) {
