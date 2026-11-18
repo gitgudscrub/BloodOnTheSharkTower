@@ -79,6 +79,20 @@ public final class SharktowerVoicechatPlugin implements VoicechatPlugin {
         registration.registerEvent(MicrophonePacketEvent.class, event -> {
             if (event.getSenderConnection() == null) return;
             UUID sender = event.getSenderConnection().getPlayer().getUuid();
+            // A roaming Wraith listens only: nobody hears them while they visit.
+            if (sender.equals(com.sharktower.bloodonthesharktower.automation.WraithNight.roaming())) {
+                event.cancel();
+                return;
+            }
+            // Relay a house's voices to the Wraith inside it, without putting them in the house's group.
+            if (com.sharktower.bloodonthesharktower.automation.WraithNight.anyListener()) {
+                UUID wraith = com.sharktower.bloodonthesharktower.automation.WraithNight.listenerIn(NightChatManager.spectatorRoom(sender));
+                var receiver = wraith == null ? null : event.getVoicechat().getConnectionOf(wraith);
+                if (receiver != null) {
+                    event.getVoicechat().sendStaticSoundPacketTo(receiver,
+                            event.getPacket().staticSoundPacketBuilder().channelId(sender).build());
+                }
+            }
             WHISPERING.put(sender, event.getPacket().isWhispering());
             com.sharktower.bloodonthesharktower.spectator.SpectatorBridge.capture(
                     sender, event.getPacket().getOpusEncodedData(), event.getPacket().isWhispering());

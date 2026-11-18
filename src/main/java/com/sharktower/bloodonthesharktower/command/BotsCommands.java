@@ -310,6 +310,17 @@ public final class BotsCommands {
                                 .then(Commands.literal("wake")
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationWake)))
+                                .then(Commands.literal("wraith")
+                                        .then(Commands.literal("release").executes(ctx -> executeWraith(ctx, "release")))
+                                        .then(Commands.literal("recall").executes(ctx -> executeWraith(ctx, "recall")))
+                                        .then(Commands.literal("dismiss").executes(ctx -> executeWraith(ctx, "dismiss")))
+                                        .then(Commands.literal("visit")
+                                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                        .executes(ctx -> executeWraith(ctx, "visit")))))
+                                .then(Commands.literal("lantern")
+                                        .then(Commands.literal("give")
+                                                .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                                        .executes(BotsCommands::executeLanternGive))))
                                 .then(Commands.literal("housevisits")
                                         .then(Commands.literal("on").executes(ctx -> executeHouseVisits(ctx, true)))
                                         .then(Commands.literal("off").executes(ctx -> executeHouseVisits(ctx, false))))
@@ -1669,6 +1680,26 @@ public final class BotsCommands {
         String refusal = com.sharktower.bloodonthesharktower.automation.HouseVisits.wakeNow(
                 context.getSource().getServer(), IntegerArgumentType.getInteger(context, "seat"));
         if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeWraith(CommandContext<CommandSourceStack> context, String action) {
+        if (!requireStoryteller(context)) return 0;
+        String refusal = switch (action) {
+            case "release" -> com.sharktower.bloodonthesharktower.automation.WraithNight.release(context.getSource().getServer());
+            case "recall" -> com.sharktower.bloodonthesharktower.automation.WraithNight.recallNow();
+            case "visit" -> com.sharktower.bloodonthesharktower.automation.WraithNight.visit(IntegerArgumentType.getInteger(context, "seat"));
+            default -> com.sharktower.bloodonthesharktower.automation.WraithNight.dismiss();
+        };
+        if (refusal != null) send(context, refusal);
+        return refusal == null ? 1 : 0;
+    }
+
+    private static int executeLanternGive(CommandContext<CommandSourceStack> context) {
+        if (!requireStoryteller(context)) return 0;
+        int seat = IntegerArgumentType.getInteger(context, "seat");
+        String refusal = com.sharktower.bloodonthesharktower.automation.WraithNight.giveBack(seat);
+        send(context, refusal == null ? "Seat " + seat + " has a fresh Spirit Lantern." : refusal);
         return refusal == null ? 1 : 0;
     }
 

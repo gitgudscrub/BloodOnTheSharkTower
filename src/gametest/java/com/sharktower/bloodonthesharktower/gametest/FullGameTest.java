@@ -2,10 +2,12 @@ package com.sharktower.bloodonthesharktower.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.sharktower.bloodonthesharktower.automation.RoleAutomation;
+import com.sharktower.bloodonthesharktower.automation.WraithNight;
 import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
 import com.sharktower.bloodonthesharktower.daytime.VotingManager;
+import com.sharktower.bloodonthesharktower.setup.SeatPositionManager;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -17,6 +19,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.world.level.GameType;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -32,7 +35,10 @@ import java.util.UUID;
  * Night 1: the Poisoner poisons the Chef, the Storyteller confirms.
  * Day 1: the Chef nominates the Imp, three hands, the vote passes, the Imp
  * is executed, and the Storyteller is offered "Good wins".
- * Then a second game checks the "Evil wins" prompt at two alive.
+ * Then a second game checks the "Evil wins" prompt at two alive, and a
+ * third has a Wraith in seat 2: released into Spectator at dusk, the Chef
+ * lights a Spirit Lantern, the Wraith visits and is revealed, and dawn brings
+ * the Wraith home with the spent lantern gone.
  */
 public final class FullGameTest {
     private static final String[] NAMES = {"Imp1", "Poisoner2", "Monk3", "Virgin4", "Chef5"};
@@ -55,7 +61,13 @@ public final class FullGameTest {
     private record Table(ServerPlayer storyteller, List<ServerPlayer> players) {}
 
     /** Joins the Storyteller and five players (once) and deals a fresh game. */
+    private static final String[] BASIC = {"imp", "poisoner", "monk", "virgin", "chef"};
+
     private static Table deal(GameTestHelper helper) {
+        return deal(helper, BASIC);
+    }
+
+    private static Table deal(GameTestHelper helper, String[] roles) {
         MinecraftServer server = helper.getLevel().getServer();
         ServerPlayer storyteller = server.getPlayerList().getPlayerByName("Storyteller");
         if (storyteller == null) storyteller = join(server, helper.getLevel(), "Storyteller");
@@ -67,7 +79,6 @@ public final class FullGameTest {
         run(server, storyteller, "bots storyteller claim");
         helper.assertTrue(StorytellerState.isStoryteller(storyteller.getUUID()), "Storyteller claim failed");
         run(server, storyteller, "bots resetGame");
-        String[] roles = {"imp", "poisoner", "monk", "virgin", "chef"};
         for (int i = 0; i < NAMES.length; i++) {
             run(server, storyteller, "bots seatPlayer " + NAMES[i] + " " + (i + 1));
             run(server, storyteller, "bots assignRole " + (i + 1) + " " + roles[i]);
@@ -89,6 +100,7 @@ public final class FullGameTest {
         ServerPlayer st = t.storyteller();
         ServerPlayer chef = t.players().get(4);
 
+        SeatPositionManager.clear();
         helper.startSequence()
                 // Night 1: the Poisoner wakes (no houses set, so at once) and poisons the Chef.
                 .thenExecute(() -> {
@@ -135,6 +147,40 @@ public final class FullGameTest {
                     helper.assertValueEqual((int) ServerState.PLAYER_DEATH_STATUS.values().stream().filter(d -> !d).count(), 2, "two players alive");
                     helper.assertValueEqual(RoleAutomation.lastWinPrompt(), "EVIL",
                             "the Storyteller should be offered Evil wins");
+                })
+                // Game 3: the Wraith visits at night.
+                .thenExecuteAfter(5, () -> {
+                    Table w = deal(helper, new String[]{"imp", "wraith", "monk", "virgin", "chef"});
+                    ServerPlayer wraith = w.players().get(1);
+                    ServerPlayer chef3 = w.players().get(4);
+                    double x = st.getX(), y = st.getY(), z = st.getZ();
+                    wraith.teleportTo(x, y, z);
+                    SeatPositionManager.setSeatHome(2, wraith);
+                    chef3.teleportTo(x + 40, y, z + 40);
+                    SeatPositionManager.setSeatHome(5, chef3);
+                    run(server, st, "bots dusk");
+                    helper.assertValueEqual(WraithNight.roaming(), wraith.getUUID(), "the Wraith is released at dusk");
+                    helper.assertValueEqual(wraith.gameMode.getGameModeForPlayer(), GameType.SPECTATOR, "the Wraith roams in Spectator");
+                    helper.assertTrue(WraithNight.hasLantern(chef3), "the Chef has a Spirit Lantern");
+                    run(server, chef3, "lantern");
+                    helper.assertTrue(WraithNight.lanternLit(chef3.getUUID()), "the Chef's lantern is lit");
+                    run(server, st, "bots automation wraith visit 5");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(WraithNight.revealed(5), "the lit lantern should reveal the Wraith"))
+                .thenExecute(() -> {
+                    ServerPlayer wraith = server.getPlayerList().getPlayerByName(NAMES[1]);
+                    ServerPlayer chef3 = server.getPlayerList().getPlayerByName(NAMES[4]);
+                    run(server, st, "bots dawn");
+                    helper.assertTrue(WraithNight.roaming() == null, "dawn recalls the Wraith");
+                    helper.assertTrue(wraith.gameMode.getGameModeForPlayer() != GameType.SPECTATOR, "the Wraith is back in their usual mode");
+                    helper.assertTrue(SeatPositionManager.isPlayerNearHome(wraith, 2, 2), "the Wraith is home");
+                    helper.assertTrue(!WraithNight.hasLantern(chef3), "the lit lantern goes out at dawn");
+                    run(server, st, "bots dusk");
+                    helper.assertTrue(!WraithNight.hasLantern(chef3), "a spent lantern is not given again");
+                    run(server, st, "bots automation wraith recall");
+                    helper.assertTrue(WraithNight.roaming() == null, "the Storyteller can recall the Wraith");
+                    run(server, st, "bots resetGame");
+                    SeatPositionManager.clear();
                 })
                 .thenSucceed();
     }

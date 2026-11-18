@@ -3,6 +3,24 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.59 — Wraith night visits and the Spirit Lantern (unreleased)
+
+- Wraith: at dusk a living, sober Wraith is put in Spectator mode and may fly
+  anywhere. Inside a house they hear that house's voices; nobody hears them.
+  When the Storyteller wakes an evil player (house visits), the Wraith is
+  brought to that house. At dawn, on death, reset or game end they go home in
+  their usual game mode (on their next login if offline).
+- Drunk or poisoned Wraith: stays home and is told; the Storyteller's card
+  offers "Release anyway".
+- Storyteller controls on the Resolve card: Recall now, Bring to seat, OK.
+  Commands: `/bots automation wraith release|recall|visit <seat>|dismiss`.
+- Spirit Lantern (house rule): when the Wraith is on the script or in play,
+  every seated player gets a lantern they may light once per game, at night
+  (right-click or `/lantern`). If the Wraith enters a house whose lantern is
+  lit, the owner learns who it is, and the Storyteller is told. Lit lanterns
+  go out at dawn. `/bots automation lantern give <seat>` hands one back.
+- The game test now plays a third game with a Wraith and a lit lantern.
+
 ## 1.0.2-alpha.58 — Full-game test in the build (unreleased)
 
 - Dev: `gradlew check` (and CI) now plays a whole scripted game on a headless
