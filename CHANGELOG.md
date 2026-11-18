@@ -13,6 +13,9 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
 - Spirit Lantern: a lit lantern now warns its owner as soon as a Wraith is
   in the house (any way in), and names the Wraith only once they come in by
   the door and join the house's voice. The Storyteller is told which.
+- Dev: pack releases now start automatically when a merge raises the version
+  on main (Prism auto-update; Modrinth stays manual). `[no release]` in the
+  merge commit skips one.
 - Houses are still "within 8 blocks of the seat home". Exact house areas and
   doors can be marked once the map is finished.
 

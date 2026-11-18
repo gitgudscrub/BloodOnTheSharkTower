@@ -1,0 +1,90 @@
+name: Auto-release on version bump
+
+# When gradle.properties' version goes up on main and no pack-<version>
+# release exists yet, start "Build / Publish Modrinth Pack" with the Prism
+# auto-update switched on (Modrinth stays off). Put "[no release]" in the
+# commit message to skip one.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'gradle.properties'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ !contains(github.event.head_commit.message, '[no release]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Work out the version and notes
+        id: plan
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^version=//p' gradle.properties | tr -d '\r' | head -1)
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "No usable version in gradle.properties: '$version'"; exit 1
+          fi
+          if gh release view "pack-$version" >/dev/null 2>&1; then
+            echo "pack-$version already released."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          last=$(gh release list --limit 20 --json tagName -q '.[].tagName' | grep '^pack-' | head -1 | sed 's/^pack-//')
+          # Every CHANGELOG section above the last released version, without "(unreleased)".
+          notes=$(python3 - "$last" <<'EOF'
+          import re, sys
+          last = sys.argv[1]
+          out, keep = [], False
+          for line in open('CHANGELOG.md', encoding='utf-8'):
+              line = line.rstrip('\r\n')
+              if line.startswith('## '):
+                  if last and line[3:].startswith(last + ' ') or line[3:] == last:
+                      break
+                  keep = True
+                  line = re.sub(r'\s*\(unreleased\)\s*$', '', line)
+              if keep:
+                  out.append(line)
+          text = '\n'.join(out).strip() or 'Blood on the Sharktower update.'
+          print(text[:6000])
+          EOF
+          )
+          case "$version" in
+            *alpha*) channel=alpha ;;
+            *beta*|*rc*) channel=beta ;;
+            *) channel=release ;;
+          esac
+          {
+            echo "skip=false"
+            echo "version=$version"
+            echo "channel=$channel"
+            echo "notes<<NOTES_END"
+            echo "$notes"
+            echo "NOTES_END"
+          } >> "$GITHUB_OUTPUT"
+          echo "Releasing $version ($channel) after ${last:-nothing}."
+
+      - name: Start the pack release
+        if: ${{ steps.plan.outputs.skip == 'false' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.plan.outputs.version }}
+          CHANNEL: ${{ steps.plan.outputs.channel }}
+          NOTES: ${{ steps.plan.outputs.notes }}
+        run: |
+          gh workflow run publish-modrinth.yml --ref main \
+            -f version="$VERSION" \
+            -f changelog="$NOTES" \
+            -f version_type="$CHANNEL" \
+            -f publish_to_modrinth=false \
+            -f publish_auto_update=true
+          echo "Started Build / Publish Modrinth Pack for $VERSION."
