@@ -181,9 +181,33 @@ public final class FullGameTest {
                     helper.assertTrue(WraithNight.hasLantern(chef3), "the Chef has a Spirit Lantern");
                     run(server, chef3, "lantern");
                     helper.assertTrue(WraithNight.lanternLit(chef3.getUUID()), "the Chef's lantern is lit");
-                    run(server, st, "bots automation wraith visit 5");
+                    // Through a wall: straight into the Chef's house, no door.
+                    wraith.teleportTo(x + 41, y, z + 40);
                 })
-                .thenWaitUntil(() -> helper.assertTrue(WraithNight.revealed(5), "the lit lantern should reveal the Wraith"))
+                .thenWaitUntil(() -> helper.assertTrue(WraithNight.alerted(5), "the lit lantern warns a Wraith is in the house"))
+                .thenExecute(() -> {
+                    ServerPlayer wraith = server.getPlayerList().getPlayerByName(NAMES[1]);
+                    helper.assertTrue(!WraithNight.revealed(5), "through a wall the Wraith is not named");
+                    helper.assertTrue(WraithNight.listenerIn("house:5") == null, "through a wall the Wraith cannot hear");
+                    // Now through the house's door.
+                    double x = st.getX(), y = st.getY(), z = st.getZ();
+                    net.minecraft.core.BlockPos door = net.minecraft.core.BlockPos.containing(x + 43, y, z + 40);
+                    helper.getLevel().setBlock(door, net.minecraft.world.level.block.Blocks.OAK_DOOR.defaultBlockState(), 3);
+                    wraith.teleportTo(door.getX() + 0.5, door.getY(), door.getZ() + 0.5);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(WraithNight.revealed(5), "by the door the lantern names the Wraith"))
+                .thenExecute(() -> {
+                    ServerPlayer wraith = server.getPlayerList().getPlayerByName(NAMES[1]);
+                    helper.assertValueEqual(WraithNight.listenerIn("house:5"), wraith.getUUID(), "by the door the Wraith hears the house");
+                    double x = st.getX(), y = st.getY(), z = st.getZ();
+                    helper.getLevel().setBlock(net.minecraft.core.BlockPos.containing(x + 43, y, z + 40),
+                            net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+                    // Leaving the house stops the listening; the Storyteller can bring them back.
+                    wraith.teleportTo(x + 80, y, z + 80);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(WraithNight.listenerIn("house:5") == null, "leaving the house stops listening"))
+                .thenExecute(() -> run(server, st, "bots automation wraith visit 5"))
+                .thenWaitUntil(() -> helper.assertTrue(WraithNight.listenerIn("house:5") != null, "brought by the Storyteller, the Wraith hears"))
                 .thenExecute(() -> {
                     ServerPlayer wraith = server.getPlayerList().getPlayerByName(NAMES[1]);
                     ServerPlayer chef3 = server.getPlayerList().getPlayerByName(NAMES[4]);

@@ -44,9 +44,13 @@ import java.util.UUID;
  * the Wraith is brought to that house. At dawn, on death, reset or game end
  * they return home in their usual game mode.
  *
+ * Through a wall the Wraith only watches; coming in by a house's door (a
+ * door block within a few blocks of the seat home) lets them hear it.
+ *
  * Spirit Lantern (house rule): when the script has the Wraith, every seated
- * player gets a lantern they may light once per game, at night. If the
- * Wraith enters a house whose lantern is lit, the owner learns who it is.
+ * player gets a lantern they may light once per game, at night. A lit lantern
+ * warns its owner when a Wraith is in the house, and names the Wraith once
+ * they come in by the door and join the house's voice.
  *
  * The Storyteller decides throughout: Recall now / Release anyway / Bring to
  * a seat on the Resolve card and {@code /bots automation wraith ...}, and can
@@ -56,7 +60,8 @@ public final class WraithNight {
     static final String PROMPT = "wraith";
     private static final String LANTERN_KEY = "sharktower_spirit_lantern";
     private static final String LIT_KEY = "lit";
-    private static final int CHECK_TICKS = 10;
+    /** A door this far from a seat home belongs to that house. */
+    private static final double DOOR_RADIUS = HouseVisits.ARRIVE_RADIUS + 4.0D;
 
     private static volatile UUID roaming;
     private static volatile int insideSeat;
@@ -65,9 +70,16 @@ public final class WraithNight {
     private static final Map<UUID, GameType> RECALL_ON_JOIN = new HashMap<>();
     private static final Set<UUID> LANTERN_SPENT = new HashSet<>();
     private static final Set<UUID> LANTERN_LIT = new HashSet<>();
+    /** Houses whose lit lantern warned "a Wraith is here" tonight. */
+    private static final Set<Integer> ALERTED = new HashSet<>();
+    /** Houses whose lit lantern named the Wraith tonight (they came in by the door). */
     private static final Set<Integer> REVEALED = new HashSet<>();
+    /** The house the Wraith hears: they came in by its door (or were brought there). */
+    private static volatile int listeningSeat;
+    /** A house the Wraith is being brought to: they may listen when they arrive. */
+    private static int bringTo;
+    private static net.minecraft.world.phys.Vec3 lastPos;
     private static MinecraftServer server;
-    private static int ticks;
 
     private WraithNight() {}
 
@@ -97,6 +109,7 @@ public final class WraithNight {
         server = srv;
         recall("A new night");
         LANTERN_LIT.clear();
+        ALERTED.clear();
         REVEALED.clear();
         if (ServerState.gameEnded) return;
         giveLanterns(srv);
@@ -123,6 +136,7 @@ public final class WraithNight {
         if (srv != null) server = srv;
         recall("Dawn");
         LANTERN_LIT.clear();
+        ALERTED.clear();
         REVEALED.clear();
         if (server != null) for (ServerPlayer player : server.getPlayerList().getPlayers()) removeLanterns(player, true);
     }
@@ -137,6 +151,7 @@ public final class WraithNight {
         recall("The game was reset");
         LANTERN_SPENT.clear();
         LANTERN_LIT.clear();
+        ALERTED.clear();
         REVEALED.clear();
         if (server != null) for (ServerPlayer player : server.getPlayerList().getPlayers()) removeLanterns(player, false);
     }
@@ -163,13 +178,17 @@ public final class WraithNight {
         player.setGameMode(GameType.SPECTATOR);
         roaming = wraith;
         insideSeat = 0;
+        listeningSeat = 0;
+        bringTo = 0;
+        lastPos = null;
         player.sendSystemMessage(Component.literal("Wraith: you may visit other players tonight. Fly anywhere (in Spectator, "
-                + "press 1 or middle-click to jump to a player). Inside a house you hear its voices; nobody hears you. "
-                + "You are brought to evil players when they wake. At dawn you return home.")
+                + "press 1 or middle-click to jump to a player). Come into a house through its door to hear its voices; "
+                + "through a wall you can only watch. Nobody hears you. You are brought to evil players when they wake. "
+                + "At dawn you return home.")
                 .withStyle(ChatFormatting.DARK_PURPLE));
         RoleAutomation.offer(server, new StorytellerPrompt(PROMPT, "Wraith",
-                who + " is roaming in Spectator. They hear any house they enter and are brought to evil players "
-                        + "you wake. They return home at dawn.",
+                who + " is roaming in Spectator. They hear a house only if they come in by its door (through a wall "
+                        + "they only watch), and are brought to evil players you wake. They return home at dawn.",
                 List.of(StorytellerPrompt.Action.neutral("Recall now", "/bots automation wraith recall"),
                         StorytellerPrompt.Action.neutral("Bring to seat",
                                 StorytellerPrompt.PICK + "/bots automation wraith visit "),
@@ -196,6 +215,7 @@ public final class WraithNight {
         if (SeatPositionManager.seatHome(seat) == null) return "Seat " + seat + " has no house set.";
         ServerPlayer player = server.getPlayerList().getPlayer(roaming);
         if (player == null) return "The Wraith is offline.";
+        bringTo = seat;
         SeatPositionManager.teleportPlayerToHome(player, seat);
         return null;
     }
@@ -209,6 +229,7 @@ public final class WraithNight {
         if (role == null || role.isFinalGood() || seat == null || SeatPositionManager.seatHome(seat) == null) return;
         ServerPlayer player = srv.getPlayerList().getPlayer(wraith);
         if (player == null) return;
+        bringTo = seat;
         SeatPositionManager.teleportPlayerToHome(player, seat);
         player.sendSystemMessage(Component.literal("Wraith: an evil player wakes, " + RoleAutomation.label(srv, woken)
                 + " (seat " + seat + "). You are with them.").withStyle(ChatFormatting.DARK_PURPLE));
@@ -218,6 +239,9 @@ public final class WraithNight {
         UUID wraith = roaming;
         roaming = null;
         insideSeat = 0;
+        listeningSeat = 0;
+        bringTo = 0;
+        lastPos = null;
         if (wraith == null) return;
         RoleAutomation.resolve(PROMPT);
         GameType mode = PREVIOUS_MODE.getOrDefault(wraith, GameType.SURVIVAL);
@@ -239,25 +263,24 @@ public final class WraithNight {
 
     // ------------------------------------------------------------- Voice
 
-    /** The roaming Wraith, if they are inside {@code room} ("house:N"); read on the voice thread. */
+    /** The roaming Wraith, if they are listening in {@code room} ("house:N"); read on the voice thread. */
     public static UUID listenerIn(String room) {
         UUID wraith = roaming;
-        int seat = insideSeat;
+        int seat = listeningSeat;
         if (wraith == null || seat <= 0 || room == null) return null;
         return room.equals("house:" + seat) ? wraith : null;
     }
 
-    /** True while a Wraith is inside some house, so the voice thread only looks up rooms then. */
+    /** True while a Wraith is listening in some house, so the voice thread only looks up rooms then. */
     public static boolean anyListener() {
-        return roaming != null && insideSeat > 0;
+        return roaming != null && listeningSeat > 0;
     }
 
     // ------------------------------------------------------------- Tick
 
     private static void tick(MinecraftServer srv) {
         UUID wraith = roaming;
-        if (wraith == null || ++ticks < CHECK_TICKS) return;
-        ticks = 0;
+        if (wraith == null) return;
         server = srv;
         if (ServerState.gameEnded || !PhaseOperations.isNight()) {
             recall(ServerState.gameEnded ? "The game is over" : "Dawn");
@@ -265,9 +288,28 @@ public final class WraithNight {
         }
         ServerPlayer player = srv.getPlayerList().getPlayer(wraith);
         if (player == null) return;
+        net.minecraft.world.phys.Vec3 now = player.position();
+        int doorSeat = passedDoor(player, lastPos, now);
+        lastPos = now;
+
+        int nearest = nearestHome(player, HouseVisits.ARRIVE_RADIUS);
+        if (nearest != insideSeat) {
+            insideSeat = nearest;
+            if (listeningSeat != 0 && listeningSeat != nearest) listeningSeat = 0;
+            if (nearest > 0) entered(srv, player, nearest);
+        }
+        if (nearest > 0 && listeningSeat != nearest && (doorSeat == nearest || bringTo == nearest)) {
+            boolean brought = bringTo == nearest;
+            bringTo = 0;
+            listen(srv, player, nearest, brought);
+        }
+        bringTo = 0; // only the tick right after the teleport counts
+    }
+
+    /** The nearest seat home within {@code radius}, or 0. */
+    private static int nearestHome(ServerPlayer player, double radius) {
         int nearest = 0;
         double best = Double.MAX_VALUE;
-        double radius = HouseVisits.ARRIVE_RADIUS;
         for (int seat : new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.values())) {
             var home = SeatPositionManager.seatHome(seat);
             if (home == null) continue;
@@ -277,24 +319,77 @@ public final class WraithNight {
                 nearest = seat;
             }
         }
-        if (nearest == insideSeat) return;
-        insideSeat = nearest;
-        if (nearest <= 0) return;
-        Integer own = ServerState.PLAYER_SEAT_NUMBERS.get(wraith);
-        if (own != null && own == nearest) return;
-        UUID owner = SetupOwner.bySeat(nearest);
-        String house = "house " + nearest + (owner == null ? "" : " (" + RoleAutomation.label(srv, owner) + ")");
-        boolean lit = owner != null && LANTERN_LIT.contains(owner) && REVEALED.add(nearest);
-        if (lit) {
-            ServerPlayer ownerPlayer = srv.getPlayerList().getPlayer(owner);
-            if (ownerPlayer != null) {
-                ownerPlayer.sendSystemMessage(Component.literal("Your Spirit Lantern flares: "
-                        + RoleAutomation.label(srv, wraith) + ", the Wraith, is in your house.")
-                        .withStyle(ChatFormatting.LIGHT_PURPLE));
+        return nearest;
+    }
+
+    /** The house whose door the Wraith moved through since the last tick, or 0. */
+    private static int passedDoor(ServerPlayer player, net.minecraft.world.phys.Vec3 from, net.minecraft.world.phys.Vec3 to) {
+        if (from == null || from.distanceToSqr(to) > 16 * 16) from = to; // a teleport is not a walk through a door
+        int steps = (int) Math.min(40, Math.ceil(from.distanceTo(to) / 0.4D)) + 1;
+        for (int i = 0; i < steps; i++) {
+            net.minecraft.world.phys.Vec3 at = steps == 1 ? to : from.lerp(to, i / (double) (steps - 1));
+            net.minecraft.core.BlockPos feet = net.minecraft.core.BlockPos.containing(at);
+            if (isDoor(player, feet) || isDoor(player, feet.above())) {
+                return nearestHome(player, DOOR_RADIUS);
             }
         }
-        RoleAutomation.tellStorytellers(srv, Component.literal("Wraith entered " + house
-                + (lit ? ". Their lit Spirit Lantern revealed the Wraith." : ".")).withStyle(ChatFormatting.DARK_PURPLE));
+        return 0;
+    }
+
+    private static boolean isDoor(ServerPlayer player, net.minecraft.core.BlockPos pos) {
+        return player.level().getBlockState(pos).is(net.minecraft.tags.BlockTags.DOORS);
+    }
+
+    private static boolean ownHouse(UUID wraith, int seat) {
+        Integer own = ServerState.PLAYER_SEAT_NUMBERS.get(wraith);
+        return own != null && own == seat;
+    }
+
+    private static String house(MinecraftServer srv, int seat) {
+        UUID owner = SetupOwner.bySeat(seat);
+        return "house " + seat + (owner == null ? "" : " (" + RoleAutomation.label(srv, owner) + ")");
+    }
+
+    /** The Wraith is now inside {@code seat}'s house: watching only, until they use the door. */
+    private static void entered(MinecraftServer srv, ServerPlayer wraith, int seat) {
+        if (ownHouse(wraith.getUUID(), seat)) return;
+        UUID owner = SetupOwner.bySeat(seat);
+        boolean alert = owner != null && LANTERN_LIT.contains(owner) && ALERTED.add(seat);
+        if (alert) tell(srv, owner, "Your Spirit Lantern flickers: a Wraith is in your house.");
+        boolean coming = bringTo == seat;
+        if (!coming) {
+            wraith.sendSystemMessage(Component.literal("Wraith: you are inside " + house(srv, seat)
+                    + ". Through a wall you can watch but not hear. Use the door to listen.")
+                    .withStyle(ChatFormatting.DARK_PURPLE));
+        }
+        RoleAutomation.tellStorytellers(srv, Component.literal("Wraith entered " + house(srv, seat)
+                + (coming ? "." : ": watching, not listening (no door yet).")
+                + (alert ? " Their lit Spirit Lantern warned them a Wraith is there." : ""))
+                .withStyle(ChatFormatting.DARK_PURPLE));
+    }
+
+    /** The Wraith came in by the door (or was brought): they hear the house. */
+    private static void listen(MinecraftServer srv, ServerPlayer wraith, int seat, boolean brought) {
+        listeningSeat = seat;
+        if (ownHouse(wraith.getUUID(), seat)) return;
+        UUID owner = SetupOwner.bySeat(seat);
+        boolean reveal = owner != null && LANTERN_LIT.contains(owner) && REVEALED.add(seat);
+        if (reveal) {
+            ALERTED.add(seat);
+            tell(srv, owner, "Your Spirit Lantern flares: " + RoleAutomation.label(srv, wraith.getUUID())
+                    + ", the Wraith, has joined your house's voice.");
+        }
+        wraith.sendSystemMessage(Component.literal("Wraith: you " + (brought ? "are with them" : "came in by the door")
+                + " and can hear " + house(srv, seat) + ".").withStyle(ChatFormatting.DARK_PURPLE));
+        RoleAutomation.tellStorytellers(srv, Component.literal("Wraith is listening in " + house(srv, seat)
+                + (brought ? " (brought there)." : " (came in by the door).")
+                + (reveal ? " Their lit Spirit Lantern revealed the Wraith." : ""))
+                .withStyle(ChatFormatting.DARK_PURPLE));
+    }
+
+    private static void tell(MinecraftServer srv, UUID player, String text) {
+        ServerPlayer online = srv.getPlayerList().getPlayer(player);
+        if (online != null) online.sendSystemMessage(Component.literal(text).withStyle(ChatFormatting.LIGHT_PURPLE));
     }
 
     // ------------------------------------------------------------- Lantern
@@ -317,7 +412,8 @@ public final class WraithNight {
             if (player == null || hasLantern(player)) continue;
             if (player.getInventory().add(lantern(false))) {
                 player.sendSystemMessage(Component.literal("You have a Spirit Lantern. Light it once per game, at night "
-                        + "(right-click it, or type /lantern): if the Wraith enters your house that night, you learn who it is.")
+                        + "(right-click it, or type /lantern). That night it warns you if a Wraith is in your house, "
+                        + "and names them if they come in by the door and join your house's voice.")
                         .withStyle(ChatFormatting.LIGHT_PURPLE));
             }
         }
@@ -362,8 +458,8 @@ public final class WraithNight {
         LANTERN_LIT.add(id);
         removeLanterns(player, false);
         player.getInventory().add(lantern(true));
-        player.sendSystemMessage(Component.literal("Your Spirit Lantern is lit until dawn. If the Wraith enters your house "
-                + "tonight, you will know who it is.").withStyle(ChatFormatting.LIGHT_PURPLE));
+        player.sendSystemMessage(Component.literal("Your Spirit Lantern is lit until dawn. It warns you if a Wraith is in "
+                + "your house, and names them if they come in by the door and join your house's voice.").withStyle(ChatFormatting.LIGHT_PURPLE));
         if (server != null) {
             RoleAutomation.tellStorytellers(server, Component.literal(RoleAutomation.label(server, id)
                     + " lit their Spirit Lantern.").withStyle(ChatFormatting.LIGHT_PURPLE));
@@ -426,7 +522,12 @@ public final class WraithNight {
         return LANTERN_LIT.contains(player);
     }
 
-    /** True once a lit lantern revealed the Wraith in {@code seat}'s house tonight (tests). */
+    /** True once a lit lantern warned {@code seat}'s owner that a Wraith is in the house (tests). */
+    public static boolean alerted(int seat) {
+        return ALERTED.contains(seat);
+    }
+
+    /** True once a lit lantern named the Wraith in {@code seat}'s house tonight (tests). */
     public static boolean revealed(int seat) {
         return REVEALED.contains(seat);
     }
