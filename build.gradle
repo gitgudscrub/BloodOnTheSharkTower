@@ -89,6 +89,18 @@ repositories {
     }
 }
 
+// Headless full-game test: a GameTest server with a Storyteller and five
+// test players runs a scripted game (src/gametest). Part of `check`.
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "blood_on_the_sharktower_gametest"
+        enableGameTests = true
+        enableClientGameTests = false
+        eula = true
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"

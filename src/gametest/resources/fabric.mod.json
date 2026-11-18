@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "blood_on_the_sharktower_gametest",
+  "version": "1.0.0",
+  "name": "Blood on the Sharktower game tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.sharktower.bloodonthesharktower.gametest.FullGameTest"
+    ]
+  },
+  "depends": {
+    "blood_on_the_sharktower": "*",
+    "fabric-gametest-api-v1": "*"
+  }
+}

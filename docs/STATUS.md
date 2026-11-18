@@ -184,6 +184,11 @@ after the alpha that introduced each change.
   registered in `build.gradle` (death visibility, reminder catalog, Game 1,
   team information, house voice, Storyteller claim lock, script import,
   hand raise mode).
+- `gradlew check` also runs `runGameTest`: a headless GameTest server where a
+  Storyteller and five test players play a scripted game through the real
+  commands (deal, Poisoner night, nomination, vote, execution of the Imp,
+  "Good wins" prompt; then a second game to the "Evil wins" prompt). Source:
+  `src/gametest`. Run it alone with `gradlew runGameTest`.
 - CI additionally boots the loopback dev server (`tools/smoke_dev_server.py`)
   and builds the client `.mrpack`.
 - Graphics, audio and multi-client behaviour still need the live checks listed

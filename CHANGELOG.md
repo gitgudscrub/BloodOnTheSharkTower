@@ -3,6 +3,15 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.58 — Full-game test in the build (unreleased)
+
+- Dev: `gradlew check` (and CI) now plays a whole scripted game on a headless
+  GameTest server: a Storyteller and five test players are dealt Imp,
+  Poisoner, Monk, Virgin and Chef; the Poisoner poisons the Chef at night; the
+  Chef nominates the Imp, the vote passes, the Imp is executed and the
+  Storyteller is offered "Good wins". A second game checks the "Evil wins"
+  prompt at two alive. `gradlew runGameTest` runs it alone (about 10 s).
+
 ## 1.0.2-alpha.57 — Idle spectator voice costs nothing (unreleased)
 
 - Watch live: the 100 ms spectator voice timer now runs only while the site
