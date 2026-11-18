@@ -117,6 +117,7 @@ public final class RoleAutomation {
     /** Forget the dedupe key so the next game can prompt again from scratch. */
     public static void reset() {
         lastPromptKey = "";
+        lastWinPrompt = null;
         clearPendingVirgin();
         pendingStarPassNight = -1;
         mayorWarned = null;
@@ -776,6 +777,13 @@ public final class RoleAutomation {
         checkWin(server);
     }
 
+    private static String lastWinPrompt;
+
+    /** "GOOD" or "EVIL" for the last win prompt this game, or null. Read by the full-game test. */
+    public static String lastWinPrompt() {
+        return lastWinPrompt;
+    }
+
     /** The plain alive-count rules, shown to the Storyteller as a prompt. */
     public static void checkWin(MinecraftServer server) {
         if (server == null || ServerState.gameEnded) return;
@@ -801,6 +809,7 @@ public final class RoleAutomation {
     private static void prompt(MinecraftServer server, String favoured, String reason, String key) {
         if (key.equals(lastPromptKey)) return;
         lastPromptKey = key;
+        lastWinPrompt = favoured;
         String team = favoured.equals("GOOD") ? "Good" : "Evil";
         Component message = Component.literal("Game over? " + reason + " " + team + " should win. ")
                 .withStyle(ChatFormatting.GOLD)
