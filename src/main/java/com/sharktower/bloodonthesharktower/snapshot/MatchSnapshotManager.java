@@ -143,6 +143,11 @@ public final class MatchSnapshotManager {
         return Region.between(corner1X, minY, corner1Z, corner2X, maxY, corner2Z);
     }
 
+    /** Each seat's character when the game started (Send Roles), or null without a snapshot. */
+    public static synchronized Map<UUID, PendingRoleAssignment> startingRoles() {
+        return currentSetup == null ? null : new HashMap<>(currentSetup.roles());
+    }
+
     public static synchronized boolean hasSnapshot() {
         return currentSetup != null;
     }

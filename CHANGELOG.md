@@ -3,6 +3,22 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.60 — Minecraft games count in Sharktower stats (unreleased)
+
+- When the Storyteller ends a game (Good or Evil wins), the server sends it to
+  the Sharktower site: script, winner, each seat's character, team,
+  alignment, starting character and whether they died, plus the
+  Storytellers. It counts in members' stats and achievements like a Grim
+  Poster game. Cancel End Game takes it back.
+- `/link`: a player gets a short code (click to copy) to enter on the site
+  under My stats. Their games here then count for their Discord account,
+  including games already recorded.
+- Storyteller switch: `/bots stats off` keeps this server's games out of the
+  stats until `/bots stats on`. Games with test seats are never sent, and
+  nothing is sent without the website link set up.
+- Needs the Sharktower site update with `/internal/minecraft/game`.
+- The game test checks the record built for the site.
+
 ## 1.0.2-alpha.59 — Wraith night visits and the Spirit Lantern (unreleased)
 
 - Wraith: at dusk a living, sober Wraith is put in Spectator mode and may fly

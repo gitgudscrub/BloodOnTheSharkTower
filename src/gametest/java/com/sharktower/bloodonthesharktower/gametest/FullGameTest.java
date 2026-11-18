@@ -1,5 +1,6 @@
 package com.sharktower.bloodonthesharktower.gametest;
 
+import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import com.sharktower.bloodonthesharktower.automation.RoleAutomation;
 import com.sharktower.bloodonthesharktower.automation.WraithNight;
@@ -7,6 +8,7 @@ import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
 import com.sharktower.bloodonthesharktower.daytime.VotingManager;
+import com.sharktower.bloodonthesharktower.serverupdate.SiteGameStats;
 import com.sharktower.bloodonthesharktower.setup.SeatPositionManager;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 import com.sharktower.bloodonthesharktower.states.StorytellerState;
@@ -137,6 +139,21 @@ public final class FullGameTest {
                     helper.assertTrue(Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(t.players().get(0).getUUID())), "the Imp should be dead");
                     helper.assertValueEqual(RoleAutomation.lastWinPrompt(), "GOOD",
                             "the Storyteller should be offered Good wins");
+                    // The record the Sharktower site gets for stats and achievements.
+                    JsonObject record = SiteGameStats.build(server, "GOOD");
+                    helper.assertTrue(record != null, "a stats record is built");
+                    helper.assertValueEqual(record.get("winner").getAsString(), "good", "stats winner");
+                    helper.assertValueEqual(record.getAsJsonArray("players").size(), 5, "stats players");
+                    JsonObject imp = null;
+                    for (var p : record.getAsJsonArray("players")) {
+                        if (p.getAsJsonObject().get("seat").getAsInt() == 1) imp = p.getAsJsonObject();
+                    }
+                    helper.assertTrue(imp != null, "seat 1 is in the stats record");
+                    helper.assertValueEqual(imp.get("roleId").getAsString(), "imp", "stats role id");
+                    helper.assertValueEqual(imp.get("team").getAsString(), "demon", "stats team");
+                    helper.assertValueEqual(imp.get("alignment").getAsString(), "evil", "stats alignment");
+                    helper.assertTrue(imp.get("dead").getAsBoolean(), "the executed Imp is dead in the stats record");
+                    helper.assertValueEqual(record.getAsJsonArray("storytellers").size(), 1, "stats storytellers");
                 })
                 // Game 2 (same test: the game state is server-wide, so games run one after another).
                 .thenExecuteAfter(5, () -> {
