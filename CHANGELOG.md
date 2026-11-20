@@ -3,6 +3,21 @@
 Versions follow `gradle.properties`. The live community release is **1.0.1**;
 `1.0.2-alpha.*` builds are development builds that have not been distributed.
 
+## 1.0.2-alpha.62 — Guide books (unreleased)
+
+- Three in-game books:
+  - **Player Guide**: how to play here (keys, houses, night choices,
+    nominations and voting, dying, winning). Given when you first join.
+  - **Script Guide**: every character on the current script, one per page,
+    with its ability and a "How to play" tip (with the mod's command where
+    it has one), then the Fabled and Lorics. Given to everyone at Send Roles.
+  - **Storyteller Guide**: how to run a game here (claiming, setup, houses,
+    house visits, Resolve cards, night, day, the Wraith, ending). Given on
+    claiming Storyteller.
+- `/guide` shows clickable buttons for all three; `/guide player|script|storyteller`
+  gives a fresh copy and replaces the old one.
+- Keys & Help mentions `/guide`.
+
 ## 1.0.2-alpha.61 — Wraith: doors to listen, walls to watch (unreleased)
 
 - The Wraith hears a house only if they come in through its door (a door

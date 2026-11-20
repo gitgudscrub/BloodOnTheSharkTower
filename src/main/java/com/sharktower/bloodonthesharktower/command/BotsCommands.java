@@ -1112,6 +1112,7 @@ public final class BotsCommands {
         StateBroadcaster.sendCurrentStateTo(player);
         StateBroadcaster.broadcastPlayerDirectory(context.getSource().getServer());
         send(context, "Storyteller control claimed. Pending setup state is now visible in your Grimoire.");
+        com.sharktower.bloodonthesharktower.guide.GuideBooks.onStorytellerClaimed(player);
         return Command.SINGLE_SUCCESS;
     }
 

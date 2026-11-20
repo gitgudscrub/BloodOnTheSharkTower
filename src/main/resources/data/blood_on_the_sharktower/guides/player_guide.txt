@@ -1,0 +1,83 @@
+# Player Guide
+
+Welcome to Blood on the Sharktower: Blood on the Clocktower in Minecraft.
+
+Good must find and execute the Demon. Evil wins if only two players are left alive. Press H for keys and help.
+
+# Getting ready
+
+- /nick <name> sets the name everyone sees.
+- /pronouns they/them shows your pronouns under your name.
+- /link gives a code for the Sharktower site, so your games count in your stats and achievements.
+
+Wait in the town square. The Storyteller seats everyone and hands out characters.
+
+# Your character
+
+When roles are sent, your character shows on your HUD (Z hides it).
+
+- X: your character's details and ability.
+- C: the script, every character that might be in play.
+- K: the role catalog.
+- B: your private notebook. Write down what you learn.
+
+The Script Guide book explains each character on the script.
+
+# Night
+
+At night, go to your house and stay there. Your house is its own private voice room: only people inside it can hear you.
+
+If your character acts at night, the Storyteller visits your house. You can only use your ability once they arrive and you see "The Storyteller is here".
+
+## Night choices
+
+Some characters choose with a command when woken:
+- Poisoner: /poison <seat>
+- Monk: /protect <seat>
+- Imp: /attack <seat>
+- Ravenkeeper: /raven <seat>
+
+You can also click a seat in your own Grimoire. Others are handled by the Storyteller in your house.
+
+# Day
+
+At dawn, leave your house and meet in the town. Outside, voice chat is shared by everyone.
+
+Talk, share what you learned (or bluff, if you are evil), and decide who to nominate.
+
+You can whisper to your neighbours, and the Storyteller may take players aside for a private chat (J leaves one).
+
+# Nominations
+
+When the Storyteller opens nominations:
+- Press U to join the speaking queue.
+- Each living player may nominate once a day, and each player may be nominated once.
+
+## Voting
+
+On a nomination the clock hand goes round the circle. Press U to raise your hand before it reaches you; it locks as it passes.
+
+If the votes reach half the living players and beat the day's highest, that player is on the block. At the end of the day the player on the block is executed.
+
+# Death
+
+Dead players keep talking and stay in the game. You have one ghost vote for the rest of the game, so save it for when it matters.
+
+Your team can still win after you die.
+
+# Winning
+
+- Good wins when the Demon dies.
+- Evil wins when only two players are alive.
+- Some characters change these rules: read the Script Guide.
+
+At the end, the Grimoire is shown to everyone. Then the Storyteller resets the town for the next game.
+
+# Tips
+
+- Keep notes every night and day.
+- Claims can be lies. Test them against what others learned.
+- Evil players get bluffs: good characters not in play to pretend to be.
+- Be kind and have fun. Sharktower is about the story, not the stats.
+
+Get a fresh copy with /guide player.
