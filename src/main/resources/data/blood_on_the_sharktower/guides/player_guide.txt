@@ -2,9 +2,7 @@
 
 Welcome to Blood on the Sharktower: Blood on the Clocktower in Minecraft.
 
-Good must find and execute the Demon. Evil wins if only two players are left alive, or by a character's special win.
-
-Press H at any time for keys and a hint for right now.
+Good must find and execute the Demon. Evil wins if only two players are left alive. Press H for keys and help.
 
 # Getting ready
 

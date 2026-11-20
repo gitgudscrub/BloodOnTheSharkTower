@@ -201,15 +201,18 @@ public final class GuideBooks {
         pages.newPage();
         pages.heading(script.name() == null || script.name().isBlank() ? "Script Guide" : script.name(), ChatFormatting.DARK_RED);
         if (script.author() != null && !script.author().isBlank()) pages.paragraph("by " + script.author(), ChatFormatting.DARK_GRAY);
-        pages.paragraph("Every character that might be in play, one per page: what it does and how to play it.", null);
+        pages.paragraph("Every character on the script and how to play it.", null);
         List<ScriptRole> roles = new ArrayList<>(script.allRoles());
         int[] counts = new int[RoleType.values().length];
         for (ScriptRole role : roles) counts[role.getTeam().ordinal()]++;
         StringBuilder summary = new StringBuilder();
         for (RoleType type : List.of(RoleType.TOWNSFOLK, RoleType.OUTSIDER, RoleType.MINION, RoleType.DEMON, RoleType.TRAVELER)) {
-            if (counts[type.ordinal()] > 0) summary.append(counts[type.ordinal()]).append(' ').append(teamName(type, counts[type.ordinal()])).append('\n');
+            if (counts[type.ordinal()] > 0) {
+                if (!summary.isEmpty()) summary.append(", ");
+                summary.append(counts[type.ordinal()]).append(' ').append(teamName(type, counts[type.ordinal()]));
+            }
         }
-        pages.paragraph(summary.toString().trim(), null);
+        pages.paragraph(summary + ".", null);
         pages.paragraph("Get a fresh copy with /guide script.", ChatFormatting.DARK_GRAY);
 
         for (ScriptRole role : roles) character(pages, role);
@@ -219,12 +222,17 @@ public final class GuideBooks {
     private static void character(BookPages pages, ScriptRole role) {
         pages.newPage();
         ChatFormatting colour = teamColour(role.getTeam());
-        pages.heading(prettyName(role.getDisplayName()), colour);
-        pages.paragraph(teamName(role.getTeam(), 1), ChatFormatting.DARK_GRAY);
-        if (role.getAbility() != null && !role.getAbility().isBlank()) pages.paragraph(role.getAbility(), null);
+        String ability = role.getAbility() == null ? "" : role.getAbility();
         String tip = tips().get(role.getId());
-        if (tip != null && !tip.isBlank()) {
-            pages.subheading("How to play", colour);
+        boolean hasTip = tip != null && !tip.isBlank();
+        // Keep each character on one page: drop the team line, then the gap, when they would not fit.
+        int total = 1 + 1 + (ability.isBlank() ? 0 : BookPages.lines(ability)) + (hasTip ? 2 + BookPages.lines(tip) : 0);
+        pages.heading(prettyName(role.getDisplayName()), colour);
+        if (total <= BookPages.LINES_PER_PAGE) pages.text(teamName(role.getTeam(), 1), ChatFormatting.DARK_GRAY);
+        if (!ability.isBlank()) pages.text(ability, null);
+        if (hasTip) {
+            if (total - 1 <= BookPages.LINES_PER_PAGE) pages.subheading("How to play", colour);
+            else pages.heading("How to play", colour);
             pages.paragraph(tip, null);
         }
     }

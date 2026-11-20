@@ -2,9 +2,7 @@
 
 You run the game: you hand out characters, wake players at night, give them information and keep the Grimoire.
 
-The automation helps, but every call is yours. Any prompt can be overridden.
-
-Press H for keys and a hint for right now.
+The automation helps, but every call is yours. Press H for keys and help.
 
 # Taking control
 
@@ -56,9 +54,7 @@ They wait at the lower right of the Grimoire, with a button for each choice. Not
 
 Visit each awake player, give them their information in their house voice room and place reminders.
 
-Reminders are small tokens on the rim of a character; most expire on their own.
-
-At the end of the night, start the day.
+Reminders are small tokens on the rim of a character; most expire on their own. At the end of the night, start the day.
 
 # Day
 

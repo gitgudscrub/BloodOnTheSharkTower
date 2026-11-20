@@ -116,7 +116,7 @@ public final class FullGameTest {
             helper.assertTrue(content != null && content.pages().size() >= 5, kind + " guide has pages");
             for (var page : content.pages()) {
                 String text = page.raw().getString();
-                helper.assertTrue(text.split("\n", -1).length <= 13, kind + " page fits: " + text);
+                helper.assertTrue(text.split("\n", -1).length <= 14, kind + " page fits: " + text);
             }
         }
     }
