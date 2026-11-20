@@ -1,11 +1,11 @@
 name = "Blood on the Sharktower"
-version = "1.0.2-alpha.61"
+version = "1.0.2-alpha.62"
 pack-format = "packwiz:1.1.0"
 
 [index]
 file = "index.toml"
 hash-format = "sha256"
-hash = "d8cabc47e9f5df241ac860d5783645b4f67c8633e7f0b71e68fd8d0d1ace6f10"
+hash = "979f434c7aca6de5bd7bf63d172cc0b3108b88678dfb354e23fd2babaeb6d080"
 
 [versions]
 minecraft = "26.3"
