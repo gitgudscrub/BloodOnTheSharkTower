@@ -128,8 +128,8 @@ public class KeysHelpScreen extends Screen {
         } else {
             UiDrawing.text(graphics, this.font, "Good to know", rightX, rightY, UiDrawing.GOLD, UiTheme.dark());
             rightY += 12;
-            for (String line : List.of("Tab shows seats and pronouns.", "/nick sets your display name.",
-                    "/pronouns sets your pronouns.", "Settings can hide any HUD.")) {
+            for (String line : List.of("Tab shows seats and pronouns.", "/nick and /pronouns: your name.",
+                    "/guide: Player, Script and ST books.", "Settings can hide any HUD.")) {
                 UiDrawing.text(graphics, this.font, line, rightX, rightY, UiDrawing.TEXT, false);
                 rightY += 10;
             }

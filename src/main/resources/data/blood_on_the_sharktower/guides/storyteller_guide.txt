@@ -1,0 +1,96 @@
+# Storyteller Guide
+
+You run the game: you hand out characters, wake players at night, give them information and keep the Grimoire.
+
+The automation helps, but every call is yours. Any prompt can be overridden.
+
+Press H for keys and a hint for right now.
+
+# Taking control
+
+Type /bots storyteller claim during setup. Once roles are sent, Storyteller control is locked until the game ends.
+
+- R: the Grimoire.
+- I: Storyteller Tools.
+- Y: the timer.
+
+# Setting up
+
+The Grimoire's setup checklist walks you through it:
+
+1. Choose a Script: Base 3, a saved script, or paste a botcscripts.com link.
+2. Seats: players are seated as they join. To Seats and To Home move everyone.
+3. Bag: Fill the Rest picks a fair set of characters.
+4. Drunk and Marionette: click the player after the deal.
+
+Then Send Roles.
+
+## Houses
+
+Each seat needs a house: stand in it and use /bots setSeatHome <seat>. A house is the area within 8 blocks of that spot, with its own voice room.
+
+# First night
+
+Press START NIGHT. Night 1 reminders (Red Herring, Washerwoman and others) are in the Grimoire.
+
+The Tonight checklist lists the wake order. The arrow keys step through it and Up visits the highlighted player.
+
+# House visits
+
+With House visits on, a player who chooses at night sleeps until you reach their house. Then they wake and choose.
+
+Their Resolve card also offers:
+- Wake now
+- Choose seat (choose for them)
+- I'll handle it
+
+Turn House visits off in the Grimoire to wake everyone at dusk instead.
+
+# Resolve cards
+
+Automation asks you before anything happens: Poisoner and Monk choices, Imp kills, Slayer shots, Virgin nominations, Witch curses and more.
+
+They wait at the lower right of the Grimoire, with a button for each choice. Nothing is decided without you.
+
+# Night
+
+Visit each awake player, give them their information in their house voice room and place reminders.
+
+Reminders are small tokens on the rim of a character; most expire on their own.
+
+At the end of the night, start the day.
+
+# Day
+
+Let the town talk. Open nominations from Tools, Nomination Flow.
+
+- Shift+left click a seat picks the nominator, Shift+right click the nominee.
+- Start Vote runs the clock hand.
+- Execute Marked executes the player on the block when nominations close.
+
+Then start the next night.
+
+# The Wraith
+
+When the Wraith is in play, they roam at night in Spectator. They hear a house only if they come in by its door.
+
+Every seated player gets a Spirit Lantern to light once per game. A lit lantern warns its owner of a Wraith and names them if they come in by the door.
+
+You are told where the Wraith goes. Recall now and Bring to seat are on their Resolve card.
+
+# Ending the game
+
+When a win happens, a "Game over?" card offers Good wins or Evil wins. You can also end the game from Tools, Game End.
+
+The Grimoire is revealed and the game is sent to the Sharktower site for stats (/bots stats off to skip). Cancel End Game takes it back.
+
+Reset for Next Game puts the town back for the next one.
+
+# Tips
+
+- Stay a step ahead: check the Tonight checklist before dusk.
+- Drunk and poisoned players get false information. Make it believable.
+- Keep the game close. A good game is decided at the end.
+- Use Undo if you click something by mistake.
+
+Get a fresh copy with /guide storyteller.

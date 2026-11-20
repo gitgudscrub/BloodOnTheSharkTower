@@ -749,6 +749,7 @@ public final class SetupOperations {
             NightChatManager.resync();
         }
         FreshGameBooks.beginGame(server, ServerState.PLAYER_ROLES.keySet());
+        com.sharktower.bloodonthesharktower.guide.GuideBooks.onRolesSent(server, ServerState.PLAYER_ROLES.keySet());
         MatchSnapshotManager.Result snapshot = MatchSnapshotManager.captureAtGameStart(server);
         StateBroadcaster.broadcastCurrentState(server);
         GrimoireRendererBridge.checkScriptAsync(ServerState.currentScript);

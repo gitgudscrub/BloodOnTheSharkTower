@@ -8,6 +8,7 @@ import com.sharktower.bloodonthesharktower.core.Reminder;
 import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
 import com.sharktower.bloodonthesharktower.daytime.VotingManager;
+import com.sharktower.bloodonthesharktower.guide.GuideBooks;
 import com.sharktower.bloodonthesharktower.serverupdate.SiteGameStats;
 import com.sharktower.bloodonthesharktower.setup.SeatPositionManager;
 import com.sharktower.bloodonthesharktower.states.ServerState;
@@ -81,6 +82,7 @@ public final class FullGameTest {
         run(server, storyteller, "bots storyteller claim");
         helper.assertTrue(StorytellerState.isStoryteller(storyteller.getUUID()), "Storyteller claim failed");
         run(server, storyteller, "bots resetGame");
+        run(server, storyteller, "bots testscript");
         for (int i = 0; i < NAMES.length; i++) {
             run(server, storyteller, "bots seatPlayer " + NAMES[i] + " " + (i + 1));
             run(server, storyteller, "bots assignRole " + (i + 1) + " " + roles[i]);
@@ -88,6 +90,10 @@ public final class FullGameTest {
         run(server, storyteller, "bots sendRoles");
         helper.assertValueEqual(ServerState.PLAYER_SEAT_NUMBERS.size(), 5, "seated players after Send Roles");
         helper.assertTrue(ServerState.PLAYER_ROLES.values().stream().anyMatch(r -> r.role() == Role.IMP), "the Imp was dealt");
+        // Guide books: the Script Guide at Send Roles, the Storyteller Guide on claiming.
+        for (ServerPlayer p : players) helper.assertTrue(GuideBooks.has(p, GuideBooks.Kind.SCRIPT), p.getName().getString() + " has the Script Guide");
+        helper.assertTrue(GuideBooks.has(storyteller, GuideBooks.Kind.SCRIPT), "the Storyteller has the Script Guide");
+        helper.assertTrue(GuideBooks.has(storyteller, GuideBooks.Kind.STORYTELLER), "the Storyteller has the Storyteller Guide");
         return new Table(storyteller, players);
     }
 
@@ -95,10 +101,31 @@ public final class FullGameTest {
         return RoleAutomation.prompts().stream().anyMatch(p -> p.id().equals(id));
     }
 
+    /** Every playable character has a tip, and every guide builds into pages. */
+    private static void checkGuides(GameTestHelper helper) {
+        for (Role role : Role.values()) {
+            switch (role.getType()) {
+                case FABLED, LORIC, NONE -> { continue; }
+                default -> helper.assertTrue(GuideBooks.hasTip(role.getId()), "a How to play tip for " + role.getId());
+            }
+        }
+        for (GuideBooks.Kind kind : GuideBooks.Kind.values()) {
+            var book = GuideBooks.create(kind);
+            helper.assertTrue(book != null, kind + " guide builds");
+            var content = book.get(net.minecraft.core.component.DataComponents.WRITTEN_BOOK_CONTENT);
+            helper.assertTrue(content != null && content.pages().size() >= 5, kind + " guide has pages");
+            for (var page : content.pages()) {
+                String text = page.raw().getString();
+                helper.assertTrue(text.split("\n", -1).length <= 13, kind + " page fits: " + text);
+            }
+        }
+    }
+
     @GameTest(maxTicks = 1200)
     public void wholeGame(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         Table t = deal(helper);
+        checkGuides(helper);
         ServerPlayer st = t.storyteller();
         ServerPlayer chef = t.players().get(4);
 
