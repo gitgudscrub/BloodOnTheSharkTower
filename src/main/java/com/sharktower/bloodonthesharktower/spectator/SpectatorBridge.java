@@ -38,7 +38,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * <p>Uses the same {@code site-link.json} as server updates; without it this
  * does nothing. Spectators on the site can only listen and talk among
- * themselves: nothing comes back into the game except the "audio wanted" flag.
+ * themselves: nothing comes back into the game except the "audio wanted" flag
+ * (and "map wanted": the {@link SpectatorMap} goes along only while someone
+ * has the page open).
  */
 public final class SpectatorBridge {
     private static final Gson GSON = new Gson();
@@ -52,6 +54,7 @@ public final class SpectatorBridge {
     private static final AtomicBoolean LIVE_IN_FLIGHT = new AtomicBoolean();
     private static final AtomicBoolean AUDIO_IN_FLIGHT = new AtomicBoolean();
     private static volatile boolean audioWanted;
+    private static volatile boolean mapWanted;
     private static volatile String lastBody;
     private static volatile long lastSentMs;
     private static int ticks;
@@ -90,6 +93,8 @@ public final class SpectatorBridge {
             // Only while an approved spectator is watching; the site never
             // shows this field to anyone else.
             if (GrimoireShare.wanted()) snap.add("grimoire", GrimoireShare.snapshot(server));
+            // Where everyone stands: only while someone has Watch live open.
+            if (mapWanted) snap.add("map", SpectatorMap.snapshot(server));
             body = GSON.toJson(snap);
         } catch (RuntimeException e) {
             BloodOnTheSharktower.LOGGER.debug("Spectator snapshot skipped", e);
@@ -153,6 +158,7 @@ public final class SpectatorBridge {
     private static void readReply(String reply) {
         JsonObject json = GSON.fromJson(reply, JsonObject.class);
         if (json != null && json.has("requests")) GrimoireShare.readReply(json);
+        mapWanted = json != null && json.has("map") && json.get("map").getAsBoolean();
         boolean wanted = json != null && json.has("audio") && json.get("audio").getAsBoolean();
         if (wanted != audioWanted) {
             setAudioWanted(wanted);
