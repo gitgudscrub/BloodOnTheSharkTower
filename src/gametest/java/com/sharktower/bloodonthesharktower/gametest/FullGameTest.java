@@ -9,6 +9,7 @@ import com.sharktower.bloodonthesharktower.core.Role;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
 import com.sharktower.bloodonthesharktower.daytime.VotingManager;
 import com.sharktower.bloodonthesharktower.guide.GuideBooks;
+import com.sharktower.bloodonthesharktower.practice.PracticePlayers;
 import com.sharktower.bloodonthesharktower.serverupdate.SiteGameStats;
 import com.sharktower.bloodonthesharktower.setup.SeatPositionManager;
 import com.sharktower.bloodonthesharktower.states.ServerState;
@@ -44,6 +45,7 @@ import java.util.UUID;
  * the Wraith home with the spent lantern gone.
  */
 public final class FullGameTest {
+    private static final String[] PRACTICE = {"Ada_bot", "Bram_bot", "Cosima_bot", "Dorian_bot", "Elspeth_bot"};
     private static final String[] NAMES = {"Imp1", "Poisoner2", "Monk3", "Virgin4", "Chef5"};
 
     private static ServerPlayer join(MinecraftServer server, ServerLevel level, String name) {
@@ -59,6 +61,19 @@ public final class FullGameTest {
 
     private static void run(MinecraftServer server, ServerPlayer as, String command) {
         server.getCommands().performPrefixedCommand(as.createCommandSourceStack(), command);
+    }
+
+    /** Runs {@code command} as {@code as} and returns what it said in chat. */
+    private static String said(MinecraftServer server, ServerPlayer as, String command) {
+        StringBuilder out = new StringBuilder();
+        net.minecraft.commands.CommandSource capture = new net.minecraft.commands.CommandSource() {
+            @Override public void sendSystemMessage(net.minecraft.network.chat.Component message) { out.append(message.getString()).append(" | "); }
+            @Override public boolean acceptsSuccess() { return true; }
+            @Override public boolean acceptsFailure() { return true; }
+            @Override public boolean shouldInformAdmins() { return false; }
+        };
+        server.getCommands().performPrefixedCommand(as.createCommandSourceStack().withSource(capture), command);
+        return out.toString();
     }
 
     private record Table(ServerPlayer storyteller, List<ServerPlayer> players) {}
@@ -121,7 +136,7 @@ public final class FullGameTest {
         }
     }
 
-    @GameTest(maxTicks = 1200)
+    @GameTest(maxTicks = 2400)
     public void wholeGame(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         Table t = deal(helper);
@@ -247,6 +262,76 @@ public final class FullGameTest {
                     helper.assertTrue(!WraithNight.hasLantern(chef3), "a spent lantern is not given again");
                     run(server, st, "bots automation wraith recall");
                     helper.assertTrue(WraithNight.roaming() == null, "the Storyteller can recall the Wraith");
+                    run(server, st, "bots resetGame");
+                    SeatPositionManager.clear();
+                })
+                // Game 4: practice players fill the town, pick at night, walk to their seats and vote.
+                .thenExecuteAfter(5, () -> {
+                    run(server, st, "bots storyteller claim");
+                    run(server, st, "bots resetGame");
+                    // The earlier games' players step out of the town (as if they had left).
+                    for (String name : NAMES) {
+                        run(server, st, "bots unseatPlayer " + name);
+                        ServerState.PLAYER_SEAT_NUMBERS.remove(server.getPlayerList().getPlayerByName(name).getUUID());
+                    }
+                    run(server, st, "bots testscript");
+                    run(server, st, "bots practice votes yes");
+                    run(server, st, "bots practice add 5");
+                    helper.assertValueEqual(PracticePlayers.count(), 5, "five practice players");
+                    String[] roles = {"imp", "poisoner", "monk", "virgin", "chef"};
+                    for (int i = 0; i < 5; i++) {
+                        helper.assertTrue(server.getPlayerList().getPlayerByName(PRACTICE[i]) != null, PRACTICE[i] + " is on the server");
+                        String seated = said(server, st, "bots seatPlayer " + PRACTICE[i] + " " + (i + 1));
+                        helper.assertTrue(StorytellerState.PENDING_SEAT_NUMBERS.containsKey(
+                                server.getPlayerList().getPlayerByName(PRACTICE[i]).getUUID()), PRACTICE[i] + " seated: " + seated);
+                        String dealt = said(server, st, "bots assignRole " + (i + 1) + " " + roles[i]);
+                        helper.assertTrue(StorytellerState.PENDING_ROLES.containsKey(
+                                server.getPlayerList().getPlayerByName(PRACTICE[i]).getUUID()), PRACTICE[i] + " dealt: " + dealt);
+                    }
+                    String sent = said(server, st, "bots sendRoles");
+                    helper.assertTrue(!ServerState.PLAYER_ROLES.isEmpty(), "roles sent: " + sent);
+                    helper.assertTrue(PracticePlayers.anySeated(), "a practice game");
+                    run(server, st, "bots dusk");
+                })
+                // No houses set, so the practice Poisoner picks a seat by itself.
+                .thenWaitUntil(() -> helper.assertTrue(RoleAutomation.prompts().stream()
+                        .anyMatch(p -> p.id().equals("poisoner") && p.body().contains(" chose ")),
+                        "the practice Poisoner should choose a seat"))
+                .thenExecute(() -> {
+                    run(server, st, "bots automation poisoner dismiss");
+                    double x = st.getX(), y = st.getY(), z = st.getZ();
+                    for (int seat = 1; seat <= 5; seat++) {
+                        double a = Math.PI * 2 * seat / 5;
+                        st.teleportTo(x + Math.cos(a) * 7, y, z + Math.sin(a) * 7);
+                        SeatPositionManager.setTownSquareSeat(seat, st);
+                    }
+                    st.teleportTo(x, y, z);
+                    run(server, st, "bots dawn");
+                    run(server, st, "bots nominations open");
+                    run(server, st, "bots nominatePair 3 1");
+                    run(server, st, "bots runVote");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(VotingManager.canResolveVote(), "the vote clock should pass every seat"))
+                .thenExecute(() -> {
+                    run(server, st, "bots resolveVote");
+                    helper.assertValueEqual(DaytimeState.getMarkedForExecution(),
+                            server.getPlayerList().getPlayerByName(PRACTICE[0]).getUUID(),
+                            "every practice hand went up, so seat 1 is on the block");
+                })
+                // They walked from where they joined to their town-square seats.
+                .thenWaitUntil(() -> {
+                    for (int seat = 1; seat <= 5; seat++) {
+                        ServerPlayer bot = server.getPlayerList().getPlayerByName(PRACTICE[seat - 1]);
+                        var at = SeatPositionManager.townSquareSeat(seat);
+                        double d = Math.hypot(bot.getX() - at.x(), bot.getZ() - at.z());
+                        helper.assertTrue(d < 0.2, PRACTICE[seat - 1] + " should reach seat " + seat + " (" + d + " away)");
+                    }
+                })
+                .thenExecute(() -> {
+                    run(server, st, "bots practice clear");
+                    helper.assertValueEqual(PracticePlayers.count(), 0, "practice players cleared");
+                    helper.assertTrue(server.getPlayerList().getPlayerByName(PRACTICE[0]) == null, "practice players left the server");
+                    run(server, st, "bots practice votes random");
                     run(server, st, "bots resetGame");
                     SeatPositionManager.clear();
                 })
