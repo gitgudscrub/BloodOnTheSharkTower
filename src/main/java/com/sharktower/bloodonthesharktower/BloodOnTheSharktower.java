@@ -61,6 +61,7 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.automation.PsychopathAxe.register();
         com.sharktower.bloodonthesharktower.automation.WraithNight.register();
         com.sharktower.bloodonthesharktower.serverupdate.SiteGameStats.register();
+        com.sharktower.bloodonthesharktower.serverupdate.GameRecap.register();
         com.sharktower.bloodonthesharktower.guide.GuideBooks.register();
         com.sharktower.bloodonthesharktower.command.RoshamboCommand.register();
         com.sharktower.bloodonthesharktower.networking.StorytellerMovement.register();

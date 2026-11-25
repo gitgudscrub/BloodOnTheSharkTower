@@ -37,6 +37,7 @@ public final class ExecutionManager {
             StorytellerState.lastExecutedRoleName = executed == null ? "" : executed.getDisplayName();
         }
         ServerState.executionToday = true;
+        com.sharktower.bloodonthesharktower.serverupdate.GameRecap.onExecution(player, !wasDead);
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
         VotingManager.clearLastResult();
@@ -55,6 +56,7 @@ public final class ExecutionManager {
     public static void executePlayerFail(MinecraftServer server, UUID player, boolean forced, UUID butcherUuid) {
         if (player == null) return;
         ServerState.executionToday = true;
+        com.sharktower.bloodonthesharktower.serverupdate.GameRecap.onExecution(player, false);
         DaytimeState.clearMarkedForExecution();
         DaytimeState.closeNominations();
         VotingManager.clearLastResult();

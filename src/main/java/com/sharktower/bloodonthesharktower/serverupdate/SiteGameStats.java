@@ -25,7 +25,8 @@ import java.util.UUID;
 
 /**
  * Finished games go to the Sharktower site, where they count in members'
- * stats and achievements like a Grim Poster game. Sent when the Storyteller
+ * stats and achievements like a Grim Poster game, and get a recap page
+ * (phases, deaths, executions and votes from {@link GameRecap}). Sent when the Storyteller
  * ends the game (Good/Evil wins); Cancel End Game takes it back. Players link
  * their Minecraft account with {@code /link} (a code to enter on the site).
  *
@@ -127,6 +128,10 @@ public final class SiteGameStats {
         game.addProperty("winner", side);
         game.add("players", players);
         game.add("storytellers", storytellers);
+        // The game's story for the website recap (and vote/death achievements).
+        GameRecap.catchUp();
+        game.add("timeline", GameRecap.timeline(ServerState.PLAYER_SEAT_NUMBERS));
+        game.add("votes", GameRecap.votes(ServerState.PLAYER_SEAT_NUMBERS));
         return game;
     }
 

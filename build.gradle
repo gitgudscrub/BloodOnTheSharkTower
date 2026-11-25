@@ -346,6 +346,13 @@ tasks.register('spectatorRegression', JavaExec) {
 }
 tasks.named('check') { dependsOn tasks.named('spectatorRegression') }
 
+tasks.register('gameRecapRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sharktower.bloodonthesharktower.serverupdate.GameRecapRegression'
+}
+tasks.named('check') { dependsOn tasks.named('gameRecapRegression') }
+
 tasks.register('nicknamesRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath

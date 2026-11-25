@@ -81,6 +81,7 @@ public final class VotingManager {
 
     public static Result resolveVote(MinecraftServer server) {
         UUID nominee = DaytimeState.getCurrentNominee();
+        UUID nominator = DaytimeState.getCurrentNominator();
         if (nominee == null) {
             lastResult = new Result(VoteResult.NOT_ENOUGH, null, 0, 0, List.of());
             return lastResult;
@@ -157,6 +158,7 @@ public final class VotingManager {
         DaytimeState.setCurrentNominee(null);
         ElectionState.endElection();
         lastResult = new Result(result, nominee, total, threshold, List.copyOf(voters));
+        com.sharktower.bloodonthesharktower.serverupdate.GameRecap.onVote(nominator, nominee, total, baseThreshold, voters);
 
         BloodOnTheSharktower.LOGGER.info(
                 "Vote resolved: nominee={}, votes={}, threshold={}, result={}", nominee, total, threshold, result
