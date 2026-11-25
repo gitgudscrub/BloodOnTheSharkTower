@@ -55,6 +55,7 @@ public final class ExileSupportManager {
         int threshold = currentThreshold();
         boolean exiled = support >= threshold;
         DaytimeState.endExileSupport();
+        com.sharktower.bloodonthesharktower.serverupdate.GameRecap.onExile(caller, target, support, threshold);
         if (exiled) ExileManager.executeExile(server, target, caller, support);
         else ExileManager.resetExile(server);
         return new Result(exiled, support, threshold);
