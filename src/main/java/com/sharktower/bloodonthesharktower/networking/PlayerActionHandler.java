@@ -57,6 +57,11 @@ public final class PlayerActionHandler {
                 .withStyle(result.ok() ? ChatFormatting.GRAY : ChatFormatting.RED));
     }
 
+    /** Raises or lowers {@code player}'s hand by the same rules as the hand key (practice players use it). */
+    public static void setHand(ServerPlayer player, MinecraftServer server, boolean raised) {
+        toggleHand(player, server, raised);
+    }
+
     private static void toggleHand(ServerPlayer player, MinecraftServer server, Boolean forcedState) {
         UUID id = player.getUUID();
         if (!ServerState.PLAYER_SEAT_NUMBERS.containsKey(id)) {

@@ -82,6 +82,14 @@ The Grimoire is revealed and the game is sent to the Sharktower site for stats (
 
 Reset for Next Game puts the town back for the next one.
 
+# Practice players
+
+Rehearse alone, or try a full town: /bots practice add 7 brings in stand-in players around you.
+
+Seat and deal as usual. They walk home at night, come to the square by day, vote, and make night picks after your visit.
+
+/bots practice votes yes, no or random. /bots practice clear sends them away. Practice games are not sent to the site.
+
 # Tips
 
 - Stay a step ahead: check the Tonight checklist before dusk.

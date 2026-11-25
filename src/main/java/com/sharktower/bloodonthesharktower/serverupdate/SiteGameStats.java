@@ -68,6 +68,10 @@ public final class SiteGameStats {
     public static void onGameEnd(MinecraftServer server, String winner) {
         if (server == null || !enabled || !SiteLink.enabled()) return;
         if (!BotsCommands.syntheticTestNames().isEmpty()) return;
+        if (com.sharktower.bloodonthesharktower.practice.PracticePlayers.anySeated()) {
+            tellStorytellers(server, "Practice game: not sent to the Sharktower site.");
+            return;
+        }
         JsonObject game = build(server, winner);
         if (game == null) return;
         String id = game.get("gameId").getAsString();

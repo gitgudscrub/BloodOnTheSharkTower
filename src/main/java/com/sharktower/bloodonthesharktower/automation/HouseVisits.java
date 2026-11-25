@@ -99,7 +99,7 @@ public final class HouseVisits {
     }
 
     /** Why {@code player} cannot choose yet (asleep, or the Storyteller chose for them), or null. */
-    static String refusal(UUID player) {
+    public static String refusal(UUID player) {
         if (player == null) return null;
         if (ASLEEP.containsKey(player)) return ASLEEP_REFUSAL;
         if (CHOSEN_FOR.contains(player)) return "The Storyteller has made your choice for you tonight.";

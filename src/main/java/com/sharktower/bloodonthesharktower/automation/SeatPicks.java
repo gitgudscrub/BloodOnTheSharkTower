@@ -30,6 +30,11 @@ public final class SeatPicks {
         send(player, payload);
     }
 
+    /** The choice open for {@code player}, or null (practice players answer it). */
+    public static SeatPickS2CPayload openFor(UUID player) {
+        return player == null ? null : OPEN.get(player);
+    }
+
     /** Closes the choice for {@code player}, if one is open. */
     static void clear(UUID player) {
         if (player == null || OPEN.remove(player) == null) return;
