@@ -54,22 +54,29 @@ public final class StorytellerActionHandler {
                 return;
             }
 
-            com.sharktower.bloodonthesharktower.core.Script scriptBefore = ServerState.currentScript;
-            long generationBefore = ServerState.resetGeneration;
-            SetupOperations.Result result = dispatch(server, player, payload.action(), payload.argument());
+            SetupOperations.Result result = run(server, player, payload.action(), payload.argument());
             player.sendSystemMessage(Component.literal(result.message()));
-
-            // Changes are re-broadcast through the same state family used by
-            // reconnect/join sync. Storytellers receive pending Grimoire state;
-            // players continue to receive committed roles. The script and the
-            // notebooks are only re-sent when a reset or a script load touched
-            // them; every other click sends the lighter game-state set.
-            if (ServerState.currentScript != scriptBefore || ServerState.resetGeneration != generationBefore) {
-                StateBroadcaster.broadcastCurrentState(server);
-            } else {
-                StateBroadcaster.broadcastGameState(server);
-            }
         });
+    }
+
+    /**
+     * Runs one Grimoire action (a click, or the matching /bots command) and
+     * re-broadcasts through the same state family used by reconnect/join sync.
+     * Storytellers receive pending Grimoire state; players continue to receive
+     * committed roles. The script and the notebooks are only re-sent when a
+     * reset or a script load touched them; every other action sends the
+     * lighter game-state set. {@code actor} may be null for the console.
+     */
+    public static SetupOperations.Result run(MinecraftServer server, ServerPlayer actor, String action, String argument) {
+        com.sharktower.bloodonthesharktower.core.Script scriptBefore = ServerState.currentScript;
+        long generationBefore = ServerState.resetGeneration;
+        SetupOperations.Result result = dispatch(server, actor, action, argument);
+        if (ServerState.currentScript != scriptBefore || ServerState.resetGeneration != generationBefore) {
+            StateBroadcaster.broadcastCurrentState(server);
+        } else {
+            StateBroadcaster.broadcastGameState(server);
+        }
+        return result;
     }
 
     private static SetupOperations.Result dispatch(MinecraftServer server, ServerPlayer actor, String action, String argument) {
@@ -541,7 +548,7 @@ public final class StorytellerActionHandler {
     private static SetupOperations.Result openNominations(MinecraftServer server) {
         Set<UUID> players = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.keySet());
         if (players.isEmpty()) return SetupOperations.Result.fail("No seated players are available.");
-        DaytimeState.openNominations(players, ServerState.deadPlayers(), java.util.List.of(), java.util.List.of());
+        DaytimeState.openNominations(players);
         VotingManager.clearLastResult();
         PhasePresentation.nominationsOpen(server);
         return SetupOperations.Result.ok("Nominations opened for " + players.size() + " player(s).");

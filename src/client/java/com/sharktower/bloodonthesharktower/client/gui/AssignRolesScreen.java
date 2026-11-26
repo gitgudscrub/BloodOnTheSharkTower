@@ -54,7 +54,6 @@ public class AssignRolesScreen extends Screen {
     private static final int ROLE_SIZE = 32;
     private static final int PERCEIVED_ROLE_SIZE = 20;
     private static final int REMINDER_SIZE = 14;
-    private static final int REMINDER_PADDING = 2;
     private static final int DECEIVED_ROLE_GAP = 4;
     private static final int HEAD_SIZE = 24;
     /** The biggest table the Sharktower map seats; the layout is tuned up to here. */

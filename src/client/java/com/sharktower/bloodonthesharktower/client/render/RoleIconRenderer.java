@@ -110,7 +110,8 @@ public final class RoleIconRenderer {
         return hasAssignedRole(perceived);
     }
 
-    private static void submitBillboard(
+    /** A camera-facing square of {@code texture}, shifted sideways by {@code horizontalOffset}; the vote markers use it too. */
+    static void submitBillboard(
             SubmitNodeCollector collector,
             PoseStack poseStack,
             Vec3 camera,

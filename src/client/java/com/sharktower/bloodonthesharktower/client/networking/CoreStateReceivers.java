@@ -263,7 +263,6 @@ public final class CoreStateReceivers {
                     payload.raisedHands(),
                     payload.currentVotes(),
                     payload.lockedVotes(),
-                    payload.leverStates(),
                     payload.organGrinderMode(),
                     payload.exileSupport(),
                     payload.currentVoter(),

@@ -242,14 +242,6 @@ public enum Role {
         return RoleText.get(nameKey, humanize(name()));
     }
 
-    public String getNameTranslationKey() {
-        return nameKey;
-    }
-
-    public String getAbilityTranslationKey() {
-        return abilityKey;
-    }
-
     public static Role findById(String roleId) {
         if (roleId == null) return null;
         String normalized = roleId.toLowerCase(Locale.ROOT).replaceAll("[_\\s-]", "");

@@ -15,16 +15,9 @@ import net.minecraft.ChatFormatting;
 
 import java.util.UUID;
 
-/** Logical/core port of BOTB ExecutionManager; presentation animation returns later. */
+/** Executions: who dies or survives on the block, and the day ending with or without one. */
 public final class ExecutionManager {
     private ExecutionManager() {}
-
-    public static boolean executeMarkedPlayer(MinecraftServer server) {
-        UUID marked = DaytimeState.getMarkedForExecution();
-        if (marked == null) return false;
-        executePlayer(server, marked, false, null);
-        return true;
-    }
 
     public static void executePlayer(MinecraftServer server, UUID player, boolean forced, UUID butcherUuid) {
         if (player == null) return;

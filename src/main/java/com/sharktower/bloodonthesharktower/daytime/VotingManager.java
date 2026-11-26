@@ -9,7 +9,6 @@ import com.sharktower.bloodonthesharktower.states.StorytellerState;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +49,6 @@ public final class VotingManager {
         if (yes) yes = ButlerVoteRule.mayRaiseHand(player);
         DaytimeState.setRaisedHand(player, yes);
         DaytimeState.setCurrentVote(player, yes);
-        DaytimeState.setLeverState(player, yes);
         StateBroadcaster.broadcastVoteState(server);
     }
 
@@ -63,7 +61,6 @@ public final class VotingManager {
         }
         vote = ButlerVoteRule.allowYesAtLock(server, player, vote);
         DaytimeState.lockVote(player, vote);
-        ElectionState.lockVote(player, vote);
         if (vote) DayPublicInfoBookManager.recordVote(server, player);
         if (vote && !StorytellerState.demonVotedToday) {
             PendingRoleAssignment assignment = StorytellerState.effectiveGrimoireRoles().get(player);
@@ -101,7 +98,7 @@ public final class VotingManager {
             if (!Boolean.TRUE.equals(entry.getValue())) continue;
             if (deadPlayers.contains(player) && DaytimeState.hasUsedGhostVote(player)) continue;
             voters.add(player);
-            lockedTotal += DaytimeState.getVoteMultiplier(player);
+            lockedTotal++;
         }
 
         int total = DaytimeState.hasManualVoteCountOverride()
@@ -150,7 +147,6 @@ public final class VotingManager {
         for (UUID voter : voters) {
             if (deadPlayers.contains(voter)) DaytimeState.markGhostVoteUsed(voter);
         }
-        DaytimeState.finalizeSecretGhostVotes();
         DaytimeState.endVote();
         DaytimeState.clearRaisedHands();
         DaytimeState.clearManualVoteCountOverride();
@@ -200,14 +196,14 @@ public final class VotingManager {
         return somethingMarked ? Math.max(base, markedVotes + 1) : base;
     }
 
-    /** Weighted YES votes whose seats have already been reached by the clock. */
+    /** YES votes whose seats the clock has already reached. */
     public static int lockedEffectiveVoteCount() {
         int total = 0;
         Set<UUID> dead = ServerState.deadPlayers();
         for (Map.Entry<UUID, Boolean> entry : DaytimeState.getLockedVotes().entrySet()) {
             if (!Boolean.TRUE.equals(entry.getValue())) continue;
             if (dead.contains(entry.getKey()) && DaytimeState.hasUsedGhostVote(entry.getKey())) continue;
-            total += DaytimeState.getVoteMultiplier(entry.getKey());
+            total++;
         }
         return total;
     }
@@ -229,41 +225,14 @@ public final class VotingManager {
         return true;
     }
 
-    public static boolean setVoteCountOverride(MinecraftServer server, int count) {
-        if (!canResolveVote()) return false;
-        DaytimeState.setManualVoteCountOverride(count);
-        StateBroadcaster.broadcastVoteState(server);
-        return true;
-    }
-
     public static void clearVoteCountOverride(MinecraftServer server) {
         DaytimeState.clearManualVoteCountOverride();
-        StateBroadcaster.broadcastVoteState(server);
-    }
-
-    public static Set<UUID> currentYesVoters() {
-        Set<UUID> result = new HashSet<>();
-        DaytimeState.getLockedVotes().forEach((id, yes) -> { if (Boolean.TRUE.equals(yes)) result.add(id); });
-        return result;
-    }
-
-    public static void resetLeverStates(MinecraftServer server) {
-        DaytimeState.clearLeverStates();
-        StateBroadcaster.broadcastVoteState(server);
-    }
-
-    public static void broadcastLeverStates(MinecraftServer server) {
         StateBroadcaster.broadcastVoteState(server);
     }
 
     public static void resetVote(MinecraftServer server) {
         DaytimeState.resetVote();
         StateBroadcaster.broadcastDaytimeState(server);
-        StateBroadcaster.broadcastVoteState(server);
-    }
-
-    public static void updatePlayerDeathIndicator(MinecraftServer server, UUID player) {
-        StateBroadcaster.broadcastDeathStatus(server);
         StateBroadcaster.broadcastVoteState(server);
     }
 }

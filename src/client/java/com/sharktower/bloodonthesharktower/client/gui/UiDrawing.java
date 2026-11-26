@@ -165,16 +165,6 @@ public final class UiDrawing {
         graphics.blit(RenderPipelines.GUI_TEXTURED, role.getIcon(), x, y, 0, 0, size, size, size, size);
     }
 
-    public static void emptyRoleSlot(GuiGraphicsExtractor graphics, int x, int y, int size) {
-        if (size <= 0) return;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, EMPTY_ROLE_SLOT, x, y, 0, 0, size, size, size, size);
-    }
-
-    public static void emptyReminderSlot(GuiGraphicsExtractor graphics, int x, int y, int size) {
-        if (size <= 0) return;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, EMPTY_REMINDER_SLOT, x, y, 0, 0, size, size, size, size);
-    }
-
     public static Identifier emptyRoleSlotTexture() {
         return EMPTY_ROLE_SLOT;
     }
@@ -241,9 +231,4 @@ public final class UiDrawing {
         return colour | 0xFF000000;
     }
 
-    public static String shortUuid(java.util.UUID uuid) {
-        if (uuid == null) return "unknown";
-        String raw = uuid.toString();
-        return raw.substring(0, Math.min(8, raw.length()));
-    }
 }

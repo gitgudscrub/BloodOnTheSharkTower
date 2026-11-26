@@ -39,11 +39,9 @@ public final class NightVisitInfoHUD {
     private static final int OUTER = 0xB84C7582;
     private static final int INNER = 0xD9142229;
     private static final int BORDER = 0xFFD1ECF4;
-    private static final int CYAN = 0xFF55FFFF;
     private static final int YELLOW = 0xFFFFFF55;
     private static final int GREEN = 0xFF55FF55;
     private static final int RED = 0xFFFF5555;
-    private static final int GREY = 0xFFB8B8B8;
 
     private NightVisitInfoHUD() {}
 

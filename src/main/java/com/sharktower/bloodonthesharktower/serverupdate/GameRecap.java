@@ -93,7 +93,7 @@ public final class GameRecap {
     public static synchronized void onVote(UUID nominator, UUID nominee, int votes, int majority, List<UUID> voters) {
         if (nominee == null) return;
         Map<UUID, Integer> hands = new HashMap<>();
-        for (UUID voter : voters) hands.put(voter, Math.max(1, DaytimeState.getVoteMultiplier(voter)));
+        for (UUID voter : voters) hands.put(voter, 1);
         addVote(new Vote(phaseNow(), System.currentTimeMillis(), nominator, nominee, false, votes, majority, hands));
     }
 

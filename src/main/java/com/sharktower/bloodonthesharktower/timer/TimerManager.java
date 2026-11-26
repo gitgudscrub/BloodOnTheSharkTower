@@ -96,10 +96,6 @@ public final class TimerManager {
                 active, paused, remainingSeconds, totalSeconds, false));
     }
 
-    public static void removePlayer(ServerPlayer player) {
-        // Boss-bar membership returns in the UI batch. Logical timer is global.
-    }
-
     public static boolean isActive() { return active; }
     public static boolean isPaused() { return paused; }
     public static int getRemainingSeconds() { return remainingSeconds; }

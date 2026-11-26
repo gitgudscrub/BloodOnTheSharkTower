@@ -36,9 +36,6 @@ public final class StorytellerState {
     public static int nextSeatNumber = 1;
     public static boolean showUnseated = true;
     public static boolean showSelf = true;
-    public static boolean autoTeleportEnabled = false;
-    public static boolean sendTeleportInfo = true;
-    public static boolean useDoorknock = true;
     public static boolean showBluffs = true;
     public static int setupOutsiderCount = 0;
 
@@ -110,17 +107,9 @@ public final class StorytellerState {
         STORYTELLERS.remove(playerId);
     }
 
-    public static boolean hasSeatedPlayers() {
-        return !ServerState.PLAYER_SEAT_NUMBERS.isEmpty() || !PENDING_SEAT_NUMBERS.isEmpty();
-    }
-
     public static boolean isTraveler(UUID playerId) {
         PendingRoleAssignment assignment = ServerState.PLAYER_ROLES.get(playerId);
         return assignment != null && assignment.getRoleType() == RoleType.TRAVELER;
-    }
-
-    public static boolean hasAnyTravelers() {
-        return ServerState.PLAYER_ROLES.entrySet().stream().anyMatch(entry -> isTraveler(entry.getKey()));
     }
 
     public static void resetDailyNightInfo() {

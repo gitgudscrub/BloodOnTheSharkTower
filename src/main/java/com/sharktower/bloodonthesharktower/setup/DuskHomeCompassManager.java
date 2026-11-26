@@ -124,22 +124,8 @@ public final class DuskHomeCompassManager {
         // hotbar slots are occupied, use another empty main-inventory slot.
         // We deliberately never overwrite or drop a player's existing item.
         var items = player.getInventory().getNonEquipmentItems();
-        int emptySlot = -1;
-        int hotbarEnd = Math.min(9, items.size());
-        for (int slot = 0; slot < hotbarEnd; slot++) {
-            if (items.get(slot).isEmpty()) {
-                emptySlot = slot;
-                break;
-            }
-        }
-        if (emptySlot < 0) {
-            for (int slot = hotbarEnd; slot < items.size(); slot++) {
-                if (items.get(slot).isEmpty()) {
-                    emptySlot = slot;
-                    break;
-                }
-            }
-        }
+        // getFreeSlot scans the hotbar (slots 0-8) before the rest of the inventory.
+        int emptySlot = player.getInventory().getFreeSlot();
 
         if (emptySlot >= 0) {
             items.set(emptySlot, compass);

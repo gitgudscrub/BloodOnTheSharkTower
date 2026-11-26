@@ -238,10 +238,6 @@ public final class DayChatZoneManager {
                 + ", currentlyPrivate=" + PLAYER_ZONE.size();
     }
 
-    public static synchronized int configuredZoneCount() {
-        return (int) ZONES.values().stream().filter(ChatZone::ready).count();
-    }
-
     /**
      * Local HUD route for daytime automatic voice routing. The existing
      * VoiceRouteS2CPayload is deliberately reused so no extra networking packet

@@ -39,10 +39,6 @@ public final class MapConfigurationStore {
 
     private MapConfigurationStore() {}
 
-    public static synchronized Path filePath() {
-        return FILE;
-    }
-
     public static synchronized void load() {
         if (!Files.isRegularFile(FILE)) {
             BloodOnTheSharktower.LOGGER.info(

@@ -2,7 +2,7 @@
 
 This repository can build a Modrinth `.mrpack` and a matching server JAR, and, when explicitly requested, publish the client pack to the Blood on the Sharktower Modrinth project.
 
-The important safety rule is that **publishing is manual-only**. Pull requests only build dry-run artifacts. Merging development work never uploads a new player release automatically.
+Publishing to **Modrinth is manual-only**, and pull requests only build dry-run artifacts. Separately, merging a version bump of `gradle.properties` to `main` releases that version to the pack auto-updater (a `pack-<version>` GitHub release, started by `.github/workflows/auto-release.yml` with the notes from `CHANGELOG.md`), so installed packs pick it up on their next launch. Put `[no release]` in the merge commit message to skip one.
 
 ## Pack contents
 

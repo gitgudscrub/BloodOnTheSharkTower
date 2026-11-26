@@ -76,6 +76,18 @@ public final class GameRecapRegression {
                 "deaths name the 1-based seat");
         GameRecap.clear();
 
+        // A game that ends without being sent (stats off, practice, no server) forgets the last sent game,
+        // so Cancel End Game can't take back an older real game.
+        try {
+            java.lang.reflect.Field sent = SiteGameStats.class.getDeclaredField("sentGameId");
+            sent.setAccessible(true);
+            sent.set(null, "an-older-game");
+            SiteGameStats.onGameEnd(null, "good");
+            check(sent.get(null) == null, "an unsent game clears the id Cancel End Game would remove");
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+
         System.out.println("GameRecapRegression passed " + checks + " checks");
     }
 }

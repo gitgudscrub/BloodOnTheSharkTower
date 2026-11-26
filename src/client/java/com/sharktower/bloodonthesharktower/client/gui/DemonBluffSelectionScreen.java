@@ -2,155 +2,44 @@ package com.sharktower.bloodonthesharktower.client.gui;
 
 import com.sharktower.bloodonthesharktower.client.networking.ClientStorytellerActions;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
-import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.core.ScriptRole;
 import com.sharktower.bloodonthesharktower.states.ClientState;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
-/**
- * Multi-select Demon bluff picker.
- *
- * All three bluff choices are collected before anything is sent to the server,
- * avoiding the old slot-by-slot flow that repeatedly closed the Grimoire.
- */
-public final class DemonBluffSelectionScreen extends Screen {
-    private int perPage() { return Math.max(1, (this.width - 24 + 6) / 128) * Math.max(1, (this.height - 50 - 90) / 25); }
-
-    private final LinkedHashSet<String> selected;
-    private final int page;
-    private final Screen returnScreen;
-
+/** The Storyteller's Demon bluff picker: three good roles that are not in play. */
+public final class DemonBluffSelectionScreen extends BluffPickerScreen {
     public DemonBluffSelectionScreen() {
         this(null);
     }
 
     public DemonBluffSelectionScreen(Screen returnScreen) {
-        this(initialSelection(), 0, returnScreen);
+        this(firstThree(availableRoles(), ClientState.demonBluffs), 0, returnScreen);
     }
 
     private DemonBluffSelectionScreen(Set<String> selected, int page, Screen returnScreen) {
-        super(Component.literal("Choose 3 Demon Bluffs"));
-        this.selected = new LinkedHashSet<>(selected);
-        this.page = Math.max(0, page);
-        this.returnScreen = returnScreen;
+        super(Component.literal("Choose 3 Demon Bluffs"), selected, page, returnScreen);
     }
 
     @Override
-    protected void init() {
-        List<ScriptRole> roles = availableRoles();
-        int maxPage = Math.max(0, (roles.size() - 1) / perPage());
-        int actualPage = Math.min(page, maxPage);
+    protected List<ScriptRole> roles() { return availableRoles(); }
 
-        int start = actualPage * perPage();
-        int end = Math.min(roles.size(), start + perPage());
+    @Override
+    protected String heading() { return "Choose 3 out-of-play good roles"; }
 
-        int columns = Math.max(1, (this.width - 24 + 6) / 128);
-        int width = 122;
-        int height = 20;
-        int gapX = 6;
-        int gapY = 5;
-        int gridWidth = columns * width + (columns - 1) * gapX;
-        int left = (this.width - gridWidth) / 2;
-        int top = 50;
-
-        for (int index = start; index < end; index++) {
-            ScriptRole role = roles.get(index);
-            int local = index - start;
-            int col = local % columns;
-            int row = local / columns;
-
-            boolean chosen = selected.contains(key(role.getId()));
-            Component label = Component.literal((chosen ? "✓ " : "") + role.getDisplayName())
-                    .withStyle(style -> style.withColor(UiDrawing.teamColor(role.getTeam())));
-
-            SharktowerButton button = SharktowerButton.builder(label, b -> toggle(role, actualPage))
-                    .bounds(left + col * (width + gapX), top + row * (height + gapY), width, height)
-                    .build();
-
-            // Once three are selected, other unselected roles are disabled until
-            // one of the selected choices is deselected.
-            button.active = chosen || selected.size() < 3;
-            this.addRenderableWidget(button);
-        }
-
-        int navY = this.height - 78;
-        SharktowerButton previous = SharktowerButton.builder(Component.literal("<"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage - 1, returnScreen)))
-                .bounds(this.width / 2 - 120, navY, 40, 20).build();
-        previous.active = actualPage > 0;
-        this.addRenderableWidget(previous);
-
-        SharktowerButton next = SharktowerButton.builder(Component.literal(">"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(selected, actualPage + 1, returnScreen)))
-                .bounds(this.width / 2 + 80, navY, 40, 20).build();
-        next.active = actualPage < maxPage;
-        this.addRenderableWidget(next);
-
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Clear Selection"), b ->
-                        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(Set.of(), actualPage, returnScreen)))
-                .bounds(this.width / 2 - 72, navY, 144, 20).build());
-
-        SharktowerButton confirm = SharktowerButton.builder(Component.literal("Confirm 3 Bluffs").withStyle(ChatFormatting.GREEN), b ->
-                        confirm())
-                .bounds(this.width / 2 - 125, this.height - 30, 120, 20).build();
-        confirm.active = selected.size() == 3;
-        this.addRenderableWidget(confirm);
-
-        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Back"), b ->
-                        back())
-                .bounds(this.width / 2 + 5, this.height - 30, 120, 20).build());
+    @Override
+    protected Screen with(Set<String> selected, int page) {
+        return new DemonBluffSelectionScreen(selected, page, returnScreen);
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
-
-        String heading = "Choose 3 out-of-play good roles";
-        UiDrawing.text(graphics, this.font, heading,
-                (this.width - this.font.width(heading)) / 2, 16, UiDrawing.GOLD, UiTheme.dark());
-
-        String count = selected.size() + "/3 selected";
-        UiDrawing.text(graphics, this.font, count,
-                (this.width - this.font.width(count)) / 2, 29,
-                selected.size() == 3 ? UiTheme.yes() : UiDrawing.MUTED, false);
-
-        String names = selectedNames();
-        if (!names.isBlank()) {
-            UiDrawing.text(graphics, this.font, names,
-                    (this.width - this.font.width(names)) / 2, 39, UiDrawing.TEXT, false);
-        }
-    }
-
-    @Override
-    public void onClose() {
-        back();
-    }
-
-    private void toggle(ScriptRole role, int currentPage) {
-        String id = key(role.getId());
-        LinkedHashSet<String> next = new LinkedHashSet<>(selected);
-
-        if (next.contains(id)) {
-            next.remove(id);
-        } else if (next.size() < 3) {
-            next.add(id);
-        }
-
-        this.minecraft.gui.setScreen(new DemonBluffSelectionScreen(next, currentPage, returnScreen));
-    }
-
-    private void confirm() {
+    protected void confirm() {
         if (selected.size() != 3) return;
 
         if (returnScreen == null) {
@@ -162,7 +51,8 @@ public final class DemonBluffSelectionScreen extends Screen {
         }
     }
 
-    private void back() {
+    @Override
+    protected void back() {
         if (this.minecraft == null) return;
         if (returnScreen != null) {
             this.minecraft.gui.setScreen(returnScreen);
@@ -172,65 +62,15 @@ public final class DemonBluffSelectionScreen extends Screen {
         }
     }
 
-    private String selectedNames() {
-        List<ScriptRole> available = availableRoles();
-        List<String> names = new ArrayList<>();
-        for (String id : selected) {
-            available.stream()
-                    .filter(role -> key(role.getId()).equals(id))
-                    .findFirst()
-                    .ifPresent(role -> names.add(role.getDisplayName()));
-        }
-        return String.join(" • ", names);
-    }
-
-    private static LinkedHashSet<String> initialSelection() {
-        Set<String> available = availableRoles().stream()
-                .map(role -> key(role.getId()))
-                .collect(java.util.stream.Collectors.toSet());
-
-        LinkedHashSet<String> out = new LinkedHashSet<>();
-        for (String bluff : ClientState.demonBluffs) {
-            String id = key(bluff);
-            if (available.contains(id) && out.size() < 3) out.add(id);
-        }
-        return out;
-    }
-
+    /** Good roles minus every role (true or believed) already in the Grimoire. */
     private static List<ScriptRole> availableRoles() {
-        if (ClientState.currentScript == null) return List.of();
-
-        Set<String> unavailable = new java.util.HashSet<>();
-
-        ClientState.grimoireRoles.values().stream()
+        Set<String> inPlay = new HashSet<>();
+        Stream.concat(ClientState.grimoireRoles.values().stream(), ClientState.grimoirePerceivedRoles.values().stream())
                 .filter(Objects::nonNull)
                 .map(PendingRoleAssignment::getRoleId)
                 .filter(Objects::nonNull)
-                .map(DemonBluffSelectionScreen::key)
-                .forEach(unavailable::add);
-
-        ClientState.grimoirePerceivedRoles.values().stream()
-                .filter(Objects::nonNull)
-                .map(PendingRoleAssignment::getRoleId)
-                .filter(Objects::nonNull)
-                .map(DemonBluffSelectionScreen::key)
-                .forEach(unavailable::add);
-
-        List<ScriptRole> roles = new ArrayList<>();
-        for (ScriptRole role : ClientState.currentScript.allRoles()) {
-            if (role == null) continue;
-            if (role.getTeam() != RoleType.TOWNSFOLK && role.getTeam() != RoleType.OUTSIDER) continue;
-            if (unavailable.contains(key(role.getId()))) continue;
-            roles.add(role);
-        }
-
-        roles.sort(Comparator
-                .comparingInt((ScriptRole role) -> role.getTeam().ordinal())
-                .thenComparing(ScriptRole::getDisplayName, String.CASE_INSENSITIVE_ORDER));
-        return roles;
-    }
-
-    private static String key(String id) {
-        return id == null ? "" : id.trim().toLowerCase(Locale.ROOT);
+                .map(BluffPickerScreen::key)
+                .forEach(inPlay::add);
+        return goodRoles(inPlay);
     }
 }

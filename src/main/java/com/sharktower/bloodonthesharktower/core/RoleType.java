@@ -45,11 +45,4 @@ public enum RoleType {
         return RoleText.get(translationKey, name());
     }
 
-    public String getShortName() {
-        return RoleText.get(translationKey + ".short", getDisplayName());
-    }
-
-    public String getPluralName() {
-        return RoleText.get(translationKey + ".plural", getDisplayName());
-    }
 }

@@ -20,12 +20,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Small wire-format bridge used while the remaining original BOTB packet
- * codecs are being bulk-ported to Minecraft 26.2.
- *
- * The public payload shapes remain the original maps/collections; only their
- * 26.2 StreamCodec transport is temporarily JSON-backed so we can restore the
- * whole gameplay state family in one batch.
+ * Wire format for the game-state payloads: their maps and collections travel
+ * as JSON strings inside each StreamCodec.
  */
 final class StateWire {
     private static final Gson GSON = new Gson();

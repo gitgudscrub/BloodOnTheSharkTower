@@ -30,13 +30,7 @@ public final class ExileManager {
         DaytimeState.clearManualVoteCountOverride();
         DaytimeState.setCurrentExileCaller(caller);
         DaytimeState.setCurrentExileTarget(traveler);
-        ElectionState.beginElection(
-                ElectionType.EXILE_SUPPORT,
-                ElectionConfig.forExileSupport(),
-                traveler,
-                caller,
-                DaytimeState.getActiveElectionSeats()
-        );
+        ElectionState.beginElection(traveler, DaytimeState.getActiveElectionSeats());
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastVoteState(server);
         return true;

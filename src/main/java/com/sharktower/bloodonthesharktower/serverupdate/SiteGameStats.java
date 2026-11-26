@@ -66,6 +66,8 @@ public final class SiteGameStats {
 
     /** End Game (first reveal): send the finished game. */
     public static void onGameEnd(MinecraftServer server, String winner) {
+        // Forget the last game first: a game that isn't sent must not let Cancel End Game remove an older one.
+        sentGameId = null;
         if (server == null || !enabled || !SiteLink.enabled()) return;
         if (!BotsCommands.syntheticTestNames().isEmpty()) return;
         if (com.sharktower.bloodonthesharktower.practice.PracticePlayers.anySeated()) {
@@ -74,8 +76,7 @@ public final class SiteGameStats {
         }
         JsonObject game = build(server, winner);
         if (game == null) return;
-        String id = game.get("gameId").getAsString();
-        sentGameId = id;
+        sentGameId = game.get("gameId").getAsString();
         SiteLink.post("/internal/minecraft/game", GSON.toJson(game), "game stats", reply ->
                 server.execute(() -> tellStorytellers(server, "Game sent to the Sharktower site for stats and achievements."
                         + " Cancel End Game takes it back.")));
@@ -89,11 +90,6 @@ public final class SiteGameStats {
         JsonObject body = new JsonObject();
         body.addProperty("gameId", id);
         SiteLink.post("/internal/minecraft/game/remove", GSON.toJson(body), "game stats removal", null);
-    }
-
-    /** A new game was started: the last one's end can no longer be cancelled from here. */
-    public static void onNewGame() {
-        sentGameId = null;
     }
 
     public static JsonObject build(MinecraftServer server, String winner) {

@@ -91,14 +91,6 @@ public record CustomRole(
         return imageUrls.getFirst();
     }
 
-    public boolean wakesFirstNight() {
-        return firstNight > 0.0;
-    }
-
-    public boolean wakesOtherNights() {
-        return otherNight > 0.0;
-    }
-
     private static RoleType parseTeam(String team) {
         return switch (team.toLowerCase(Locale.ROOT)) {
             case "townsfolk" -> RoleType.TOWNSFOLK;

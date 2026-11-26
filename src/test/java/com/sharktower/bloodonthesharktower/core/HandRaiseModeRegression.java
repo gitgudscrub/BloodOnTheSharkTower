@@ -18,7 +18,7 @@ public final class HandRaiseModeRegression {
         check(HandRaiseMode.determine(1,1,false,null,false,a,false,false)==HandRaiseMode.VOTING,"Existing daytime exile call retains voting controls");
         check(HandRaiseMode.determine(1,1,true,null,false,null,true,false)==HandRaiseMode.VOTING,"Exile support uses voting hands");
         check(HandRaiseMode.determine(1,1,true,null,false,null,false,true)==HandRaiseMode.OFF,"End-game presentation hides hands");
-        DaytimeState.openNominations(Set.of(a,b),Set.of(),List.of(),List.of());
+        DaytimeState.openNominations(Set.of(a,b));
         AttentionHands.set(a,true);AttentionHands.set(b,true);
         DaytimeState.setMarkedForExecution(a, 3);
         check(HandRaiseMode.determine(1,1,DaytimeState.areNominationsOpen(),DaytimeState.getCurrentNominee(),false,null,false,false)==HandRaiseMode.SPEAKING,"Player marked for execution still permits speaking between nominations");
@@ -26,7 +26,7 @@ public final class HandRaiseModeRegression {
         check(AttentionHands.positions().get(a)==1 && AttentionHands.positions().get(b)==2,"Voting hand changes preserve independent speaking order");
         DaytimeState.closeNominations();check(AttentionHands.positions().isEmpty(),"Closing nominations clears speaking queue");
         AttentionHands.set(a,true);DaytimeState.resetDaily();check(AttentionHands.positions().isEmpty(),"Dusk/new day clears speaking queue");
-        AttentionHands.set(a,true);DaytimeState.openNominations(Set.of(a,b),Set.of(),List.of(),List.of());
+        AttentionHands.set(a,true);DaytimeState.openNominations(Set.of(a,b));
         check(AttentionHands.positions().isEmpty(),"New nomination window begins with an empty queue");
         DaytimeState.hardReset(Set.of(),Set.of());
         System.out.println("PASS: "+checks+" nomination-only hand mode and speaking queue lifecycle checks");

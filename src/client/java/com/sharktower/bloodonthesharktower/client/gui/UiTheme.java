@@ -53,17 +53,13 @@ public final class UiTheme {
     public static final int GOLD_DIM = 0xFF8A6D2F;
     public static final int GOLD_SHADOW = 0xFF5C4720;
     public static final int AMBER = 0xFFE0A446;
-    public static final int BLOOD = 0xFF8E1B1B;
-    public static final int BLOOD_LIGHT = 0xFFE26B5E;
     public static final int GOOD_BADGE = 0xFF2F5F9C;
     public static final int EVIL_BADGE = 0xFF8E1B1B;
     public static final int INK = 0xFF0E0B10;
     public static final int PARCHMENT = 0xFFE9DCC0;
-    public static final int PARCHMENT_DARK = 0xFFCDB890;
     public static final int PARCHMENT_INK = 0xFF2B2118;
     public static final int CHIP_HARMFUL = 0xFFB23A2E;
     public static final int CHIP_PROTECTIVE = 0xFF3F8E4C;
-    public static final int CHIP_NEUTRAL = 0xFFB8A878;
 
     private static final Identifier TOKEN_DISC = tex("token_disc");
     private static final Identifier DISC = tex("disc");
@@ -160,14 +156,6 @@ public final class UiTheme {
         if (!dark()) graphics.outline(x + 2, y + 2, width - 4, height - 4, 0xFFE4D5B2);
     }
 
-    /** Header band across the top of a framed panel. */
-    public static void headerBand(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int width) {
-        graphics.fill(x + 1, y + 1, x + width - 1, y + 18, dark() ? 0xFF1E1822 : 0xFFE6D9BB);
-        graphics.fill(x + 1, y + 18, x + width - 1, y + 19, GOLD_SHADOW);
-        Component label = display(text.toUpperCase(Locale.ROOT));
-        UiDrawing.text(graphics, font, label, x + 8, y + 5, dark() ? GOLD : 0xFF5C4315, dark());
-    }
-
     /** Whole-screen backdrop behind a Sharktower screen: vignette (dark) or a parchment sheet (light). */
     public static void screenBackdrop(GuiGraphicsExtractor graphics, int width, int height) {
         if (dark()) {
@@ -254,16 +242,4 @@ public final class UiTheme {
 
     // ---------------------------------------------------------------- chips
 
-    /** Reminder chip background: parchment on dark mode, ink on light mode, so it always contrasts. */
-    public static int chipBackground() {
-        return dark() ? 0xFFE6D9BB : 0xFF2B2118;
-    }
-
-    public static int chipText() {
-        return dark() ? PARCHMENT_INK : 0xFFF1E9D6;
-    }
-
-    public static int chipBorder() {
-        return dark() ? GOLD_DIM : 0xFF9C7A2E;
-    }
 }

@@ -495,12 +495,6 @@ public final class NightOrderHUD {
         }
     }
 
-    public static void resetSelection() {
-        selectedIndex = 0;
-        selectedKey = "static:dusk";
-        NightVisitInfoHUD.clear();
-    }
-
     private static boolean isAvailable(Minecraft minecraft) {
         if (minecraft == null || minecraft.player == null) return false;
         if (!ClientState.isHudEnabled || ClientState.gameEnding) return false;

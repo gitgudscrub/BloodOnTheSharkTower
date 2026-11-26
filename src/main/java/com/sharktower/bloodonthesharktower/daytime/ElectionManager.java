@@ -13,31 +13,16 @@ import net.minecraft.world.entity.decoration.Cushion;
 import net.minecraft.world.phys.AABB;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
-/**
- * Clockwise vote coordinator. The physical redstone clock from BOTB is replaced
- * by a server tick clock that locks each player's current hand state in seat order.
- */
+/** Clockwise vote coordinator: a server tick clock that locks each player's hand in seat order. */
 public final class ElectionManager {
-    public static final int PISTON_POWER_DELAY_TICKS = 2;
-    public static final int START_COUNTDOWN_TICKS = 60;
+    private static final int START_COUNTDOWN_TICKS = 60;
     private static long observedVoteStart = -1L;
     private static int countdownTicksRemaining;
     private static int ticksUntilNextSeat = VotePresentationSettings.stepTicks();
 
     private ElectionManager() {}
-
-    public static boolean isCleanupInProgress() { return false; }
-
-    public static List<UUID> buildElectionOrder(UUID target, Map<UUID, Integer> seats) {
-        return ElectionState.buildElectionOrder(target, seats);
-    }
-
-    /** Retained API surface; registration is performed once from the mod initializer. */
-    public static void registerTickScheduler() {}
 
     /** Called from END_SERVER_TICK. */
     public static void serverTick(MinecraftServer server) {
@@ -106,45 +91,7 @@ public final class ElectionManager {
         }
     }
 
-    public static List<UUID> getElectionOrder() { return ElectionState.getElectionOrder(); }
-    public static long getElectionStartTime() { return ElectionState.getStartTime(); }
-
-    public static void runVotingPhase(MinecraftServer server, ElectionConfig config, Set<UUID> deadPlayers) {
-        if (config.getType() == ElectionType.EXILE_SUPPORT) {
-            ExileSupportManager.startExileSupport(server);
-        } else {
-            VotingManager.startVote(
-                    server,
-                    deadPlayers,
-                    config.applyOrganGrinderMode(),
-                    DaytimeState.isVoudonModeActive(),
-                    DaytimeState.getVoudonPlayerUuid(),
-                    Set.of()
-            );
-        }
-    }
-
-    public static void cancelVotingPhase(MinecraftServer server) {
-        if (DaytimeState.isExileSupportInProgress()) DaytimeState.cancelExileSupportVote();
-        else DaytimeState.resetVote();
-        ElectionState.resetVotingPhase();
-        StateBroadcaster.broadcastDaytimeState(server);
-        StateBroadcaster.broadcastVoteState(server);
-    }
-
-    public static void cancelAllTimers() {
-        ElectionState.resetVotingPhase();
-        observedVoteStart = -1L;
-        countdownTicksRemaining = 0;
-        ticksUntilNextSeat = VotePresentationSettings.stepTicks();
-    }
-
-    public static int calculateThreshold(int alivePlayers, int totalPlayers, ElectionConfig config) {
-        int base = config.useAliveForThreshold() ? alivePlayers : totalPlayers;
-        return Math.max(1, (int) Math.ceil(Math.max(0, base) / 2.0));
-    }
-
-    public static void freezePlayersInSeats(MinecraftServer server, List<UUID> players) {
+    private static void freezePlayersInSeats(MinecraftServer server, List<UUID> players) {
         if (server == null || players == null) return;
         for (UUID id : players) {
             if (id == null) continue;
@@ -157,7 +104,7 @@ public final class ElectionManager {
         }
     }
 
-    public static void keepPlayersFrozen(MinecraftServer server, List<UUID> players) {
+    private static void keepPlayersFrozen(MinecraftServer server, List<UUID> players) {
         if (server == null || players == null) return;
         final double toleranceSq = 0.035D;
         for (UUID id : players) {
@@ -222,18 +169,13 @@ public final class ElectionManager {
         }
         return best;
     }
-    public static void resetAllLevers(MinecraftServer server, List<UUID> players) {
-        DaytimeState.clearLeverStates();
-        StateBroadcaster.broadcastVoteState(server);
-    }
-    public static void powerAllSeatPistons(MinecraftServer server) {}
-    public static void restoreAllPistonPower(MinecraftServer server, List<UUID> players) {}
-    public static void sendStartSounds(MinecraftServer server) {
+
+    private static void sendStartSounds(MinecraftServer server) {
         playTownSquareSound(server, ModSounds.VOTE_START, 1.2F);
     }
 
     /** Play exactly one clock tick when one seat is counted. */
-    public static void sendClockTickSound(MinecraftServer server) {
+    private static void sendClockTickSound(MinecraftServer server) {
         playTownSquareSound(server, ModSounds.CLOCK_TICK, 1.0F);
     }
 
@@ -245,9 +187,5 @@ public final class ElectionManager {
         double y = center == null ? anchor.getY() : center.y();
         double z = center == null ? anchor.getZ() : center.z();
         anchor.level().playSound(null, x, y, z, sound, SoundSource.MASTER, volume, 1.0F);
-    }
-
-    public static void sendStopSounds(MinecraftServer server) {
-        // Seat ticks are one-shot sounds, so there is no persistent sound to stop.
     }
 }

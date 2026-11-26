@@ -38,7 +38,7 @@ public final class GameOneRegression {
         check(!InformationVisibility.canSeeBluffs(monk,monk),"Ordinary player receives no bluffs");
         check(!InformationVisibility.canSeeBluffs(monk,imp),"Lunatic/perceived Demon receives no actual team bluff leak");
         ServerState.PLAYER_SEAT_NUMBERS.putAll(seats);
-        DaytimeState.openNominations(seats.keySet(),Set.of(),List.of(),List.of());
+        DaytimeState.openNominations(seats.keySet());
         DaytimeState.setCurrentNominator(a); DaytimeState.setCurrentNominee(b);
         DaytimeState.useNomination(a); DaytimeState.setCanNominate(a,false); DaytimeState.setCanBeNominated(b,false);
         DaytimeState.setRaisedHand(c,true); DaytimeState.lockVote(c,true);

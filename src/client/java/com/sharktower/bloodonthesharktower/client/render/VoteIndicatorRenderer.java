@@ -1,15 +1,12 @@
 package com.sharktower.bloodonthesharktower.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.client.hud.GameEndAnimationHUD;
 import com.sharktower.bloodonthesharktower.states.ClientState;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -110,64 +107,7 @@ public final class VoteIndicatorRenderer {
             double cx = position.x;
             double cy = position.y + player.getBbHeight() + HEAD_OFFSET;
             double cz = position.z;
-            submitBillboard(collector, poseStack, camera, texture, cx, cy, cz, size);
+            RoleIconRenderer.submitBillboard(collector, poseStack, camera, texture, cx, cy, cz, 0.0D, size);
         }
-    }
-
-    private static void submitBillboard(
-            SubmitNodeCollector collector,
-            PoseStack poseStack,
-            Vec3 camera,
-            Identifier texture,
-            double cx,
-            double cy,
-            double cz,
-            double iconSize
-    ) {
-        double fx = camera.x - cx;
-        double fz = camera.z - cz;
-        double horizontal = Math.sqrt(fx * fx + fz * fz);
-        if (horizontal < 0.0001D) {
-            fx = 0.0D;
-            fz = 1.0D;
-            horizontal = 1.0D;
-        }
-        fx /= horizontal;
-        fz /= horizontal;
-
-        double rx = fz;
-        double rz = -fx;
-        double half = iconSize * 0.5D;
-
-        float leftX = (float) (cx - rx * half - camera.x);
-        float leftZ = (float) (cz - rz * half - camera.z);
-        float rightX = (float) (cx + rx * half - camera.x);
-        float rightZ = (float) (cz + rz * half - camera.z);
-        float bottomY = (float) (cy - half - camera.y);
-        float topY = (float) (cy + half - camera.y);
-
-        collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(texture), (pose, consumer) -> {
-            vertex(consumer, pose, leftX, bottomY, leftZ, 0.0F, 1.0F);
-            vertex(consumer, pose, rightX, bottomY, rightZ, 1.0F, 1.0F);
-            vertex(consumer, pose, rightX, topY, rightZ, 1.0F, 0.0F);
-            vertex(consumer, pose, leftX, topY, leftZ, 0.0F, 0.0F);
-        });
-    }
-
-    private static void vertex(
-            VertexConsumer consumer,
-            PoseStack.Pose pose,
-            float x,
-            float y,
-            float z,
-            float u,
-            float v
-    ) {
-        consumer.addVertex(pose, x, y, z)
-                .setColor(0xFFFFFFFF)
-                .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(0x00F000F0)
-                .setNormal(pose, 0.0F, 0.0F, 1.0F);
     }
 }

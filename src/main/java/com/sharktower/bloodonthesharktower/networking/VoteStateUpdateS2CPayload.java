@@ -18,7 +18,6 @@ public record VoteStateUpdateS2CPayload(
         Map<UUID, Boolean> raisedHands,
         Map<UUID, Boolean> currentVotes,
         Map<UUID, Boolean> lockedVotes,
-        Map<UUID, Boolean> leverStates,
         boolean organGrinderMode,
         boolean exileSupport,
         UUID currentVoter,
@@ -60,7 +59,6 @@ public record VoteStateUpdateS2CPayload(
                     StateWire.deathFromJson(buf.readUtf()),
                     StateWire.deathFromJson(buf.readUtf()),
                     StateWire.deathFromJson(buf.readUtf()),
-                    StateWire.deathFromJson(buf.readUtf()),
                     buf.readBoolean(),
                     buf.readBoolean(),
                     readUuid(buf),
@@ -99,7 +97,6 @@ public record VoteStateUpdateS2CPayload(
             buf.writeUtf(StateWire.deathToJson(value.raisedHands));
             buf.writeUtf(StateWire.deathToJson(value.currentVotes));
             buf.writeUtf(StateWire.deathToJson(value.lockedVotes));
-            buf.writeUtf(StateWire.deathToJson(value.leverStates));
             buf.writeBoolean(value.organGrinderMode);
             buf.writeBoolean(value.exileSupport);
             writeUuid(buf, value.currentVoter);
@@ -133,7 +130,6 @@ public record VoteStateUpdateS2CPayload(
         raisedHands = Map.copyOf(raisedHands);
         currentVotes = Map.copyOf(currentVotes);
         lockedVotes = Map.copyOf(lockedVotes);
-        leverStates = Map.copyOf(leverStates);
         lastVoteResult = lastVoteResult == null || lastVoteResult.isBlank() ? "NONE" : lastVoteResult;
     }
 

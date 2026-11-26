@@ -353,14 +353,6 @@ public record Script(
         }
     }
 
-    public boolean hasCustomRoles() {
-        return !customRoles.isEmpty();
-    }
-
-    public boolean hasCustomRolesOrTravelers() {
-        return !customRoles.isEmpty() || !travelers.isEmpty();
-    }
-
     public List<CustomRole> allCustomRoles() {
         List<CustomRole> result = new ArrayList<>(customRoles);
         for (ScriptRole role : travelers) {
@@ -373,20 +365,8 @@ public record Script(
         return getFabledOrLoric(id).isPresent();
     }
 
-    public boolean hasLogo() {
-        return logo != null && !logo.isEmpty();
-    }
-
-    public boolean hasBootleggerRules() {
-        return bootlegger != null && !bootlegger.isEmpty();
-    }
-
     public boolean hasAlmanac() {
         return almanac != null && !almanac.isEmpty();
-    }
-
-    public boolean hasAnyAlmanac() {
-        return hasAlmanac() || (extraAlmanacs != null && !extraAlmanacs.isEmpty());
     }
 
     public boolean hasFabled() {
@@ -399,10 +379,6 @@ public record Script(
 
     public boolean hasFabledOrLoric() {
         return hasFabled() || hasLoric();
-    }
-
-    public boolean hasTravelers() {
-        return !travelers.isEmpty();
     }
 
     public List<ScriptRole> allFabledAndLoric() {

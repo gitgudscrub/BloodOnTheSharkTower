@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Diagnostic layer retained while the original BOTB packet families are bulk-ported. */
+/** Client state acknowledgements, so /bots status can show whether clients match the server. */
 public final class NetworkDiagnostics {
     private static final AtomicInteger NEXT_SEQUENCE = new AtomicInteger();
     private static final Map<UUID, Ack> ACKS = new ConcurrentHashMap<>();

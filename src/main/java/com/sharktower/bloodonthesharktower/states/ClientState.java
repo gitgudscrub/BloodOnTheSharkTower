@@ -27,8 +27,6 @@ public final class ClientState {
 
     public static int activePlayerCount = 0;
     public static int travelerCount = 0;
-    public static int lobbyPlayerCount = 0;
-    public static int lobbyStorytellerCount = 0;
 
     public static Script currentScript = null;
     public static Map<UUID, Integer> playerSeatNumbers = new HashMap<>();
@@ -77,7 +75,6 @@ public final class ClientState {
     public static Map<UUID, Boolean> raisedHands = new HashMap<>();
     public static Map<UUID, Boolean> currentVotes = new HashMap<>();
     public static Map<UUID, Boolean> lockedVotes = new HashMap<>();
-    public static Map<UUID, Boolean> leverStates = new HashMap<>();
     public static boolean organGrinderMode = false;
     public static boolean exileSupportVote = false;
     public static UUID currentVoteClockPlayer = null;
@@ -260,7 +257,6 @@ public final class ClientState {
             Map<UUID, Boolean> handState,
             Map<UUID, Boolean> votes,
             Map<UUID, Boolean> locks,
-            Map<UUID, Boolean> levers,
             boolean organGrinder,
             boolean exileSupport,
             UUID currentVoter,
@@ -305,7 +301,6 @@ public final class ClientState {
         raisedHands = new HashMap<>(handState);
         currentVotes = new HashMap<>(votes);
         lockedVotes = new HashMap<>(locks);
-        leverStates = new HashMap<>(levers);
         organGrinderMode = organGrinder;
         exileSupportVote = exileSupport;
         boolean voterChanged = currentVoteClockPlayer == null

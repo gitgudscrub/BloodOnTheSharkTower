@@ -3,20 +3,16 @@ package com.sharktower.bloodonthesharktower.daytime;
 import com.sharktower.bloodonthesharktower.core.RoleType;
 import com.sharktower.bloodonthesharktower.states.ServerState;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Bulk 26.2 port of BOTB's authoritative daytime/election state.
- *
- * The physical redstone/lever presentation is intentionally kept outside this
- * class. This is the same logical home for nominations, ghost votes, marked
- * players, exile state and role-specific vote modifiers used by the original.
+ * Authoritative daytime state: nominations, hands and votes, ghost votes, the
+ * player on the block and Traveller exiles. The clockwise vote clock itself
+ * lives in {@link ElectionState} and {@link ElectionManager}.
  */
 public final class DaytimeState {
     private static final Map<UUID, Boolean> canNominate = new HashMap<>();
@@ -39,25 +35,12 @@ public final class DaytimeState {
 
     private static final Map<UUID, Boolean> currentVotes = new HashMap<>();
     private static final Map<UUID, Boolean> lockedVotes = new HashMap<>();
-    private static final Map<UUID, Boolean> currentLeverStates = new HashMap<>();
     /** Sharktower hand-voting intent. This stays separate from locked/counting vote state. */
     private static final Map<UUID, Boolean> raisedHands = new HashMap<>();
-    private static final Set<UUID> pendingGhostVoteUpdates = new HashSet<>();
-    private static final Set<UUID> secretlyUsedGhostVotes = new HashSet<>();
-    private static final Set<UUID> mayNotNominatePlayers = new HashSet<>();
-
-    private static final Set<UUID> bansheeDoubleVotePlayers = new HashSet<>();
-    private static final Map<UUID, Boolean> bansheeDoubleVoteActive = new HashMap<>();
-    private static final Set<UUID> bansheeHasVotedOnce = new HashSet<>();
     private static final Map<UUID, Integer> nominationsRemaining = new HashMap<>();
-    private static final Map<UUID, Boolean> bansheeUnderlyingGhostVoteUsed = new HashMap<>();
 
     private static boolean voudonModeActive;
-    private static final Set<UUID> voudonBlockedPlayers = new HashSet<>();
     private static UUID voudonPlayerUuid;
-    private static final Set<UUID> ugHatPlayers = new HashSet<>();
-    private static final Map<UUID, Integer> bureaucratMultipliers = new HashMap<>();
-    private static final Map<UUID, Integer> thiefMultipliers = new HashMap<>();
 
     private static final Map<UUID, Boolean> canBeExiled = new HashMap<>();
     /** Travellers who have been exiled are removed from election participation; they are not dead. */
@@ -65,7 +48,6 @@ public final class DaytimeState {
     private static UUID currentExileCaller;
     private static UUID currentExileTarget;
     private static boolean exileSupportInProgress;
-    private static final Set<Integer> seatsWithGhostUsedBlocks = new HashSet<>();
     private static final Map<UUID, Boolean> exileSupportVotes = new HashMap<>();
     private static final Map<UUID, Boolean> lockedExileSupportVotes = new HashMap<>();
 
@@ -82,7 +64,6 @@ public final class DaytimeState {
 
     public static boolean hasUsedGhostVote(UUID id) { return hasUsedGhostVote.getOrDefault(id, false); }
     public static void markGhostVoteUsed(UUID id) { hasUsedGhostVote.put(id, true); }
-    public static void resetGhostVote(UUID id) { hasUsedGhostVote.put(id, false); }
     public static void clearAllGhostVotes() { hasUsedGhostVote.clear(); }
     public static Map<UUID, Boolean> getGhostVoteMap() { return Map.copyOf(hasUsedGhostVote); }
 
@@ -121,12 +102,8 @@ public final class DaytimeState {
 
     public static boolean areNominationsOpen() { return nominationsOpen; }
 
-    public static void openNominations(
-            Set<UUID> players,
-            Set<UUID> deadPlayers,
-            List<UUID> bansheePlayers,
-            List<UUID> mayNotNominate
-    ) {
+    /** Opens nominations for {@code players}: one nomination each, Travellers can't be nominated. */
+    public static void openNominations(Set<UUID> players) {
         nominationsOpen = true;
         AttentionHands.clear();
         resetNomination();
@@ -134,19 +111,12 @@ public final class DaytimeState {
         canBeNominated.clear();
         nominationsRemaining.clear();
         raisedHands.clear();
-        setMayNotNominatePlayers(mayNotNominate);
 
         for (UUID id : players) {
-            boolean mayNominate = !mayNotNominatePlayers.contains(id) && !isExiledTraveler(id);
-            canNominate.put(id, mayNominate);
-            boolean traveler = isTraveler(id);
-            canBeNominated.put(id, !traveler);
-            nominationsRemaining.put(id, bansheePlayers != null && bansheePlayers.contains(id) ? 2 : 1);
+            canNominate.put(id, !isExiledTraveler(id));
+            canBeNominated.put(id, !isTraveler(id));
+            nominationsRemaining.put(id, 1);
             hasUsedGhostVote.putIfAbsent(id, false);
-        }
-
-        if (bansheePlayers != null) {
-            for (UUID id : bansheePlayers) enableBansheeDoubleVote(id);
         }
 
         initializeExileEligibility(players);
@@ -170,12 +140,9 @@ public final class DaytimeState {
         currentVotes.clear();
         lockedVotes.clear();
         manualVoteCountOverride = null;
-        currentLeverStates.clear();
-        // A raised hand means "I intend to vote". Seed the logical vote map
-        // so the existing vote backend can consume the hand state even before
-        // the rotating/counting presentation lands in 1.1.0-dev B.
+        // A raised hand means "I intend to vote": seed the vote map so a hand
+        // raised before the clock starts counts when the clock reaches the seat.
         currentVotes.putAll(raisedHands);
-        bansheeHasVotedOnce.clear();
     }
     public static void endVote() { voteInProgress = false; }
 
@@ -186,16 +153,6 @@ public final class DaytimeState {
     }
     public static void clearManualVoteCountOverride() { manualVoteCountOverride = null; }
 
-    public static void addPendingGhostVoteUpdate(UUID id) { pendingGhostVoteUpdates.add(id); }
-    public static Set<UUID> getPendingGhostVoteUpdates() { return Set.copyOf(pendingGhostVoteUpdates); }
-    public static void clearPendingGhostVoteUpdates() { pendingGhostVoteUpdates.clear(); }
-    public static void markGhostVoteSecretlyUsed(UUID id) { secretlyUsedGhostVotes.add(id); }
-    public static boolean hasSecretlyUsedGhostVote(UUID id) { return secretlyUsedGhostVotes.contains(id); }
-    public static void finalizeSecretGhostVotes() {
-        for (UUID id : secretlyUsedGhostVotes) markGhostVoteUsed(id);
-        secretlyUsedGhostVotes.clear();
-    }
-
     public static void setCurrentVote(UUID id, boolean value) { currentVotes.put(id, value); }
     public static Map<UUID, Boolean> getCurrentVotes() { return Map.copyOf(currentVotes); }
     public static void lockVote(UUID id, boolean value) {
@@ -203,15 +160,12 @@ public final class DaytimeState {
         lockedVotes.put(id, value);
     }
     public static Map<UUID, Boolean> getLockedVotes() { return Map.copyOf(lockedVotes); }
-    public static void setLeverState(UUID id, boolean value) { currentLeverStates.put(id, value); }
-    public static Map<UUID, Boolean> getLeverStates() { return Map.copyOf(currentLeverStates); }
-    public static void clearLeverStates() { currentLeverStates.clear(); }
 
     public static void setRaisedHand(UUID id, boolean raised) {
         if (id == null) return;
         raisedHands.put(id, raised);
-        // During an active vote, changing your hand immediately updates your
-        // un-locked vote intent. 1.1.0-dev B will add the clockwise lock-in.
+        // During a vote, changing your hand changes your vote until the clock
+        // reaches your seat and locks it.
         if (voteInProgress && !lockedVotes.containsKey(id)) {
             currentVotes.put(id, raised);
         }
@@ -240,15 +194,12 @@ public final class DaytimeState {
         canNominate.clear();
         canBeNominated.clear();
         nominationsRemaining.clear();
-        mayNotNominatePlayers.clear();
         clearRaisedHands();
         organGrinderMode = false;
         organGrinderModeActiveToday = false;
         clearMarkedForExecution();
         clearStorytellerMFE();
-        clearBansheeDoubleVotes();
         deactivateVoudonMode();
-        clearTravelerMultipliers();
         resetExile();
         resetExileEligibilityDaily();
     }
@@ -258,11 +209,7 @@ public final class DaytimeState {
         organGrinderMode = false;
         currentVotes.clear();
         lockedVotes.clear();
-        currentLeverStates.clear();
         manualVoteCountOverride = null;
-        pendingGhostVoteUpdates.clear();
-        secretlyUsedGhostVotes.clear();
-        bansheeHasVotedOnce.clear();
         ElectionState.resetVotingPhase();
     }
 
@@ -276,55 +223,6 @@ public final class DaytimeState {
             canBeNominated.put(id, false);
         }
         initializeExileEligibility(players);
-    }
-
-    public static void enableBansheeDoubleVote(UUID id) {
-        bansheeDoubleVotePlayers.add(id);
-        bansheeDoubleVoteActive.putIfAbsent(id, false);
-    }
-    public static void disableBansheeDoubleVote(UUID id) {
-        bansheeDoubleVotePlayers.remove(id);
-        bansheeDoubleVoteActive.remove(id);
-        bansheeHasVotedOnce.remove(id);
-        bansheeUnderlyingGhostVoteUsed.remove(id);
-    }
-    public static boolean hasBansheeDoubleVote(UUID id) { return bansheeDoubleVotePlayers.contains(id); }
-    public static boolean toggleBansheeDoubleVoteActive(UUID id) {
-        boolean next = !bansheeDoubleVoteActive.getOrDefault(id, false);
-        bansheeDoubleVoteActive.put(id, next);
-        return next;
-    }
-    public static boolean isBansheeDoubleVoteActive(UUID id) { return bansheeDoubleVoteActive.getOrDefault(id, false); }
-
-    public static int getVoteMultiplier(UUID id) {
-        int multiplier = 1;
-        if (isBansheeDoubleVoteActive(id)) multiplier *= 2;
-        if (ugHatPlayers.contains(id)) multiplier *= 2;
-        multiplier *= bureaucratMultipliers.getOrDefault(id, 1);
-        multiplier *= thiefMultipliers.getOrDefault(id, 1);
-        return multiplier;
-    }
-
-    public static void clearBansheeDoubleVotes() {
-        bansheeDoubleVotePlayers.clear();
-        bansheeDoubleVoteActive.clear();
-        bansheeHasVotedOnce.clear();
-        bansheeUnderlyingGhostVoteUsed.clear();
-    }
-
-    public static void setMayNotNominatePlayers(List<UUID> players) {
-        mayNotNominatePlayers.clear();
-        if (players != null) mayNotNominatePlayers.addAll(players);
-    }
-    public static boolean isMayNotNominate(UUID id) { return mayNotNominatePlayers.contains(id); }
-    public static boolean isBansheeUnderlyingGhostVoteUsed(UUID id) {
-        return bansheeUnderlyingGhostVoteUsed.getOrDefault(id, false);
-    }
-    public static Set<UUID> getBansheeDoubleVotePlayers() { return Set.copyOf(bansheeDoubleVotePlayers); }
-    public static Set<UUID> getBansheeDoubleVoteActivePlayers() {
-        Set<UUID> active = new HashSet<>();
-        bansheeDoubleVoteActive.forEach((id, value) -> { if (Boolean.TRUE.equals(value)) active.add(id); });
-        return active;
     }
 
     public static void setNominationsRemaining(UUID id, int count) {
@@ -346,28 +244,6 @@ public final class DaytimeState {
     public static void deactivateVoudonMode() {
         voudonModeActive = false;
         voudonPlayerUuid = null;
-        voudonBlockedPlayers.clear();
-    }
-    public static void addVoudonBlockedPlayer(UUID id) { voudonBlockedPlayers.add(id); }
-    public static void removeVoudonBlockedPlayer(UUID id) { voudonBlockedPlayers.remove(id); }
-    public static Set<UUID> getVoudonBlockedPlayers() { return Set.copyOf(voudonBlockedPlayers); }
-    public static void clearVoudonBlockedPlayers() { voudonBlockedPlayers.clear(); }
-
-    public static void setUgHatPlayers(Collection<UUID> ids) {
-        ugHatPlayers.clear();
-        if (ids != null) ugHatPlayers.addAll(ids);
-    }
-    public static void clearUgHatPlayers() { ugHatPlayers.clear(); }
-    public static void setBureaucratMultiplier(UUID id, boolean active) {
-        if (active) bureaucratMultipliers.put(id, 3); else bureaucratMultipliers.remove(id);
-    }
-    public static void setThiefMultiplier(UUID id, boolean active) {
-        if (active) thiefMultipliers.put(id, -1); else thiefMultipliers.remove(id);
-    }
-    public static void clearTravelerMultipliers() {
-        ugHatPlayers.clear();
-        bureaucratMultipliers.clear();
-        thiefMultipliers.clear();
     }
 
     public static boolean canBeExiled(UUID id) {
@@ -400,16 +276,11 @@ public final class DaytimeState {
         currentVotes.remove(id);
         lockedVotes.remove(id);
     }
-    public static void setCanBeExiled(UUID id, boolean value) {
-        if (id != null) canBeExiled.put(id, value && !isExiledTraveler(id));
-    }
     public static void initializeExileEligibility(Set<UUID> players) {
         canBeExiled.clear();
         if (players == null) return;
         for (UUID id : players) canBeExiled.put(id, isTraveler(id) && !isExiledTraveler(id));
     }
-    public static void addTraveler(UUID id) { if (id != null) canBeExiled.put(id, !isExiledTraveler(id)); }
-    public static void removeTraveler(UUID id) { canBeExiled.remove(id); }
     public static void resetExileEligibilityDaily() {
         for (UUID id : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
             canBeExiled.put(id, isTraveler(id) && !isExiledTraveler(id));
@@ -443,7 +314,6 @@ public final class DaytimeState {
         manualVoteCountOverride = null;
         ElectionState.resetVotingPhase();
     }
-    public static void setExileSupportVote(UUID id, boolean value) { exileSupportVotes.put(id, value); }
     public static Map<UUID, Boolean> getExileSupportVotes() { return Map.copyOf(exileSupportVotes); }
     public static void lockExileSupportVote(UUID id, boolean value) {
         exileSupportVotes.put(id, value);
@@ -452,15 +322,6 @@ public final class DaytimeState {
     public static Map<UUID, Boolean> getLockedExileSupportVotes() { return Map.copyOf(lockedExileSupportVotes); }
     public static int getLockedExileSupportCount() {
         return (int) lockedExileSupportVotes.values().stream().filter(Boolean.TRUE::equals).count();
-    }
-    public static void saveGhostUsedBlockSeats(Set<Integer> seats) {
-        seatsWithGhostUsedBlocks.clear();
-        if (seats != null) seatsWithGhostUsedBlocks.addAll(seats);
-    }
-    public static Set<Integer> getAndClearGhostUsedBlockSeats() {
-        Set<Integer> result = Set.copyOf(seatsWithGhostUsedBlocks);
-        seatsWithGhostUsedBlocks.clear();
-        return result;
     }
     public static void resetExile() {
         currentExileCaller = null;

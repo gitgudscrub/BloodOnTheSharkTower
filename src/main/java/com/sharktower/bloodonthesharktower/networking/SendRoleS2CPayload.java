@@ -45,24 +45,6 @@ public record SendRoleS2CPayload(
         return assignment.role();
     }
 
-    public static SendRoleS2CPayload ofRole(
-            Role role,
-            boolean good,
-            int activePlayerCount,
-            int travelerCount,
-            boolean silent
-    ) {
-        return new SendRoleS2CPayload(
-                new PendingRoleAssignment(
-                        role,
-                        good ? AlignmentOverride.FORCE_GOOD : AlignmentOverride.FORCE_BAD
-                ),
-                activePlayerCount,
-                travelerCount,
-                silent
-        );
-    }
-
     public static SendRoleS2CPayload ofAssignment(
             PendingRoleAssignment assignment,
             int activePlayerCount,

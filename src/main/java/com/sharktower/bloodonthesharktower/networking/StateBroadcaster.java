@@ -326,12 +326,6 @@ public final class StateBroadcaster {
         }
     }
 
-    public static void broadcastEndGameState(MinecraftServer server) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            sendEndGameStateTo(player);
-        }
-    }
-
     public static void broadcastPlayerDirectory(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) sendPlayerDirectoryTo(player);
     }
@@ -380,7 +374,6 @@ public final class StateBroadcaster {
                 DaytimeState.getRaisedHands(),
                 exileSupport ? DaytimeState.getExileSupportVotes() : DaytimeState.getCurrentVotes(),
                 exileSupport ? DaytimeState.getLockedExileSupportVotes() : DaytimeState.getLockedVotes(),
-                DaytimeState.getLeverStates(),
                 DaytimeState.isOrganGrinderMode(),
                 exileSupport,
                 ElectionState.getCurrentVoter(),
@@ -506,14 +499,6 @@ public final class StateBroadcaster {
     public static void broadcastVoteState(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             sendVoteStateTo(player);
-        }
-    }
-
-    public static void broadcastScript(MinecraftServer server) {
-        if (ServerState.currentScript == null) return;
-        SendScriptS2CPayload payload = new SendScriptS2CPayload(ServerState.currentScript);
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            ServerPlayNetworking.send(player, payload);
         }
     }
 

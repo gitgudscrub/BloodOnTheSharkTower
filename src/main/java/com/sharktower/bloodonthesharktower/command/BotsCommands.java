@@ -9,18 +9,14 @@ import com.mojang.brigadier.context.CommandContext;
 import com.sharktower.bloodonthesharktower.BloodOnTheSharktower;
 import com.sharktower.bloodonthesharktower.core.AlignmentOverride;
 import com.sharktower.bloodonthesharktower.core.GamePhase;
-import com.sharktower.bloodonthesharktower.core.LegacyPortInfo;
 import com.sharktower.bloodonthesharktower.core.PendingRoleAssignment;
 import com.sharktower.bloodonthesharktower.core.PhaseOperations;
 import com.sharktower.bloodonthesharktower.core.Role;
-import com.sharktower.bloodonthesharktower.core.RoleModelDiagnostics;
 import com.sharktower.bloodonthesharktower.core.Script;
 import com.sharktower.bloodonthesharktower.core.ScriptNetworkTestData;
 import com.sharktower.bloodonthesharktower.daytime.DaytimeState;
-import com.sharktower.bloodonthesharktower.daytime.ExecutionManager;
 import com.sharktower.bloodonthesharktower.daytime.ExileManager;
 import com.sharktower.bloodonthesharktower.daytime.ExileSupportManager;
-import com.sharktower.bloodonthesharktower.daytime.NominationManager;
 import com.sharktower.bloodonthesharktower.daytime.VotingManager;
 import com.sharktower.bloodonthesharktower.daytime.VotePresentationSettings;
 import com.sharktower.bloodonthesharktower.networking.NetworkDiagnostics;
@@ -53,11 +49,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Blood on the Sharktower command root.
- *
- * The original private BOTB /botb tree is being bulk-ported under /bots.
- * Diagnostic commands stay here while the original command handlers are wired
- * back in during the playable-core/game-flow batches.
+ * Blood on the Sharktower command root: Storyteller tools and test helpers
+ * under /bots. Game actions that the Grimoire also offers run through
+ * {@link com.sharktower.bloodonthesharktower.networking.StorytellerActionHandler#run}.
  */
 public final class BotsCommands {
     public static final String ROOT = "bots";
@@ -278,24 +272,24 @@ public final class BotsCommands {
                                 .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                         .executes(BotsCommands::executeTeleportToSeat)))
                         .then(Commands.literal("nominations")
-                                .then(Commands.literal("open").executes(BotsCommands::executeOpenNominations))
-                                .then(Commands.literal("close").executes(BotsCommands::executeCloseNominations)))
+                                .then(Commands.literal("open").executes(context -> grimoire(context, "nominations_open", "")))
+                                .then(Commands.literal("close").executes(context -> grimoire(context, "nominations_close", ""))))
                         .then(Commands.literal("nominate")
                                 .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                         .executes(BotsCommands::executeNominate)))
-                        .then(Commands.literal("runVote").executes(BotsCommands::executeRunVote))
+                        .then(Commands.literal("runVote").executes(context -> grimoire(context, "vote_start", "")))
                         .then(Commands.literal("hand")
-                                .executes(BotsCommands::executeToggleHand)
-                                .then(Commands.literal("up").executes(BotsCommands::executeRaiseHand))
-                                .then(Commands.literal("down").executes(BotsCommands::executeLowerHand))
+                                .executes(context -> setHandFromCommand(context, null))
+                                .then(Commands.literal("up").executes(context -> setHandFromCommand(context, true)))
+                                .then(Commands.literal("down").executes(context -> setHandFromCommand(context, false)))
                                 .then(Commands.literal("status").executes(BotsCommands::executeHandStatus)))
                         .then(Commands.literal("vote")
                                 .then(Commands.argument("yes", BoolArgumentType.bool())
                                         .executes(BotsCommands::executeVote)))
-                        .then(Commands.literal("resolveVote").executes(BotsCommands::executeResolveVote))
-                        .then(Commands.literal("cancelVote").executes(BotsCommands::executeCancelVote))
+                        .then(Commands.literal("resolveVote").executes(context -> grimoire(context, "vote_finish", "")))
+                        .then(Commands.literal("cancelVote").executes(context -> grimoire(context, "vote_cancel", "")))
                         .then(Commands.literal("resetVote").executes(BotsCommands::executeResetVote))
-                        .then(Commands.literal("execute").executes(BotsCommands::executeMarkedPlayer))
+                        .then(Commands.literal("execute").executes(context -> grimoire(context, "execute_marked", "")))
                         .then(Commands.literal("markDead")
                                 .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                         .executes(context -> executeMarkDead(context, false))))
@@ -400,7 +394,7 @@ public final class BotsCommands {
                                                 .executes(BotsCommands::executeAutomationVirginDismiss))
                                         .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                                 .executes(BotsCommands::executeAutomationVirgin))))
-                        .then(Commands.literal("executionFail").executes(BotsCommands::executeMarkedPlayerFail))
+                        .then(Commands.literal("executionFail").executes(context -> grimoire(context, "execute_marked_survives", "")))
                         .then(Commands.literal("callForExile")
                                 .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                         .executes(BotsCommands::executeCallForExile)))
@@ -416,7 +410,6 @@ public final class BotsCommands {
                         .then(Commands.literal("clearExileCount").executes(BotsCommands::executeClearExileCount))
                         .then(Commands.literal("exileStatus").executes(BotsCommands::executeExileStatus))
                         .then(Commands.literal("resetExile").executes(BotsCommands::executeResetExile))
-                        .then(Commands.literal("gameflowdemo").executes(BotsCommands::executeGameFlowDemo))
                         .then(Commands.literal("timer")
                                 .then(Commands.literal("start")
                                         .then(Commands.argument("seconds", IntegerArgumentType.integer(1))
@@ -425,7 +418,7 @@ public final class BotsCommands {
                                 .then(Commands.literal("resume").executes(BotsCommands::executeTimerResume))
                                 .then(Commands.literal("stop").executes(BotsCommands::executeTimerStop))))
         );
-        BloodOnTheSharktower.LOGGER.info("Registered /bots command root (private BOTB -> BOTS port).");
+        BloodOnTheSharktower.LOGGER.info("Registered /bots command root.");
     }
 
     private static int executeStatus(CommandContext<CommandSourceStack> context) {
@@ -435,7 +428,6 @@ public final class BotsCommands {
                 .orElse("unknown");
 
         GamePhase phase = currentPhase();
-        RoleModelDiagnostics.Result roleModel = RoleModelDiagnostics.run();
         Script serverScript = ServerState.currentScript;
         String serverScriptName = serverScript == null ? "none" : serverScript.name();
         int serverScriptRoleCount = serverScript == null ? 0 : serverScript.allRoles().size();
@@ -452,7 +444,6 @@ public final class BotsCommands {
                 + ", server=" + (VoicechatIntegrationState.isServerStarted() ? "ONLINE" : "WAITING")
                 + ", localClient=" + (VoicechatIntegrationState.isClientConnected() ? "CONNECTED" : "NOT CONNECTED"));
         send(context, NightChatManager.statusLine());
-        send(context, "BOTB port source: " + LegacyPortInfo.SOURCE_VERSION);
         send(context, "Server phase: " + phase);
         send(context, "Game flow: nominations=" + (DaytimeState.areNominationsOpen() ? "OPEN" : "CLOSED")
                 + ", nominee=" + seatLabel(DaytimeState.getCurrentNominee())
@@ -467,11 +458,6 @@ public final class BotsCommands {
                 + " (" + DaytimeState.getLockedExileSupportCount() + " yes)");
         send(context, "Timer: " + (TimerManager.isActive() ? (TimerManager.isPaused() ? "PAUSED" : "RUNNING") : "IDLE")
                 + " " + TimerManager.getRemainingSeconds() + "/" + TimerManager.getTotalSeconds() + "s");
-        send(context, "Role model: " + (roleModel.ok() ? "ONLINE" : "FAILED")
-                + " (" + roleModel.enumEntries() + " enum / "
-                + roleModel.selectableRoles() + " selectable)");
-        send(context, "Script parser: " + (roleModel.ok() ? "ONLINE" : "FAILED")
-                + " (" + roleModel.parsedSmokeRoles() + " smoke-test roles)");
         send(context, "Server script: " + serverScriptName + " (" + serverScriptRoleCount + " roles)");
         send(context, "Server core state: seats=" + serverSeats
                 + ", dead=" + serverDead
@@ -527,7 +513,6 @@ public final class BotsCommands {
         send(context, "Setup backend: " + SetupOperations.summary());
         send(context, "Seat positions: homes=" + SeatPositionManager.configuredSeatHomes()
                 + ", townSquare=" + SeatPositionManager.configuredTownSquareSeats());
-        send(context, "Legacy assets staged: " + LegacyPortInfo.IMPORTED_ASSET_FILE_COUNT + " files");
         return Command.SINGLE_SUCCESS;
     }
 
@@ -1550,10 +1535,7 @@ public final class BotsCommands {
             send(context, "Both seats must have a player.");
             return 0;
         }
-        SetupOperations.Result result = com.sharktower.bloodonthesharktower.networking.StorytellerActionHandler
-                .nominatePair(context.getSource().getServer(), nominator + "|" + nominee);
-        send(context, result.message());
-        return result.ok() ? Command.SINGLE_SUCCESS : 0;
+        return grimoire(context, "nominate_pair", nominator + "|" + nominee);
     }
 
     /** Storyteller override for the Spy-nominates-Virgin case: execute that seat as if the Virgin fired. */
@@ -1782,28 +1764,16 @@ public final class BotsCommands {
         return false;
     }
 
-    private static int executeOpenNominations(CommandContext<CommandSourceStack> context) {
+    /** Runs the Grimoire's own action, so a /bots command follows the same rules, announcements and broadcasts. */
+    private static int grimoire(CommandContext<CommandSourceStack> context, String action, String argument) {
         if (!requireStoryteller(context)) return 0;
-        Set<UUID> players = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.keySet());
-        if (players.isEmpty()) {
-            for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
-                players.add(player.getUUID());
-            }
-        }
-        DaytimeState.openNominations(players, ServerState.deadPlayers(), java.util.List.of(), java.util.List.of());
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Nominations opened for " + players.size() + " player(s).");
-        return Command.SINGLE_SUCCESS;
+        SetupOperations.Result result = com.sharktower.bloodonthesharktower.networking.StorytellerActionHandler
+                .run(context.getSource().getServer(), context.getSource().getPlayer(), action, argument);
+        send(context, result.message());
+        return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
-    private static int executeCloseNominations(CommandContext<CommandSourceStack> context) {
-        if (!requireStoryteller(context)) return 0;
-        DaytimeState.closeNominations();
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Nominations closed.");
-        return Command.SINGLE_SUCCESS;
-    }
-
+    /** A player nominates the player in {@code seat}, by the Grimoire's nomination rules. */
     private static int executeNominate(CommandContext<CommandSourceStack> context) {
         ServerPlayer nominator = requirePlayer(context, "nominate");
         if (nominator == null) return 0;
@@ -1813,29 +1783,10 @@ public final class BotsCommands {
             send(context, "No player is assigned to seat " + seat + ".");
             return 0;
         }
-        boolean ok = NominationManager.executeNomination(
-                context.getSource().getServer(), nominator.getUUID(), nominee, VotingManager.alivePlayerCount()
-        );
-        if (!ok) {
-            send(context, "Nomination rejected by current daytime state.");
-            return 0;
-        }
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Nomination accepted: " + seatLabel(nominator.getUUID()) + " -> seat " + seat
-                + ". Votes required: " + currentVotesRequired());
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static int executeToggleHand(CommandContext<CommandSourceStack> context) {
-        return setHandFromCommand(context, null);
-    }
-
-    private static int executeRaiseHand(CommandContext<CommandSourceStack> context) {
-        return setHandFromCommand(context, true);
-    }
-
-    private static int executeLowerHand(CommandContext<CommandSourceStack> context) {
-        return setHandFromCommand(context, false);
+        SetupOperations.Result result = com.sharktower.bloodonthesharktower.networking.StorytellerActionHandler
+                .run(context.getSource().getServer(), nominator, "nominate_pair", nominator.getUUID() + "|" + nominee);
+        send(context, result.message());
+        return result.ok() ? Command.SINGLE_SUCCESS : 0;
     }
 
     private static int executeHandStatus(CommandContext<CommandSourceStack> context) {
@@ -1850,60 +1801,11 @@ public final class BotsCommands {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int setHandFromCommand(CommandContext<CommandSourceStack> context, Boolean forced) {
+    /** The hand key's own rules (Butler, ghost votes, speaking hands); {@code raised} null toggles. */
+    private static int setHandFromCommand(CommandContext<CommandSourceStack> context, Boolean raised) {
         ServerPlayer player = requirePlayer(context, "hand");
         if (player == null) return 0;
-        UUID id = player.getUUID();
-        if (!ServerState.PLAYER_SEAT_NUMBERS.containsKey(id)) {
-            send(context, "You must be seated to raise a voting hand.");
-            return 0;
-        }
-        if (StorytellerState.isStoryteller(id)) {
-            send(context, "Storytellers do not raise player voting hands.");
-            return 0;
-        }
-        boolean exileVoting = DaytimeState.hasActiveExile() || DaytimeState.isExileSupportInProgress();
-        if (DaytimeState.isExiledTraveler(id)) {
-            send(context, "You have been exiled and are no longer participating in votes.");
-            return 0;
-        }
-        if (!DaytimeState.areNominationsOpen() && !DaytimeState.isVoteInProgress() && !exileVoting) {
-            send(context, "Voting hands are available during nominations or an exile call.");
-            return 0;
-        }
-        if (!exileVoting && Boolean.TRUE.equals(ServerState.PLAYER_DEATH_STATUS.get(id)) && DaytimeState.hasUsedGhostVote(id)) {
-            DaytimeState.setRaisedHand(id, false);
-            StateBroadcaster.broadcastVoteState(context.getSource().getServer());
-            send(context, "Your ghost vote has already been used.");
-            return 0;
-        }
-        boolean alreadyLocked = exileVoting
-                ? DaytimeState.getLockedExileSupportVotes().containsKey(id)
-                : DaytimeState.getLockedVotes().containsKey(id);
-        if ((DaytimeState.isVoteInProgress() || DaytimeState.isExileSupportInProgress()) && alreadyLocked) {
-            send(context, "Your vote has already been counted.");
-            return 0;
-        }
-        boolean next = forced != null ? forced : !DaytimeState.isHandRaised(id);
-        DaytimeState.setRaisedHand(id, next);
-        StateBroadcaster.broadcastVoteState(context.getSource().getServer());
-        int required = exileVoting ? ExileSupportManager.currentThreshold() : VotingManager.currentHandsRequired();
-        send(context, (exileVoting ? "Exile support hand " : "Voting hand ") + (next ? "RAISED" : "LOWERED") + ". "
-                + VotingManager.raisedHandCount() + " hand(s) raised; " + required + " required.");
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static int executeRunVote(CommandContext<CommandSourceStack> context) {
-        if (!requireStoryteller(context)) return 0;
-        if (!DaytimeState.hasActiveNomination()) {
-            send(context, "No active nomination to vote on.");
-            return 0;
-        }
-        VotingManager.startVote(context.getSource().getServer(), ServerState.deadPlayers(), false, false, null, Set.of());
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, String.format(java.util.Locale.ROOT,
-                "Clockwise vote started. Each seat locks after %.2f second(s). Required to beat the block: %d.",
-                VotePresentationSettings.stepTicks() / 20.0D, currentVotesRequired()));
+        com.sharktower.bloodonthesharktower.networking.PlayerActionHandler.setHand(player, context.getSource().getServer(), raised);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -1922,75 +1824,11 @@ public final class BotsCommands {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int executeResolveVote(CommandContext<CommandSourceStack> context) {
-        if (!requireStoryteller(context)) return 0;
-        if (!DaytimeState.isVoteInProgress()) {
-            send(context, "No vote is currently running.");
-            return 0;
-        }
-        if (!VotingManager.canResolveVote()) {
-            send(context, "The clockwise vote clock has not reached every seat yet.");
-            return 0;
-        }
-        VotingManager.Result result = VotingManager.resolveVote(context.getSource().getServer());
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Vote result: " + result.result() + " — " + result.votes() + " vote(s), threshold " + result.threshold() + ".");
-        if (DaytimeState.getMarkedForExecution() != null) {
-            send(context, "On the block: " + seatLabel(DaytimeState.getMarkedForExecution())
-                    + " with " + DaytimeState.getVotesForMarkedPlayer() + " vote(s).");
-        }
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static int executeCancelVote(CommandContext<CommandSourceStack> context) {
-        if (!requireStoryteller(context)) return 0;
-        if (!DaytimeState.isVoteInProgress()) {
-            send(context, "No vote is currently running.");
-            return 0;
-        }
-        VotingManager.resetVote(context.getSource().getServer());
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Vote cancelled. The current nomination remains active.");
-        return Command.SINGLE_SUCCESS;
-    }
-
     private static int executeResetVote(CommandContext<CommandSourceStack> context) {
         if (!requireStoryteller(context)) return 0;
         VotingManager.resetVote(context.getSource().getServer());
         StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
         send(context, "Vote state reset.");
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static int executeMarkedPlayer(CommandContext<CommandSourceStack> context) {
-        if (!requireStoryteller(context)) return 0;
-        UUID marked = DaytimeState.getMarkedForExecution();
-        if (marked == null) {
-            send(context, "Nobody is currently marked for execution.");
-            return 0;
-        }
-        String warning = com.sharktower.bloodonthesharktower.automation.RoleAutomation
-                .executionWarning(context.getSource().getServer(), marked);
-        if (warning != null) {
-            send(context, warning);
-            return 0;
-        }
-        ExecutionManager.executePlayer(context.getSource().getServer(), marked, false, null);
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Executed " + seatLabel(marked) + ".");
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static int executeMarkedPlayerFail(CommandContext<CommandSourceStack> context) {
-        if (!requireStoryteller(context)) return 0;
-        UUID marked = DaytimeState.getMarkedForExecution();
-        if (marked == null) {
-            send(context, "Nobody is currently marked for execution.");
-            return 0;
-        }
-        ExecutionManager.executePlayerFail(context.getSource().getServer(), marked, false, null);
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Execution resolved as SURVIVED/FAILED for " + seatLabel(marked) + ".");
         return Command.SINGLE_SUCCESS;
     }
 
@@ -2111,30 +1949,6 @@ public final class BotsCommands {
     }
 
     /** One-player smoke test that walks the actual nomination/vote/execution backend. */
-    private static int executeGameFlowDemo(CommandContext<CommandSourceStack> context) {
-        if (!requireStoryteller(context)) return 0;
-        ServerPlayer player = requirePlayer(context, "gameflowdemo");
-        if (player == null) return 0;
-        UUID id = player.getUUID();
-        ServerState.PLAYER_SEAT_NUMBERS.putIfAbsent(id, 1);
-        ServerState.PLAYER_DEATH_STATUS.put(id, false);
-        int day = Math.max(1, Math.max(ServerState.currentNight, ServerState.currentDay));
-        ServerState.currentNight = day;
-        ServerState.currentDay = day;
-        ServerState.executionToday = false;
-        DaytimeState.hardReset(Set.of(id), Set.of());
-        DaytimeState.openNominations(Set.of(id), Set.of(), java.util.List.of(), java.util.List.of());
-        NominationManager.executeNomination(context.getSource().getServer(), id, id, 1);
-        VotingManager.startVote(context.getSource().getServer(), Set.of(), false, false, null, Set.of());
-        VotingManager.setVote(context.getSource().getServer(), id, true);
-        VotingManager.lockVote(context.getSource().getServer(), id);
-        VotingManager.Result result = VotingManager.resolveVote(context.getSource().getServer());
-        StateBroadcaster.broadcastCurrentState(context.getSource().getServer());
-        send(context, "Game-flow demo complete: nomination -> YES vote -> " + result.result()
-                + ". Run /bots status, then /bots execute to test execution.");
-        return Command.SINGLE_SUCCESS;
-    }
-
     private static UUID playerBySeat(int seat) {
         for (var entry : ServerState.PLAYER_SEAT_NUMBERS.entrySet()) {
             if (entry.getValue() != null && entry.getValue() == seat) return entry.getKey();
@@ -2146,13 +1960,6 @@ public final class BotsCommands {
         if (player == null) return "none";
         Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(player);
         return seat == null ? player.toString() : "seat " + seat;
-    }
-
-    private static int currentVotesRequired() {
-        int base = VotingManager.calculateThreshold(VotingManager.alivePlayerCount());
-        return DaytimeState.getMarkedForExecution() == null
-                ? base
-                : Math.max(base, DaytimeState.getVotesForMarkedPlayer() + 1);
     }
 
     private static int executeTimerStart(CommandContext<CommandSourceStack> context) {
