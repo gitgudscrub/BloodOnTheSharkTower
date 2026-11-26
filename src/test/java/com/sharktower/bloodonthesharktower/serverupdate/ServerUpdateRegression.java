@@ -1,17 +1,23 @@
 package com.sharktower.bloodonthesharktower.serverupdate;
 
+import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/** Plain Java regression executable: pack.toml parsing and duplicate-mod clean-up. */
+/** Plain Java regression executable: pack.toml parsing, duplicate-mod clean-up and the website link. */
 public final class ServerUpdateRegression {
     private static int checks;
 
@@ -20,7 +26,7 @@ public final class ServerUpdateRegression {
         if (!value) throw new AssertionError(message);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         PackInfo pack = PackInfo.parse("""
                 name = "Blood on the Sharktower"
                 version = "1.0.2-alpha.48"
@@ -71,7 +77,44 @@ public final class ServerUpdateRegression {
             }
         }
 
+        siteLinkSendsNoUpgrade();
+
         System.out.println("ServerUpdateRegression passed (" + checks + " checks).");
+    }
+
+    /** The website link speaks plain HTTP/1.1, so it never asks the site to upgrade the connection. */
+    private static void siteLinkSendsNoUpgrade() throws Exception {
+        List<String> upgrades = new CopyOnWriteArrayList<>();
+        HttpServer site = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        site.createContext("/internal/minecraft/live", exchange -> {
+            String upgrade = exchange.getRequestHeaders().getFirst("Upgrade");
+            upgrades.add(upgrade == null ? "none" : upgrade);
+            exchange.getRequestBody().readAllBytes();
+            byte[] reply = "{}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, reply.length);
+            exchange.getResponseBody().write(reply);
+            exchange.close();
+        });
+        site.start();
+        try {
+            setSiteLink("url", "http://127.0.0.1:" + site.getAddress().getPort());
+            setSiteLink("key", "k".repeat(32));
+            List<String> replies = new CopyOnWriteArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                SiteLink.post("/internal/minecraft/live", "{}", "spectator updates", replies::add)
+                        .get(10, TimeUnit.SECONDS);
+            }
+            check(upgrades.equals(List.of("none", "none")), "website link asked to upgrade: " + upgrades);
+            check(replies.equals(List.of("{}", "{}")), "site replies reach the caller: " + replies);
+        } finally {
+            site.stop(0);
+        }
+    }
+
+    private static void setSiteLink(String field, String value) throws ReflectiveOperationException {
+        Field f = SiteLink.class.getDeclaredField(field);
+        f.setAccessible(true);
+        f.set(null, value);
     }
 
     private static void jar(Path path, String modId) throws IOException {

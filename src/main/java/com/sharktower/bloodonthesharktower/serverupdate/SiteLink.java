@@ -34,7 +34,10 @@ public final class SiteLink {
             "https://raw.githubusercontent.com/gitgudscrub/BloodOnTheSharkTower/pack/pack.toml";
 
     private static final Gson GSON = new Gson();
+    // HTTP/1.1: with Java's default (HTTP/2) every post on an http:// link asks
+    // the site to upgrade the connection, and the site logs two warnings each time.
     private static final HttpClient HTTP = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
