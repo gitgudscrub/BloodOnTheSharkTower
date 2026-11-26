@@ -5,6 +5,11 @@ it to the pack auto-updater, with that version's section below as its notes
 (see `MODRINTH_RELEASES.md`); publishing to Modrinth stays manual. Add the
 section in the same pull request as the bump.
 
+## 1.0.2-alpha.69 — No stars when locked in
+
+- Night lock: a locked player no longer sees the moon or stars through the
+  dark fog.
+
 ## 1.0.2-alpha.68 — Locked in at night
 
 - Night lock: at night, a player who reaches their house stays inside it

@@ -7,7 +7,8 @@
     "EntityRendererMixin",
     "VoiceGroupIconMixin",
     "ScreenBackdropMixin",
-    "FogRendererMixin"
+    "FogRendererMixin",
+    "SkyRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
