@@ -34,15 +34,4 @@ public record Reminder(
         return new Reminder(text, Optional.empty(), Optional.ofNullable(customRoleId), Optional.empty());
     }
 
-    public static Reminder forFabled(String text, String fabledId) {
-        return forCustomRole(text, fabledId);
-    }
-
-    public boolean isPlayerReminder() {
-        return playerUuid.isPresent();
-    }
-
-    public boolean isCustomRoleReminder() {
-        return customRoleId.isPresent();
-    }
 }

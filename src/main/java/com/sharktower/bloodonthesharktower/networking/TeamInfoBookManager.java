@@ -40,22 +40,8 @@ public final class TeamInfoBookManager {
         ItemStack book = createBook(kind, message);
         var items = player.getInventory().getNonEquipmentItems();
 
-        int emptySlot = -1;
-        int hotbarEnd = Math.min(9, items.size());
-        for (int slot = 0; slot < hotbarEnd; slot++) {
-            if (items.get(slot).isEmpty()) {
-                emptySlot = slot;
-                break;
-            }
-        }
-        if (emptySlot < 0) {
-            for (int slot = hotbarEnd; slot < items.size(); slot++) {
-                if (items.get(slot).isEmpty()) {
-                    emptySlot = slot;
-                    break;
-                }
-            }
-        }
+        // getFreeSlot scans the hotbar (slots 0-8) before the rest of the inventory.
+        int emptySlot = player.getInventory().getFreeSlot();
 
         if (emptySlot < 0) {
             player.sendSystemMessage(Component.literal(

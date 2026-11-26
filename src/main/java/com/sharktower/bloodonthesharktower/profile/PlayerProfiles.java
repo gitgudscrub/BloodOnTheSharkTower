@@ -53,14 +53,6 @@ public final class PlayerProfiles {
         return entry == null || entry.nickname == null ? "" : entry.nickname;
     }
 
-    public static Map<UUID, String> allNicknames() {
-        Map<UUID, String> result = new LinkedHashMap<>();
-        PROFILES.forEach((id, entry) -> {
-            if (entry != null && entry.nickname != null && !entry.nickname.isEmpty()) result.put(id, entry.nickname);
-        });
-        return result;
-    }
-
     /** The name other players see: the nickname when set, otherwise the username. */
     public static String displayName(ServerPlayer player) {
         if (player == null) return "";

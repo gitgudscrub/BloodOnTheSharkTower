@@ -1,9 +1,72 @@
 # Changelog
 
-Versions follow `gradle.properties`. The live community release is **1.0.1**;
-`1.0.2-alpha.*` builds are development builds that have not been distributed.
+Versions follow `gradle.properties`. Merging a version bump to `main` releases
+it to the pack auto-updater, with that version's section below as its notes
+(see `MODRINTH_RELEASES.md`); publishing to Modrinth stays manual. Add the
+section in the same pull request as the bump.
 
-## 1.0.2-alpha.62 — Guide books (unreleased)
+## 1.0.2-alpha.66 — Clean-up
+
+- Fix: pressing Cancel End Game after a game that was not sent to the site
+  (a practice game, game stats off, or test seats) no longer removes the
+  previous real game from the Sharktower site.
+- `/bots` nominations, nominate, runVote, resolveVote, cancelVote, execute,
+  executionFail and hand now run the same code as the Grimoire buttons and
+  the hand key, so they give the same announcements and the Butler rule
+  applies to `/bots hand`.
+- `/bots status` no longer lists the old port checks, and `/bots gameflowdemo`
+  is gone. The startup log no longer runs the port smoke test.
+- Removed unused code: the lever and piston vote leftovers (including an
+  unused field in the vote packet, so clients must update, which the login
+  version check already asks for), vote multipliers and role hooks that
+  nothing turned on (Banshee, UG hat, Bureaucrat, Thief, may-not-nominate,
+  ghost-vote blocks), the unused election config, and about 55 other unused
+  methods and constants.
+- The Demon and Lunatic bluff pickers share one screen; the vote markers use
+  the role icons' drawing code; the info books and the Home Compass use
+  Minecraft's own free-slot search (hotbar first, as before).
+- Removed `docs/history` and the original class and resource lists from
+  `docs/original` (the original licence stays). They remain in git history.
+
+## 1.0.2-alpha.65 — Practice players
+
+- `/bots practice add <n>` brings in up to 15 stand-in players around the
+  Storyteller, to rehearse a game alone or try a full town. They are real
+  server-side players on a connection that drops everything, so seating,
+  dealing, the Grimoire, deaths, teleports and Watch live treat them like
+  anyone else.
+- They walk home at night and to their town-square seat by day, raise or
+  lower hands in votes (`/bots practice votes random|yes|no`; on random, evil
+  ones protect their team and the dead save their ghost vote), and answer
+  night seat picks (Monk, Imp, Poisoner, Ravenkeeper) once the Storyteller
+  has visited.
+- `/bots practice clear` sends them away; they also leave when the server stops.
+- A game with any practice player seated is never sent to the Sharktower site.
+- Storyteller Guide: new Practice players page.
+
+## 1.0.2-alpha.64 — Game recap
+
+- Each game's story is recorded while it runs and sent with the end-of-game
+  stats, for the site's Past games pages: phase changes, deaths and revivals,
+  executions, every nomination vote with whose hands were up, and Traveller
+  exile calls.
+- Same format as Grim Poster's timeline and votes, so Minecraft games also
+  count for the site's vote and death achievements.
+- Capped at 400 events and 100 votes; cleared on reset or a return to setup;
+  recording stops once the game has ended. A server restart mid-game keeps
+  only what happened after it.
+
+## 1.0.2-alpha.63 — Watch live town map
+
+- While someone has Watch live open on the website, the server adds a town
+  map to the live view: seat homes, town-square seats, the clock centre,
+  where each person stands (rounded to half a block) and the voting clock
+  (nominee, nominator, whose vote it is).
+- Players in spectator mode are left off, so a roaming Wraith is never
+  shown. The Storyteller is always included. When nobody is watching,
+  nothing extra is sent.
+
+## 1.0.2-alpha.62 — Guide books
 
 - Three in-game books:
   - **Player Guide**: how to play here (keys, houses, night choices,
@@ -18,7 +81,7 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
   gives a fresh copy and replaces the old one.
 - Keys & Help mentions `/guide`.
 
-## 1.0.2-alpha.61 — Wraith: doors to listen, walls to watch (unreleased)
+## 1.0.2-alpha.61 — Wraith: doors to listen, walls to watch
 
 - The Wraith hears a house only if they come in through its door (a door
   block within a few blocks of the seat home). Coming in through a wall they
@@ -83,7 +146,7 @@ Versions follow `gradle.properties`. The live community release is **1.0.1**;
   says someone is listening. Before, it ran for the whole life of the server,
   even with the site link off (about 2% of a server core in profiling).
 
-## 1.0.2-alpha.56 — Spectators can ask to see the Grimoire, new icon (unreleased)
+## 1.0.2-alpha.56 — Spectators can ask to see the Grimoire, new icon
 
 - On the website's Watch live page a spectator can press **Ask to see the
   Grimoire**. Every Storyteller online gets a chat message with clickable
@@ -135,7 +198,7 @@ Measured with Java Flight Recorder in a 16-seat test game.
 - Dev: `BOTST_DEV_JVM_ARGS` passes extra JVM options to the run tasks
   (for example `-Xmx3G` to test at the pack's memory limit).
 
-## 1.0.2-alpha.52 — Watch live on the Sharktower website (unreleased)
+## 1.0.2-alpha.52 — Watch live on the Sharktower website
 
 - Watch live: the server feeds the Sharktower website's new Watch live page
   (Discord members only), so people without Minecraft can follow a game:

@@ -60,11 +60,6 @@ public final class GrimoireReturnState {
         return true;
     }
 
-    /** For local/back navigation where no server snapshot is expected. */
-    public static void scheduleReturn() {
-        deferredOpenTicks = 0;
-    }
-
     public static void suppressNextReveal() {
         suppressNextReveal = true;
     }

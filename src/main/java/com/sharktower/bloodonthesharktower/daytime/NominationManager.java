@@ -33,13 +33,7 @@ public final class NominationManager {
 
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(nominee);
-        ElectionState.beginElection(
-                ElectionType.VOTE,
-                ElectionConfig.forVote(false),
-                nominee,
-                nominator,
-                DaytimeState.getActiveElectionSeats()
-        );
+        ElectionState.beginElection(nominee, DaytimeState.getActiveElectionSeats());
         DaytimeState.useNomination(nominator);
         if (!DaytimeState.hasNominationsRemaining(nominator)) DaytimeState.setCanNominate(nominator, false);
         if (ServerState.PLAYER_SEAT_NUMBERS.containsKey(nominee)) DaytimeState.setCanBeNominated(nominee, false);
@@ -71,13 +65,7 @@ public final class NominationManager {
         DaytimeState.clearRaisedHands();
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(storyteller);
-        ElectionState.beginElection(
-                ElectionType.VOTE,
-                ElectionConfig.forVote(false),
-                storyteller,
-                nominator,
-                DaytimeState.getActiveElectionSeats()
-        );
+        ElectionState.beginElection(storyteller, DaytimeState.getActiveElectionSeats());
         DaytimeState.useNomination(nominator);
         if (!DaytimeState.hasNominationsRemaining(nominator)) DaytimeState.setCanNominate(nominator, false);
         DaytimeState.setStorytellerCanBeNominated(false);
@@ -100,7 +88,7 @@ public final class NominationManager {
         VotingManager.clearLastResult();
         DaytimeState.setCurrentNominator(nominator);
         DaytimeState.setCurrentNominee(nominee);
-        ElectionState.beginElection(ElectionType.VOTE, ElectionConfig.forVote(false), nominee, nominator, DaytimeState.getActiveElectionSeats());
+        ElectionState.beginElection(nominee, DaytimeState.getActiveElectionSeats());
         DayPublicInfoBookManager.recordNomination(server, nominator);
         recordMinionNomination(server, nominator);
         StateBroadcaster.broadcastDaytimeState(server);
@@ -144,8 +132,4 @@ public final class NominationManager {
         StateBroadcaster.broadcastVoteState(server);
     }
 
-    /** Presentation hook retained for original API compatibility; glow returns with the UI/world batch. */
-    public static void updateMarkedGlow(MinecraftServer server, UUID player, boolean marked) {
-        BloodOnTheSharktower.LOGGER.debug("Deferred marked glow update: player={}, marked={}", player, marked);
-    }
 }

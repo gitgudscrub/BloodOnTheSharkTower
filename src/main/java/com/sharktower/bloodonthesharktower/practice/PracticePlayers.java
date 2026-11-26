@@ -105,10 +105,6 @@ public final class PracticePlayers {
         ServerLifecycleEvents.SERVER_STOPPING.register(PracticePlayers::removeAll);
     }
 
-    public static boolean isPractice(UUID id) {
-        return id != null && BOTS.containsKey(id);
-    }
-
     public static int count() {
         return BOTS.size();
     }

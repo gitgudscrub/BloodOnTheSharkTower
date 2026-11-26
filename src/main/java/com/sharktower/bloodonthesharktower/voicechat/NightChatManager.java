@@ -48,19 +48,6 @@ public final class NightChatManager {
         return active;
     }
 
-    public static synchronized int managedConnectionCount() {
-        return MANAGED_CONNECTIONS.size();
-    }
-
-    public static synchronized int pendingInviteCount() {
-        cleanupExpiredInvites();
-        return INVITES.size();
-    }
-
-    public static synchronized int privateSessionCount() {
-        return uniquePrivateSessionCount();
-    }
-
     public static synchronized UUID privatePartner(UUID participantId) {
         PrivateSession session = SESSIONS_BY_PARTICIPANT.get(participantId);
         if (session == null) return null;

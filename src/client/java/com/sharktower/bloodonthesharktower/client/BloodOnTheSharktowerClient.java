@@ -42,6 +42,5 @@ public final class BloodOnTheSharktowerClient implements ClientModInitializer {
         GhostPlayerEffects.register();
         BloodOnTheSharktower.LOGGER.info("Blood on the Sharktower client initialized successfully.");
         BloodOnTheSharktower.LOGGER.info("Core client networking receivers registered.");
-        BloodOnTheSharktower.LOGGER.info("1.1.0-dev A.11 client polish registered: player list, public role counts, and knowledge-scoped world role icons.");
     }
 }

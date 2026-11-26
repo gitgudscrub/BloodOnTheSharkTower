@@ -8,11 +8,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Functional port of BOTB's seat-home / town-square teleport configuration.
- *
- * 0.7.0 keeps this in memory; persistent server-config JSON is intentionally
- * left for the config/world integration pass. The behavior mirrors the
- * original controls closely enough to operate a real test game now.
+ * Seat homes, town-square seats and the vote clock's centre for this map.
+ * Every change is saved by {@link MapConfigurationStore}, which loads it again
+ * at startup.
  */
 public final class SeatPositionManager {
     public record Position(double x, double y, double z) {}
@@ -143,13 +141,6 @@ public final class SeatPositionManager {
 
     public static boolean teleportPlayerToHome(ServerPlayer player, int seat) {
         Position position = SEAT_HOMES.get(seat);
-        if (position == null) return false;
-        teleport(player, position);
-        return true;
-    }
-
-    public static boolean teleportPlayerToTownSquare(ServerPlayer player, int seat) {
-        Position position = TOWN_SQUARE_SEATS.get(seat);
         if (position == null) return false;
         teleport(player, position);
         return true;

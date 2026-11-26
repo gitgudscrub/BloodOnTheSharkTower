@@ -172,14 +172,6 @@ public final class PlayerSidebarHUD {
         return ClientState.raisedHands.getOrDefault(id, false);
     }
 
-    private static boolean hasElectionContext() {
-        return ClientState.currentNominee != null
-                || ClientState.voteInProgress
-                || ClientState.currentExileTarget != null
-                || ClientState.exileSupportInProgress
-                || ClientState.exileSupportVote;
-    }
-
     /** Tiny pixel hand so the indicator does not depend on an emoji font. */
     private static void drawHand(GuiGraphicsExtractor graphics, int x, int y, int colour) {
         int dark = 0xFF174F22;

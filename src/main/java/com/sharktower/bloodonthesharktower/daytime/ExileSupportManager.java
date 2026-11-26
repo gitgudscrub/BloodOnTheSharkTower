@@ -28,7 +28,6 @@ public final class ExileSupportManager {
         if (yes) yes = ButlerVoteRule.mayRaiseHand(player);
         DaytimeState.setRaisedHand(player, yes);
         DaytimeState.lockExileSupportVote(player, yes);
-        ElectionState.lockVote(player, yes);
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastVoteState(server);
     }
@@ -39,7 +38,6 @@ public final class ExileSupportManager {
         boolean yes = DaytimeState.isHandRaised(player);
         yes = ButlerVoteRule.allowYesAtLock(server, player, yes);
         DaytimeState.lockExileSupportVote(player, yes);
-        ElectionState.lockVote(player, yes);
         StateBroadcaster.broadcastDaytimeState(server);
         StateBroadcaster.broadcastVoteState(server);
     }
@@ -110,7 +108,4 @@ public final class ExileSupportManager {
         return true;
     }
 
-    public static void resetExileSupport(MinecraftServer server) {
-        ExileManager.resetExile(server);
-    }
 }

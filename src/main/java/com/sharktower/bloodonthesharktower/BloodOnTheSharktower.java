@@ -1,9 +1,7 @@
 package com.sharktower.bloodonthesharktower;
 
 import com.sharktower.bloodonthesharktower.command.BotsCommands;
-import com.sharktower.bloodonthesharktower.core.LegacyPortInfo;
 import com.sharktower.bloodonthesharktower.core.PhasePresentation;
-import com.sharktower.bloodonthesharktower.core.RoleModelDiagnostics;
 import com.sharktower.bloodonthesharktower.daytime.ElectionManager;
 import com.sharktower.bloodonthesharktower.daytime.DayPublicInfoBookManager;
 import com.sharktower.bloodonthesharktower.networking.ModPackets;
@@ -25,19 +23,6 @@ public final class BloodOnTheSharktower implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("Blood on the Sharktower initialized successfully.");
-        LOGGER.info(
-                "Private BOTB port foundation loaded: source {}, {} legacy asset files staged.",
-                LegacyPortInfo.SOURCE_VERSION,
-                LegacyPortInfo.IMPORTED_ASSET_FILE_COUNT
-        );
-        RoleModelDiagnostics.Result roleModel = RoleModelDiagnostics.run();
-        LOGGER.info(
-                "Role/script model smoke test: {} ({} enum roles, {} selectable, {} parsed test roles).",
-                roleModel.ok() ? "PASS" : "FAIL",
-                roleModel.enumEntries(),
-                roleModel.selectableRoles(),
-                roleModel.parsedSmokeRoles()
-        );
         MapConfigurationStore.load();
         ModSounds.initialize();
         ModPayloads.registerPayloads();
@@ -50,7 +35,6 @@ public final class BloodOnTheSharktower implements ModInitializer {
         com.sharktower.bloodonthesharktower.command.ServerUpdateCommand.register();
         com.sharktower.bloodonthesharktower.networking.PlayerNotebooks.register();
         com.sharktower.bloodonthesharktower.profile.PlayerProfiles.register();
-        LOGGER.info("Bulk 0.5.0 game-flow networking registered: core state, daytime elections, votes, executions and exile state.");
         BotsCommands.register();
         com.sharktower.bloodonthesharktower.command.PronounsCommands.register();
         com.sharktower.bloodonthesharktower.command.NickCommands.register();

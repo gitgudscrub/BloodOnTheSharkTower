@@ -57,8 +57,11 @@ public final class PlayerActionHandler {
                 .withStyle(result.ok() ? ChatFormatting.GRAY : ChatFormatting.RED));
     }
 
-    /** Raises or lowers {@code player}'s hand by the same rules as the hand key (practice players use it). */
-    public static void setHand(ServerPlayer player, MinecraftServer server, boolean raised) {
+    /**
+     * Raises or lowers {@code player}'s hand by the same rules as the hand key
+     * (practice players and /bots hand use it); {@code raised} null toggles.
+     */
+    public static void setHand(ServerPlayer player, MinecraftServer server, Boolean raised) {
         toggleHand(player, server, raised);
     }
 

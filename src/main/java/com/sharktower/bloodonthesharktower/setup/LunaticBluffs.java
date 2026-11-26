@@ -117,10 +117,6 @@ public final class LunaticBluffs {
         return SetupOperations.workingRoles().values().stream().anyMatch(LunaticBluffs::isLunatic);
     }
 
-    public static boolean lunaticInPlay() {
-        return ServerState.PLAYER_ROLES.values().stream().anyMatch(LunaticBluffs::isLunatic);
-    }
-
     public static boolean lunaticOnScript() {
         Script script = ServerState.currentScript;
         return script != null && script.allRoles().stream()
