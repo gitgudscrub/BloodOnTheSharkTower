@@ -44,6 +44,8 @@ Their Resolve card also offers:
 
 Turn House visits off in the Grimoire to wake everyone at dusk instead.
 
+Night lock keeps each player in their house from the moment they reach it until dawn, with darkness outside. You, the Wraith and spectators are free; teleporting a player frees them. Switch it in Setup Tools or with /bots automation nightlock on|off.
+
 # Resolve cards
 
 Automation asks you before anything happens: Poisoner and Monk choices, Imp kills, Slayer shots, Virgin nominations, Witch curses and more.

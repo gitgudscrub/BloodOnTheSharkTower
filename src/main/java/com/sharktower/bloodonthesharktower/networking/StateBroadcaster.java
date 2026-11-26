@@ -37,7 +37,8 @@ public final class StateBroadcaster {
         boolean storyteller = StorytellerState.isStoryteller(player.getUUID());
         ServerPlayNetworking.send(player, new StorytellerPromptsS2CPayload(
                 storyteller ? com.sharktower.bloodonthesharktower.automation.RoleAutomation.prompts() : java.util.List.of(),
-                com.sharktower.bloodonthesharktower.automation.HouseVisits.enabled()));
+                com.sharktower.bloodonthesharktower.automation.HouseVisits.enabled(),
+                com.sharktower.bloodonthesharktower.automation.NightLock.enabled()));
     }
 
     public static void broadcastPrompts(MinecraftServer server) {

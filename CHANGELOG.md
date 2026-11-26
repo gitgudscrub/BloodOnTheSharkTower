@@ -5,6 +5,16 @@ it to the pack auto-updater, with that version's section below as its notes
 (see `MODRINTH_RELEASES.md`); publishing to Modrinth stays manual. Add the
 section in the same pull request as the bump.
 
+## 1.0.2-alpha.68 — Locked in at night
+
+- Night lock: at night, a player who reaches their house stays inside it
+  until dawn, and thick dark fog hides everything outside. The Storyteller,
+  the Wraith and spectators are free. Teleporting a player frees them.
+  Switch it in Setup Tools (Night lock ON/OFF) or with
+  `/bots automation nightlock on|off`. Houses are the 8-block area around
+  each seat's home for now; dark curtains on doors and windows come when
+  the map's houses are marked.
+
 ## 1.0.2-alpha.67 — Quieter website link
 
 - The server's link to the Sharktower site (game stats, the live table,

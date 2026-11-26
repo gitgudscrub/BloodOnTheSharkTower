@@ -6,7 +6,8 @@
     "AvatarRendererMixin",
     "EntityRendererMixin",
     "VoiceGroupIconMixin",
-    "ScreenBackdropMixin"
+    "ScreenBackdropMixin",
+    "FogRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

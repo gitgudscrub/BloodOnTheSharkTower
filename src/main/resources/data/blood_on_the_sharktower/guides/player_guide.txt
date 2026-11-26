@@ -25,7 +25,7 @@ The Script Guide book explains each character on the script.
 
 # Night
 
-At night, go to your house and stay there. Your house is its own private voice room: only people inside it can hear you.
+At night, go to your house. Once you are inside, you are locked in until dawn and cannot see out. Your house is its own private voice room: only people inside it can hear you.
 
 If your character acts at night, the Storyteller visits your house. You can only use your ability once they arrive and you see "The Storyteller is here".
 

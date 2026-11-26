@@ -194,6 +194,10 @@ public final class StorytellerActionHandler {
                             !com.sharktower.bloodonthesharktower.automation.HouseVisits.enabled());
                     yield SetupOperations.Result.ok(com.sharktower.bloodonthesharktower.automation.HouseVisits.describe());
                 }
+                case "toggle_night_lock" -> {
+                    com.sharktower.bloodonthesharktower.automation.NightLock.setEnabled(server, !com.sharktower.bloodonthesharktower.automation.NightLock.enabled());
+                    yield SetupOperations.Result.ok(com.sharktower.bloodonthesharktower.automation.NightLock.describe());
+                }
                 case "send_home" -> {
                     int moved = SeatPositionManager.sendAllHome(server, SetupOperations.workingSeats());
                     yield SetupOperations.Result.ok("Sent " + moved + " connected player(s) home.");

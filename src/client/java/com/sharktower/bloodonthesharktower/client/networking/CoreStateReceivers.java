@@ -42,6 +42,7 @@ public final class CoreStateReceivers {
 
     public static void resetSession() {
         resetGeneration = Long.MIN_VALUE;
+        ClientState.nightLocked = false;
         ClientState.notebookText = "";
         ClientState.attentionHands = java.util.Map.of();
         ClientState.talkingPlayers = java.util.Map.of();
@@ -88,9 +89,12 @@ public final class CoreStateReceivers {
             }
             ClientState.pendingDeaths = java.util.Set.copyOf(payload.pendingDeaths().keySet());
         });
+        ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.NightLockS2CPayload.TYPE,
+                (payload, context) -> ClientState.nightLocked = payload.locked());
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.StorytellerPromptsS2CPayload.TYPE, (payload, context) -> {
             ClientState.storytellerPrompts = payload.prompts();
             ClientState.houseVisits = payload.houseVisits();
+            ClientState.nightLock = payload.nightLock();
             ClientState.storytellerPromptsRevision++;
         });
         ClientPlayNetworking.registerGlobalReceiver(com.sharktower.bloodonthesharktower.networking.SetupStatusS2CPayload.TYPE,

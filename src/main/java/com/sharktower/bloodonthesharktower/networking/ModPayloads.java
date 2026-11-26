@@ -14,6 +14,7 @@ public final class ModPayloads {
         PayloadTypeRegistry.serverboundPlay().register(NotebookPayload.TYPE, NotebookPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SocialStateS2CPayload.TYPE, SocialStateS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(GameVisibilityS2CPayload.TYPE, GameVisibilityS2CPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(NightLockS2CPayload.TYPE, NightLockS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(StorytellerPromptsS2CPayload.TYPE, StorytellerPromptsS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SeatPickS2CPayload.TYPE, SeatPickS2CPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SetupStatusS2CPayload.TYPE, SetupStatusS2CPayload.CODEC);

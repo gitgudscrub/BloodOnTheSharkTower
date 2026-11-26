@@ -226,6 +226,21 @@ public final class FullGameTest {
                     // Through a wall: straight into the Chef's house, no door.
                     wraith.teleportTo(x + 41, y, z + 40);
                 })
+                // Night lock: the Chef reached home at dusk, so they stay in; the Wraith is free.
+                .thenWaitUntil(() -> helper.assertTrue(com.sharktower.bloodonthesharktower.automation.NightLock.locked(
+                        server.getPlayerList().getPlayerByName(NAMES[4]).getUUID()), "the Chef is locked in their house"))
+                .thenExecute(() -> {
+                    helper.assertTrue(!com.sharktower.bloodonthesharktower.automation.NightLock.locked(
+                            server.getPlayerList().getPlayerByName(NAMES[1]).getUUID()), "the Wraith is never locked");
+                    helper.assertTrue(!com.sharktower.bloodonthesharktower.automation.NightLock.locked(st.getUUID()), "the Storyteller is never locked");
+                    server.getPlayerList().getPlayerByName(NAMES[4]).teleportTo(st.getX() + 50, st.getY(), st.getZ() + 40);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(SeatPositionManager.isPlayerNearHome(
+                        server.getPlayerList().getPlayerByName(NAMES[4]), 5, 8), "walking out puts the Chef back inside"))
+                .thenExecute(() -> server.getPlayerList().getPlayerByName(NAMES[4]).teleportTo(st.getX() + 120, st.getY(), st.getZ() + 40))
+                .thenWaitUntil(() -> helper.assertTrue(!com.sharktower.bloodonthesharktower.automation.NightLock.locked(
+                        server.getPlayerList().getPlayerByName(NAMES[4]).getUUID()), "a teleport frees the Chef"))
+                .thenExecute(() -> server.getPlayerList().getPlayerByName(NAMES[4]).teleportTo(st.getX() + 40, st.getY(), st.getZ() + 40))
                 .thenWaitUntil(() -> helper.assertTrue(WraithNight.alerted(5), "the lit lantern warns a Wraith is in the house"))
                 .thenExecute(() -> {
                     ServerPlayer wraith = server.getPlayerList().getPlayerByName(NAMES[1]);
