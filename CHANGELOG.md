@@ -5,6 +5,14 @@ it to the pack auto-updater, with that version's section below as its notes
 (see `MODRINTH_RELEASES.md`); publishing to Modrinth stays manual. Add the
 section in the same pull request as the bump.
 
+## 1.0.2-alpha.67 — Quieter website link
+
+- The server's link to the Sharktower site (game stats, the live table,
+  server status) now uses plain HTTP/1.1. Before, every post asked the site
+  to upgrade the connection, which the site refused and logged as two
+  warnings, about one pair every 1.6 seconds while the server ran. Posts
+  worked before and work the same now.
+
 ## 1.0.2-alpha.66 — Clean-up
 
 - Fix: pressing Cancel End Game after a game that was not sent to the site
