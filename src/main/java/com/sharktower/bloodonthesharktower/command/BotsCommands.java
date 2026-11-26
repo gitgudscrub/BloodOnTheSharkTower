@@ -321,6 +321,9 @@ public final class BotsCommands {
                                 .then(Commands.literal("housevisits")
                                         .then(Commands.literal("on").executes(ctx -> executeHouseVisits(ctx, true)))
                                         .then(Commands.literal("off").executes(ctx -> executeHouseVisits(ctx, false))))
+                                .then(Commands.literal("nightlock")
+                                        .then(Commands.literal("on").executes(ctx -> executeNightLock(ctx, true)))
+                                        .then(Commands.literal("off").executes(ctx -> executeNightLock(ctx, false))))
                                 .then(Commands.literal("witch")
                                         .then(Commands.literal("dismiss")
                                                 .executes(BotsCommands::executeAutomationWitchDismiss))
@@ -1699,6 +1702,13 @@ public final class BotsCommands {
         if (!requireStoryteller(context)) return 0;
         com.sharktower.bloodonthesharktower.automation.HouseVisits.setEnabled(context.getSource().getServer(), on);
         send(context, com.sharktower.bloodonthesharktower.automation.HouseVisits.describe());
+        return 1;
+    }
+
+    private static int executeNightLock(CommandContext<CommandSourceStack> context, boolean on) {
+        if (!requireStoryteller(context)) return 0;
+        com.sharktower.bloodonthesharktower.automation.NightLock.setEnabled(context.getSource().getServer(), on);
+        send(context, com.sharktower.bloodonthesharktower.automation.NightLock.describe());
         return 1;
     }
 

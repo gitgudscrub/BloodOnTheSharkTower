@@ -37,6 +37,15 @@ public final class SetupToolsScreen extends Screen {
                     rebuildWidgets();
                 })
                 .bounds(cx - 153, y + 24, 150, 20).tooltip(Tooltip.create(Component.literal(AssignRolesScreen.HOUSE_VISITS_TIP))).build());
+        this.addRenderableWidget(SharktowerButton.builder(Component.literal("Night lock: " + (ClientState.nightLock ? "ON" : "OFF"))
+                        .withStyle(ClientState.nightLock ? net.minecraft.ChatFormatting.GREEN : net.minecraft.ChatFormatting.WHITE), b -> {
+                    ClientState.nightLock = !ClientState.nightLock;
+                    action("toggle_night_lock");
+                    rebuildWidgets();
+                })
+                .bounds(cx + 3, y + 24, 150, 20).tooltip(Tooltip.create(Component.literal(
+                        "ON: at night players stay in their house once they reach it and see only darkness outside. "
+                        + "You, the Wraith and spectators are free. Teleporting a player frees them."))).build());
         add(cx + 3, y, "Unseated: " + (AssignRolesScreen.showUnseated() ? "SHOW" : "HIDE"),
                 "Show or hide the list of players without a seat.", () -> {
                     AssignRolesScreen.toggleShowUnseated();
