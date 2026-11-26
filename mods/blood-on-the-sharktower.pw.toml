@@ -1,8 +1,8 @@
 name = "Blood on the Sharktower"
-filename = "blood-on-the-sharktower-1.0.2-alpha.65.jar"
+filename = "blood-on-the-sharktower-1.0.2-alpha.66.jar"
 side = "both"
 
 [download]
-url = "https://github.com/gitgudscrub/BloodOnTheSharkTower/releases/download/pack-1.0.2-alpha.65/blood-on-the-sharktower-1.0.2-alpha.65.jar"
+url = "https://github.com/gitgudscrub/BloodOnTheSharkTower/releases/download/pack-1.0.2-alpha.66/blood-on-the-sharktower-1.0.2-alpha.66.jar"
 hash-format = "sha512"
-hash = "3d246765337adfd925832a771810c05dfff380ed897bf4f2e2553e1e79547bd0d99befe65e85ec8eb84f88dc5002d239d699f6c542a29755804f64d01584627c"
+hash = "a6a279fa8f65d0c0a346a137c92c390006d931c7939b9588afe120df0824db7bc8504df56cfab939a2f8daeb9e75ae4ca1ae6074bde742c28b427a51ce4ea97f"
